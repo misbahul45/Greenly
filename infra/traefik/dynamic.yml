@@ -1,0 +1,14 @@
+http:
+  middlewares:
+    security-headers:
+      headers:
+        frameDeny: true
+        contentTypeNosniff: true
+        browserXssFilter: true
+        customResponseHeaders:
+          X-Powered-By: "Greenly-Infrastructure"
+
+    rate-limit:
+      rateLimit:
+        average: 100
+        burst: 50
