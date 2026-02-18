@@ -1,12 +1,6 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
-  provider = "prisma-client"
-  output   = "../generated/prisma"
+  provider     = "prisma-client"
+  output       = "../generated/prisma"
   moduleFormat = "cjs"
 }
 
@@ -14,19 +8,330 @@ datasource db {
   provider = "mysql"
 }
 
-
-model User {
-  id    Int     @id @default(autoincrement())
-  email String  @unique
-  name  String?
-  posts Post[]
+enum ShopStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  SUSPENDED
 }
 
-model Post {
+enum ApplicationStatus {
+  PENDING
+  REVIEW
+  APPROVED
+  REJECTED
+}
+
+enum OrderStatus {
+  PENDING
+  PAID
+  PROCESSING
+  SHIPPED
+  COMPLETED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCESS
+  FAILED
+  EXPIRED
+}
+
+enum RefundStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  COMPLETED
+}
+
+enum PromotionType {
+  PERCENTAGE
+  FIXED
+}
+
+enum LedgerType {
+  CREDIT
+  DEBIT
+}
+
+model User {
+  id             Int       @id @default(autoincrement())
+  email          String    @unique
+  passwordHash   String
+  isActive       Boolean   @default(true)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  profile        UserProfile?
+  shopMember     ShopMember[]
+  roles          UserRole[]
+  cart           Cart?
+  orders         Order[]
+  notifications  Notification[]
+  ownedShop      Shop?     @relation("ShopOwner")
+  followingShops ShopFollower[]
+  events         UserEvent[]
+
+  @@map("users")
+}
+
+model UserProfile {
   id        Int     @id @default(autoincrement())
+  userId    Int     @unique
+  fullName  String
+  phone     String?
+  avatarUrl String?
+  address   String?
+
+  user      User    @relation(fields: [userId], references: [id])
+
+  @@map("user_profiles")
+}
+
+model Role {
+  id          Int          @id @default(autoincrement())
+  name        String       @unique
+  permissions Permission[]
+  users       UserRole[]
+
+  @@map("roles")
+}
+
+model Permission {
+  id    Int    @id @default(autoincrement())
+  name  String @unique
+  roles Role[]
+
+  @@map("permissions")
+}
+
+model UserRole {
+  userId Int
+  roleId Int
+
+  user   User @relation(fields: [userId], references: [id])
+  role   Role @relation(fields: [roleId], references: [id])
+
+  @@id([userId, roleId])
+  @@map("user_roles")
+}
+
+model Shop {
+  id          Int        @id @default(autoincrement())
+  ownerId     Int        @unique
+  name        String
+  description String?
+  status      ShopStatus @default(PENDING)
+  balance     Decimal    @default(0) @db.Decimal(15,2)
+  createdAt   DateTime   @default(now())
+
+  owner       User            @relation("ShopOwner", fields: [ownerId], references: [id])
+  members     ShopMember[]
+  followers   ShopFollower[]
+  application ShopApplication?
+  orders      Order[]
+  payouts     Payout[]
+  ledger      ShopLedger[]
+
+  @@map("shops")
+}
+
+model ShopFollower {
+  userId    Int
+  shopId    Int
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  shop Shop @relation(fields: [shopId], references: [id], onDelete: Cascade)
+
+  @@id([userId, shopId])
+  @@index([shopId])
+  @@map("shop_followers")
+}
+
+model ShopApplication {
+  id          Int              @id @default(autoincrement())
+  shopId      Int              @unique
+  idCardUrl   String
+  selfieUrl   String?
+  nib         String?
+  npwp        String?
+  siupUrl     String?
+  bankName    String
+  bankAccount String
+  accountName String
+  status      ApplicationStatus @default(PENDING)
+  notes       String?
+  createdAt   DateTime         @default(now())
+  reviewedAt  DateTime?
+
+  shop        Shop @relation(fields: [shopId], references: [id])
+
+  @@map("shop_applications")
+}
+
+model ShopMember {
+  id     Int @id @default(autoincrement())
+  shopId Int
+  userId Int
+  role   String
+
+  shop   Shop @relation(fields: [shopId], references: [id])
+  user   User @relation(fields: [userId], references: [id])
+
+  @@unique([shopId, userId])
+  @@map("shop_members")
+}
+
+model Cart {
+  id        Int      @id @default(autoincrement())
+  userId    Int      @unique
+  updatedAt DateTime @updatedAt
+
+  user  User       @relation(fields: [userId], references: [id])
+  items CartItem[]
+
+  @@map("carts")
+}
+
+model CartItem {
+  id        Int @id @default(autoincrement())
+  cartId    Int
+  productId Int
+  quantity  Int
+
+  cart Cart @relation(fields: [cartId], references: [id])
+
+  @@unique([cartId, productId])
+  @@map("cart_items")
+}
+
+model Order {
+  id          Int         @id @default(autoincrement())
+  userId      Int
+  shopId      Int
+  shopName    String
+  totalAmount Decimal     @db.Decimal(15,2)
+  status      OrderStatus @default(PENDING)
+  createdAt   DateTime    @default(now())
+
+  user    User    @relation(fields: [userId], references: [id])
+  shop    Shop    @relation(fields: [shopId], references: [id])
+  items   OrderItem[]
+  payment Payment?
+
+  @@index([userId])
+  @@index([shopId])
+  @@map("orders")
+}
+
+model OrderItem {
+  id          Int     @id @default(autoincrement())
+  orderId     Int
+  productId   Int
+  productName String
+  price       Decimal @db.Decimal(15,2)
+  quantity    Int
+
+  order Order @relation(fields: [orderId], references: [id])
+
+  @@map("order_items")
+}
+
+model Payment {
+  id              Int           @id @default(autoincrement())
+  orderId         Int           @unique
+  grossAmount     Decimal       @db.Decimal(15,2)
+  gatewayFee      Decimal       @db.Decimal(15,2)
+  marketplaceFee  Decimal       @db.Decimal(15,2)
+  netAmount       Decimal       @db.Decimal(15,2)
+  method          String
+  status          PaymentStatus @default(PENDING)
+  transactionId   String?
+  createdAt       DateTime      @default(now())
+  paidAt          DateTime?
+
+  order   Order   @relation(fields: [orderId], references: [id])
+  refunds Refund[]
+
+  @@map("payments")
+}
+
+model Refund {
+  id        Int          @id @default(autoincrement())
+  paymentId Int
+  amount    Decimal      @db.Decimal(15,2)
+  reason    String
+  status    RefundStatus @default(PENDING)
+  createdAt DateTime     @default(now())
+
+  payment Payment @relation(fields: [paymentId], references: [id])
+
+  @@map("refunds")
+}
+
+model ShopLedger {
+  id        Int        @id @default(autoincrement())
+  shopId    Int
+  type      LedgerType
+  amount    Decimal    @db.Decimal(15,2)
+  reference String
+  createdAt DateTime   @default(now())
+
+  shop Shop @relation(fields: [shopId], references: [id])
+
+  @@index([shopId])
+  @@map("shop_ledgers")
+}
+
+model Payout {
+  id        Int      @id @default(autoincrement())
+  shopId    Int
+  amount    Decimal  @db.Decimal(15,2)
+  status    String
+  createdAt DateTime @default(now())
+  paidAt    DateTime?
+
+  shop Shop @relation(fields: [shopId], references: [id])
+
+  @@index([shopId])
+  @@map("payouts")
+}
+
+model Promotion {
+  id          Int           @id @default(autoincrement())
+  code        String        @unique
+  discountVal Decimal       @db.Decimal(15,2)
+  type        PromotionType
+  startDate   DateTime
+  endDate     DateTime
+  isActive    Boolean       @default(true)
+
+  @@map("promotions")
+}
+
+model Notification {
+  id        Int      @id @default(autoincrement())
+  userId    Int
   title     String
-  content   String? @db.Text
-  published Boolean @default(false)
-  author    User    @relation(fields: [authorId], references: [id])
-  authorId  Int
+  message   String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("notifications")
+}
+
+model UserEvent {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  eventType String
+  metadata  Json?
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("user_events")
 }
