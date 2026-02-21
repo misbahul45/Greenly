@@ -78,3 +78,12 @@ export const ChangePasswordSchema = z.object({
 });
 
 export type ChangePasswordDTO = z.infer<typeof ChangePasswordSchema>;
+
+
+export const GenerateTokensSchema = z.object({
+  sub: z.number(),
+  email: z.string().email(),
+  roles: z.array(z.string()),
+});
+
+export type GenerateTokensDTO =  z.infer<typeof GenerateTokensSchema>;

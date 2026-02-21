@@ -1,16 +1,20 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
-import { type LoginDTO, type RegisterDTO } from './auth.dto';
+import { GenerateTokensDTO, GenerateTokensSchema, VerifyEmailDTO, type LoginDTO, type RegisterDTO } from './auth.dto';
 import { AuthRepository } from './auth.repository';
 import { AppError } from '../../libs/errors/app.error';
 import * as bcrypt from 'bcrypt'
 import { ConfigService } from '@nestjs/config';
 import { sendEmail } from '../../common/utils/email';
+import { hashValue } from '../../common/utils/crypto';
+import { JwtService } from '@nestjs/jwt';
+import { StringValue } from 'ms';
 
 @Injectable()
 export class AuthService {
   constructor(
     private readonly repo:AuthRepository,
-    private readonly config:ConfigService
+    private readonly config:ConfigService,
+    private readonly jwt:JwtService
   ){}
 
   async register(dto: RegisterDTO) {
@@ -38,13 +42,14 @@ export class AuthService {
     await sendEmail({
       serviceId: emailConfig.serviceId,
       templateId: emailConfig.templates.verifyEmail,
-      publicKey: emailConfig.publicKey,
+      userId: emailConfig.userId,     
+      accessToken: emailConfig.accessToken,
+      recaptcha: '',
       email: dto.email,
       name: dto.name,
       token: data.payload.otp,
-      link: `${apiUrl}/auth/verify`,
+      link: `${apiUrl}/auth/verify-email?token=${data.payload.otp}`,
     });
-
     return {
       message: 'User registered',
       data: {
@@ -52,6 +57,116 @@ export class AuthService {
         email: data.user.email,
         name: dto.name,
       },
+    };
+  }
+
+  async verifyEmail(dto:VerifyEmailDTO){
+    const hashedOtp = hashValue(dto.token);
+    const findToken=await this.repo.findAuthToken(hashedOtp)
+
+    if (!findToken) {
+      throw new AppError(
+        "Token verification not found",
+        404
+      );
+    }
+
+    if (findToken.expiresAt < new Date()) {
+      throw new AppError(
+        "Token has expired",
+        400
+      );
+    }
+
+    if (findToken.usedAt) {
+      throw new AppError(
+        "Token already used",
+        400
+      );
+    }
+
+    if (findToken.type !== "VERIFY_EMAIL") {
+      throw new AppError(
+        "Invalid token type",
+        400
+      );
+    }
+
+    const user=await this.repo.verifyEmail(findToken.userId)
+
+    await this.repo.markTokenUsed(findToken.id)
+
+    const payloadJWT={
+      sub:user.id,
+      email:user.email,
+      roles:user.roles.map((role)=>role.role.name)
+    }
+
+    const {accessToken, refreshToken}=await this.generateTokens(payloadJWT)
+    
+    const decoded = this.jwt.decode(refreshToken) as any;
+
+    const expiresAt = new Date(decoded.exp * 1000);
+
+    await this.repo.saveRefreshToken({
+      userId:user.id,
+      token:refreshToken,
+      expiresAt
+    })
+
+    return {
+        message: "Email verified successfully",
+        data:{
+          user:{
+            id: user.id,
+            email:user.email,
+            name: user.profile?.fullName,
+          },
+          tokens:{
+            accessToken,
+            refreshToken
+          }
+        }
+    }
+  }
+
+  async generateTokens(payload: GenerateTokensDTO) {
+
+    const data = GenerateTokensSchema.parse(payload);
+
+    const accessSecret = this.config.get<string>('jwt.access.key')!;
+    const refreshSecret = this.config.get<string>('jwt.refresh.key')!;
+
+    const accessExpires = this.config.get<string>('jwt.access.duration')!;
+    const refreshExpires = this.config.get<string>('jwt.refresh.duration')!;
+
+    const accessToken = await this.jwt.signAsync(
+      {
+        sub: data.sub,
+        email: data.email,
+        roles: data.roles,
+      },
+      {
+        secret: accessSecret,
+        expiresIn: (accessExpires as StringValue),
+      },
+    );
+
+    const refreshToken = await this.jwt.signAsync(
+      {
+        sub: data.sub,
+        email: data.email,
+        roles: data.roles,
+      },
+      {
+        secret: refreshSecret,
+        expiresIn: (refreshExpires as StringValue),
+      },
+    );
+
+    return {
+      accessToken,
+      refreshToken,
     };
   }
 
@@ -88,11 +203,38 @@ export class AuthService {
     };
   }
 
-  async me() {
+  async me(dto:UserLogin) {
+    const user=await this.repo.getUserById(dto.sub)
+
+    if(!user){
+      throw new AppError('Unauthorized user', 404)
+    }
+
     return {
-      id: 1,
-      email: 'user@example.com',
-    };
+      id: user.id,
+      email: user.email,
+      status: user.status,
+      emailVerified: !!user.emailVerified,
+
+      profile: {
+        fullName: user.profile?.fullName ?? null,
+        phone: user.profile?.phone ?? null,
+        avatarUrl: user.profile?.avatarUrl ?? null,
+        address: user.profile?.address ?? null,
+      },
+
+      roles: user.roles.map(r => r.role.name),
+
+      shop: user.ownedShop
+        ? {
+            id: user.ownedShop.id,
+            name: user.ownedShop.name,
+            status: user.ownedShop.status,
+          }
+        : null,
+
+      createdAt: user.createdAt,
+    }
   }
 
   async changePassword(dto: any) {

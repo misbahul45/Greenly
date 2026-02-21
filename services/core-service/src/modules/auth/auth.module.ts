@@ -1,15 +1,35 @@
 import { Module } from '@nestjs/common';
+import { JwtModule } from '@nestjs/jwt';
+import { ConfigService, ConfigModule } from '@nestjs/config';
+import { StringValue } from 'ms';
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { AuthRepository } from './auth.repository';
 import { UserRegisteredEvent } from './events/user.registered.event';
 
 @Module({
-  controllers: [AuthController],
-  providers: [
-    AuthRepository, 
-    AuthService, 
-    UserRegisteredEvent
+  imports: [
+    ConfigModule, 
+    JwtModule.registerAsync({
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => ({
+        secret:
+          config.get<string>('jwt.access.key') ?? 'default-secret',
+        signOptions: {
+          expiresIn: config.get<string>('jwt.access.duration') as unknown as StringValue
+        },
+      }),
+    })
   ],
+
+  controllers: [AuthController],
+
+  providers: [
+    AuthRepository,
+    AuthService,
+    UserRegisteredEvent,
+  ],
+
+  exports: [AuthService],
 })
 export class AuthModule {}

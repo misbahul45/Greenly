@@ -3,18 +3,20 @@ import { AppError } from "../../libs/errors/app.error"
 type SendEmailParams = {
   serviceId: string
   templateId: string
-  publicKey: string
+  userId: string
+  accessToken: string
   email: string
   name: string
   token: string
-  link:string
+  link: string
   recaptcha?: string
 }
 
 export const sendEmail = async ({
   serviceId,
   templateId,
-  publicKey,
+  userId,
+  accessToken,
   email,
   name,
   token,
@@ -25,16 +27,18 @@ export const sendEmail = async ({
   const payload = {
     service_id: serviceId,
     template_id: templateId,
-    user_id: publicKey,
+    user_id: userId,
+    accessToken: accessToken,
     template_params: {
       to_email: email,
       username: name,
       token: token,
-      link:link,
-      "g-recaptcha-response": recaptcha
+      link: link,
+      "g-recaptcha-response": recaptcha || ""
     }
   }
 
+  console.log(payload)
   try {
     const res = await fetch(
       "https://api.emailjs.com/api/v1.0/email/send",
@@ -48,6 +52,8 @@ export const sendEmail = async ({
     )
 
     if (!res.ok) {
+      const text = await res.text()
+      console.log("EmailJS error:", text)
       throw new Error("Failed to send email")
     }
 

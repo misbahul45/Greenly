@@ -5,9 +5,9 @@ import {
   Get,
   Patch,
   UseGuards,
+  Query,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { JwtAuthGuard } from './guards/jwt-auth.guard';
 
 import {
   type LoginDTO,
@@ -22,15 +22,19 @@ import {
   type ResetPasswordDTO,
   ChangePasswordSchema,
   type ChangePasswordDTO,
+  VerifyEmailSchema,
 } from './auth.dto';
 
 import ErrorHandler from 'src/libs/errors/handler.error';
 import { ZodValidationPipe } from 'src/libs/pipes/zod-validation.pipe';
+import { Public } from './decorators/public.decorator';
+import { CurrentUser } from './decorators/current-user.decorator';
 
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
-
+  
+  @Public()
   @Post('register')
   register(
     @Body(new ZodValidationPipe(RegisterSchema)) dto: RegisterDTO
@@ -38,6 +42,7 @@ export class AuthController {
     return ErrorHandler(async() => this.authService.register(dto));
   }
 
+  @Public()
   @Post('login')
   login(
     @Body(new ZodValidationPipe(LoginSchema)) dto: LoginDTO
@@ -45,6 +50,7 @@ export class AuthController {
     return ErrorHandler(() => this.authService.login(dto));
   }
 
+  @Public()
   @Post('refresh')
   refresh(
     @Body(new ZodValidationPipe(RefreshTokenSchema))
@@ -55,15 +61,23 @@ export class AuthController {
     );
   }
 
-  @Post('verify')
-  Verify(
-    dto: any
+  @Public()
+  @Post('verify-email')
+  @Get('verify-email')
+  verify(
+    @Body() body: any,
+    @Query('token') queryToken?: string
   ) {
+    const token = body?.token ?? queryToken
+
+    const dto = VerifyEmailSchema.parse({ token })
+
     return ErrorHandler(() =>
-      this.authService.refresh(dto.refreshToken)
-    );
+      this.authService.verifyEmail(dto)
+    )
   }
 
+  @Public()
   @Post('forgot-password')
   forgotPassword(
     @Body(new ZodValidationPipe(ForgotPasswordSchema))
@@ -74,6 +88,7 @@ export class AuthController {
     );
   }
 
+  @Public()
   @Post('reset-password')
   resetPassword(
     @Body(new ZodValidationPipe(ResetPasswordSchema))
@@ -84,13 +99,13 @@ export class AuthController {
     );
   }
 
-  @UseGuards(JwtAuthGuard)
   @Get('me')
-  me() {
-    return ErrorHandler(() => this.authService.me());
+  me(
+    @CurrentUser() user:UserLogin
+  ) {
+    return ErrorHandler(() => this.authService.me(user));
   }
 
-  @UseGuards(JwtAuthGuard)
   @Patch('change-password')
   changePassword(
     @Body(new ZodValidationPipe(ChangePasswordSchema))
@@ -101,7 +116,6 @@ export class AuthController {
     );
   }
 
-  @UseGuards(JwtAuthGuard)
   @Post('logout')
   logout() {
     return ErrorHandler(() => this.authService.logout());

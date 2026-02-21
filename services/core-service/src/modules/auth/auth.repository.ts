@@ -3,7 +3,8 @@ import { DatabaseService } from '../../libs/database/database.service';
 import { RegisterDTO } from "./auth.dto";
 import { randomAvatarUrl } from "../../common/utils/random-avatar";
 import { generateOtp, hashValue } from "../../common/utils/crypto";
-import { AuthTokenType } from "../../../generated/prisma/enums";
+import { AuthTokenType, UserStatus } from "../../../generated/prisma/enums";
+import * as bcrypt from 'bcrypt'
 @Injectable()
 export class AuthRepository{
     constructor(
@@ -67,4 +68,122 @@ export class AuthRepository{
         })    
     }
 
+    async getUserById(id: number) {
+        return this.db.user.findUnique({
+            where: { id },
+                include: {
+                    profile: true,
+
+                    roles: {
+                        include: {
+                            role: {
+                                select: { name: true },
+                            },
+                        },
+                    },
+
+                    ownedShop: {
+                        select: {
+                            id: true,
+                            name: true,
+                            status: true,
+                        },
+                    },
+                },
+        })
+    }
+
+    async findAuthToken(tokenHash:string){
+        return await this.db.authToken.findUnique({
+            where:{
+                tokenHash,
+                type:AuthTokenType.VERIFY_EMAIL
+            }
+        })
+    }
+
+    async verifyEmail(userId:number){
+        return await this.db.user.update({
+            where:{
+                id:userId
+            },
+            data:{
+                emailVerified:new Date(),
+                status:UserStatus.ACTIVE
+            },
+            include:{
+                profile:{
+                    select:{
+                        fullName:true
+                    }
+                },
+                roles:{
+                    include:{
+                        role:{
+                            select:{
+                                name:true
+                            }
+                        }
+                    }
+                }
+            }
+        })
+    }
+
+    async markTokenUsed(tokenId:number){
+        return await this.db.authToken.update({
+            where:{
+                id:tokenId
+            },
+            data:{
+                usedAt:new Date()
+            }
+        })
+    }
+
+    async saveRefreshToken(payload: {
+        userId: number;
+        token: string;
+        expiresAt: Date;
+    }) {
+
+        const hashedToken = await bcrypt.hash(payload.token, 10);
+
+        return this.db.authToken.create({
+            data: {
+                userId: payload.userId,
+                tokenHash: hashedToken,
+                type: AuthTokenType.REFRESH_TOKEN,
+                expiresAt: payload.expiresAt,
+            },
+        });
+    }
+    async getUserPermissions(userId: number): Promise<string[]> {
+        const user = await this.db.user.findUnique({
+            where: { id: userId },
+            include: {
+            roles: {
+                include: {
+                role: {
+                    include: {
+                    permissions: true,
+                    },
+                },
+                },
+            },
+            },
+        })
+
+        if (!user) return []
+
+        const permissions = new Set<string>()
+
+        user.roles.forEach((ur) => {
+            ur.role.permissions.forEach((p) =>
+            permissions.add(p.name),
+            )
+        })
+
+        return [...permissions]
+    }
 }

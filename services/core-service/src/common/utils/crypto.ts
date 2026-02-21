@@ -14,6 +14,7 @@ export function hashValue(value: string): string {
 }
 
 
+
 export function verifyHash(rawValue: string, hashedValue: string): boolean {
   const hashedIncoming = hashValue(rawValue);
 

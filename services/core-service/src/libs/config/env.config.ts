@@ -20,14 +20,14 @@ export default () => ({
     },
     refresh: {
       key: process.env.JWT_REFRESH_SECRET_KEY,
-      duration: process.env.JWT_REFRESH_EXPIRES || '7d',
+      duration: process.env.JWT_REFRESH_EXPIRES || '30d',
     },
   },
 
   emailJs: {
     serviceId: process.env.EMAIL_JS_SERVICE_ID,
-    publicKey: process.env.EMAIL_JS_PUBLIC_ID,
-
+    userId: process.env.EMAIL_JS_PUBLIC_ID,
+    accessToken:process.env.EMAIL_JS_PRIVATE_KEY,
     templates: {
       verifyEmail: process.env.EMAIL_JS_VERIFY_EMAIL_TEMPLATE_ID,
       resetPassword: process.env.EMAIL_JS_RESET_PW_TEMPLATE_ID,
