@@ -33,4 +33,6 @@ export default () => ({
       resetPassword: process.env.EMAIL_JS_RESET_PW_TEMPLATE_ID,
     },
   },
+
+  API_URL:process.env.API_URL
 });

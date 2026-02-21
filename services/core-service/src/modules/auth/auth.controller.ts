@@ -55,6 +55,15 @@ export class AuthController {
     );
   }
 
+  @Post('verify')
+  Verify(
+    dto: any
+  ) {
+    return ErrorHandler(() =>
+      this.authService.refresh(dto.refreshToken)
+    );
+  }
+
   @Post('forgot-password')
   forgotPassword(
     @Body(new ZodValidationPipe(ForgotPasswordSchema))

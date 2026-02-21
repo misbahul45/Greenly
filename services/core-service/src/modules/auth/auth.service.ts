@@ -3,11 +3,14 @@ import { type LoginDTO, type RegisterDTO } from './auth.dto';
 import { AuthRepository } from './auth.repository';
 import { AppError } from '../../libs/errors/app.error';
 import * as bcrypt from 'bcrypt'
+import { ConfigService } from '@nestjs/config';
+import { sendEmail } from '../../common/utils/email';
 
 @Injectable()
 export class AuthService {
   constructor(
-    private readonly repo:AuthRepository
+    private readonly repo:AuthRepository,
+    private readonly config:ConfigService
   ){}
 
   async register(dto: RegisterDTO) {
@@ -19,17 +22,34 @@ export class AuthService {
 
     const hashedPassword = await bcrypt.hash(dto.password, 10);
 
-    const user = await this.repo.registerUser({
+    const data = await this.repo.registerUser({
       ...dto,
       password: hashedPassword,
     });
 
+    const emailConfig = this.config.get('emailJs', { infer: true });
+
+    if (!emailConfig) {
+      throw new Error('Email config not found');
+    }
+
+    const apiUrl = this.config.get<string>('API_URL');
+
+    await sendEmail({
+      serviceId: emailConfig.serviceId,
+      templateId: emailConfig.templates.verifyEmail,
+      publicKey: emailConfig.publicKey,
+      email: dto.email,
+      name: dto.name,
+      token: data.payload.otp,
+      link: `${apiUrl}/auth/verify`,
+    });
 
     return {
       message: 'User registered',
       data: {
-        id: user.id,
-        email: user.email,
+        id: data.user.id,
+        email: data.user.email,
         name: dto.name,
       },
     };

@@ -1,3 +1,5 @@
+import { AppError } from "../../libs/errors/app.error"
+
 type SendEmailParams = {
   serviceId: string
   templateId: string
@@ -50,9 +52,8 @@ export const sendEmail = async ({
     }
 
     return { success: true }
-
   } catch (error) {
-    console.error("EmailJS Error:", error)
-    return { success: false, error }
+    console.log(error)
+    throw new AppError('Invalid sending verify email', 404)
   }
 }
