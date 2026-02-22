@@ -76,6 +76,7 @@ model User {
   emailVerified   DateTime?   
   status UserStatus @default(PENDING_VERIFICATION)
   deletedAt DateTime?
+  isActive Boolean @default(true)
 
   profile        UserProfile?
   shopMember     ShopMember[]

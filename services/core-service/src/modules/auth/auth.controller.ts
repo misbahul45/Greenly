@@ -23,6 +23,7 @@ import {
   ChangePasswordSchema,
   type ChangePasswordDTO,
   VerifyEmailSchema,
+  type VerifyEmailDTO,
 } from './auth.dto';
 
 import ErrorHandler from 'src/libs/errors/handler.error';
@@ -63,17 +64,17 @@ export class AuthController {
 
   @Public()
   @Post('verify-email')
-  @Get('verify-email')
   verify(
-    @Body() body: any,
-    @Query('token') queryToken?: string
+    @Body(
+      new ZodValidationPipe(VerifyEmailSchema)
+    ) body: VerifyEmailDTO,
   ) {
-    const token = body?.token ?? queryToken
 
-    const dto = VerifyEmailSchema.parse({ token })
-
-    return ErrorHandler(() =>
-      this.authService.verifyEmail(dto)
+    return ErrorHandler(() =>{
+      const token = body.token
+       const dto = VerifyEmailSchema.parse({ token })
+        return this.authService.verifyEmail(dto)
+      }
     )
   }
 

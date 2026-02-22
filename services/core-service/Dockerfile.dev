@@ -2,14 +2,13 @@ FROM node:20-alpine
 
 WORKDIR /app
 
-RUN corepack enable
+# install pnpm manually (lebih stabil)
+RUN npm install -g pnpm
 
-# copy dependency files dulu (cache layer)
 COPY package.json pnpm-lock.yaml ./
 
 RUN pnpm install
 
-# ⭐ COPY SOURCE supaya container punya project valid
 COPY . .
 
 CMD ["pnpm", "run", "start:dev"]

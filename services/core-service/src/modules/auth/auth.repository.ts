@@ -57,6 +57,13 @@ export class AuthRepository{
         return await this.db.user.findUnique({
             where:{
                 email:email
+            },
+            include:{
+                roles:{
+                    select:{
+                        role:true
+                    }
+                }
             }
         })
     }

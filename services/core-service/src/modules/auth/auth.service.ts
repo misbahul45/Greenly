@@ -44,11 +44,9 @@ export class AuthService {
       templateId: emailConfig.templates.verifyEmail,
       userId: emailConfig.userId,     
       accessToken: emailConfig.accessToken,
-      recaptcha: '',
       email: dto.email,
       name: dto.name,
       token: data.payload.otp,
-      link: `${apiUrl}/auth/verify-email?token=${data.payload.otp}`,
     });
     return {
       message: 'User registered',
@@ -126,7 +124,7 @@ export class AuthService {
             accessToken,
             refreshToken
           }
-        }
+        },
     }
   }
 
@@ -171,19 +169,48 @@ export class AuthService {
   }
 
   async login(dto: LoginDTO) {
-    if (!dto?.email || !dto?.password) {
-      throw new UnauthorizedException('Invalid credentials');
+    const existedUser = await this.repo.checkUserByEmail(dto.email);
+
+    if (!existedUser) {
+      throw new AppError('Invalid email or password', 401);
     }
 
+    if (!existedUser.emailVerified) {
+      throw new AppError('Your email is not verified. Please verify to continue.', 403);
+    }
+
+    const isPasswordValid = await bcrypt.compare(dto.password, existedUser.passwordHash);
+
+    if (!isPasswordValid) {
+      throw new AppError('Invalid email or password', 401);
+    }
+    const payloadJWT={
+      sub:existedUser.id,
+      email:existedUser.email,
+      roles:existedUser.roles.map((role)=>role.role.name)
+    }
+
+    const {accessToken, refreshToken}=await this.generateTokens(payloadJWT)
+    
+    const decoded = this.jwt.decode(refreshToken) as any;
+
+    const expiresAt = new Date(decoded.exp * 1000);
+
+    await this.repo.saveRefreshToken({
+      userId:existedUser.id,
+      token:refreshToken,
+      expiresAt
+    })
+
     return {
-      accessToken: 'access-token',
-      refreshToken: 'refresh-token',
+      accessToken,
+      refreshToken,
     };
   }
 
   async refresh(token: string) {
     if (!token) {
-      throw new UnauthorizedException('Invalid refresh token');
+      throw new AppError('Invalid refresh token', 400);
     }
 
     return {

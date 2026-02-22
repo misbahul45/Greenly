@@ -8,8 +8,6 @@ type SendEmailParams = {
   email: string
   name: string
   token: string
-  link: string
-  recaptcha?: string
 }
 
 export const sendEmail = async ({
@@ -20,8 +18,6 @@ export const sendEmail = async ({
   email,
   name,
   token,
-  recaptcha,
-  link
 }: SendEmailParams) => {
 
   const payload = {
@@ -33,12 +29,8 @@ export const sendEmail = async ({
       to_email: email,
       username: name,
       token: token,
-      link: link,
-      "g-recaptcha-response": recaptcha || ""
     }
   }
-
-  console.log(payload)
   try {
     const res = await fetch(
       "https://api.emailjs.com/api/v1.0/email/send",

@@ -42,7 +42,7 @@ export type RefreshTokenDTO = z.infer<typeof RefreshTokenSchema>;
 
 
 export const VerifyEmailSchema = z.object({
-  token: z.string().min(10),
+  token: z.string().min(6),
 });
 
 export type VerifyEmailDTO = z.infer<typeof VerifyEmailSchema>;
