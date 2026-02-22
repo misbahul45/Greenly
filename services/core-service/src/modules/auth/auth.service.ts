@@ -1,5 +1,5 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
-import { GenerateTokensDTO, GenerateTokensSchema, VerifyEmailDTO, type LoginDTO, type RegisterDTO } from './auth.dto';
+import { ChangePasswordDTO, GenerateTokensDTO, GenerateTokensSchema, VerifyEmailDTO, type LoginDTO, type RegisterDTO } from './auth.dto';
 import { AuthRepository } from './auth.repository';
 import { AppError } from '../../libs/errors/app.error';
 import * as bcrypt from 'bcrypt'
@@ -57,7 +57,7 @@ export class AuthService {
     };
   }
 
-  async verifyEmail(dto:VerifyEmailDTO){
+  async verify(dto:VerifyEmailDTO, type:AuthTokenType){
     const hashedOtp = hashValue(dto.token);
     const findToken=await this.repo.findAuthToken(hashedOtp, AuthTokenType.VERIFY_EMAIL)
 
@@ -82,7 +82,7 @@ export class AuthService {
       );
     }
 
-    if (findToken.type !== "VERIFY_EMAIL") {
+    if (findToken.type !== type) {
       throw new AppError(
         "Invalid token type",
         400
@@ -108,7 +108,8 @@ export class AuthService {
     await this.repo.saveToken({
       userId:user.id,
       token:refreshToken,
-      expiresAt
+      expiresAt,
+      tokenType:AuthTokenType.REFRESH_TOKEN
     })
 
     return {
@@ -198,7 +199,8 @@ export class AuthService {
     await this.repo.saveToken({
       userId:existedUser.id,
       token:refreshToken,
-      expiresAt
+      expiresAt,
+      tokenType:AuthTokenType.REFRESH_TOKEN
     })
 
     return {
@@ -239,7 +241,8 @@ export class AuthService {
     await this.repo.saveToken({
       userId:user.id,
       token:refreshToken,
-      expiresAt
+      expiresAt,
+      tokenType:AuthTokenType.REFRESH_TOKEN
     })
 
     await this.repo.markTokenUsed(findAuthToken.id)
@@ -283,18 +286,13 @@ export class AuthService {
     await this.repo.saveToken({
       userId:existedUser.id,
       token:hashedOtp,
-      expiresAt
+      expiresAt,
+      tokenType:AuthTokenType.RESET_PASSWORD
     })
 
 
     return {
       message: `Password reset sent to ${email}`,
-    };
-  }
-
-  async resetPassword(dto: any) {
-    return {
-      message: 'Password has been reset',
     };
   }
 
@@ -332,9 +330,26 @@ export class AuthService {
     }
   }
 
-  async changePassword(dto: any) {
+  async changePassword(dto: ChangePasswordDTO) {
+    const findToken=await this.repo.findOTPToken(dto.tokenId, AuthTokenType.RESET_PASSWORD)
+
+    if(!findToken){
+      throw new AppError('Token not found', 404)
+    }
+
+    if(!findToken.usedAt){
+      throw new AppError('Token did not verified', 400)
+    }
+
+    const passwordHash=await bcrypt.hash(dto.newPassword, 10)
+
+    const user=await this.repo.changePassword(findToken.userId, passwordHash)
     return {
       message: 'Password changed successfully',
+      data:{
+        id: user.id,
+        email:user.email,
+      },
     };
   }
 

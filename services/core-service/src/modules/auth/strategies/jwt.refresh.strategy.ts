@@ -3,6 +3,7 @@ import { PassportStrategy } from '@nestjs/passport';
 import { Strategy, ExtractJwt } from 'passport-jwt';
 import { ConfigService } from '@nestjs/config';
 import { AuthRepository } from '../auth.repository';
+import { Request } from 'express';
 
 @Injectable()
 export class JwtRefreshStrategy extends PassportStrategy(
@@ -20,8 +21,9 @@ export class JwtRefreshStrategy extends PassportStrategy(
     });
   }
 
-  async validate(payload: any) {
+  async validate(req:Request, payload: any) {
     const user = await this.repo.checkUserById(payload.sub);
+    const refreshToken = req.get('Authorization')?.replace('Bearer', '').trim();
 
     if (!user) throw new UnauthorizedException();
 
@@ -29,6 +31,7 @@ export class JwtRefreshStrategy extends PassportStrategy(
       id: user.id,
       email: user.email,
       roles: payload.roles,
+      refreshToken
     };
   }
 }

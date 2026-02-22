@@ -48,6 +48,11 @@ export const VerifyEmailSchema = z.object({
 export type VerifyEmailDTO = z.infer<typeof VerifyEmailSchema>;
 
 
+export const VerifyPasswordSchema = z.object({
+  token: z.string().min(6),
+});
+
+export type VerifyPasswordDTO = z.infer<typeof VerifyPasswordSchema>;
 
 export const ForgotPasswordSchema = z.object({
   email: z.string().email().toLowerCase(),
@@ -56,21 +61,10 @@ export const ForgotPasswordSchema = z.object({
 export type ForgotPasswordDTO = z.infer<typeof ForgotPasswordSchema>;
 
 
-export const ResetPasswordSchema = z.object({
-  token: z.string().min(10),
-
-  newPassword: z
-    .string()
-    .min(8)
-    .max(100),
-});
-
-export type ResetPasswordDTO = z.infer<typeof ResetPasswordSchema>;
 
 
 export const ChangePasswordSchema = z.object({
-  oldPassword: z.string().min(1),
-
+  tokenId:z.number().min(1),
   newPassword: z
     .string()
     .min(8)

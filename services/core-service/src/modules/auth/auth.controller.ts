@@ -4,6 +4,7 @@ import {
   Body,
   Get,
   Patch,
+  UseGuards,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 
@@ -12,22 +13,23 @@ import {
   LoginSchema,
   type RegisterDTO,
   RegisterSchema,
-  RefreshTokenSchema,
-  type RefreshTokenDTO,
   ForgotPasswordSchema,
   type ForgotPasswordDTO,
-  ResetPasswordSchema,
-  type ResetPasswordDTO,
   ChangePasswordSchema,
   type ChangePasswordDTO,
   VerifyEmailSchema,
   type VerifyEmailDTO,
+  VerifyPasswordSchema,
+  type VerifyPasswordDTO,
 } from './auth.dto';
 
 import ErrorHandler from 'src/libs/errors/handler.error';
 import { ZodValidationPipe } from 'src/libs/pipes/zod-validation.pipe';
 import { Public } from './decorators/public.decorator';
 import { CurrentUser } from './decorators/current-user.decorator';
+import { AuthTokenType } from '../../../generated/prisma/enums';
+import { JwtRefreshGuard } from './guards/jwt.refresh.guard';
+import { AppError } from '../../libs/errors/app.error';
 
 @Controller('auth')
 export class AuthController {
@@ -50,19 +52,25 @@ export class AuthController {
   }
 
   @Public()
+  @UseGuards(JwtRefreshGuard)
   @Post('refresh')
   refresh(
-    @Body(new ZodValidationPipe(RefreshTokenSchema))
-    dto: RefreshTokenDTO
+    @CurrentUser() payload:UserLogin
   ) {
-    return ErrorHandler(() =>
-      this.authService.refresh(dto.refreshToken)
+    return ErrorHandler(() =>{
+
+      if(!payload.refreshToken){
+        throw new AppError('Invalid refresh token', 403)
+      }
+
+        return this.authService.refresh(payload.refreshToken)
+      }
     );
   }
 
   @Public()
   @Post('verify-email')
-  verify(
+  verifyEmail(
     @Body(
       new ZodValidationPipe(VerifyEmailSchema)
     ) body: VerifyEmailDTO,
@@ -71,7 +79,23 @@ export class AuthController {
     return ErrorHandler(() =>{
       const token = body.token
        const dto = VerifyEmailSchema.parse({ token })
-        return this.authService.verifyEmail(dto)
+        return this.authService.verify(dto, AuthTokenType.VERIFY_EMAIL)
+      }
+    )
+  }
+
+  @Public()
+  @Post('verify-password')
+  verifyPassword(
+    @Body(
+      new ZodValidationPipe(VerifyPasswordSchema)
+    ) body: VerifyPasswordDTO,
+  ) {
+
+    return ErrorHandler(() =>{
+      const token = body.token
+       const dto = VerifyEmailSchema.parse({ token })
+        return this.authService.verify(dto, AuthTokenType.RESET_PASSWORD)
       }
     )
   }

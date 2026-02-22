@@ -5,6 +5,7 @@ import { ConfigService } from '@nestjs/config';
 import { AuthRepository } from '../auth.repository';
 import { UserStatus } from '../../../../generated/prisma/enums';
 import { AppError } from '../../../libs/errors/app.error';
+import { Request } from 'express';
 
 @Injectable()
 export class JwtAccessStrategy extends PassportStrategy(Strategy, 'jwt-access') {
@@ -19,7 +20,9 @@ export class JwtAccessStrategy extends PassportStrategy(Strategy, 'jwt-access') 
     });
   }
 
-  async validate(payload: any) {
+  async validate(req: Request,payload: any) {
+    const accessToken = req.get('Authorization')?.replace('Bearer', '').trim();
+
     const user = await this.repo.checkUserById(payload.sub);
 
     if (!user) throw new AppError('User not found', 400);
@@ -36,6 +39,7 @@ export class JwtAccessStrategy extends PassportStrategy(Strategy, 'jwt-access') 
       id: user.id,
       email: user.email,
       roles: payload.roles,
+      accessToken
     };
   }
 }

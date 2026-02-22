@@ -121,6 +121,15 @@ export class AuthRepository{
         })
     }
 
+    async findOTPToken(id:number, tokenType:AuthTokenType){
+        return await this.db.authToken.findUnique({
+            where:{
+                id:id,
+                type:tokenType
+            },
+        })
+    }
+
     async verifyEmail(userId:number){
         return await this.db.user.update({
             where:{
@@ -164,6 +173,7 @@ export class AuthRepository{
         userId: number;
         token: string;
         expiresAt: Date;
+        tokenType:AuthTokenType;
     }) {
 
         const hashedToken = await bcrypt.hash(payload.token, 10);
@@ -172,7 +182,7 @@ export class AuthRepository{
             data: {
                 userId: payload.userId,
                 tokenHash: hashedToken,
-                type: AuthTokenType.REFRESH_TOKEN,
+                type:payload.tokenType,
                 expiresAt: payload.expiresAt,
             },
         });
@@ -204,5 +214,16 @@ export class AuthRepository{
         })
 
         return [...permissions]
+    }
+
+    async changePassword(userId:number, passwordHash:string){
+        return await this.db.user.update({
+            where:{
+                id:userId,
+            },
+            data:{
+                passwordHash
+            }
+        })
     }
 }
