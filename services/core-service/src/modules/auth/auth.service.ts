@@ -5,9 +5,10 @@ import { AppError } from '../../libs/errors/app.error';
 import * as bcrypt from 'bcrypt'
 import { ConfigService } from '@nestjs/config';
 import { sendEmail } from '../../common/utils/email';
-import { hashValue } from '../../common/utils/crypto';
+import { generateOtp, hashValue } from '../../common/utils/crypto';
 import { JwtService } from '@nestjs/jwt';
 import { StringValue } from 'ms';
+import { AuthTokenType } from '../../../generated/prisma/enums';
 
 @Injectable()
 export class AuthService {
@@ -37,8 +38,6 @@ export class AuthService {
       throw new Error('Email config not found');
     }
 
-    const apiUrl = this.config.get<string>('API_URL');
-
     await sendEmail({
       serviceId: emailConfig.serviceId,
       templateId: emailConfig.templates.verifyEmail,
@@ -60,7 +59,7 @@ export class AuthService {
 
   async verifyEmail(dto:VerifyEmailDTO){
     const hashedOtp = hashValue(dto.token);
-    const findToken=await this.repo.findAuthToken(hashedOtp)
+    const findToken=await this.repo.findAuthToken(hashedOtp, AuthTokenType.VERIFY_EMAIL)
 
     if (!findToken) {
       throw new AppError(
@@ -106,7 +105,7 @@ export class AuthService {
 
     const expiresAt = new Date(decoded.exp * 1000);
 
-    await this.repo.saveRefreshToken({
+    await this.repo.saveToken({
       userId:user.id,
       token:refreshToken,
       expiresAt
@@ -196,7 +195,7 @@ export class AuthService {
 
     const expiresAt = new Date(decoded.exp * 1000);
 
-    await this.repo.saveRefreshToken({
+    await this.repo.saveToken({
       userId:existedUser.id,
       token:refreshToken,
       expiresAt
@@ -209,18 +208,87 @@ export class AuthService {
   }
 
   async refresh(token: string) {
-    if (!token) {
-      throw new AppError('Invalid refresh token', 400);
+    const findAuthToken=await this.repo.findAuthToken(token, AuthTokenType.REFRESH_TOKEN)
+
+    if(!findAuthToken){
+      throw new AppError('Invalid refresh token', 404)
     }
 
+    if(findAuthToken.expiresAt < new Date()){
+      throw new AppError('Refresh token already expired', 400)
+    }
+
+    const user=await this.repo.checkUserById(findAuthToken.userId)
+
+    if(!user){
+      throw new AppError('User not found', 404)
+    }
+
+    const payloadJWT={
+      sub:user.id,
+      email:user.email,
+      roles:user.roles.map((role)=>role.role.name)
+    }
+
+    const {accessToken, refreshToken}=await this.generateTokens(payloadJWT)
+    
+    const decoded = this.jwt.decode(refreshToken) as any;
+
+    const expiresAt = new Date(decoded.exp * 1000);
+
+    await this.repo.saveToken({
+      userId:user.id,
+      token:refreshToken,
+      expiresAt
+    })
+
+    await this.repo.markTokenUsed(findAuthToken.id)
     return {
-      accessToken: 'new-access-token',
+      accessToken,
+      refreshToken
     };
   }
 
   async forgotPassword(email: string) {
+    const existedUser=await this.repo.checkUserByEmail(email)
+
+    if(!existedUser){
+      throw new AppError('User not found', 404)
+    }
+
+    if(!existedUser.emailVerified){
+      throw new AppError('Your email is not verified. Please verify to continue.', 403);
+    }
+
+    const emailConfig = this.config.get('emailJs', { infer: true });
+
+    if (!emailConfig) {
+      throw new Error('Email config not found');
+    }
+
+    const rawOtp = generateOtp();
+    const hashedOtp = hashValue(rawOtp);
+    const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
+
+    await sendEmail({
+      serviceId: emailConfig.serviceId,
+      templateId: emailConfig.templates.verifyEmail,
+      userId: emailConfig.userId,     
+      accessToken: emailConfig.accessToken,
+      email: existedUser.email,
+      name: existedUser.profile?.fullName || 'Anonymus',
+      token: rawOtp,
+    });
+
+    await this.repo.saveToken({
+      userId:existedUser.id,
+      token:hashedOtp,
+      expiresAt
+    })
+
+
     return {
-      message: `Password reset link sent to ${email}`,
+      message: `Password reset sent to ${email}`,
     };
   }
 

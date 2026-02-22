@@ -4,8 +4,6 @@ import {
   Body,
   Get,
   Patch,
-  UseGuards,
-  Query,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 
@@ -86,17 +84,6 @@ export class AuthController {
   ) {
     return ErrorHandler(() =>
       this.authService.forgotPassword(dto.email)
-    );
-  }
-
-  @Public()
-  @Post('reset-password')
-  resetPassword(
-    @Body(new ZodValidationPipe(ResetPasswordSchema))
-    dto: ResetPasswordDTO
-  ) {
-    return ErrorHandler(() =>
-      this.authService.resetPassword(dto)
     );
   }
 

@@ -63,6 +63,11 @@ export class AuthRepository{
                     select:{
                         role:true
                     }
+                },
+                profile:{
+                    select:{
+                        fullName:true
+                    }
                 }
             }
         })
@@ -71,6 +76,13 @@ export class AuthRepository{
         return await this.db.user.findUnique({
             where:{
                 id:id
+            },
+            include:{
+                roles:{
+                    select:{
+                        role:true
+                    }
+                }
             }
         })    
     }
@@ -100,12 +112,12 @@ export class AuthRepository{
         })
     }
 
-    async findAuthToken(tokenHash:string){
+    async findAuthToken(tokenHash:string, tokenType:AuthTokenType){
         return await this.db.authToken.findUnique({
             where:{
                 tokenHash,
-                type:AuthTokenType.VERIFY_EMAIL
-            }
+                type:tokenType
+            },
         })
     }
 
@@ -148,7 +160,7 @@ export class AuthRepository{
         })
     }
 
-    async saveRefreshToken(payload: {
+    async saveToken(payload: {
         userId: number;
         token: string;
         expiresAt: Date;
