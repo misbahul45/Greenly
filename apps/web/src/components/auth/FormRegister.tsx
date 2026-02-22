@@ -5,7 +5,6 @@ import { useForm } from "@tanstack/react-form"
 import { toast } from "sonner"
 import * as z from "zod"
 import { Eye, EyeOff } from "lucide-react"
-import { Link } from "@tanstack/react-router"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -26,6 +25,10 @@ import {
 import { Input } from "@/components/ui/input"
 
 const formSchema = z.object({
+  name: z
+    .string()
+    .min(2, "Name must be at least 2 characters.")
+    .max(100, "Name must be at most 100 characters."),
   email: z
     .string()
     .min(1, "Email is required.")
@@ -36,11 +39,12 @@ const formSchema = z.object({
     .max(100, "Password must be at most 100 characters."),
 })
 
-export default function FormLogin() {
+export default function FormRegister() {
   const [showPassword, setShowPassword] = React.useState(false)
 
   const form = useForm({
     defaultValues: {
+      name: "",
       email: "",
       password: "",
     },
@@ -48,7 +52,7 @@ export default function FormLogin() {
       onSubmit: formSchema,
     },
     onSubmit: async ({ value }) => {
-      toast("Login submitted", {
+      toast("Register submitted", {
         description: (
           <pre className="bg-code text-code-foreground mt-2 w-[320px] overflow-x-auto rounded-md p-4">
             <code>{JSON.stringify(value, null, 2)}</code>
@@ -68,21 +72,52 @@ export default function FormLogin() {
   return (
     <Card className="w-full sm:max-w-md">
       <CardHeader>
-        <CardTitle>Login</CardTitle>
+        <CardTitle>Register</CardTitle>
         <CardDescription>
-          Enter your email and password to access your account.
+          Create a new account by filling in the information below.
         </CardDescription>
       </CardHeader>
 
       <CardContent>
         <form
-          id="login-form"
+          id="register-form"
           onSubmit={(e) => {
             e.preventDefault()
             form.handleSubmit()
           }}
         >
           <FieldGroup>
+
+            {/* NAME FIELD */}
+            <form.Field
+              name="name"
+              children={(field) => {
+                const isInvalid =
+                  field.state.meta.isTouched && !field.state.meta.isValid
+
+                return (
+                  <Field data-invalid={isInvalid}>
+                    <FieldLabel htmlFor={field.name}>Full Name</FieldLabel>
+                    <Input
+                      id={field.name}
+                      name={field.name}
+                      type="text"
+                      value={field.state.value}
+                      onBlur={field.handleBlur}
+                      onChange={(e) => field.handleChange(e.target.value)}
+                      aria-invalid={isInvalid}
+                      placeholder="Your full name"
+                      autoComplete="name"
+                    />
+                    {isInvalid && (
+                      <FieldError errors={field.state.meta.errors} />
+                    )}
+                  </Field>
+                )
+              }}
+            />
+
+            {/* EMAIL FIELD */}
             <form.Field
               name="email"
               children={(field) => {
@@ -111,6 +146,7 @@ export default function FormLogin() {
               }}
             />
 
+            {/* PASSWORD FIELD */}
             <form.Field
               name="password"
               children={(field) => {
@@ -131,7 +167,7 @@ export default function FormLogin() {
                         onChange={(e) => field.handleChange(e.target.value)}
                         aria-invalid={isInvalid}
                         placeholder="Enter your password"
-                        autoComplete="current-password"
+                        autoComplete="new-password"
                         className="pr-10"
                       />
 
@@ -166,26 +202,15 @@ export default function FormLogin() {
         </form>
       </CardContent>
 
-      <CardFooter className="flex flex-col gap-4">
+      <CardFooter>
         <Field orientation="horizontal">
           <Button type="button" variant="outline" onClick={() => form.reset()}>
             Reset
           </Button>
-          <Button type="submit" form="login-form">
-            Login
+          <Button type="submit" form="register-form">
+            Register
           </Button>
         </Field>
-
-        {/* REGISTER LINK */}
-        <p className="text-sm text-muted-foreground text-center">
-          Belum punya akun <span className="font-medium">Greenly Mart</span>?{" "}
-          <Link
-            to="/auth/regiister"
-            className="text-green-700 font-medium hover:underline"
-          >
-            Daftar
-          </Link>
-        </p>
       </CardFooter>
     </Card>
   )

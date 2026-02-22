@@ -65,22 +65,21 @@ export interface FileRoutesById {
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-<<<<<<< HEAD
-  fullPaths: '/' | '/auth/login' | '/auth/regiister' | '/demo/tanstack-query'
-  fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth/login' | '/auth/regiister' | '/demo/tanstack-query'
-  id:
-    | '__root__'
+  fullPaths:
     | '/'
+    | '/home'
     | '/auth/login'
     | '/auth/regiister'
     | '/demo/tanstack-query'
-=======
-  fullPaths: '/' | '/home' | '/auth/login' | '/demo/tanstack-query'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/home' | '/auth/login' | '/demo/tanstack-query'
-  id: '__root__' | '/' | '/home' | '/auth/login' | '/demo/tanstack-query'
->>>>>>> 319e3e5daf054fa1fc410e43803c4efe5219b668
+  to: '/' | '/home' | '/auth/login' | '/auth/regiister' | '/demo/tanstack-query'
+  id:
+    | '__root__'
+    | '/'
+    | '/home'
+    | '/auth/login'
+    | '/auth/regiister'
+    | '/demo/tanstack-query'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
