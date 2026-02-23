@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Global, Module } from '@nestjs/common';
 import { MessaggingService } from './messagging.service';
 import {
   ClientProviderOptions,
@@ -7,6 +7,7 @@ import {
 } from '@nestjs/microservices';
 import { ConfigService } from '@nestjs/config';
 
+@Global()
 @Module({
   providers: [MessaggingService],
   exports: [MessaggingService],
