@@ -15,6 +15,7 @@ import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as SellerDashboardRouteImport } from './routes/seller/dashboard'
 import { Route as DemoTanstackQueryRouteImport } from './routes/demo/tanstack-query'
+import { Route as AuthRegiisterRouteImport } from './routes/auth/regiister'
 import { Route as AuthLoginRouteImport } from './routes/auth/login'
 import { Route as AdminTokoRouteImport } from './routes/admin/toko'
 import { Route as AdminPesananRouteImport } from './routes/admin/pesanan'
@@ -51,6 +52,11 @@ const SellerDashboardRoute = SellerDashboardRouteImport.update({
 const DemoTanstackQueryRoute = DemoTanstackQueryRouteImport.update({
   id: '/demo/tanstack-query',
   path: '/demo/tanstack-query',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthRegiisterRoute = AuthRegiisterRouteImport.update({
+  id: '/auth/regiister',
+  path: '/auth/regiister',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthLoginRoute = AuthLoginRouteImport.update({
@@ -101,6 +107,7 @@ export interface FileRoutesByFullPath {
   '/admin/pesanan': typeof AdminPesananRoute
   '/admin/toko': typeof AdminTokoRoute
   '/auth/login': typeof AuthLoginRoute
+  '/auth/regiister': typeof AuthRegiisterRoute
   '/demo/tanstack-query': typeof DemoTanstackQueryRoute
   '/seller/dashboard': typeof SellerDashboardRoute
 }
@@ -116,6 +123,7 @@ export interface FileRoutesByTo {
   '/admin/pesanan': typeof AdminPesananRoute
   '/admin/toko': typeof AdminTokoRoute
   '/auth/login': typeof AuthLoginRoute
+  '/auth/regiister': typeof AuthRegiisterRoute
   '/demo/tanstack-query': typeof DemoTanstackQueryRoute
   '/seller/dashboard': typeof SellerDashboardRoute
 }
@@ -132,11 +140,13 @@ export interface FileRoutesById {
   '/admin/pesanan': typeof AdminPesananRoute
   '/admin/toko': typeof AdminTokoRoute
   '/auth/login': typeof AuthLoginRoute
+  '/auth/regiister': typeof AuthRegiisterRoute
   '/demo/tanstack-query': typeof DemoTanstackQueryRoute
   '/seller/dashboard': typeof SellerDashboardRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
+<<<<<<< HEAD
   fullPaths:
     | '/'
     | '/admin'
@@ -181,6 +191,24 @@ export interface FileRouteTypes {
     | '/auth/login'
     | '/demo/tanstack-query'
     | '/seller/dashboard'
+=======
+<<<<<<< HEAD
+  fullPaths: '/' | '/auth/login' | '/auth/regiister' | '/demo/tanstack-query'
+  fileRoutesByTo: FileRoutesByTo
+  to: '/' | '/auth/login' | '/auth/regiister' | '/demo/tanstack-query'
+  id:
+    | '__root__'
+    | '/'
+    | '/auth/login'
+    | '/auth/regiister'
+    | '/demo/tanstack-query'
+=======
+  fullPaths: '/' | '/home' | '/auth/login' | '/demo/tanstack-query'
+  fileRoutesByTo: FileRoutesByTo
+  to: '/' | '/home' | '/auth/login' | '/demo/tanstack-query'
+  id: '__root__' | '/' | '/home' | '/auth/login' | '/demo/tanstack-query'
+>>>>>>> 319e3e5daf054fa1fc410e43803c4efe5219b668
+>>>>>>> ca0b8ab36d7a4f09cb51dad26753dee97e262ade
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -189,6 +217,7 @@ export interface RootRouteChildren {
   HomeRoute: typeof HomeRoute
   SellerRoute: typeof SellerRouteWithChildren
   AuthLoginRoute: typeof AuthLoginRoute
+  AuthRegiisterRoute: typeof AuthRegiisterRoute
   DemoTanstackQueryRoute: typeof DemoTanstackQueryRoute
 }
 
@@ -234,6 +263,13 @@ declare module '@tanstack/react-router' {
       path: '/demo/tanstack-query'
       fullPath: '/demo/tanstack-query'
       preLoaderRoute: typeof DemoTanstackQueryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth/regiister': {
+      id: '/auth/regiister'
+      path: '/auth/regiister'
+      fullPath: '/auth/regiister'
+      preLoaderRoute: typeof AuthRegiisterRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth/login': {
@@ -325,6 +361,7 @@ const rootRouteChildren: RootRouteChildren = {
   HomeRoute: HomeRoute,
   SellerRoute: SellerRouteWithChildren,
   AuthLoginRoute: AuthLoginRoute,
+  AuthRegiisterRoute: AuthRegiisterRoute,
   DemoTanstackQueryRoute: DemoTanstackQueryRoute,
 }
 export const routeTree = rootRouteImport

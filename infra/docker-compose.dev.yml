@@ -75,6 +75,16 @@ services:
     networks:
       - greenly_network
 
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: greenly_rabbitmq
+    restart: always
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    networks:
+      - greenly_network
+
   # ==============================
   # CORE SERVICE (NODE)
   # ==============================
@@ -82,12 +92,12 @@ services:
     build:
       context: ../services/core-service
       dockerfile: Dockerfile.dev
-    volumes:
-      - ../services/core-service:/app
-      - core_node_modules:/app/node_modules
+
     depends_on:
       - mysql
       - redis
+      - rabbitmq
+
     environment:
       DATABASE_HOST: mysql
       DATABASE_PORT: 3306
@@ -96,23 +106,32 @@ services:
       DATABASE_NAME: greenly_core
       REDIS_HOST: redis
       REDIS_PORT: 6379
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672/
+
+    develop:
+      watch:
+        # 🔥 Sync source → hot reload
+        - action: sync
+          path: ../services/core-service
+          target: /app
+          ignore:
+            - node_modules/
+            - dist/
+
+        # 🔥 Rebuild kalau dependency berubah
+        - action: rebuild
+          path: ../services/core-service/package.json
+
     labels:
       - "traefik.enable=true"
-
-      # Router
       - "traefik.http.routers.core.rule=PathPrefix(`/api/core`)"
       - "traefik.http.routers.core.entrypoints=web"
-
-      # Service port inside container
       - "traefik.http.services.core.loadbalancer.server.port=3000"
-
-      # Strip /api/core
       - "traefik.http.middlewares.core-strip.stripprefix.prefixes=/api/core"
       - "traefik.http.routers.core.middlewares=core-strip"
 
     networks:
       - greenly_network
-
   # ==============================
   # ML ENGINE (FASTAPI)
   # ==============================
@@ -120,28 +139,53 @@ services:
     build:
       context: ../services/ml-engine
       dockerfile: Dockerfile.dev
-    volumes:
-      - ../services/ml-engine:/app
-      - ml_venv:/app/.venv
+
     depends_on:
       - redis
+      - rabbitmq
+
     environment:
       REDIS_HOST: redis
       REDIS_PORT: 6379
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672/
+
+    develop:
+      watch:
+        - action: sync
+          path: ../services/ml-engine
+          target: /app
+
+        - action: rebuild
+          path: ../services/ml-engine/pyproject.toml
+
     labels:
       - "traefik.enable=true"
-
       - "traefik.http.routers.ml.rule=PathPrefix(`/api/ml`)"
       - "traefik.http.routers.ml.entrypoints=web"
-
       - "traefik.http.services.ml.loadbalancer.server.port=8000"
-
       - "traefik.http.middlewares.ml-strip.stripprefix.prefixes=/api/ml"
       - "traefik.http.routers.ml.middlewares=ml-strip"
 
     networks:
       - greenly_network
 
+  ml-worker:
+    build:
+      context: ../services/ml-engine
+      dockerfile: Dockerfile.dev
+    command: uv run celery -A app.celery worker --loglevel=info
+    volumes:
+      - ../services/ml-engine:/app
+      - ml_venv:/app/.venv
+    depends_on:
+      - redis
+      - rabbitmq
+    environment:
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672/
+    networks:
+      - greenly_network
   # ==============================
   # CATALOG SERVICE (GO)
   # ==============================
@@ -149,17 +193,29 @@ services:
     build:
       context: ../services/catalog-service
       dockerfile: Dockerfile.dev
-    volumes:
-      - ../services/catalog-service:/app
-      - go_mod_cache:/go/pkg/mod
+
+    depends_on:
+      - rabbitmq
+      - mongodb
+
+    environment:
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672/
+      MONGODB_URI: mongodb://root:root@mongodb:27017/?authSource=admin
+
+    develop:
+      watch:
+        - action: sync
+          path: ../services/catalog-service
+          target: /app
+
+        - action: rebuild
+          path: ../services/catalog-service/go.mod
+
     labels:
       - "traefik.enable=true"
-
       - "traefik.http.routers.catalog.rule=PathPrefix(`/api/catalog`)"
       - "traefik.http.routers.catalog.entrypoints=web"
-
       - "traefik.http.services.catalog.loadbalancer.server.port=8081"
-
       - "traefik.http.middlewares.catalog-strip.stripprefix.prefixes=/api/catalog"
       - "traefik.http.routers.catalog.middlewares=catalog-strip"
 

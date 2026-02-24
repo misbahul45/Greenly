@@ -15,6 +15,13 @@ enum ShopStatus {
   SUSPENDED
 }
 
+enum AuthTokenType {
+  VERIFY_EMAIL
+  RESET_PASSWORD
+  REFRESH_TOKEN
+  DELETE_USER
+}
+
 enum ApplicationStatus {
   PENDING
   REVIEW
@@ -54,14 +61,23 @@ enum LedgerType {
   CREDIT
   DEBIT
 }
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+  BANNED
+  PENDING_VERIFICATION
+}
 
 model User {
   id             Int       @id @default(autoincrement())
   email          String    @unique
   passwordHash   String
-  isActive       Boolean   @default(true)
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
+  emailVerified   DateTime?   
+  status UserStatus @default(PENDING_VERIFICATION)
+  deletedAt DateTime?
+  isActive Boolean @default(true)
 
   profile        UserProfile?
   shopMember     ShopMember[]
@@ -72,8 +88,10 @@ model User {
   ownedShop      Shop?     @relation("ShopOwner")
   followingShops ShopFollower[]
   events         UserEvent[]
+  tokens         AuthToken[] 
 
   @@map("users")
+  @@index([email])
 }
 
 model UserProfile {
@@ -96,6 +114,22 @@ model Role {
   users       UserRole[]
 
   @@map("roles")
+}
+
+model AuthToken {
+  id          Int          @id @default(autoincrement())
+  userId     Int
+  tokenHash  String        @unique
+  type       AuthTokenType
+  expiresAt  DateTime
+  usedAt     DateTime?
+  createdAt  DateTime      @default(now())
+
+  user       User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([type])
+  @@map("auth_tokens")
 }
 
 model Permission {
