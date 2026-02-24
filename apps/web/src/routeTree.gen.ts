@@ -9,21 +9,45 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SellerRouteImport } from './routes/seller'
 import { Route as HomeRouteImport } from './routes/home'
+import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as SellerDashboardRouteImport } from './routes/seller/dashboard'
 import { Route as DemoTanstackQueryRouteImport } from './routes/demo/tanstack-query'
 import { Route as AuthRegiisterRouteImport } from './routes/auth/regiister'
 import { Route as AuthLoginRouteImport } from './routes/auth/login'
+import { Route as AdminTokoRouteImport } from './routes/admin/toko'
+import { Route as AdminPesananRouteImport } from './routes/admin/pesanan'
+import { Route as AdminKategoriRouteImport } from './routes/admin/kategori'
+import { Route as AdminDashboardRouteImport } from './routes/admin/dashboard'
+import { Route as AdminCustomerRouteImport } from './routes/admin/customer'
+import { Route as AdminApprovalRouteImport } from './routes/admin/approval'
 
+const SellerRoute = SellerRouteImport.update({
+  id: '/seller',
+  path: '/seller',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const HomeRoute = HomeRouteImport.update({
   id: '/home',
   path: '/home',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const SellerDashboardRoute = SellerDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => SellerRoute,
 } as any)
 const DemoTanstackQueryRoute = DemoTanstackQueryRouteImport.update({
   id: '/demo/tanstack-query',
@@ -40,51 +64,142 @@ const AuthLoginRoute = AuthLoginRouteImport.update({
   path: '/auth/login',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminTokoRoute = AdminTokoRouteImport.update({
+  id: '/toko',
+  path: '/toko',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminPesananRoute = AdminPesananRouteImport.update({
+  id: '/pesanan',
+  path: '/pesanan',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminKategoriRoute = AdminKategoriRouteImport.update({
+  id: '/kategori',
+  path: '/kategori',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminDashboardRoute = AdminDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminCustomerRoute = AdminCustomerRouteImport.update({
+  id: '/customer',
+  path: '/customer',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminApprovalRoute = AdminApprovalRouteImport.update({
+  id: '/approval',
+  path: '/approval',
+  getParentRoute: () => AdminRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRouteWithChildren
   '/home': typeof HomeRoute
+  '/seller': typeof SellerRouteWithChildren
+  '/admin/approval': typeof AdminApprovalRoute
+  '/admin/customer': typeof AdminCustomerRoute
+  '/admin/dashboard': typeof AdminDashboardRoute
+  '/admin/kategori': typeof AdminKategoriRoute
+  '/admin/pesanan': typeof AdminPesananRoute
+  '/admin/toko': typeof AdminTokoRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/regiister': typeof AuthRegiisterRoute
   '/demo/tanstack-query': typeof DemoTanstackQueryRoute
+  '/seller/dashboard': typeof SellerDashboardRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRouteWithChildren
   '/home': typeof HomeRoute
+  '/seller': typeof SellerRouteWithChildren
+  '/admin/approval': typeof AdminApprovalRoute
+  '/admin/customer': typeof AdminCustomerRoute
+  '/admin/dashboard': typeof AdminDashboardRoute
+  '/admin/kategori': typeof AdminKategoriRoute
+  '/admin/pesanan': typeof AdminPesananRoute
+  '/admin/toko': typeof AdminTokoRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/regiister': typeof AuthRegiisterRoute
   '/demo/tanstack-query': typeof DemoTanstackQueryRoute
+  '/seller/dashboard': typeof SellerDashboardRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/admin': typeof AdminRouteWithChildren
   '/home': typeof HomeRoute
+  '/seller': typeof SellerRouteWithChildren
+  '/admin/approval': typeof AdminApprovalRoute
+  '/admin/customer': typeof AdminCustomerRoute
+  '/admin/dashboard': typeof AdminDashboardRoute
+  '/admin/kategori': typeof AdminKategoriRoute
+  '/admin/pesanan': typeof AdminPesananRoute
+  '/admin/toko': typeof AdminTokoRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/regiister': typeof AuthRegiisterRoute
   '/demo/tanstack-query': typeof DemoTanstackQueryRoute
+  '/seller/dashboard': typeof SellerDashboardRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/admin'
     | '/home'
+    | '/seller'
+    | '/admin/approval'
+    | '/admin/customer'
+    | '/admin/dashboard'
+    | '/admin/kategori'
+    | '/admin/pesanan'
+    | '/admin/toko'
     | '/auth/login'
     | '/auth/regiister'
     | '/demo/tanstack-query'
+    | '/seller/dashboard'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/home' | '/auth/login' | '/auth/regiister' | '/demo/tanstack-query'
+  to:
+    | '/'
+    | '/admin'
+    | '/home'
+    | '/seller'
+    | '/admin/approval'
+    | '/admin/customer'
+    | '/admin/dashboard'
+    | '/admin/kategori'
+    | '/admin/pesanan'
+    | '/admin/toko'
+    | '/auth/login'
+    | '/auth/regiister'
+    | '/demo/tanstack-query'
+    | '/seller/dashboard'
   id:
     | '__root__'
     | '/'
+    | '/admin'
     | '/home'
+    | '/seller'
+    | '/admin/approval'
+    | '/admin/customer'
+    | '/admin/dashboard'
+    | '/admin/kategori'
+    | '/admin/pesanan'
+    | '/admin/toko'
     | '/auth/login'
     | '/auth/regiister'
     | '/demo/tanstack-query'
+    | '/seller/dashboard'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AdminRoute: typeof AdminRouteWithChildren
   HomeRoute: typeof HomeRoute
+  SellerRoute: typeof SellerRouteWithChildren
   AuthLoginRoute: typeof AuthLoginRoute
   AuthRegiisterRoute: typeof AuthRegiisterRoute
   DemoTanstackQueryRoute: typeof DemoTanstackQueryRoute
@@ -92,11 +207,25 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/seller': {
+      id: '/seller'
+      path: '/seller'
+      fullPath: '/seller'
+      preLoaderRoute: typeof SellerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/home': {
       id: '/home'
       path: '/home'
       fullPath: '/home'
       preLoaderRoute: typeof HomeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -105,6 +234,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/seller/dashboard': {
+      id: '/seller/dashboard'
+      path: '/dashboard'
+      fullPath: '/seller/dashboard'
+      preLoaderRoute: typeof SellerDashboardRouteImport
+      parentRoute: typeof SellerRoute
     }
     '/demo/tanstack-query': {
       id: '/demo/tanstack-query'
@@ -127,12 +263,87 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthLoginRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/toko': {
+      id: '/admin/toko'
+      path: '/toko'
+      fullPath: '/admin/toko'
+      preLoaderRoute: typeof AdminTokoRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/pesanan': {
+      id: '/admin/pesanan'
+      path: '/pesanan'
+      fullPath: '/admin/pesanan'
+      preLoaderRoute: typeof AdminPesananRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/kategori': {
+      id: '/admin/kategori'
+      path: '/kategori'
+      fullPath: '/admin/kategori'
+      preLoaderRoute: typeof AdminKategoriRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/dashboard': {
+      id: '/admin/dashboard'
+      path: '/dashboard'
+      fullPath: '/admin/dashboard'
+      preLoaderRoute: typeof AdminDashboardRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/customer': {
+      id: '/admin/customer'
+      path: '/customer'
+      fullPath: '/admin/customer'
+      preLoaderRoute: typeof AdminCustomerRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/approval': {
+      id: '/admin/approval'
+      path: '/approval'
+      fullPath: '/admin/approval'
+      preLoaderRoute: typeof AdminApprovalRouteImport
+      parentRoute: typeof AdminRoute
+    }
   }
 }
 
+interface AdminRouteChildren {
+  AdminApprovalRoute: typeof AdminApprovalRoute
+  AdminCustomerRoute: typeof AdminCustomerRoute
+  AdminDashboardRoute: typeof AdminDashboardRoute
+  AdminKategoriRoute: typeof AdminKategoriRoute
+  AdminPesananRoute: typeof AdminPesananRoute
+  AdminTokoRoute: typeof AdminTokoRoute
+}
+
+const AdminRouteChildren: AdminRouteChildren = {
+  AdminApprovalRoute: AdminApprovalRoute,
+  AdminCustomerRoute: AdminCustomerRoute,
+  AdminDashboardRoute: AdminDashboardRoute,
+  AdminKategoriRoute: AdminKategoriRoute,
+  AdminPesananRoute: AdminPesananRoute,
+  AdminTokoRoute: AdminTokoRoute,
+}
+
+const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
+
+interface SellerRouteChildren {
+  SellerDashboardRoute: typeof SellerDashboardRoute
+}
+
+const SellerRouteChildren: SellerRouteChildren = {
+  SellerDashboardRoute: SellerDashboardRoute,
+}
+
+const SellerRouteWithChildren =
+  SellerRoute._addFileChildren(SellerRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AdminRoute: AdminRouteWithChildren,
   HomeRoute: HomeRoute,
+  SellerRoute: SellerRouteWithChildren,
   AuthLoginRoute: AuthLoginRoute,
   AuthRegiisterRoute: AuthRegiisterRoute,
   DemoTanstackQueryRoute: DemoTanstackQueryRoute,

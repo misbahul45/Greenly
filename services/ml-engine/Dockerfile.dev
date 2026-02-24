@@ -2,15 +2,18 @@ FROM python:3.12-slim
 
 WORKDIR /app
 
-# Copy dependency definition
-COPY pyproject.toml ./
+# Install uv
+RUN pip install --no-cache-dir uv
 
-# Install dependencies via pip
-RUN pip install --no-cache-dir fastapi uvicorn
+# Copy dependency files dulu (biar caching optimal)
+COPY pyproject.toml uv.lock* ./
 
-# Copy source code
+# Install deps
+RUN uv sync
+
+# Copy source
 COPY . .
 
 EXPOSE 8000
 
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+CMD ["uv", "run", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]

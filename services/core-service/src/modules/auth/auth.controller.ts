@@ -1,39 +1,129 @@
-import { 
-  Controller, 
-  Get, 
-  Post, 
-  Body, 
-  Patch, 
-  Param, 
-  Delete } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  Get,
+  Patch,
+  UseGuards,
+} from '@nestjs/common';
 import { AuthService } from './auth.service';
+
+import {
+  type LoginDTO,
+  LoginSchema,
+  type RegisterDTO,
+  RegisterSchema,
+  ForgotPasswordSchema,
+  type ForgotPasswordDTO,
+  ChangePasswordSchema,
+  type ChangePasswordDTO,
+  VerifyEmailSchema,
+  type VerifyEmailDTO,
+  VerifyPasswordSchema,
+  type VerifyPasswordDTO,
+} from './auth.dto';
+
+import ErrorHandler from 'src/libs/errors/handler.error';
+import { ZodValidationPipe } from 'src/libs/pipes/zod-validation.pipe';
+import { Public } from './decorators/public.decorator';
+import { CurrentUser } from './decorators/current-user.decorator';
+import { AuthTokenType } from './../../../generated/prisma/enums';
+import { JwtRefreshGuard } from './guards/jwt.refresh.guard';
+import { AppError } from './../../libs/errors/app.error';
 
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
-
-  @Post()
-  create(@Body() createAuthDto: any) {
-    return this.authService.create(createAuthDto);
+  
+  @Public()
+  @Post('register')
+  register(
+    @Body(new ZodValidationPipe(RegisterSchema)) dto: RegisterDTO
+  ) {
+    return ErrorHandler(async() => this.authService.register(dto));
   }
 
-  @Get()
-  findAll() {
-    return this.authService.findAll();
+  @Public()
+  @Post('login')
+  login(
+    @Body(new ZodValidationPipe(LoginSchema)) dto: LoginDTO
+  ) {
+    return ErrorHandler(() => this.authService.login(dto));
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.authService.findOne(+id);
+  @Public()
+  @UseGuards(JwtRefreshGuard)
+  @Post('refresh')
+  refresh(
+    @CurrentUser() payload:UserLogin
+  ) {
+    return ErrorHandler(() =>{
+
+      if(!payload.refreshToken){
+        throw new AppError('Invalid refresh token', 403)
+      }
+
+        return this.authService.refresh(payload.refreshToken)
+      }
+    );
   }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateAuthDto: any) {
-    return this.authService.update(+id, updateAuthDto);
+  @Public()
+  @Post('verify-email')
+  verifyEmail(
+    @Body(
+      new ZodValidationPipe(VerifyEmailSchema)
+    ) body: VerifyEmailDTO,
+  ) {
+
+    return ErrorHandler(() =>{
+      const token = body.token
+       const dto = VerifyEmailSchema.parse({ token })
+        return this.authService.verify(dto, AuthTokenType.VERIFY_EMAIL)
+      }
+    )
   }
 
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.authService.remove(+id);
+  @Public()
+  @Post('verify-password')
+  verifyPassword(
+    @Body(
+      new ZodValidationPipe(VerifyPasswordSchema)
+    ) body: VerifyPasswordDTO,
+  ) {
+
+    return ErrorHandler(() =>{
+      const token = body.token
+       const dto = VerifyEmailSchema.parse({ token })
+        return this.authService.verify(dto, AuthTokenType.RESET_PASSWORD)
+      }
+    )
+  }
+
+  @Public()
+  @Post('forgot-password')
+  forgotPassword(
+    @Body(new ZodValidationPipe(ForgotPasswordSchema))
+    dto: ForgotPasswordDTO
+  ) {
+    return ErrorHandler(() =>
+      this.authService.forgotPassword(dto.email)
+    );
+  }
+
+
+  @Patch('change-password')
+  changePassword(
+    @Body(new ZodValidationPipe(ChangePasswordSchema))
+    dto: ChangePasswordDTO
+  ) {
+    return ErrorHandler(() =>
+      this.authService.changePassword(dto)
+    );
+  }
+
+  @Post('logout')
+  logout() {
+    return ErrorHandler(() => this.authService.logout());
   }
 }
