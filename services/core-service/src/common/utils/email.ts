@@ -8,6 +8,7 @@ type SendEmailParams = {
   email: string
   name: string
   token: string
+  action:string
 }
 
 export const sendEmail = async ({
@@ -18,6 +19,7 @@ export const sendEmail = async ({
   email,
   name,
   token,
+  action
 }: SendEmailParams) => {
 
   const payload = {
@@ -28,7 +30,8 @@ export const sendEmail = async ({
     template_params: {
       to_email: email,
       username: name,
-      token: token,
+      otp: token,
+      action
     }
   }
   try {

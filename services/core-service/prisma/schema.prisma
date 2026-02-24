@@ -19,6 +19,7 @@ enum AuthTokenType {
   VERIFY_EMAIL
   RESET_PASSWORD
   REFRESH_TOKEN
+  DELETE_USER
 }
 
 enum ApplicationStatus {

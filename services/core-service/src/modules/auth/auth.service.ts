@@ -46,6 +46,7 @@ export class AuthService {
       email: dto.email,
       name: dto.name,
       token: data.payload.otp,
+      action:'verify account'
     });
     return {
       message: 'User registered',
@@ -281,6 +282,7 @@ export class AuthService {
       email: existedUser.email,
       name: existedUser.profile?.fullName || 'Anonymus',
       token: rawOtp,
+      action:'reset password'
     });
 
     await this.repo.saveToken({
