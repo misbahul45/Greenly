@@ -20,7 +20,7 @@ const prisma = new PrismaClient({ adapter })
 async function main() {
   /*
    |--------------------------------------------------------------------------
-   | 1. DEFINE ROLES
+   | 1️⃣ GLOBAL SYSTEM ROLES (Marketplace Level Only)
    |--------------------------------------------------------------------------
    */
 
@@ -29,44 +29,45 @@ async function main() {
     'ADMIN',
     'FINANCE_ADMIN',
     'SUPPORT_ADMIN',
-    'SHOP_OWNER',
-    'SHOP_MANAGER',
-    'SHOP_STAFF',
-    'CUSTOMER',
     'SYSTEM',
   ]
 
   /*
    |--------------------------------------------------------------------------
-   | 2. DEFINE PERMISSIONS
+   | 2️⃣ PERMISSIONS (SYSTEM LEVEL)
    |--------------------------------------------------------------------------
    */
 
   const permissions = [
-    'user.create',
+    // user management
     'user.read',
     'user.update',
+    'user.suspend',
     'user.delete',
 
-    'shop.create',
+    // shop approval
     'shop.read',
-    'shop.update',
+    'shop.approve',
+    'shop.suspend',
     'shop.delete',
 
-    'order.create',
+    // order monitoring
     'order.read',
-    'order.update',
-    'order.cancel',
+    'order.force_cancel',
 
+    // payment & finance
     'payment.read',
     'payment.refund',
+    'payout.read',
+    'payout.process',
 
+    // system
     'system.manage',
   ]
 
   /*
    |--------------------------------------------------------------------------
-   | 3. CREATE PERMISSIONS
+   | 3️⃣ CREATE PERMISSIONS
    |--------------------------------------------------------------------------
    */
 
@@ -80,7 +81,7 @@ async function main() {
 
   /*
    |--------------------------------------------------------------------------
-   | 4. CREATE ROLES
+   | 4️⃣ CREATE ROLES
    |--------------------------------------------------------------------------
    */
 
@@ -94,7 +95,7 @@ async function main() {
 
   /*
    |--------------------------------------------------------------------------
-   | 5. ROLE → PERMISSION MAP
+   | 5️⃣ ROLE → PERMISSION MAP (SYSTEM LEVEL)
    |--------------------------------------------------------------------------
    */
 
@@ -102,10 +103,10 @@ async function main() {
     SUPER_ADMIN: permissions,
 
     ADMIN: [
-      'user.create',
       'user.read',
       'user.update',
       'shop.read',
+      'shop.approve',
       'order.read',
       'payment.read',
     ],
@@ -113,39 +114,15 @@ async function main() {
     FINANCE_ADMIN: [
       'payment.read',
       'payment.refund',
+      'payout.read',
+      'payout.process',
       'order.read',
     ],
 
     SUPPORT_ADMIN: [
       'user.read',
       'order.read',
-      'order.update',
-    ],
-
-    SHOP_OWNER: [
-      'shop.create',
-      'shop.read',
-      'shop.update',
-      'order.read',
-      'order.update',
-    ],
-
-    SHOP_MANAGER: [
-      'shop.read',
-      'shop.update',
-      'order.read',
-      'order.update',
-    ],
-
-    SHOP_STAFF: [
-      'order.read',
-      'order.update',
-    ],
-
-    CUSTOMER: [
-      'order.create',
-      'order.read',
-      'order.cancel',
+      'order.force_cancel',
     ],
 
     SYSTEM: ['system.manage'],
@@ -153,7 +130,7 @@ async function main() {
 
   /*
    |--------------------------------------------------------------------------
-   | 6. ATTACH PERMISSIONS TO ROLES
+   | 6️⃣ ATTACH PERMISSIONS TO ROLES
    |--------------------------------------------------------------------------
    */
 
@@ -168,13 +145,14 @@ async function main() {
       where: { id: role.id },
       data: {
         permissions: {
+          set: [], // reset dulu supaya idempotent
           connect: perms.map((name) => ({ name })),
         },
       },
     })
   }
 
-  console.log('✅ Roles & Permissions seeded successfully')
+  console.log('✅ Global Roles & Permissions seeded successfully')
 }
 
 main()

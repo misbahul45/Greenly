@@ -27,9 +27,9 @@ import ErrorHandler from 'src/libs/errors/handler.error';
 import { ZodValidationPipe } from 'src/libs/pipes/zod-validation.pipe';
 import { Public } from './decorators/public.decorator';
 import { CurrentUser } from './decorators/current-user.decorator';
-import { AuthTokenType } from '../../../generated/prisma/enums';
+import { AuthTokenType } from './../../../generated/prisma/enums';
 import { JwtRefreshGuard } from './guards/jwt.refresh.guard';
-import { AppError } from '../../libs/errors/app.error';
+import { AppError } from './../../libs/errors/app.error';
 
 @Controller('auth')
 export class AuthController {
@@ -111,12 +111,6 @@ export class AuthController {
     );
   }
 
-  @Get('me')
-  me(
-    @CurrentUser() user:UserLogin
-  ) {
-    return ErrorHandler(() => this.authService.me(user));
-  }
 
   @Patch('change-password')
   changePassword(

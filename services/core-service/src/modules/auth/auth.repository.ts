@@ -87,31 +87,6 @@ export class AuthRepository{
         })    
     }
 
-    async getUserById(id: number) {
-        return this.db.user.findUnique({
-            where: { id },
-                include: {
-                    profile: true,
-
-                    roles: {
-                        include: {
-                            role: {
-                                select: { name: true },
-                            },
-                        },
-                    },
-
-                    ownedShop: {
-                        select: {
-                            id: true,
-                            name: true,
-                            status: true,
-                        },
-                    },
-                },
-        })
-    }
-
     async findAuthToken(tokenHash:string, tokenType:AuthTokenType){
         return await this.db.authToken.findUnique({
             where:{

@@ -296,40 +296,6 @@ export class AuthService {
     };
   }
 
-  async me(dto:UserLogin) {
-    const user=await this.repo.getUserById(dto.sub)
-
-    if(!user){
-      throw new AppError('Unauthorized user', 404)
-    }
-
-    return {
-      id: user.id,
-      email: user.email,
-      status: user.status,
-      emailVerified: !!user.emailVerified,
-
-      profile: {
-        fullName: user.profile?.fullName ?? null,
-        phone: user.profile?.phone ?? null,
-        avatarUrl: user.profile?.avatarUrl ?? null,
-        address: user.profile?.address ?? null,
-      },
-
-      roles: user.roles.map(r => r.role.name),
-
-      shop: user.ownedShop
-        ? {
-            id: user.ownedShop.id,
-            name: user.ownedShop.name,
-            status: user.ownedShop.status,
-          }
-        : null,
-
-      createdAt: user.createdAt,
-    }
-  }
-
   async changePassword(dto: ChangePasswordDTO) {
     const findToken=await this.repo.findOTPToken(dto.tokenId, AuthTokenType.RESET_PASSWORD)
 

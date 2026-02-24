@@ -1,4 +1,5 @@
 {
   "typescript.preferences.importModuleSpecifier": "relative",
-  "typescript.preferences.preferTypeOnlyAutoImports": false
+  "typescript.preferences.preferTypeOnlyAutoImports": false,
+  "prismaERDPreviewer.preferredTheme": "dark"
 }
