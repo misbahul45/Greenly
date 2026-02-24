@@ -146,7 +146,6 @@ export interface FileRoutesById {
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-<<<<<<< HEAD
   fullPaths:
     | '/'
     | '/admin'
@@ -159,6 +158,7 @@ export interface FileRouteTypes {
     | '/admin/pesanan'
     | '/admin/toko'
     | '/auth/login'
+    | '/auth/regiister'
     | '/demo/tanstack-query'
     | '/seller/dashboard'
   fileRoutesByTo: FileRoutesByTo
@@ -174,6 +174,7 @@ export interface FileRouteTypes {
     | '/admin/pesanan'
     | '/admin/toko'
     | '/auth/login'
+    | '/auth/regiister'
     | '/demo/tanstack-query'
     | '/seller/dashboard'
   id:
@@ -189,26 +190,9 @@ export interface FileRouteTypes {
     | '/admin/pesanan'
     | '/admin/toko'
     | '/auth/login'
-    | '/demo/tanstack-query'
-    | '/seller/dashboard'
-=======
-<<<<<<< HEAD
-  fullPaths: '/' | '/auth/login' | '/auth/regiister' | '/demo/tanstack-query'
-  fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth/login' | '/auth/regiister' | '/demo/tanstack-query'
-  id:
-    | '__root__'
-    | '/'
-    | '/auth/login'
     | '/auth/regiister'
     | '/demo/tanstack-query'
-=======
-  fullPaths: '/' | '/home' | '/auth/login' | '/demo/tanstack-query'
-  fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/home' | '/auth/login' | '/demo/tanstack-query'
-  id: '__root__' | '/' | '/home' | '/auth/login' | '/demo/tanstack-query'
->>>>>>> 319e3e5daf054fa1fc410e43803c4efe5219b668
->>>>>>> ca0b8ab36d7a4f09cb51dad26753dee97e262ade
+    | '/seller/dashboard'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
