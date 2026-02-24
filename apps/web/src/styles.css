@@ -16,11 +16,14 @@ body {
 code {
   font-family:
     source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
+  
 }
 
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.141 0.005 285.823);
+  /* --background: oklch(1 0 0); */
+  /* --foreground: oklch(0.141 0.005 285.823); */
+    --foreground: #492828;
+      --background: #F5F1E8;
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.141 0.005 285.823);
   --popover: oklch(1 0 0);
