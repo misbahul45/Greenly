@@ -5,9 +5,8 @@ import { useForm } from "@tanstack/react-form"
 import { toast } from "sonner"
 import * as z from "zod"
 import { Eye, EyeOff } from "lucide-react"
-import { Link } from "@tanstack/react-router"
 
-import { Button } from "#/components/ui/button"
+import { Button } from "@/components/ui/button"
 import {
   Card,
   CardContent,
@@ -15,17 +14,21 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "#/components/ui/card"
+} from "@/components/ui/card"
 import {
   Field,
   FieldDescription,
   FieldError,
   FieldGroup,
   FieldLabel,
-} from "#/components/ui/field"
-import { Input } from "#/components/ui/input"
+} from "@/components/ui/field"
+import { Input } from "@/components/ui/input"
 
 const formSchema = z.object({
+  name: z
+    .string()
+    .min(2, "Nama minimal 2 karakter.")
+    .max(100, "Nama maksimal 100 karakter."),
   email: z
     .string()
     .min(1, "Email wajib diisi.")
@@ -36,11 +39,12 @@ const formSchema = z.object({
     .max(100, "Password maksimal 100 karakter."),
 })
 
-export default function FormLogin() {
+export default function FormRegister() {
   const [showPassword, setShowPassword] = React.useState(false)
 
   const form = useForm({
     defaultValues: {
+      name: "",
       email: "",
       password: "",
     },
@@ -48,7 +52,7 @@ export default function FormLogin() {
       onSubmit: formSchema,
     },
     onSubmit: async ({ value }) => {
-      toast("Login berhasil dikirim", {
+      toast("Pendaftaran berhasil dikirim", {
         description: (
           <pre className="bg-code text-code-foreground mt-2 w-[320px] overflow-x-auto rounded-md p-4">
             <code>{JSON.stringify(value, null, 2)}</code>
@@ -68,21 +72,52 @@ export default function FormLogin() {
   return (
     <Card className="w-full sm:max-w-md">
       <CardHeader>
-        <CardTitle>Masuk</CardTitle>
+        <CardTitle>Daftar</CardTitle>
         <CardDescription>
-          Masukkan email dan password untuk mengakses akun Anda.
+          Buat akun baru dengan mengisi informasi di bawah ini.
         </CardDescription>
       </CardHeader>
 
       <CardContent>
         <form
-          id="login-form"
+          id="register-form"
           onSubmit={(e) => {
             e.preventDefault()
             form.handleSubmit()
           }}
         >
           <FieldGroup>
+
+            {/* NAME FIELD */}
+            <form.Field
+              name="name"
+              children={(field) => {
+                const isInvalid =
+                  field.state.meta.isTouched && !field.state.meta.isValid
+
+                return (
+                  <Field data-invalid={isInvalid}>
+                    <FieldLabel htmlFor={field.name}>Nama Lengkap</FieldLabel>
+                    <Input
+                      id={field.name}
+                      name={field.name}
+                      type="text"
+                      value={field.state.value}
+                      onBlur={field.handleBlur}
+                      onChange={(e) => field.handleChange(e.target.value)}
+                      aria-invalid={isInvalid}
+                      placeholder="Masukkan nama lengkap Anda"
+                      autoComplete="name"
+                    />
+                    {isInvalid && (
+                      <FieldError errors={field.state.meta.errors} />
+                    )}
+                  </Field>
+                )
+              }}
+            />
+
+            {/* EMAIL FIELD */}
             <form.Field
               name="email"
               children={(field) => {
@@ -111,6 +146,7 @@ export default function FormLogin() {
               }}
             />
 
+            {/* PASSWORD FIELD */}
             <form.Field
               name="password"
               children={(field) => {
@@ -131,7 +167,7 @@ export default function FormLogin() {
                         onChange={(e) => field.handleChange(e.target.value)}
                         aria-invalid={isInvalid}
                         placeholder="Masukkan password Anda"
-                        autoComplete="current-password"
+                        autoComplete="new-password"
                         className="pr-10"
                       />
 
@@ -168,25 +204,15 @@ export default function FormLogin() {
         </form>
       </CardContent>
 
-      <CardFooter className="flex flex-col gap-4">
+      <CardFooter>
         <Field orientation="horizontal">
           <Button type="button" variant="outline" onClick={() => form.reset()}>
             Reset
           </Button>
-          <Button type="submit" form="login-form">
-            Masuk
+          <Button type="submit" form="register-form">
+            Daftar
           </Button>
         </Field>
-
-        <p className="text-sm text-muted-foreground text-center">
-          Belum punya akun <span className="font-medium">Greenly Mart</span>?{" "}
-          <Link
-            to="/auth/regiister"
-            className="text-green-700 font-medium hover:underline"
-          >
-            Daftar
-          </Link>
-        </p>
       </CardFooter>
     </Card>
   )
