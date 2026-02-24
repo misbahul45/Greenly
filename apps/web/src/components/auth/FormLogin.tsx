@@ -28,12 +28,12 @@ import { Input } from "@/components/ui/input"
 const formSchema = z.object({
   email: z
     .string()
-    .min(1, "Email is required.")
-    .email("Please enter a valid email address."),
+    .min(1, "Email wajib diisi.")
+    .email("Masukkan alamat email yang valid."),
   password: z
     .string()
-    .min(6, "Password must be at least 6 characters.")
-    .max(100, "Password must be at most 100 characters."),
+    .min(6, "Password minimal 6 karakter.")
+    .max(100, "Password maksimal 100 karakter."),
 })
 
 export default function FormLogin() {
@@ -48,7 +48,7 @@ export default function FormLogin() {
       onSubmit: formSchema,
     },
     onSubmit: async ({ value }) => {
-      toast("Login submitted", {
+      toast("Login berhasil dikirim", {
         description: (
           <pre className="bg-code text-code-foreground mt-2 w-[320px] overflow-x-auto rounded-md p-4">
             <code>{JSON.stringify(value, null, 2)}</code>
@@ -68,9 +68,9 @@ export default function FormLogin() {
   return (
     <Card className="w-full sm:max-w-md">
       <CardHeader>
-        <CardTitle>Login</CardTitle>
+        <CardTitle>Masuk</CardTitle>
         <CardDescription>
-          Enter your email and password to access your account.
+          Masukkan email dan password untuk mengakses akun Anda.
         </CardDescription>
       </CardHeader>
 
@@ -100,7 +100,7 @@ export default function FormLogin() {
                       onBlur={field.handleBlur}
                       onChange={(e) => field.handleChange(e.target.value)}
                       aria-invalid={isInvalid}
-                      placeholder="you@example.com"
+                      placeholder="contoh@email.com"
                       autoComplete="email"
                     />
                     {isInvalid && (
@@ -130,7 +130,7 @@ export default function FormLogin() {
                         onBlur={field.handleBlur}
                         onChange={(e) => field.handleChange(e.target.value)}
                         aria-invalid={isInvalid}
-                        placeholder="Enter your password"
+                        placeholder="Masukkan password Anda"
                         autoComplete="current-password"
                         className="pr-10"
                       />
@@ -140,7 +140,9 @@ export default function FormLogin() {
                         onClick={() => setShowPassword((prev) => !prev)}
                         className="text-muted-foreground hover:text-foreground absolute right-3 top-1/2 -translate-y-1/2"
                         aria-label={
-                          showPassword ? "Hide password" : "Show password"
+                          showPassword
+                            ? "Sembunyikan password"
+                            : "Tampilkan password"
                         }
                       >
                         {showPassword ? (
@@ -152,7 +154,7 @@ export default function FormLogin() {
                     </div>
 
                     <FieldDescription>
-                      Your password must be at least 6 characters.
+                      Password minimal 6 karakter.
                     </FieldDescription>
 
                     {isInvalid && (
@@ -172,11 +174,10 @@ export default function FormLogin() {
             Reset
           </Button>
           <Button type="submit" form="login-form">
-            Login
+            Masuk
           </Button>
         </Field>
 
-        {/* REGISTER LINK */}
         <p className="text-sm text-muted-foreground text-center">
           Belum punya akun <span className="font-medium">Greenly Mart</span>?{" "}
           <Link

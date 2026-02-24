@@ -27,16 +27,16 @@ import { Input } from "@/components/ui/input"
 const formSchema = z.object({
   name: z
     .string()
-    .min(2, "Name must be at least 2 characters.")
-    .max(100, "Name must be at most 100 characters."),
+    .min(2, "Nama minimal 2 karakter.")
+    .max(100, "Nama maksimal 100 karakter."),
   email: z
     .string()
-    .min(1, "Email is required.")
-    .email("Please enter a valid email address."),
+    .min(1, "Email wajib diisi.")
+    .email("Masukkan alamat email yang valid."),
   password: z
     .string()
-    .min(6, "Password must be at least 6 characters.")
-    .max(100, "Password must be at most 100 characters."),
+    .min(6, "Password minimal 6 karakter.")
+    .max(100, "Password maksimal 100 karakter."),
 })
 
 export default function FormRegister() {
@@ -52,7 +52,7 @@ export default function FormRegister() {
       onSubmit: formSchema,
     },
     onSubmit: async ({ value }) => {
-      toast("Register submitted", {
+      toast("Pendaftaran berhasil dikirim", {
         description: (
           <pre className="bg-code text-code-foreground mt-2 w-[320px] overflow-x-auto rounded-md p-4">
             <code>{JSON.stringify(value, null, 2)}</code>
@@ -72,9 +72,9 @@ export default function FormRegister() {
   return (
     <Card className="w-full sm:max-w-md">
       <CardHeader>
-        <CardTitle>Register</CardTitle>
+        <CardTitle>Daftar</CardTitle>
         <CardDescription>
-          Create a new account by filling in the information below.
+          Buat akun baru dengan mengisi informasi di bawah ini.
         </CardDescription>
       </CardHeader>
 
@@ -97,7 +97,7 @@ export default function FormRegister() {
 
                 return (
                   <Field data-invalid={isInvalid}>
-                    <FieldLabel htmlFor={field.name}>Full Name</FieldLabel>
+                    <FieldLabel htmlFor={field.name}>Nama Lengkap</FieldLabel>
                     <Input
                       id={field.name}
                       name={field.name}
@@ -106,7 +106,7 @@ export default function FormRegister() {
                       onBlur={field.handleBlur}
                       onChange={(e) => field.handleChange(e.target.value)}
                       aria-invalid={isInvalid}
-                      placeholder="Your full name"
+                      placeholder="Masukkan nama lengkap Anda"
                       autoComplete="name"
                     />
                     {isInvalid && (
@@ -135,7 +135,7 @@ export default function FormRegister() {
                       onBlur={field.handleBlur}
                       onChange={(e) => field.handleChange(e.target.value)}
                       aria-invalid={isInvalid}
-                      placeholder="you@example.com"
+                      placeholder="contoh@email.com"
                       autoComplete="email"
                     />
                     {isInvalid && (
@@ -166,7 +166,7 @@ export default function FormRegister() {
                         onBlur={field.handleBlur}
                         onChange={(e) => field.handleChange(e.target.value)}
                         aria-invalid={isInvalid}
-                        placeholder="Enter your password"
+                        placeholder="Masukkan password Anda"
                         autoComplete="new-password"
                         className="pr-10"
                       />
@@ -176,7 +176,9 @@ export default function FormRegister() {
                         onClick={() => setShowPassword((prev) => !prev)}
                         className="text-muted-foreground hover:text-foreground absolute right-3 top-1/2 -translate-y-1/2"
                         aria-label={
-                          showPassword ? "Hide password" : "Show password"
+                          showPassword
+                            ? "Sembunyikan password"
+                            : "Tampilkan password"
                         }
                       >
                         {showPassword ? (
@@ -188,7 +190,7 @@ export default function FormRegister() {
                     </div>
 
                     <FieldDescription>
-                      Your password must be at least 6 characters.
+                      Password minimal 6 karakter.
                     </FieldDescription>
 
                     {isInvalid && (
@@ -208,7 +210,7 @@ export default function FormRegister() {
             Reset
           </Button>
           <Button type="submit" form="register-form">
-            Register
+            Daftar
           </Button>
         </Field>
       </CardFooter>
