@@ -87,7 +87,7 @@ export class AuthRepository{
         })    
     }
 
-    async findAuthToken(tokenHash:string, tokenType:AuthTokenType){
+    async findAuthTokenByHash(tokenHash:string, tokenType:AuthTokenType){
         return await this.db.authToken.findUnique({
             where:{
                 tokenHash,
@@ -96,7 +96,7 @@ export class AuthRepository{
         })
     }
 
-    async findOTPToken(id:number, tokenType:AuthTokenType){
+    async findAuthTokenById(id:number, tokenType:AuthTokenType){
         return await this.db.authToken.findUnique({
             where:{
                 id:id,

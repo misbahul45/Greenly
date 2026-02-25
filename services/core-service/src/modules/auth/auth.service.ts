@@ -60,7 +60,7 @@ export class AuthService {
 
   async verify(dto:VerifyEmailDTO, type:AuthTokenType){
     const hashedOtp = hashValue(dto.token);
-    const findToken=await this.repo.findAuthToken(hashedOtp, AuthTokenType.VERIFY_EMAIL)
+    const findToken=await this.repo.findAuthTokenByHash(hashedOtp, AuthTokenType.VERIFY_EMAIL)
 
     if (!findToken) {
       throw new AppError(
@@ -211,7 +211,7 @@ export class AuthService {
   }
 
   async refresh(token: string) {
-    const findAuthToken=await this.repo.findAuthToken(token, AuthTokenType.REFRESH_TOKEN)
+    const findAuthToken=await this.repo.findAuthTokenByHash(token, AuthTokenType.REFRESH_TOKEN)
 
     if(!findAuthToken){
       throw new AppError('Invalid refresh token', 404)
@@ -299,7 +299,7 @@ export class AuthService {
   }
 
   async changePassword(dto: ChangePasswordDTO) {
-    const findToken=await this.repo.findOTPToken(dto.tokenId, AuthTokenType.RESET_PASSWORD)
+    const findToken=await this.repo.findAuthTokenById(dto.tokenId, AuthTokenType.RESET_PASSWORD)
 
     if(!findToken){
       throw new AppError('Token not found', 404)

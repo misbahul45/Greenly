@@ -1,11 +1,13 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common'
 import { UsersRepositository } from './users.repository'
-import { type UserQueryDTO } from './users.dto'
+import { VerifyDeleteDTO, type UserQueryDTO } from './users.dto'
 import * as bcrypt from 'bcrypt'
 import { generateOtp, hashValue } from '../../../common/utils/crypto'
 import { AuthTokenType } from '../../../../generated/prisma/enums'
 import { ConfigService } from '@nestjs/config'
 import { sendEmail } from '../../../common/utils/email'
+import { AppError } from '../../../libs/errors/app.error'
+import { ScheduleService } from './schedule.service'
 
 @Injectable()
 
@@ -13,6 +15,7 @@ export class UsersService {
   constructor(
     private readonly repo: UsersRepositository,
     private readonly config:ConfigService,
+    private readonly schedule:ScheduleService
 ) {}
 
   async findAll(query: UserQueryDTO) {
@@ -117,7 +120,32 @@ export class UsersService {
     });
 
     return {
-      message: 'User deleted successfully',
+      message: 'Check your validation otp for delete your Accoount',
     }
   }
+
+
+
+  async verifyRemove(payload:VerifyDeleteDTO){
+      const hashedOtp = hashValue(payload.token);
+      const findToken=await this.repo.findAuthToken(hashedOtp, AuthTokenType.DELETE_USER)
+
+      if(!findToken || !findToken.userId){
+        throw new AppError('Invalid otp token', 400)
+      }
+
+      const findUser=await this.repo.findUser(findToken.userId)
+
+      // soft delete
+
+      await this.repo.softDeleteUser(findToken.userId)
+
+      await this.repo.markTokenUsed(findToken.id)
+
+      await this.schedule.cleanUpUser()
+      return{
+        message:'User sucessfully deleted'
+      }
+  }
+
 }

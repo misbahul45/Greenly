@@ -92,6 +92,7 @@ model User {
 
   @@map("users")
   @@index([email])
+  @@index([deletedAt])
 }
 
 model UserProfile {

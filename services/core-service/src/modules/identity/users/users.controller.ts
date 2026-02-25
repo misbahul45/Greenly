@@ -20,6 +20,8 @@ import {
   type UserIdParamDTO,
   type CreateUserDTO,
   type UpdateUserDTO,
+  VerifyDeleteSchema,
+  type VerifyDeleteDTO,
 } from './users.dto'
 import { Roles } from '../../auth/decorators/roles.decorator'
 import { CurrentUser } from '../../auth/decorators/current-user.decorator'
@@ -85,7 +87,12 @@ export class UsersController {
   }
 
   @Delete('/delete/verify')
-  async verifyRemove(){
-    
+  async verifyRemove(
+    @Body(new ZodValidationPipe(VerifyDeleteSchema)) 
+    body:VerifyDeleteDTO
+  ){
+    return ErrorHandler(()=>(
+      this.service.verifyRemove(body)
+    ))
   }
 }

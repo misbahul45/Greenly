@@ -98,6 +98,7 @@ export class UsersRepositository {
       data: {
         deletedAt: new Date(),
         isActive: false,
+        status:UserStatus.SUSPENDED,
       },
     })
   }
@@ -118,13 +119,40 @@ export class UsersRepositository {
     })
   }
 
-  async findAuthToken(
-    tokenId:number
-  ){
-    return await this.db.authToken.findUnique({
-        where:{
-            id:tokenId
-        }
-    })
-  }
+    async anonymizeUsersOlderThan(date: Date) {
+      return this.db.user.updateMany({
+        where: {
+          deletedAt: {
+            not: null,
+            lte: date,
+          },
+        },
+        data: {
+          name: 'Deleted User',
+          phone: null,
+          address: null,
+        },
+      });
+    }
+
+    async findAuthToken(tokenHash:string, tokenType:AuthTokenType){
+      return await this.db.authToken.findUnique({
+          where:{
+              tokenHash,
+              type:tokenType
+          },
+      })
+    }
+
+    async markTokenUsed(tokenId:number){
+        return await this.db.authToken.update({
+            where:{
+                id:tokenId
+            },
+            data:{
+                usedAt:new Date()
+            }
+        })
+    }
+
 }
