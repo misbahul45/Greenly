@@ -1,9 +1,9 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common'
 import { UsersRepositository } from './users.repository'
-import { VerifyDeleteDTO, type UserQueryDTO } from './users.dto'
+import { UserIdParamDTO, VerifyDeleteDTO, type UserQueryDTO } from './users.dto'
 import * as bcrypt from 'bcrypt'
 import { generateOtp, hashValue } from '../../../common/utils/crypto'
-import { AuthTokenType } from '../../../../generated/prisma/enums'
+import { AuthTokenType, UserStatus } from '../../../../generated/prisma/enums'
 import { ConfigService } from '@nestjs/config'
 import { sendEmail } from '../../../common/utils/email'
 import { AppError } from '../../../libs/errors/app.error'
@@ -146,6 +146,18 @@ export class UsersService {
       return{
         message:'User sucessfully deleted'
       }
+  }
+
+  async bannedUser(params:UserIdParamDTO){
+    const findUser=await this.repo.findUser(params.id)
+
+    if(!findUser){
+      throw new AppError('User not found', 404)
+    }
+
+    await this.repo.updateUser(params.id, {
+      status:UserStatus.BANNED
+    })
   }
 
 }
