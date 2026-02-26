@@ -5,7 +5,10 @@ import { StringValue } from 'ms';
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { AuthRepository } from './auth.repository';
-import { UserRegisteredEvent } from './events/user.registered.event';
+import { EmailConsume } from './consumer/email.consume';
+import { UserRegisteredPublisher } from './publisher/user_registered.publisher';
+import { UserLoginPublisher } from './publisher/user_login.publisher';
+import { UserVerifiedPublisher } from './publisher/user_verified.publisher';
 
 @Module({
   imports: [
@@ -22,12 +25,15 @@ import { UserRegisteredEvent } from './events/user.registered.event';
     })
   ],
 
-  controllers: [AuthController],
+  controllers: [AuthController, EmailConsume],
 
   providers: [
     AuthRepository,
     AuthService,
-    UserRegisteredEvent,
+    UserRegisteredPublisher,
+    UserLoginPublisher,
+    UserRegisteredPublisher,
+    UserVerifiedPublisher
   ],
 
   exports: [AuthService],

@@ -9,13 +9,21 @@ import { generateOtp, hashValue } from '../../common/utils/crypto';
 import { JwtService } from '@nestjs/jwt';
 import { StringValue } from 'ms';
 import { AuthTokenType } from '../../../generated/prisma/enums';
+import { UserRegisteredPublisher } from './publisher/user_registered.publisher';
+import { UserVerifiedPublisher } from './publisher/user_verified.publisher';
+import { UserForgotPasswordPublisher } from './publisher/user_forgot_password.publisher';
+import { UserLoginPublisher } from './publisher/user_login.publisher';
 
 @Injectable()
 export class AuthService {
   constructor(
     private readonly repo:AuthRepository,
+    private readonly jwt:JwtService,
     private readonly config:ConfigService,
-    private readonly jwt:JwtService
+    private readonly registerPublisher:UserRegisteredPublisher,
+    private readonly verifiedPublisher:UserVerifiedPublisher,
+    private readonly forgotPasswordPublisher:UserForgotPasswordPublisher,
+    private readonly loginPublisher:UserLoginPublisher
   ){}
 
   async register(dto: RegisterDTO) {
@@ -32,22 +40,14 @@ export class AuthService {
       password: hashedPassword,
     });
 
-    const emailConfig = this.config.get('emailJs', { infer: true });
+    this.registerPublisher.publishEmail({
+      email:data.user.email,
+      name:dto.name,
+      otp:data.payload.otp,
+      action:'Verify email'
+    })
 
-    if (!emailConfig) {
-      throw new Error('Email config not found');
-    }
 
-    await sendEmail({
-      serviceId: emailConfig.serviceId,
-      templateId: emailConfig.templates.verifyEmail,
-      userId: emailConfig.userId,     
-      accessToken: emailConfig.accessToken,
-      email: dto.email,
-      name: dto.name,
-      token: data.payload.otp,
-      action:'verify account'
-    });
     return {
       message: 'User registered',
       data: {
@@ -274,16 +274,12 @@ export class AuthService {
     const hashedOtp = hashValue(rawOtp);
     const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
 
-    await sendEmail({
-      serviceId: emailConfig.serviceId,
-      templateId: emailConfig.templates.verifyEmail,
-      userId: emailConfig.userId,     
-      accessToken: emailConfig.accessToken,
-      email: existedUser.email,
-      name: existedUser.profile?.fullName || 'Anonymus',
-      token: rawOtp,
-      action:'reset password'
-    });
+    await this.forgotPasswordPublisher.publishEmail({
+      email:existedUser.email,
+      name:existedUser.profile?.fullName || 'anonymus',
+      otp:rawOtp,
+      action:'Reset password'
+    })
 
     await this.repo.saveToken({
       userId:existedUser.id,

@@ -34,7 +34,7 @@ export class JwtAccessStrategy extends PassportStrategy(Strategy, 'jwt-access') 
     if (user.deletedAt){
         throw new AppError('User deleted', 400)
     }
-
+    
     return {
       id: user.id,
       email: user.email,
