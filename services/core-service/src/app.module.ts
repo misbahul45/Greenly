@@ -15,7 +15,7 @@ import { ScheduleModule } from '@nestjs/schedule';
       load:[envConfig],
       envFilePath:'.env'
     }),
-    ScheduleModule.forRoot()
+    ScheduleModule.forRoot(),
   ],
   providers: [
     {

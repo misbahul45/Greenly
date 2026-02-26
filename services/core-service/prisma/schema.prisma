@@ -15,6 +15,13 @@ enum ShopStatus {
   SUSPENDED
 }
 
+enum PayoutStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
 enum AuthTokenType {
   VERIFY_EMAIL
   RESET_PASSWORD
@@ -85,7 +92,7 @@ model User {
   cart           Cart?
   orders         Order[]
   notifications  Notification[]
-  ownedShop      Shop?     @relation("ShopOwner")
+  ownedShop      Shop[]     @relation("ShopOwner")
   followingShops ShopFollower[]
   events         UserEvent[]
   tokens         AuthToken[] 
@@ -154,12 +161,13 @@ model UserRole {
 
 model Shop {
   id          Int        @id @default(autoincrement())
-  ownerId     Int        @unique
+  ownerId     Int
   name        String
   description String?
   status      ShopStatus @default(PENDING)
   balance     Decimal    @default(0) @db.Decimal(15,2)
   createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
 
   owner       User            @relation("ShopOwner", fields: [ownerId], references: [id])
   members     ShopMember[]
@@ -170,6 +178,7 @@ model Shop {
   ledger      ShopLedger[]
 
   @@map("shops")
+  @@index([ownerId])
 }
 
 model ShopFollower {
@@ -200,12 +209,12 @@ model ShopApplication {
   notes       String?
   createdAt   DateTime         @default(now())
   reviewedAt  DateTime?
+  updatedAt   DateTime         @updatedAt
 
   shop        Shop @relation(fields: [shopId], references: [id])
 
   @@map("shop_applications")
 }
-
 model ShopMember {
   id     Int @id @default(autoincrement())
   shopId Int
@@ -286,6 +295,8 @@ model Payment {
   transactionId   String?
   createdAt       DateTime      @default(now())
   paidAt          DateTime?
+  updatedAt       DateTime      @updatedAt
+
 
   order   Order   @relation(fields: [orderId], references: [id])
   refunds Refund[]
@@ -307,12 +318,13 @@ model Refund {
 }
 
 model ShopLedger {
-  id        Int        @id @default(autoincrement())
-  shopId    Int
-  type      LedgerType
-  amount    Decimal    @db.Decimal(15,2)
-  reference String
-  createdAt DateTime   @default(now())
+  id          Int        @id @default(autoincrement())
+  shopId      Int
+  type        LedgerType
+  amount      Decimal    @db.Decimal(15,2)
+  reference   String
+  description String?
+  createdAt   DateTime   @default(now())
 
   shop Shop @relation(fields: [shopId], references: [id])
 
@@ -324,7 +336,7 @@ model Payout {
   id        Int      @id @default(autoincrement())
   shopId    Int
   amount    Decimal  @db.Decimal(15,2)
-  status    String
+  status    PayoutStatus @default(PENDING)
   createdAt DateTime @default(now())
   paidAt    DateTime?
 
