@@ -133,7 +133,7 @@ model AuthToken {
   @@map("auth_tokens")
 }
 
-model Permission {
+model Permission {          email: null,
   id    Int    @id @default(autoincrement())
   name  String @unique
   roles Role[]
