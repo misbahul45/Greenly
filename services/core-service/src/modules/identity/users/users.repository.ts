@@ -119,21 +119,24 @@ export class UsersRepositository {
     })
   }
 
-    async anonymizeUsersOlderThan(date: Date) {
-      return this.db.user.updateMany({
-        where: {
+  async anonymizeUsersOlderThan(date: Date) {
+    return this.db.userProfile.updateMany({
+      where: {
+        user: {
           deletedAt: {
             not: null,
             lte: date,
           },
         },
-        data: {
-          name: 'Deleted User',
-          phone: null,
-          address: null,
-        },
-      });
-    }
+      },
+      data: {
+        phone: null,
+        address: null,
+        avatarUrl: null,
+        fullName: 'Deleted User',
+      },
+    });
+  }
 
     async findAuthToken(tokenHash:string, tokenType:AuthTokenType){
       return await this.db.authToken.findUnique({
