@@ -15,6 +15,7 @@ class _FormRegisterState extends State<FormRegister> {
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
   final confirmPasswordController = TextEditingController();
+  final nameController=TextEditingController();
 
   bool obscurePassword = true;
   bool obscureConfirmPassword = true;
@@ -72,6 +73,14 @@ class _FormRegisterState extends State<FormRegister> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            /// Name
+            Textvalidation(
+              hint: "Fullname", 
+              controller: nameController,
+              prefixIcon: Icons.account_balance_rounded,
+              validator: AuthValidation.name,
+            ),
+                    
             /// EMAIL
             Textvalidation(
               hint: "Email",

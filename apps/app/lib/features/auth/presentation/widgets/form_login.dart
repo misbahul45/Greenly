@@ -55,7 +55,7 @@ class _FormLoginState extends State<FormLogin> {
         key: _formKey,
         child: Column(
           mainAxisSize: MainAxisSize.min,
-          children: [
+          children: [   
             /// EMAIL
             Textvalidation(
               hint: "Email",

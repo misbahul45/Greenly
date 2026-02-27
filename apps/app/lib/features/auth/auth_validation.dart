@@ -18,6 +18,16 @@ class AuthValidation {
 
     return null;
   }
+  static String? name(String? value) {
+    final requiredCheck = required(value, "Nama");
+    if (requiredCheck != null) return requiredCheck;
+
+    if (value!.length < 3) {
+      return "Nama minimal 3 karakter";
+    }
+
+    return null;
+  }
 
   static String? password(String? value) {
     final requiredCheck = required(value, "Password");

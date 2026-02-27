@@ -17,6 +17,10 @@ export const RegisterSchema = z.object({
     .string()
     .min(8)
     .max(100),
+  confirmPassword: z
+    .string()
+    .min(8)
+    .max(100),
 });
 
 export type RegisterDTO = z.infer<typeof RegisterSchema>;
@@ -25,7 +29,6 @@ export type RegisterDTO = z.infer<typeof RegisterSchema>;
 
 export const LoginSchema = z.object({
   email: z.string().email().toLowerCase(),
-
   password: z.string().min(1),
 });
 
@@ -38,8 +41,6 @@ export const RefreshTokenSchema = z.object({
 });
 
 export type RefreshTokenDTO = z.infer<typeof RefreshTokenSchema>;
-
-
 
 export const VerifyEmailSchema = z.object({
   token: z.string().min(6),
