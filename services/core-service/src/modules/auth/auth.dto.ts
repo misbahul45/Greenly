@@ -19,9 +19,10 @@ export const RegisterSchema = z.object({
     .max(100),
   confirmPassword: z
     .string()
-    .min(8)
-    .max(100),
-});
+}).refine((data) => data.password === data.confirmPassword, {
+    message: "Password dan konfirmasi password harus sama",
+    path: ["confirmPassword"], 
+  });;
 
 export type RegisterDTO = z.infer<typeof RegisterSchema>;
 

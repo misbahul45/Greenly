@@ -1,7 +1,7 @@
 export default () => ({
   rabbitmq: {
     url: process.env.RABBITMQ_URL || 'amqp://guest:guest@localhost:5672/',
-    queue: process.env.RABBITMQ_QUEUE || 'greenly_queue',
+    queue: process.env.RABBITMQ_QUEUE || 'default_queue',
     noAck: process.env.RABBITMQ_NO_ACK === 'true',
   },
 
@@ -30,7 +30,6 @@ export default () => ({
     accessToken:process.env.EMAIL_JS_PRIVATE_KEY,
     templates: {
       verifyEmail: process.env.EMAIL_JS_VERIFY_EMAIL_TEMPLATE_ID,
-      resetPassword: process.env.EMAIL_JS_RESET_PW_TEMPLATE_ID,
     },
   },
 

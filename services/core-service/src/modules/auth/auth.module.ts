@@ -26,7 +26,7 @@ import { UserForgotPasswordPublisher } from './publisher/user_forgot_password.pu
     })
   ],
 
-  controllers: [AuthController],
+  controllers: [AuthController, EmailConsume],
 
   providers: [
     AuthRepository,
@@ -35,7 +35,6 @@ import { UserForgotPasswordPublisher } from './publisher/user_forgot_password.pu
     UserLoginPublisher,
     UserVerifiedPublisher,
     UserForgotPasswordPublisher,
-    EmailConsume
   ],
 
   exports: [AuthService],

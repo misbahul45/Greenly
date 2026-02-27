@@ -10,15 +10,21 @@ async function bootstrap() {
 
   const configService = app.get(ConfigService);
 
-  const urls = [configService.get<string>('rabbitmq.url') ?? 'amqp://localhost:5672'];
-  const queue = configService.get<string>('rabbitmq.queue') ?? 'default_queue';
+  const queue = configService.get<string>('rabbitmq.queue') ?? 'greenly_queue';
+  const url = configService.get<string>('rabbitmq.url') ?? 'amqp://guest:guest@rabbitmq:5672/';
 
-  const microservice = app.connectMicroservice<MicroserviceOptions>({
+  console.log({
+    queue,
+    url
+  })
+
+  app.connectMicroservice({
     transport: Transport.RMQ,
     options: {
-      urls,
+      urls: [url],
       queue,
       queueOptions: { durable: true },
+      noAck: configService.get('rabbitmq.noAck') ?? false,
     },
   });
 
