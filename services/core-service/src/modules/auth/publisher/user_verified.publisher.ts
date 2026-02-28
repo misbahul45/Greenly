@@ -1,6 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { MessaggingService } from "../../../libs/messagging/messagging.service";
-import { PayloadEmail } from "../types/event";
+import { PayloadEmail } from "../../../common/types/event";
 
 @Injectable()
 export class UserVerifiedPublisher {

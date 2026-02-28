@@ -10,6 +10,8 @@ import { UserRegisteredPublisher } from './publisher/user_registered.publisher';
 import { UserLoginPublisher } from './publisher/user_login.publisher';
 import { UserVerifiedPublisher } from './publisher/user_verified.publisher';
 import { UserForgotPasswordPublisher } from './publisher/user_forgot_password.publisher';
+import { JwtRefreshStrategy } from './strategies/jwt.refresh.strategy';
+import { JwtAccessStrategy } from './strategies/jwt.access.strategy';
 
 @Module({
   imports: [
@@ -35,6 +37,8 @@ import { UserForgotPasswordPublisher } from './publisher/user_forgot_password.pu
     UserLoginPublisher,
     UserVerifiedPublisher,
     UserForgotPasswordPublisher,
+    JwtAccessStrategy,
+    JwtRefreshStrategy
   ],
 
   exports: [AuthService],

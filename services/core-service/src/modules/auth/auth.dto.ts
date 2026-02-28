@@ -27,7 +27,6 @@ export const RegisterSchema = z.object({
 export type RegisterDTO = z.infer<typeof RegisterSchema>;
 
 
-
 export const LoginSchema = z.object({
   email: z.string().email().toLowerCase(),
   password: z.string().min(1),

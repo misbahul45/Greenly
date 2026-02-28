@@ -4,6 +4,7 @@ import { Strategy, ExtractJwt } from 'passport-jwt';
 import { ConfigService } from '@nestjs/config';
 import { AuthRepository } from '../auth.repository';
 import { Request } from 'express';
+import { AppError } from '../../../libs/errors/app.error';
 
 @Injectable()
 export class JwtRefreshStrategy extends PassportStrategy(
@@ -25,10 +26,10 @@ export class JwtRefreshStrategy extends PassportStrategy(
     const user = await this.repo.checkUserById(payload.sub);
     const refreshToken = req.get('Authorization')?.replace('Bearer', '').trim();
 
-    if (!user) throw new UnauthorizedException();
+    if (!user) throw new AppError('Unauthorized', 401);
 
     return {
-      id: user.id,
+      sub: user.id,
       email: user.email,
       roles: payload.roles,
       refreshToken,

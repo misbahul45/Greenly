@@ -8,7 +8,7 @@ import {
   Query,
   Body,
 } from '@nestjs/common'
-import { UsersService } from './users.service'
+import { UsersService } from './services/users.service'
 import ErrorHandler from '../../../libs/errors/handler.error'
 import { ZodValidationPipe } from '../../../libs/pipes/zod-validation.pipe'
 import {

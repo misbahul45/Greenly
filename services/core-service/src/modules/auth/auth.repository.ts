@@ -153,6 +153,16 @@ export class AuthRepository{
 
         const hashedToken = await bcrypt.hash(payload.token, 10);
 
+          await this.db.authToken.updateMany({
+            where: {
+                userId: payload.userId,
+                type: payload.tokenType,
+                usedAt: null,
+            },
+            data: {
+                usedAt: new Date(),
+            },
+        });
         return this.db.authToken.create({
             data: {
                 userId: payload.userId,
@@ -198,6 +208,18 @@ export class AuthRepository{
             },
             data:{
                 passwordHash
+            }
+        })
+    }
+
+    async deactiveAllAuthToken(userId:number){
+        return await this.db.authToken.updateMany({
+            where:{
+                userId,
+                usedAt:null
+            },
+            data:{
+                usedAt:new Date()
             }
         })
     }

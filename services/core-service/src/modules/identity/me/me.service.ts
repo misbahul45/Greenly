@@ -10,6 +10,7 @@ export class MeService {
     ){}
 
     async me(dto:UserLogin) {
+        console.log(dto)
         const user=await this.repo.getUserById(dto.sub)
 
         if(!user){

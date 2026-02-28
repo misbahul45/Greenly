@@ -123,7 +123,9 @@ export class AuthController {
   }
 
   @Post('logout')
-  logout() {
-    return ErrorHandler(() => this.authService.logout());
+  logout(
+    @CurrentUser() user:UserLogin
+  ) {
+    return ErrorHandler(() => this.authService.logout(user.sub));
   }
 }

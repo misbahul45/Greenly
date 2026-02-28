@@ -1,13 +1,14 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common'
-import { UsersRepositository } from './users.repository'
-import { UserIdParamDTO, VerifyDeleteDTO, type UserQueryDTO } from './users.dto'
+import { UsersRepositository } from '../users.repository'
+import { UserIdParamDTO, VerifyDeleteDTO, type UserQueryDTO } from '../users.dto'
 import * as bcrypt from 'bcrypt'
-import { generateOtp, hashValue } from '../../../common/utils/crypto'
-import { AuthTokenType, UserStatus } from '../../../../generated/prisma/enums'
+import { generateOtp, hashValue } from '../../../../common/utils/crypto'
+import { AuthTokenType, UserStatus } from '../../../../../generated/prisma/enums'
 import { ConfigService } from '@nestjs/config'
-import { sendEmail } from '../../../common/utils/email'
-import { AppError } from '../../../libs/errors/app.error'
+import { sendEmail } from '../../../../common/utils/email'
+import { AppError } from '../../../../libs/errors/app.error'
 import { ScheduleService } from './schedule.service'
+import { DeletedUserPublisher } from '../publisher/deleted.user.publisher'
 
 @Injectable()
 
@@ -15,7 +16,8 @@ export class UsersService {
   constructor(
     private readonly repo: UsersRepositository,
     private readonly config:ConfigService,
-    private readonly schedule:ScheduleService
+    private readonly schedule:ScheduleService,
+    private readonly deletedUserPublisher:DeletedUserPublisher
 ) {}
 
   async findAll(query: UserQueryDTO) {
@@ -108,16 +110,12 @@ export class UsersService {
       throw new Error('Email config not found');
     }
 
-    await sendEmail({
-        serviceId: emailConfig.serviceId,
-        templateId: emailConfig.templates.verifyEmail,
-        userId: emailConfig.userId,     
-        accessToken: emailConfig.accessToken,
-        email: findUser.email,
-        name: findUser.profile.name,
-        token: rawOtp,
-        action:'delete account'
-    });
+    await this.deletedUserPublisher.publishEmail({
+      email: findUser.email,
+      name: findUser.profile.name,
+      otp: rawOtp,
+      action:'delete account'
+    })
 
     return {
       message: 'Check your validation otp for delete your Accoount',

@@ -8,6 +8,7 @@ import {
 } from '@nestjs/common'
 import { Reflector } from '@nestjs/core'
 import { ROLES_KEY } from '../decorators/roles.decorator'
+import { AppError } from '../../../libs/errors/app.error'
 
 @Injectable()
 export class RolesGuard implements CanActivate {
@@ -28,7 +29,7 @@ export class RolesGuard implements CanActivate {
     )
 
     if (!hasRole) {
-      throw new ForbiddenException('Insufficient role')
+      throw new AppError('Insufficient role', 403)
     }
 
     return true

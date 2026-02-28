@@ -10,7 +10,7 @@ import {
 import CircuitBreaker from "opossum";
 
 import { sendEmail } from "../../../common/utils/email";
-import { type PayloadEmail } from "../types/event";
+import { type PayloadEmail } from "../../../common/types/event";
 import { AppError } from "../../../libs/errors/app.error";
 
 @Controller()
@@ -98,5 +98,31 @@ export class EmailConsume implements OnModuleInit {
     });
 
     console.log("OTP reset sent to:", payload.email);
+  }
+
+  @EventPattern("auth.user.deleted")
+  async sendDeletedOtp(
+    @Payload() payload: PayloadEmail
+  ) {
+    console.log("Received event:", payload);
+
+    const emailConfig = this.config.get("emailJs", { infer: true });
+
+    if (!emailConfig) {
+      throw new AppError("Email config not found", 500);
+    }
+
+    await this.breaker.fire({
+      serviceId: emailConfig.serviceId,
+      templateId: emailConfig.templates.verifyEmail,
+      userId: emailConfig.userId,
+      accessToken: emailConfig.accessToken,
+      email: payload.email,
+      name: payload.name,
+      token: payload.otp,
+      action: payload.action,
+    });
+
+    console.log("deleted email sent to:", payload.email);
   }
 }

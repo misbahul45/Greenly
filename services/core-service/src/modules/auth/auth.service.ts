@@ -317,7 +317,9 @@ export class AuthService {
     };
   }
 
-  async logout() {
+  async logout(userId:number) {
+    await this.repo.deactiveAllAuthToken(userId);
+    
     return {
       message: 'Logged out successfully',
     };

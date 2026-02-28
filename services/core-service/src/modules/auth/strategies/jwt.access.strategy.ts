@@ -17,11 +17,18 @@ export class JwtAccessStrategy extends PassportStrategy(Strategy, 'jwt-access') 
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       secretOrKey: config.get<string>('jwt.access.key') ?? 'default-secret',
       ignoreExpiration: false,
+      passReqToCallback: true,
     });
   }
 
   async validate(req: Request,payload: any) {
     const accessToken = req.get('Authorization')?.replace('Bearer', '').trim();
+
+    console.log('accessToken', accessToken)
+    
+    if(!accessToken){
+      throw new AppError('Unauthorized', 401)
+    }
 
     const user = await this.repo.checkUserById(payload.sub);
 
@@ -36,7 +43,7 @@ export class JwtAccessStrategy extends PassportStrategy(Strategy, 'jwt-access') 
     }
     
     return {
-      id: user.id,
+      sub: user.id,
       email: user.email,
       roles: payload.roles,
       accessToken

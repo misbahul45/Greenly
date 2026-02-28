@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
-import { UsersRepositository } from './users.repository';
+import { UsersRepositository } from '../users.repository';
 
 @Injectable()
 export class ScheduleService {
