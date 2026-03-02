@@ -7,6 +7,7 @@ import {
 import type { QueryClient } from "@tanstack/react-query"
 import appCss from "../styles.css?url"
 import TanStackQueryProvider from "../integrations/tanstack-query/root-provider"
+import { Toaster } from "sonner"
 
 interface MyRouterContext {
   queryClient: QueryClient
@@ -31,6 +32,7 @@ function RootDocument() {
         <HeadContent />
       </head>
       <body className="bg-[#F5F1E8]">
+        <Toaster />
         <TanStackQueryProvider>
           <Outlet />
         </TanStackQueryProvider>

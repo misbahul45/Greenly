@@ -12,7 +12,10 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as SellerRouteImport } from './routes/seller'
 import { Route as HomeRouteImport } from './routes/home'
 import { Route as AdminRouteImport } from './routes/admin'
+import { Route as AuthedRouteRouteImport } from './routes/_authed/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as SellerProdukRouteImport } from './routes/seller/produk'
+import { Route as SellerPesananRouteImport } from './routes/seller/pesanan'
 import { Route as SellerDashboardRouteImport } from './routes/seller/dashboard'
 import { Route as DemoTanstackQueryRouteImport } from './routes/demo/tanstack-query'
 import { Route as AuthRegisterRouteImport } from './routes/auth/register'
@@ -23,6 +26,7 @@ import { Route as AdminKategoriRouteImport } from './routes/admin/kategori'
 import { Route as AdminDashboardRouteImport } from './routes/admin/dashboard'
 import { Route as AdminCustomerRouteImport } from './routes/admin/customer'
 import { Route as AdminApprovalRouteImport } from './routes/admin/approval'
+import { Route as AuthedUserDataRouteImport } from './routes/_authed/user/data'
 
 const SellerRoute = SellerRouteImport.update({
   id: '/seller',
@@ -39,10 +43,24 @@ const AdminRoute = AdminRouteImport.update({
   path: '/admin',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthedRouteRoute = AuthedRouteRouteImport.update({
+  id: '/_authed',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const SellerProdukRoute = SellerProdukRouteImport.update({
+  id: '/produk',
+  path: '/produk',
+  getParentRoute: () => SellerRoute,
+} as any)
+const SellerPesananRoute = SellerPesananRouteImport.update({
+  id: '/pesanan',
+  path: '/pesanan',
+  getParentRoute: () => SellerRoute,
 } as any)
 const SellerDashboardRoute = SellerDashboardRouteImport.update({
   id: '/dashboard',
@@ -94,6 +112,11 @@ const AdminApprovalRoute = AdminApprovalRouteImport.update({
   path: '/approval',
   getParentRoute: () => AdminRoute,
 } as any)
+const AuthedUserDataRoute = AuthedUserDataRouteImport.update({
+  id: '/user/data',
+  path: '/user/data',
+  getParentRoute: () => AuthedRouteRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -110,6 +133,9 @@ export interface FileRoutesByFullPath {
   '/auth/register': typeof AuthRegisterRoute
   '/demo/tanstack-query': typeof DemoTanstackQueryRoute
   '/seller/dashboard': typeof SellerDashboardRoute
+  '/seller/pesanan': typeof SellerPesananRoute
+  '/seller/produk': typeof SellerProdukRoute
+  '/user/data': typeof AuthedUserDataRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -126,10 +152,14 @@ export interface FileRoutesByTo {
   '/auth/register': typeof AuthRegisterRoute
   '/demo/tanstack-query': typeof DemoTanstackQueryRoute
   '/seller/dashboard': typeof SellerDashboardRoute
+  '/seller/pesanan': typeof SellerPesananRoute
+  '/seller/produk': typeof SellerProdukRoute
+  '/user/data': typeof AuthedUserDataRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_authed': typeof AuthedRouteRouteWithChildren
   '/admin': typeof AdminRouteWithChildren
   '/home': typeof HomeRoute
   '/seller': typeof SellerRouteWithChildren
@@ -143,6 +173,9 @@ export interface FileRoutesById {
   '/auth/register': typeof AuthRegisterRoute
   '/demo/tanstack-query': typeof DemoTanstackQueryRoute
   '/seller/dashboard': typeof SellerDashboardRoute
+  '/seller/pesanan': typeof SellerPesananRoute
+  '/seller/produk': typeof SellerProdukRoute
+  '/_authed/user/data': typeof AuthedUserDataRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -161,6 +194,9 @@ export interface FileRouteTypes {
     | '/auth/register'
     | '/demo/tanstack-query'
     | '/seller/dashboard'
+    | '/seller/pesanan'
+    | '/seller/produk'
+    | '/user/data'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -177,9 +213,13 @@ export interface FileRouteTypes {
     | '/auth/register'
     | '/demo/tanstack-query'
     | '/seller/dashboard'
+    | '/seller/pesanan'
+    | '/seller/produk'
+    | '/user/data'
   id:
     | '__root__'
     | '/'
+    | '/_authed'
     | '/admin'
     | '/home'
     | '/seller'
@@ -193,10 +233,14 @@ export interface FileRouteTypes {
     | '/auth/register'
     | '/demo/tanstack-query'
     | '/seller/dashboard'
+    | '/seller/pesanan'
+    | '/seller/produk'
+    | '/_authed/user/data'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthedRouteRoute: typeof AuthedRouteRouteWithChildren
   AdminRoute: typeof AdminRouteWithChildren
   HomeRoute: typeof HomeRoute
   SellerRoute: typeof SellerRouteWithChildren
@@ -228,12 +272,33 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authed': {
+      id: '/_authed'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthedRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/seller/produk': {
+      id: '/seller/produk'
+      path: '/produk'
+      fullPath: '/seller/produk'
+      preLoaderRoute: typeof SellerProdukRouteImport
+      parentRoute: typeof SellerRoute
+    }
+    '/seller/pesanan': {
+      id: '/seller/pesanan'
+      path: '/pesanan'
+      fullPath: '/seller/pesanan'
+      preLoaderRoute: typeof SellerPesananRouteImport
+      parentRoute: typeof SellerRoute
     }
     '/seller/dashboard': {
       id: '/seller/dashboard'
@@ -305,8 +370,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminApprovalRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/_authed/user/data': {
+      id: '/_authed/user/data'
+      path: '/user/data'
+      fullPath: '/user/data'
+      preLoaderRoute: typeof AuthedUserDataRouteImport
+      parentRoute: typeof AuthedRouteRoute
+    }
   }
 }
+
+interface AuthedRouteRouteChildren {
+  AuthedUserDataRoute: typeof AuthedUserDataRoute
+}
+
+const AuthedRouteRouteChildren: AuthedRouteRouteChildren = {
+  AuthedUserDataRoute: AuthedUserDataRoute,
+}
+
+const AuthedRouteRouteWithChildren = AuthedRouteRoute._addFileChildren(
+  AuthedRouteRouteChildren,
+)
 
 interface AdminRouteChildren {
   AdminApprovalRoute: typeof AdminApprovalRoute
@@ -330,10 +414,14 @@ const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
 
 interface SellerRouteChildren {
   SellerDashboardRoute: typeof SellerDashboardRoute
+  SellerPesananRoute: typeof SellerPesananRoute
+  SellerProdukRoute: typeof SellerProdukRoute
 }
 
 const SellerRouteChildren: SellerRouteChildren = {
   SellerDashboardRoute: SellerDashboardRoute,
+  SellerPesananRoute: SellerPesananRoute,
+  SellerProdukRoute: SellerProdukRoute,
 }
 
 const SellerRouteWithChildren =
@@ -341,6 +429,7 @@ const SellerRouteWithChildren =
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthedRouteRoute: AuthedRouteRouteWithChildren,
   AdminRoute: AdminRouteWithChildren,
   HomeRoute: HomeRoute,
   SellerRoute: SellerRouteWithChildren,

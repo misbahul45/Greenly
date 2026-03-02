@@ -56,3 +56,10 @@ export const updateUserSchema = z.object({
 })
 
 export type UpdateUserDTO = z.infer<typeof updateUserSchema>
+
+
+export const VerifyDeleteSchema = z.object({
+  token: z.string().min(6),
+});
+
+export type VerifyDeleteDTO = z.infer<typeof VerifyDeleteSchema>;

@@ -1,11 +1,14 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common'
-import { UsersRepositository } from './users.repository'
-import { type UserQueryDTO } from './users.dto'
+import { UsersRepositository } from '../users.repository'
+import { UserIdParamDTO, VerifyDeleteDTO, type UserQueryDTO } from '../users.dto'
 import * as bcrypt from 'bcrypt'
-import { generateOtp, hashValue } from '../../../common/utils/crypto'
-import { AuthTokenType } from '../../../../generated/prisma/enums'
+import { generateOtp, hashValue } from '../../../../common/utils/crypto'
+import { AuthTokenType, UserStatus } from '../../../../../generated/prisma/enums'
 import { ConfigService } from '@nestjs/config'
-import { sendEmail } from '../../../common/utils/email'
+import { sendEmail } from '../../../../common/utils/email'
+import { AppError } from '../../../../libs/errors/app.error'
+import { ScheduleService } from './schedule.service'
+import { DeletedUserPublisher } from '../publisher/deleted.user.publisher'
 
 @Injectable()
 
@@ -13,6 +16,8 @@ export class UsersService {
   constructor(
     private readonly repo: UsersRepositository,
     private readonly config:ConfigService,
+    private readonly schedule:ScheduleService,
+    private readonly deletedUserPublisher:DeletedUserPublisher
 ) {}
 
   async findAll(query: UserQueryDTO) {
@@ -105,19 +110,52 @@ export class UsersService {
       throw new Error('Email config not found');
     }
 
-    await sendEmail({
-        serviceId: emailConfig.serviceId,
-        templateId: emailConfig.templates.verifyEmail,
-        userId: emailConfig.userId,     
-        accessToken: emailConfig.accessToken,
-        email: findUser.email,
-        name: findUser.profile.name,
-        token: rawOtp,
-        action:'delete account'
-    });
+    await this.deletedUserPublisher.publishEmail({
+      email: findUser.email,
+      name: findUser.profile.name,
+      otp: rawOtp,
+      action:'delete account'
+    })
 
     return {
-      message: 'User deleted successfully',
+      message: 'Check your validation otp for delete your Accoount',
     }
   }
+
+
+
+  async verifyRemove(payload:VerifyDeleteDTO){
+      const hashedOtp = hashValue(payload.token);
+      const findToken=await this.repo.findAuthToken(hashedOtp, AuthTokenType.DELETE_USER)
+
+      if(!findToken || !findToken.userId){
+        throw new AppError('Invalid otp token', 400)
+      }
+
+      const findUser=await this.repo.findUser(findToken.userId)
+
+      // soft delete
+
+      await this.repo.softDeleteUser(findToken.userId)
+
+      await this.repo.markTokenUsed(findToken.id)
+
+      await this.schedule.cleanUpUser()
+      return{
+        message:'User sucessfully deleted'
+      }
+  }
+
+  async bannedUser(params:UserIdParamDTO){
+    const findUser=await this.repo.findUser(params.id)
+
+    if(!findUser){
+      throw new AppError('User not found', 404)
+    }
+
+    await this.repo.updateUser(params.id, {
+      status:UserStatus.BANNED
+    })
+  }
+
 }

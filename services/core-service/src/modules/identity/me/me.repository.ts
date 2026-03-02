@@ -22,13 +22,13 @@ export class MeRepositository{
                         },
                     },
 
-                    ownedShop: {
-                        select: {
-                            id: true,
-                            name: true,
-                            status: true,
-                        },
-                    },
+                    ownedShop:{
+                        select:{
+                            id:true,
+                            name:true,
+                            status:true
+                        }
+                    }
                 },
         })
     }

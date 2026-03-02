@@ -1,3 +1,4 @@
+import { CategoryTableDummy } from '#/components/admin/CetegoryTable'
 import { createFileRoute } from '@tanstack/react-router'
 
 export const Route = createFileRoute('/admin/kategori')({
@@ -5,5 +6,7 @@ export const Route = createFileRoute('/admin/kategori')({
 })
 
 function RouteComponent() {
-  return <div>Hello "/admin/kategori"!</div>
+  return <div>
+    <CategoryTableDummy />  
+  </div>
 }

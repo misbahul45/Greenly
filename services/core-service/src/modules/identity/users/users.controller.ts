@@ -8,7 +8,7 @@ import {
   Query,
   Body,
 } from '@nestjs/common'
-import { UsersService } from './users.service'
+import { UsersService } from './services/users.service'
 import ErrorHandler from '../../../libs/errors/handler.error'
 import { ZodValidationPipe } from '../../../libs/pipes/zod-validation.pipe'
 import {
@@ -20,6 +20,8 @@ import {
   type UserIdParamDTO,
   type CreateUserDTO,
   type UpdateUserDTO,
+  VerifyDeleteSchema,
+  type VerifyDeleteDTO,
 } from './users.dto'
 import { Roles } from '../../auth/decorators/roles.decorator'
 import { CurrentUser } from '../../auth/decorators/current-user.decorator'
@@ -85,7 +87,23 @@ export class UsersController {
   }
 
   @Delete('/delete/verify')
-  async verifyRemove(){
-    
+  async verifyRemove(
+    @Body(new ZodValidationPipe(VerifyDeleteSchema)) 
+    body:VerifyDeleteDTO
+  ){
+    return ErrorHandler(()=>(
+      this.service.verifyRemove(body)
+    ))
+  }
+
+  @Roles('ADMIN','SUPER_ADMIN')
+  @Post('/banned/:id')
+  async BanUnser(
+    @Param(new ZodValidationPipe(userIdParamSchema))
+    params: UserIdParamDTO,
+  ){
+    return ErrorHandler(()=>(
+      this.service.bannedUser(params)
+    ))
   }
 }

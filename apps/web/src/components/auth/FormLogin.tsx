@@ -5,7 +5,7 @@ import { useForm } from "@tanstack/react-form"
 import { toast } from "sonner"
 import * as z from "zod"
 import { Eye, EyeOff } from "lucide-react"
-import { Link } from "@tanstack/react-router"
+import { Link, useNavigate } from "@tanstack/react-router"
 
 import { Button } from "#/components/ui/button"
 import {
@@ -24,20 +24,13 @@ import {
   FieldLabel,
 } from "#/components/ui/field"
 import { Input } from "#/components/ui/input"
+import { LoginSchema } from "#/schema/auth"
+import { loginFn } from "#/server/auth"
 
-const formSchema = z.object({
-  email: z
-    .string()
-    .min(1, "Email wajib diisi.")
-    .email("Masukkan alamat email yang valid."),
-  password: z
-    .string()
-    .min(6, "Password minimal 6 karakter.")
-    .max(100, "Password maksimal 100 karakter."),
-})
 
 export default function FormLogin() {
   const [showPassword, setShowPassword] = React.useState(false)
+  const navigate=useNavigate()
 
   const form = useForm({
     defaultValues: {
@@ -45,25 +38,32 @@ export default function FormLogin() {
       password: "",
     },
     validators: {
-      onSubmit: formSchema,
+      onSubmit: LoginSchema,
     },
     onSubmit: async ({ value }) => {
-      toast("Login berhasil dikirim", {
-        description: (
-          <pre className="bg-code text-code-foreground mt-2 w-[320px] overflow-x-auto rounded-md p-4">
-            <code>{JSON.stringify(value, null, 2)}</code>
-          </pre>
-        ),
-        position: "bottom-right",
-        classNames: {
-          content: "flex flex-col gap-2",
-        },
-        style: {
-          "--border-radius": "calc(var(--radius)  + 4px)",
-        } as React.CSSProperties,
-      })
+      try {
+        const result = await loginFn({ data: value });
+
+        console.log(result)
+
+        toast.success("Login berhasil", {
+          description: "Selamat datang kembali 👋",
+          position: "bottom-right",
+        });
+
+        navigate({
+          to:'/admin/dashboard'
+        })
+
+        console.log("Login result:", result);
+      } catch (error: any) {
+        toast.error("Login gagal", {
+          description: error.message ?? "Terjadi kesalahan",
+          position: "bottom-right",
+        });
+      }
     },
-  })
+  });
 
   return (
     <Card className="w-full sm:max-w-md">
