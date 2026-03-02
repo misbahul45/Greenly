@@ -3,11 +3,16 @@ CREATE TABLE `users` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `email` VARCHAR(191) NOT NULL,
     `passwordHash` VARCHAR(191) NOT NULL,
-    `isActive` BOOLEAN NOT NULL DEFAULT true,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updatedAt` DATETIME(3) NOT NULL,
+    `emailVerified` DATETIME(3) NULL,
+    `status` ENUM('ACTIVE', 'SUSPENDED', 'BANNED', 'PENDING_VERIFICATION') NOT NULL DEFAULT 'PENDING_VERIFICATION',
+    `deletedAt` DATETIME(3) NULL,
+    `isActive` BOOLEAN NOT NULL DEFAULT true,
 
     UNIQUE INDEX `users_email_key`(`email`),
+    INDEX `users_email_idx`(`email`),
+    INDEX `users_deletedAt_idx`(`deletedAt`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -30,6 +35,22 @@ CREATE TABLE `roles` (
     `name` VARCHAR(191) NOT NULL,
 
     UNIQUE INDEX `roles_name_key`(`name`),
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `auth_tokens` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `userId` INTEGER NOT NULL,
+    `tokenHash` VARCHAR(191) NOT NULL,
+    `type` ENUM('VERIFY_EMAIL', 'RESET_PASSWORD', 'REFRESH_TOKEN', 'DELETE_USER') NOT NULL,
+    `expiresAt` DATETIME(3) NOT NULL,
+    `usedAt` DATETIME(3) NULL,
+    `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+
+    UNIQUE INDEX `auth_tokens_tokenHash_key`(`tokenHash`),
+    INDEX `auth_tokens_userId_idx`(`userId`),
+    INDEX `auth_tokens_type_idx`(`type`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -59,8 +80,9 @@ CREATE TABLE `shops` (
     `status` ENUM('PENDING', 'APPROVED', 'REJECTED', 'SUSPENDED') NOT NULL DEFAULT 'PENDING',
     `balance` DECIMAL(15, 2) NOT NULL DEFAULT 0,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `updatedAt` DATETIME(3) NOT NULL,
 
-    UNIQUE INDEX `shops_ownerId_key`(`ownerId`),
+    INDEX `shops_ownerId_idx`(`ownerId`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -90,6 +112,7 @@ CREATE TABLE `shop_applications` (
     `notes` VARCHAR(191) NULL,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `reviewedAt` DATETIME(3) NULL,
+    `updatedAt` DATETIME(3) NOT NULL,
 
     UNIQUE INDEX `shop_applications_shopId_key`(`shopId`),
     PRIMARY KEY (`id`)
@@ -167,6 +190,7 @@ CREATE TABLE `payments` (
     `transactionId` VARCHAR(191) NULL,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `paidAt` DATETIME(3) NULL,
+    `updatedAt` DATETIME(3) NOT NULL,
 
     UNIQUE INDEX `payments_orderId_key`(`orderId`),
     PRIMARY KEY (`id`)
@@ -191,6 +215,7 @@ CREATE TABLE `shop_ledgers` (
     `type` ENUM('CREDIT', 'DEBIT') NOT NULL,
     `amount` DECIMAL(15, 2) NOT NULL,
     `reference` VARCHAR(191) NOT NULL,
+    `description` VARCHAR(191) NULL,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
 
     INDEX `shop_ledgers_shopId_idx`(`shopId`),
@@ -202,7 +227,7 @@ CREATE TABLE `payouts` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `shopId` INTEGER NOT NULL,
     `amount` DECIMAL(15, 2) NOT NULL,
-    `status` VARCHAR(191) NOT NULL,
+    `status` ENUM('PENDING', 'PROCESSING', 'COMPLETED', 'FAILED') NOT NULL DEFAULT 'PENDING',
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `paidAt` DATETIME(3) NULL,
 
@@ -258,6 +283,9 @@ CREATE TABLE `_PermissionToRole` (
 
 -- AddForeignKey
 ALTER TABLE `user_profiles` ADD CONSTRAINT `user_profiles_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `users`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `auth_tokens` ADD CONSTRAINT `auth_tokens_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `users`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `user_roles` ADD CONSTRAINT `user_roles_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `users`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;

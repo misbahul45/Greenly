@@ -5,6 +5,7 @@ export interface ApiResponse<T> {
   statusCode: number;
   path: string;
   message: string;
-  data: T;
+  data?: T;
+  errors?:any;
   timestamp: string;
 }
