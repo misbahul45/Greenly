@@ -8,7 +8,7 @@ import {
   ClipboardCheck,
 } from "lucide-react"
 
-export const Route = createFileRoute("/admin/dashboard")({
+export const Route = createFileRoute("/_authed/admin/dashboard")({
   component: DashboardAdmin,
 })
 

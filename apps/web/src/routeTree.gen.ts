@@ -9,38 +9,27 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as SellerRouteImport } from './routes/seller'
 import { Route as HomeRouteImport } from './routes/home'
-import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AuthedRouteRouteImport } from './routes/_authed/route'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as SellerProdukRouteImport } from './routes/seller/produk'
-import { Route as SellerPesananRouteImport } from './routes/seller/pesanan'
-import { Route as SellerDashboardRouteImport } from './routes/seller/dashboard'
 import { Route as DemoTanstackQueryRouteImport } from './routes/demo/tanstack-query'
 import { Route as AuthRegiisterRouteImport } from './routes/auth/regiister'
 import { Route as AuthLoginRouteImport } from './routes/auth/login'
-import { Route as AdminTokoRouteImport } from './routes/admin/toko'
-import { Route as AdminPesananRouteImport } from './routes/admin/pesanan'
-import { Route as AdminKategoriRouteImport } from './routes/admin/kategori'
-import { Route as AdminDashboardRouteImport } from './routes/admin/dashboard'
-import { Route as AdminCustomerRouteImport } from './routes/admin/customer'
-import { Route as AdminApprovalRouteImport } from './routes/admin/approval'
+import { Route as AuthedSellerRouteImport } from './routes/_authed/seller'
+import { Route as AuthedAdminRouteImport } from './routes/_authed/admin'
 import { Route as AuthedUserDataRouteImport } from './routes/_authed/user/data'
+import { Route as AuthedSellerProdukRouteImport } from './routes/_authed/seller/produk'
+import { Route as AuthedSellerPesananRouteImport } from './routes/_authed/seller/pesanan'
+import { Route as AuthedSellerDashboardRouteImport } from './routes/_authed/seller/dashboard'
+import { Route as AuthedAdminTokoRouteImport } from './routes/_authed/admin/toko'
+import { Route as AuthedAdminPesananRouteImport } from './routes/_authed/admin/pesanan'
+import { Route as AuthedAdminKategoriRouteImport } from './routes/_authed/admin/kategori'
+import { Route as AuthedAdminDashboardRouteImport } from './routes/_authed/admin/dashboard'
+import { Route as AuthedAdminApprovalRouteImport } from './routes/_authed/admin/approval'
 
-const SellerRoute = SellerRouteImport.update({
-  id: '/seller',
-  path: '/seller',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const HomeRoute = HomeRouteImport.update({
   id: '/home',
   path: '/home',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AdminRoute = AdminRouteImport.update({
-  id: '/admin',
-  path: '/admin',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthedRouteRoute = AuthedRouteRouteImport.update({
@@ -51,21 +40,6 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
-} as any)
-const SellerProdukRoute = SellerProdukRouteImport.update({
-  id: '/produk',
-  path: '/produk',
-  getParentRoute: () => SellerRoute,
-} as any)
-const SellerPesananRoute = SellerPesananRouteImport.update({
-  id: '/pesanan',
-  path: '/pesanan',
-  getParentRoute: () => SellerRoute,
-} as any)
-const SellerDashboardRoute = SellerDashboardRouteImport.update({
-  id: '/dashboard',
-  path: '/dashboard',
-  getParentRoute: () => SellerRoute,
 } as any)
 const DemoTanstackQueryRoute = DemoTanstackQueryRouteImport.update({
   id: '/demo/tanstack-query',
@@ -82,117 +56,133 @@ const AuthLoginRoute = AuthLoginRouteImport.update({
   path: '/auth/login',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AdminTokoRoute = AdminTokoRouteImport.update({
-  id: '/toko',
-  path: '/toko',
-  getParentRoute: () => AdminRoute,
+const AuthedSellerRoute = AuthedSellerRouteImport.update({
+  id: '/seller',
+  path: '/seller',
+  getParentRoute: () => AuthedRouteRoute,
 } as any)
-const AdminPesananRoute = AdminPesananRouteImport.update({
-  id: '/pesanan',
-  path: '/pesanan',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminKategoriRoute = AdminKategoriRouteImport.update({
-  id: '/kategori',
-  path: '/kategori',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminDashboardRoute = AdminDashboardRouteImport.update({
-  id: '/dashboard',
-  path: '/dashboard',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminCustomerRoute = AdminCustomerRouteImport.update({
-  id: '/customer',
-  path: '/customer',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminApprovalRoute = AdminApprovalRouteImport.update({
-  id: '/approval',
-  path: '/approval',
-  getParentRoute: () => AdminRoute,
+const AuthedAdminRoute = AuthedAdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => AuthedRouteRoute,
 } as any)
 const AuthedUserDataRoute = AuthedUserDataRouteImport.update({
   id: '/user/data',
   path: '/user/data',
   getParentRoute: () => AuthedRouteRoute,
 } as any)
+const AuthedSellerProdukRoute = AuthedSellerProdukRouteImport.update({
+  id: '/produk',
+  path: '/produk',
+  getParentRoute: () => AuthedSellerRoute,
+} as any)
+const AuthedSellerPesananRoute = AuthedSellerPesananRouteImport.update({
+  id: '/pesanan',
+  path: '/pesanan',
+  getParentRoute: () => AuthedSellerRoute,
+} as any)
+const AuthedSellerDashboardRoute = AuthedSellerDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => AuthedSellerRoute,
+} as any)
+const AuthedAdminTokoRoute = AuthedAdminTokoRouteImport.update({
+  id: '/toko',
+  path: '/toko',
+  getParentRoute: () => AuthedAdminRoute,
+} as any)
+const AuthedAdminPesananRoute = AuthedAdminPesananRouteImport.update({
+  id: '/pesanan',
+  path: '/pesanan',
+  getParentRoute: () => AuthedAdminRoute,
+} as any)
+const AuthedAdminKategoriRoute = AuthedAdminKategoriRouteImport.update({
+  id: '/kategori',
+  path: '/kategori',
+  getParentRoute: () => AuthedAdminRoute,
+} as any)
+const AuthedAdminDashboardRoute = AuthedAdminDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => AuthedAdminRoute,
+} as any)
+const AuthedAdminApprovalRoute = AuthedAdminApprovalRouteImport.update({
+  id: '/approval',
+  path: '/approval',
+  getParentRoute: () => AuthedAdminRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/admin': typeof AdminRouteWithChildren
   '/home': typeof HomeRoute
-  '/seller': typeof SellerRouteWithChildren
-  '/admin/approval': typeof AdminApprovalRoute
-  '/admin/customer': typeof AdminCustomerRoute
-  '/admin/dashboard': typeof AdminDashboardRoute
-  '/admin/kategori': typeof AdminKategoriRoute
-  '/admin/pesanan': typeof AdminPesananRoute
-  '/admin/toko': typeof AdminTokoRoute
+  '/admin': typeof AuthedAdminRouteWithChildren
+  '/seller': typeof AuthedSellerRouteWithChildren
   '/auth/login': typeof AuthLoginRoute
   '/auth/regiister': typeof AuthRegiisterRoute
   '/demo/tanstack-query': typeof DemoTanstackQueryRoute
-  '/seller/dashboard': typeof SellerDashboardRoute
-  '/seller/pesanan': typeof SellerPesananRoute
-  '/seller/produk': typeof SellerProdukRoute
+  '/admin/approval': typeof AuthedAdminApprovalRoute
+  '/admin/dashboard': typeof AuthedAdminDashboardRoute
+  '/admin/kategori': typeof AuthedAdminKategoriRoute
+  '/admin/pesanan': typeof AuthedAdminPesananRoute
+  '/admin/toko': typeof AuthedAdminTokoRoute
+  '/seller/dashboard': typeof AuthedSellerDashboardRoute
+  '/seller/pesanan': typeof AuthedSellerPesananRoute
+  '/seller/produk': typeof AuthedSellerProdukRoute
   '/user/data': typeof AuthedUserDataRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/admin': typeof AdminRouteWithChildren
   '/home': typeof HomeRoute
-  '/seller': typeof SellerRouteWithChildren
-  '/admin/approval': typeof AdminApprovalRoute
-  '/admin/customer': typeof AdminCustomerRoute
-  '/admin/dashboard': typeof AdminDashboardRoute
-  '/admin/kategori': typeof AdminKategoriRoute
-  '/admin/pesanan': typeof AdminPesananRoute
-  '/admin/toko': typeof AdminTokoRoute
+  '/admin': typeof AuthedAdminRouteWithChildren
+  '/seller': typeof AuthedSellerRouteWithChildren
   '/auth/login': typeof AuthLoginRoute
   '/auth/regiister': typeof AuthRegiisterRoute
   '/demo/tanstack-query': typeof DemoTanstackQueryRoute
-  '/seller/dashboard': typeof SellerDashboardRoute
-  '/seller/pesanan': typeof SellerPesananRoute
-  '/seller/produk': typeof SellerProdukRoute
+  '/admin/approval': typeof AuthedAdminApprovalRoute
+  '/admin/dashboard': typeof AuthedAdminDashboardRoute
+  '/admin/kategori': typeof AuthedAdminKategoriRoute
+  '/admin/pesanan': typeof AuthedAdminPesananRoute
+  '/admin/toko': typeof AuthedAdminTokoRoute
+  '/seller/dashboard': typeof AuthedSellerDashboardRoute
+  '/seller/pesanan': typeof AuthedSellerPesananRoute
+  '/seller/produk': typeof AuthedSellerProdukRoute
   '/user/data': typeof AuthedUserDataRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authed': typeof AuthedRouteRouteWithChildren
-  '/admin': typeof AdminRouteWithChildren
   '/home': typeof HomeRoute
-  '/seller': typeof SellerRouteWithChildren
-  '/admin/approval': typeof AdminApprovalRoute
-  '/admin/customer': typeof AdminCustomerRoute
-  '/admin/dashboard': typeof AdminDashboardRoute
-  '/admin/kategori': typeof AdminKategoriRoute
-  '/admin/pesanan': typeof AdminPesananRoute
-  '/admin/toko': typeof AdminTokoRoute
+  '/_authed/admin': typeof AuthedAdminRouteWithChildren
+  '/_authed/seller': typeof AuthedSellerRouteWithChildren
   '/auth/login': typeof AuthLoginRoute
   '/auth/regiister': typeof AuthRegiisterRoute
   '/demo/tanstack-query': typeof DemoTanstackQueryRoute
-  '/seller/dashboard': typeof SellerDashboardRoute
-  '/seller/pesanan': typeof SellerPesananRoute
-  '/seller/produk': typeof SellerProdukRoute
+  '/_authed/admin/approval': typeof AuthedAdminApprovalRoute
+  '/_authed/admin/dashboard': typeof AuthedAdminDashboardRoute
+  '/_authed/admin/kategori': typeof AuthedAdminKategoriRoute
+  '/_authed/admin/pesanan': typeof AuthedAdminPesananRoute
+  '/_authed/admin/toko': typeof AuthedAdminTokoRoute
+  '/_authed/seller/dashboard': typeof AuthedSellerDashboardRoute
+  '/_authed/seller/pesanan': typeof AuthedSellerPesananRoute
+  '/_authed/seller/produk': typeof AuthedSellerProdukRoute
   '/_authed/user/data': typeof AuthedUserDataRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/admin'
     | '/home'
+    | '/admin'
     | '/seller'
+    | '/auth/login'
+    | '/auth/regiister'
+    | '/demo/tanstack-query'
     | '/admin/approval'
-    | '/admin/customer'
     | '/admin/dashboard'
     | '/admin/kategori'
     | '/admin/pesanan'
     | '/admin/toko'
-    | '/auth/login'
-    | '/auth/regiister'
-    | '/demo/tanstack-query'
     | '/seller/dashboard'
     | '/seller/pesanan'
     | '/seller/produk'
@@ -200,18 +190,17 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/admin'
     | '/home'
+    | '/admin'
     | '/seller'
+    | '/auth/login'
+    | '/auth/regiister'
+    | '/demo/tanstack-query'
     | '/admin/approval'
-    | '/admin/customer'
     | '/admin/dashboard'
     | '/admin/kategori'
     | '/admin/pesanan'
     | '/admin/toko'
-    | '/auth/login'
-    | '/auth/regiister'
-    | '/demo/tanstack-query'
     | '/seller/dashboard'
     | '/seller/pesanan'
     | '/seller/produk'
@@ -220,30 +209,27 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/_authed'
-    | '/admin'
     | '/home'
-    | '/seller'
-    | '/admin/approval'
-    | '/admin/customer'
-    | '/admin/dashboard'
-    | '/admin/kategori'
-    | '/admin/pesanan'
-    | '/admin/toko'
+    | '/_authed/admin'
+    | '/_authed/seller'
     | '/auth/login'
     | '/auth/regiister'
     | '/demo/tanstack-query'
-    | '/seller/dashboard'
-    | '/seller/pesanan'
-    | '/seller/produk'
+    | '/_authed/admin/approval'
+    | '/_authed/admin/dashboard'
+    | '/_authed/admin/kategori'
+    | '/_authed/admin/pesanan'
+    | '/_authed/admin/toko'
+    | '/_authed/seller/dashboard'
+    | '/_authed/seller/pesanan'
+    | '/_authed/seller/produk'
     | '/_authed/user/data'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthedRouteRoute: typeof AuthedRouteRouteWithChildren
-  AdminRoute: typeof AdminRouteWithChildren
   HomeRoute: typeof HomeRoute
-  SellerRoute: typeof SellerRouteWithChildren
   AuthLoginRoute: typeof AuthLoginRoute
   AuthRegiisterRoute: typeof AuthRegiisterRoute
   DemoTanstackQueryRoute: typeof DemoTanstackQueryRoute
@@ -251,25 +237,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/seller': {
-      id: '/seller'
-      path: '/seller'
-      fullPath: '/seller'
-      preLoaderRoute: typeof SellerRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/home': {
       id: '/home'
       path: '/home'
       fullPath: '/home'
       preLoaderRoute: typeof HomeRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/admin': {
-      id: '/admin'
-      path: '/admin'
-      fullPath: '/admin'
-      preLoaderRoute: typeof AdminRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authed': {
@@ -285,27 +257,6 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
-    }
-    '/seller/produk': {
-      id: '/seller/produk'
-      path: '/produk'
-      fullPath: '/seller/produk'
-      preLoaderRoute: typeof SellerProdukRouteImport
-      parentRoute: typeof SellerRoute
-    }
-    '/seller/pesanan': {
-      id: '/seller/pesanan'
-      path: '/pesanan'
-      fullPath: '/seller/pesanan'
-      preLoaderRoute: typeof SellerPesananRouteImport
-      parentRoute: typeof SellerRoute
-    }
-    '/seller/dashboard': {
-      id: '/seller/dashboard'
-      path: '/dashboard'
-      fullPath: '/seller/dashboard'
-      preLoaderRoute: typeof SellerDashboardRouteImport
-      parentRoute: typeof SellerRoute
     }
     '/demo/tanstack-query': {
       id: '/demo/tanstack-query'
@@ -328,47 +279,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthLoginRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/admin/toko': {
-      id: '/admin/toko'
-      path: '/toko'
-      fullPath: '/admin/toko'
-      preLoaderRoute: typeof AdminTokoRouteImport
-      parentRoute: typeof AdminRoute
+    '/_authed/seller': {
+      id: '/_authed/seller'
+      path: '/seller'
+      fullPath: '/seller'
+      preLoaderRoute: typeof AuthedSellerRouteImport
+      parentRoute: typeof AuthedRouteRoute
     }
-    '/admin/pesanan': {
-      id: '/admin/pesanan'
-      path: '/pesanan'
-      fullPath: '/admin/pesanan'
-      preLoaderRoute: typeof AdminPesananRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/kategori': {
-      id: '/admin/kategori'
-      path: '/kategori'
-      fullPath: '/admin/kategori'
-      preLoaderRoute: typeof AdminKategoriRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/dashboard': {
-      id: '/admin/dashboard'
-      path: '/dashboard'
-      fullPath: '/admin/dashboard'
-      preLoaderRoute: typeof AdminDashboardRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/customer': {
-      id: '/admin/customer'
-      path: '/customer'
-      fullPath: '/admin/customer'
-      preLoaderRoute: typeof AdminCustomerRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/approval': {
-      id: '/admin/approval'
-      path: '/approval'
-      fullPath: '/admin/approval'
-      preLoaderRoute: typeof AdminApprovalRouteImport
-      parentRoute: typeof AdminRoute
+    '/_authed/admin': {
+      id: '/_authed/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AuthedAdminRouteImport
+      parentRoute: typeof AuthedRouteRoute
     }
     '/_authed/user/data': {
       id: '/_authed/user/data'
@@ -377,14 +300,110 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedUserDataRouteImport
       parentRoute: typeof AuthedRouteRoute
     }
+    '/_authed/seller/produk': {
+      id: '/_authed/seller/produk'
+      path: '/produk'
+      fullPath: '/seller/produk'
+      preLoaderRoute: typeof AuthedSellerProdukRouteImport
+      parentRoute: typeof AuthedSellerRoute
+    }
+    '/_authed/seller/pesanan': {
+      id: '/_authed/seller/pesanan'
+      path: '/pesanan'
+      fullPath: '/seller/pesanan'
+      preLoaderRoute: typeof AuthedSellerPesananRouteImport
+      parentRoute: typeof AuthedSellerRoute
+    }
+    '/_authed/seller/dashboard': {
+      id: '/_authed/seller/dashboard'
+      path: '/dashboard'
+      fullPath: '/seller/dashboard'
+      preLoaderRoute: typeof AuthedSellerDashboardRouteImport
+      parentRoute: typeof AuthedSellerRoute
+    }
+    '/_authed/admin/toko': {
+      id: '/_authed/admin/toko'
+      path: '/toko'
+      fullPath: '/admin/toko'
+      preLoaderRoute: typeof AuthedAdminTokoRouteImport
+      parentRoute: typeof AuthedAdminRoute
+    }
+    '/_authed/admin/pesanan': {
+      id: '/_authed/admin/pesanan'
+      path: '/pesanan'
+      fullPath: '/admin/pesanan'
+      preLoaderRoute: typeof AuthedAdminPesananRouteImport
+      parentRoute: typeof AuthedAdminRoute
+    }
+    '/_authed/admin/kategori': {
+      id: '/_authed/admin/kategori'
+      path: '/kategori'
+      fullPath: '/admin/kategori'
+      preLoaderRoute: typeof AuthedAdminKategoriRouteImport
+      parentRoute: typeof AuthedAdminRoute
+    }
+    '/_authed/admin/dashboard': {
+      id: '/_authed/admin/dashboard'
+      path: '/dashboard'
+      fullPath: '/admin/dashboard'
+      preLoaderRoute: typeof AuthedAdminDashboardRouteImport
+      parentRoute: typeof AuthedAdminRoute
+    }
+    '/_authed/admin/approval': {
+      id: '/_authed/admin/approval'
+      path: '/approval'
+      fullPath: '/admin/approval'
+      preLoaderRoute: typeof AuthedAdminApprovalRouteImport
+      parentRoute: typeof AuthedAdminRoute
+    }
   }
 }
 
+interface AuthedAdminRouteChildren {
+  AuthedAdminApprovalRoute: typeof AuthedAdminApprovalRoute
+  AuthedAdminDashboardRoute: typeof AuthedAdminDashboardRoute
+  AuthedAdminKategoriRoute: typeof AuthedAdminKategoriRoute
+  AuthedAdminPesananRoute: typeof AuthedAdminPesananRoute
+  AuthedAdminTokoRoute: typeof AuthedAdminTokoRoute
+}
+
+const AuthedAdminRouteChildren: AuthedAdminRouteChildren = {
+  AuthedAdminApprovalRoute: AuthedAdminApprovalRoute,
+  AuthedAdminDashboardRoute: AuthedAdminDashboardRoute,
+  AuthedAdminKategoriRoute: AuthedAdminKategoriRoute,
+  AuthedAdminPesananRoute: AuthedAdminPesananRoute,
+  AuthedAdminTokoRoute: AuthedAdminTokoRoute,
+}
+
+const AuthedAdminRouteWithChildren = AuthedAdminRoute._addFileChildren(
+  AuthedAdminRouteChildren,
+)
+
+interface AuthedSellerRouteChildren {
+  AuthedSellerDashboardRoute: typeof AuthedSellerDashboardRoute
+  AuthedSellerPesananRoute: typeof AuthedSellerPesananRoute
+  AuthedSellerProdukRoute: typeof AuthedSellerProdukRoute
+}
+
+const AuthedSellerRouteChildren: AuthedSellerRouteChildren = {
+  AuthedSellerDashboardRoute: AuthedSellerDashboardRoute,
+  AuthedSellerPesananRoute: AuthedSellerPesananRoute,
+  AuthedSellerProdukRoute: AuthedSellerProdukRoute,
+}
+
+const AuthedSellerRouteWithChildren = AuthedSellerRoute._addFileChildren(
+  AuthedSellerRouteChildren,
+)
+
 interface AuthedRouteRouteChildren {
+  AuthedAdminRoute: typeof AuthedAdminRouteWithChildren
+  AuthedSellerRoute: typeof AuthedSellerRouteWithChildren
   AuthedUserDataRoute: typeof AuthedUserDataRoute
 }
 
 const AuthedRouteRouteChildren: AuthedRouteRouteChildren = {
+  AuthedAdminRoute: AuthedAdminRouteWithChildren,
+  AuthedSellerRoute: AuthedSellerRouteWithChildren,
   AuthedUserDataRoute: AuthedUserDataRoute,
 }
 
@@ -392,47 +411,10 @@ const AuthedRouteRouteWithChildren = AuthedRouteRoute._addFileChildren(
   AuthedRouteRouteChildren,
 )
 
-interface AdminRouteChildren {
-  AdminApprovalRoute: typeof AdminApprovalRoute
-  AdminCustomerRoute: typeof AdminCustomerRoute
-  AdminDashboardRoute: typeof AdminDashboardRoute
-  AdminKategoriRoute: typeof AdminKategoriRoute
-  AdminPesananRoute: typeof AdminPesananRoute
-  AdminTokoRoute: typeof AdminTokoRoute
-}
-
-const AdminRouteChildren: AdminRouteChildren = {
-  AdminApprovalRoute: AdminApprovalRoute,
-  AdminCustomerRoute: AdminCustomerRoute,
-  AdminDashboardRoute: AdminDashboardRoute,
-  AdminKategoriRoute: AdminKategoriRoute,
-  AdminPesananRoute: AdminPesananRoute,
-  AdminTokoRoute: AdminTokoRoute,
-}
-
-const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
-
-interface SellerRouteChildren {
-  SellerDashboardRoute: typeof SellerDashboardRoute
-  SellerPesananRoute: typeof SellerPesananRoute
-  SellerProdukRoute: typeof SellerProdukRoute
-}
-
-const SellerRouteChildren: SellerRouteChildren = {
-  SellerDashboardRoute: SellerDashboardRoute,
-  SellerPesananRoute: SellerPesananRoute,
-  SellerProdukRoute: SellerProdukRoute,
-}
-
-const SellerRouteWithChildren =
-  SellerRoute._addFileChildren(SellerRouteChildren)
-
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthedRouteRoute: AuthedRouteRouteWithChildren,
-  AdminRoute: AdminRouteWithChildren,
   HomeRoute: HomeRoute,
-  SellerRoute: SellerRouteWithChildren,
   AuthLoginRoute: AuthLoginRoute,
   AuthRegiisterRoute: AuthRegiisterRoute,
   DemoTanstackQueryRoute: DemoTanstackQueryRoute,

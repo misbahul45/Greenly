@@ -2,17 +2,19 @@ import { Zod } from "#/lib/zod";
 import { LoginSchema } from "#/schema/auth";
 import { createServerFn } from "@tanstack/react-start";
 import { createApi } from "./api";
-import { apiRequeest, serverRequest } from "#/lib/request";
+import { apiRequest, serverRequest } from "#/lib/request";
 import type { UserResponse } from "#/types/user.me";
 import { useAppSession } from "#/hooks/useSession";
+import type { ApiResponse } from "#/types/api.response";
+import type { LoginResponse } from "#/types/login.response";
 
 export const loginFn = createServerFn({ method: 'POST' })
   .inputValidator(Zod(LoginSchema))
   .handler(async ({ data }) => {
     const api = createApi()
 
-    const res = await api.post('/auth/login', data)
-    const { accessToken, refreshToken } = res.data
+    const res = await api.post<ApiResponse<LoginResponse>>('/auth/login', data)
+    const { accessToken, refreshToken } = res.data.data.tokens
 
     const session = await useAppSession()
 
@@ -28,7 +30,7 @@ export const getCurrentUserFn =
   createServerFn({ method: "GET" })
     .handler(async (ctx) => {
       return serverRequest<UserResponse>(ctx, (api) =>
-        apiRequeest(
+        apiRequest(
           api.get("/me")
         )
       );

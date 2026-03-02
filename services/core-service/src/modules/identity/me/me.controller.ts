@@ -14,7 +14,6 @@ export class MeController {
     me(
         @CurrentUser() user:UserLogin
     ){
-        console.log(user)
         return ErrorHandler(()=>(
             this.meService.me(user)
         ))

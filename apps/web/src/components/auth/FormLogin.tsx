@@ -54,9 +54,8 @@ export default function FormLogin() {
         navigate({
           to:'/admin/dashboard'
         })
-
-        console.log("Login result:", result);
       } catch (error: any) {
+        console.log(error)
         toast.error("Login gagal", {
           description: error.message ?? "Terjadi kesalahan",
           position: "bottom-right",
@@ -154,7 +153,7 @@ export default function FormLogin() {
                     </div>
 
                     <FieldDescription>
-                      Password minimal 6 karakter.
+                      Password minimal 8 karakter.
                     </FieldDescription>
 
                     {isInvalid && (

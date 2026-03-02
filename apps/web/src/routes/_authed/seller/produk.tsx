@@ -1,7 +1,7 @@
 import { ProductTableFull } from '#/components/seller/ProductTable'
 import { createFileRoute } from '@tanstack/react-router'
 
-export const Route = createFileRoute('/seller/produk')({
+export const Route = createFileRoute('/_authed/seller/produk')({
   component: RouteComponent,
 })
 
