@@ -212,7 +212,8 @@ export class AuthService {
       user:{
         id:existedUser.id,
         name:existedUser.profile?.fullName,
-        email:existedUser.email
+        email:existedUser.email,
+        roles:existedUser.roles.map((role)=>role.role)
       }
     };
   }
