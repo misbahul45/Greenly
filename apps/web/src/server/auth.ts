@@ -8,23 +8,25 @@ import { useAppSession } from "#/hooks/useSession";
 import type { ApiResponse } from "#/types/api.response";
 import type { LoginResponse } from "#/types/login.response";
 
-export const loginFn = createServerFn({ method: 'POST' })
+export const loginFn = createServerFn({ method: "POST" })
   .inputValidator(Zod(LoginSchema))
   .handler(async ({ data }) => {
-    const api = createApi()
+    const api = createApi();
 
-    const res = await api.post<ApiResponse<LoginResponse>>('/auth/login', data)
-    const { accessToken, refreshToken } = res.data.data.tokens
+    const res = await api.post<ApiResponse<LoginResponse>>("/auth/login", data);
 
-    const session = await useAppSession()
+    const tokens = res.data.data?.tokens;
+    if (!tokens?.accessToken || !tokens?.refreshToken) {
+      throw new Error("Login failed: tokens not returned by API");
+    }
 
-    await session.update({
-        accessToken,
-        refreshToken
-    })
+    const { accessToken, refreshToken } = tokens;
 
-    return res.data
-  })
+    const session = await useAppSession();
+    await session.update({ accessToken, refreshToken });
+
+    return res.data;
+  });
 
 export const getCurrentUserFn =
   createServerFn({ method: "GET" })
