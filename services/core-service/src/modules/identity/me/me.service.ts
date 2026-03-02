@@ -10,6 +10,7 @@ export class MeService {
     ){}
 
     async me(dto:UserLogin) {
+        console.log(dto)
         const user=await this.repo.getUserById(dto.sub)
 
         if(!user){
@@ -31,13 +32,13 @@ export class MeService {
 
             roles: user.roles.map(r => r.role.name),
 
-            shop: user.ownedShop
-                ? {
-                    id: user.ownedShop.id,
-                    name: user.ownedShop.name,
-                    status: user.ownedShop.status,
-                }
-                : null,
+            shop:user.ownedShop.length
+                ? user.ownedShop.map(shop => ({
+                    id: shop.id,
+                    name: shop.name,
+                    status: shop.status,
+                    }))
+                : [],
 
                 createdAt: user.createdAt,
         }

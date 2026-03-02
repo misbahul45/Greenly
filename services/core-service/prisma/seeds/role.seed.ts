@@ -30,6 +30,7 @@ async function main() {
     'FINANCE_ADMIN',
     'SUPPORT_ADMIN',
     'SYSTEM',
+    'CUSTOMER'
   ]
 
   /*
@@ -126,6 +127,7 @@ async function main() {
     ],
 
     SYSTEM: ['system.manage'],
+    CUSTOMER: [],
   }
 
   /*
