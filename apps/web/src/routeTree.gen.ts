@@ -15,7 +15,7 @@ import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as SellerDashboardRouteImport } from './routes/seller/dashboard'
 import { Route as DemoTanstackQueryRouteImport } from './routes/demo/tanstack-query'
-import { Route as AuthRegiisterRouteImport } from './routes/auth/regiister'
+import { Route as AuthRegisterRouteImport } from './routes/auth/register'
 import { Route as AuthLoginRouteImport } from './routes/auth/login'
 import { Route as AdminTokoRouteImport } from './routes/admin/toko'
 import { Route as AdminPesananRouteImport } from './routes/admin/pesanan'
@@ -54,9 +54,9 @@ const DemoTanstackQueryRoute = DemoTanstackQueryRouteImport.update({
   path: '/demo/tanstack-query',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthRegiisterRoute = AuthRegiisterRouteImport.update({
-  id: '/auth/regiister',
-  path: '/auth/regiister',
+const AuthRegisterRoute = AuthRegisterRouteImport.update({
+  id: '/auth/register',
+  path: '/auth/register',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthLoginRoute = AuthLoginRouteImport.update({
@@ -107,7 +107,7 @@ export interface FileRoutesByFullPath {
   '/admin/pesanan': typeof AdminPesananRoute
   '/admin/toko': typeof AdminTokoRoute
   '/auth/login': typeof AuthLoginRoute
-  '/auth/regiister': typeof AuthRegiisterRoute
+  '/auth/register': typeof AuthRegisterRoute
   '/demo/tanstack-query': typeof DemoTanstackQueryRoute
   '/seller/dashboard': typeof SellerDashboardRoute
 }
@@ -123,7 +123,7 @@ export interface FileRoutesByTo {
   '/admin/pesanan': typeof AdminPesananRoute
   '/admin/toko': typeof AdminTokoRoute
   '/auth/login': typeof AuthLoginRoute
-  '/auth/regiister': typeof AuthRegiisterRoute
+  '/auth/register': typeof AuthRegisterRoute
   '/demo/tanstack-query': typeof DemoTanstackQueryRoute
   '/seller/dashboard': typeof SellerDashboardRoute
 }
@@ -140,7 +140,7 @@ export interface FileRoutesById {
   '/admin/pesanan': typeof AdminPesananRoute
   '/admin/toko': typeof AdminTokoRoute
   '/auth/login': typeof AuthLoginRoute
-  '/auth/regiister': typeof AuthRegiisterRoute
+  '/auth/register': typeof AuthRegisterRoute
   '/demo/tanstack-query': typeof DemoTanstackQueryRoute
   '/seller/dashboard': typeof SellerDashboardRoute
 }
@@ -158,7 +158,7 @@ export interface FileRouteTypes {
     | '/admin/pesanan'
     | '/admin/toko'
     | '/auth/login'
-    | '/auth/regiister'
+    | '/auth/register'
     | '/demo/tanstack-query'
     | '/seller/dashboard'
   fileRoutesByTo: FileRoutesByTo
@@ -174,7 +174,7 @@ export interface FileRouteTypes {
     | '/admin/pesanan'
     | '/admin/toko'
     | '/auth/login'
-    | '/auth/regiister'
+    | '/auth/register'
     | '/demo/tanstack-query'
     | '/seller/dashboard'
   id:
@@ -190,7 +190,7 @@ export interface FileRouteTypes {
     | '/admin/pesanan'
     | '/admin/toko'
     | '/auth/login'
-    | '/auth/regiister'
+    | '/auth/register'
     | '/demo/tanstack-query'
     | '/seller/dashboard'
   fileRoutesById: FileRoutesById
@@ -201,7 +201,7 @@ export interface RootRouteChildren {
   HomeRoute: typeof HomeRoute
   SellerRoute: typeof SellerRouteWithChildren
   AuthLoginRoute: typeof AuthLoginRoute
-  AuthRegiisterRoute: typeof AuthRegiisterRoute
+  AuthRegisterRoute: typeof AuthRegisterRoute
   DemoTanstackQueryRoute: typeof DemoTanstackQueryRoute
 }
 
@@ -249,11 +249,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DemoTanstackQueryRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/auth/regiister': {
-      id: '/auth/regiister'
-      path: '/auth/regiister'
-      fullPath: '/auth/regiister'
-      preLoaderRoute: typeof AuthRegiisterRouteImport
+    '/auth/register': {
+      id: '/auth/register'
+      path: '/auth/register'
+      fullPath: '/auth/register'
+      preLoaderRoute: typeof AuthRegisterRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth/login': {
@@ -345,7 +345,7 @@ const rootRouteChildren: RootRouteChildren = {
   HomeRoute: HomeRoute,
   SellerRoute: SellerRouteWithChildren,
   AuthLoginRoute: AuthLoginRoute,
-  AuthRegiisterRoute: AuthRegiisterRoute,
+  AuthRegisterRoute: AuthRegisterRoute,
   DemoTanstackQueryRoute: DemoTanstackQueryRoute,
 }
 export const routeTree = rootRouteImport

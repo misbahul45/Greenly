@@ -18,7 +18,7 @@ function DashboardAdmin() {
       {/* WELCOME */}
       <div className="rounded-2xl bg-white p-6 ring-1 ring-black/5 shadow-sm">
         <h1 className="text-2xl font-semibold text-[#674636]">
-          Selamat datang kembali, Admin 👋
+          Selamat datang kembali, hai 👋
         </h1>
         <p className="mt-2 text-sm text-foreground/60">
           Berikut adalah statistik kinerja platform Greenly Mart.
