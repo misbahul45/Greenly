@@ -23,9 +23,6 @@ function AdminLayout() {
           onOpenSidebar={() => setSidebarOpen(true)}
         />
 
-        {/* Biar kelihatan layoutnya kepanggil */}
-        {/* <div className="px-4 pt-2 text-xs opacity-60">ADMIN LAYOUT AKTIF ✅</div> */}
-
         <main className="flex-1 px-4 pb-6 pt-4 sm:px-6 sm:pt-6">
           <Outlet />
         </main>

@@ -13,7 +13,7 @@ import { Route as HomeRouteImport } from './routes/home'
 import { Route as AuthedRouteRouteImport } from './routes/_authed/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as DemoTanstackQueryRouteImport } from './routes/demo/tanstack-query'
-import { Route as AuthRegiisterRouteImport } from './routes/auth/regiister'
+import { Route as AuthRegisterRouteImport } from './routes/auth/register'
 import { Route as AuthLoginRouteImport } from './routes/auth/login'
 import { Route as AuthedSellerRouteImport } from './routes/_authed/seller'
 import { Route as AuthedAdminRouteImport } from './routes/_authed/admin'
@@ -46,9 +46,9 @@ const DemoTanstackQueryRoute = DemoTanstackQueryRouteImport.update({
   path: '/demo/tanstack-query',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthRegiisterRoute = AuthRegiisterRouteImport.update({
-  id: '/auth/regiister',
-  path: '/auth/regiister',
+const AuthRegisterRoute = AuthRegisterRouteImport.update({
+  id: '/auth/register',
+  path: '/auth/register',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthLoginRoute = AuthLoginRouteImport.update({
@@ -118,7 +118,7 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AuthedAdminRouteWithChildren
   '/seller': typeof AuthedSellerRouteWithChildren
   '/auth/login': typeof AuthLoginRoute
-  '/auth/regiister': typeof AuthRegiisterRoute
+  '/auth/register': typeof AuthRegisterRoute
   '/demo/tanstack-query': typeof DemoTanstackQueryRoute
   '/admin/approval': typeof AuthedAdminApprovalRoute
   '/admin/dashboard': typeof AuthedAdminDashboardRoute
@@ -136,7 +136,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AuthedAdminRouteWithChildren
   '/seller': typeof AuthedSellerRouteWithChildren
   '/auth/login': typeof AuthLoginRoute
-  '/auth/regiister': typeof AuthRegiisterRoute
+  '/auth/register': typeof AuthRegisterRoute
   '/demo/tanstack-query': typeof DemoTanstackQueryRoute
   '/admin/approval': typeof AuthedAdminApprovalRoute
   '/admin/dashboard': typeof AuthedAdminDashboardRoute
@@ -156,7 +156,7 @@ export interface FileRoutesById {
   '/_authed/admin': typeof AuthedAdminRouteWithChildren
   '/_authed/seller': typeof AuthedSellerRouteWithChildren
   '/auth/login': typeof AuthLoginRoute
-  '/auth/regiister': typeof AuthRegiisterRoute
+  '/auth/register': typeof AuthRegisterRoute
   '/demo/tanstack-query': typeof DemoTanstackQueryRoute
   '/_authed/admin/approval': typeof AuthedAdminApprovalRoute
   '/_authed/admin/dashboard': typeof AuthedAdminDashboardRoute
@@ -176,7 +176,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/seller'
     | '/auth/login'
-    | '/auth/regiister'
+    | '/auth/register'
     | '/demo/tanstack-query'
     | '/admin/approval'
     | '/admin/dashboard'
@@ -194,7 +194,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/seller'
     | '/auth/login'
-    | '/auth/regiister'
+    | '/auth/register'
     | '/demo/tanstack-query'
     | '/admin/approval'
     | '/admin/dashboard'
@@ -213,7 +213,7 @@ export interface FileRouteTypes {
     | '/_authed/admin'
     | '/_authed/seller'
     | '/auth/login'
-    | '/auth/regiister'
+    | '/auth/register'
     | '/demo/tanstack-query'
     | '/_authed/admin/approval'
     | '/_authed/admin/dashboard'
@@ -231,7 +231,7 @@ export interface RootRouteChildren {
   AuthedRouteRoute: typeof AuthedRouteRouteWithChildren
   HomeRoute: typeof HomeRoute
   AuthLoginRoute: typeof AuthLoginRoute
-  AuthRegiisterRoute: typeof AuthRegiisterRoute
+  AuthRegisterRoute: typeof AuthRegisterRoute
   DemoTanstackQueryRoute: typeof DemoTanstackQueryRoute
 }
 
@@ -265,11 +265,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DemoTanstackQueryRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/auth/regiister': {
-      id: '/auth/regiister'
-      path: '/auth/regiister'
-      fullPath: '/auth/regiister'
-      preLoaderRoute: typeof AuthRegiisterRouteImport
+    '/auth/register': {
+      id: '/auth/register'
+      path: '/auth/register'
+      fullPath: '/auth/register'
+      preLoaderRoute: typeof AuthRegisterRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth/login': {
@@ -416,7 +416,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthedRouteRoute: AuthedRouteRouteWithChildren,
   HomeRoute: HomeRoute,
   AuthLoginRoute: AuthLoginRoute,
-  AuthRegiisterRoute: AuthRegiisterRoute,
+  AuthRegisterRoute: AuthRegisterRoute,
   DemoTanstackQueryRoute: DemoTanstackQueryRoute,
 }
 export const routeTree = rootRouteImport
