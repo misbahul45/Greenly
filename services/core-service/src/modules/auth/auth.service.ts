@@ -205,8 +205,15 @@ export class AuthService {
     })
 
     return {
-      accessToken,
-      refreshToken,
+      tokens:{
+        accessToken,
+        refreshToken,
+      },
+      user:{
+        id:existedUser.id,
+        name:existedUser.profile?.fullName,
+        email:existedUser.email
+      }
     };
   }
 

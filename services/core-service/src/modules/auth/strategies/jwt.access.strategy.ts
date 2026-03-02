@@ -23,8 +23,6 @@ export class JwtAccessStrategy extends PassportStrategy(Strategy, 'jwt-access') 
 
   async validate(req: Request,payload: any) {
     const accessToken = req.get('Authorization')?.replace('Bearer', '').trim();
-
-    console.log('accessToken', accessToken)
     
     if(!accessToken){
       throw new AppError('Unauthorized', 401)

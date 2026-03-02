@@ -1,3 +1,4 @@
+import { CustomerTableDummy } from '#/components/admin/CistomerTable'
 import { createFileRoute } from '@tanstack/react-router'
 
 export const Route = createFileRoute('/admin/customer')({
@@ -5,5 +6,7 @@ export const Route = createFileRoute('/admin/customer')({
 })
 
 function RouteComponent() {
-  return <div>Hello "/admin/customer"!</div>
+  return <div>
+    <CustomerTableDummy />
+  </div>
 }
