@@ -6,7 +6,7 @@ import { toast } from "sonner"
 import * as z from "zod"
 import { Eye, EyeOff } from "lucide-react"
 
-import { Button } from "@/components/ui/button"
+import { Button } from "#/components/ui/button"
 import {
   Card,
   CardContent,
