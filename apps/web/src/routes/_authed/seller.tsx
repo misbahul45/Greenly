@@ -2,10 +2,10 @@
 
 import * as React from "react"
 import { Outlet, createFileRoute } from "@tanstack/react-router"
-import SidebarSeller from "../components/SidebarSeller"
-import Header from "../components/Header"
+import SidebarSeller from "../../components/SidebarSeller"
+import Header from "../../components/Header"
 
-export const Route = createFileRoute("/seller")({
+export const Route = createFileRoute("/_authed/seller")({
   component: SellerLayout,
 })
 

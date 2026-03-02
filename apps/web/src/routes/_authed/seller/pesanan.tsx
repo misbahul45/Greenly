@@ -1,7 +1,7 @@
 import { OrderTableDummy } from '#/components/seller/OrderTable'
 import { createFileRoute } from '@tanstack/react-router'
 
-export const Route = createFileRoute('/admin/pesanan')({
+export const Route = createFileRoute('/_authed/seller/pesanan')({
   component: RouteComponent,
 })
 
