@@ -162,7 +162,7 @@ model UserRole {
 model Shop {
   id          Int        @id @default(autoincrement())
   ownerId     Int
-  name        String
+  name        String    
   description String?
   status      ShopStatus @default(PENDING)
   balance     Decimal    @default(0) @db.Decimal(15,2)

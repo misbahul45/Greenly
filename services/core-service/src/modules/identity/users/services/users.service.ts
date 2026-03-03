@@ -21,33 +21,35 @@ export class UsersService {
 ) {}
 
   async findAll(query: UserQueryDTO) {
-    const { page, limit, status, include } = query
+    const { page, limit, status, search, sortBy, sortOrder } = query
 
     const [users, total] = await Promise.all([
       this.repo.getUsers({
         skip: (page - 1) * limit,
         take: limit,
         status,
-        include,
+        search,
+        sortBy,
+        sortOrder,
       }),
-      this.repo.countUsers(status),
+      this.repo.countUsers({
+        status,
+        search,
+      }),
     ])
 
     return {
-      data: {
-        items: users,
-        meta: {
-          total,
-          page,
-          lastPage: Math.ceil(total / limit),
-        },
+      data:users,
+      meta: {
+        total,
+        page,
+        lastPage: Math.ceil(total / limit),
       },
       message: 'Users fetched successfully',
     }
   }
-
-  async findOne(id: number, include?: any) {
-    const user = await this.repo.findUser(id, include)
+  async findOne(id: number) {
+    const user = await this.repo.findUser(id,)
 
     if (!user) throw new NotFoundException('User not found')
 
@@ -91,7 +93,7 @@ export class UsersService {
   }
 
   async remove(user:UserLogin) {
-    const findUser = await this.repo.findUser(user.sub, ['profile']) as any
+    const findUser = await this.repo.findUser(user.sub) as any
     if (!findUser) throw new NotFoundException('User not found')
     
     const rawOtp = generateOtp();

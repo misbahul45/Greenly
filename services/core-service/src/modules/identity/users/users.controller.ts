@@ -46,11 +46,9 @@ export class UsersController {
   async findOne(
     @Param(new ZodValidationPipe(userIdParamSchema))
     params: UserIdParamDTO,
-    @Query(new ZodValidationPipe(userQuerySchema))
-    query: UserQueryDTO,
   ) {
     return ErrorHandler(() =>
-      this.service.findOne(params.id, query.include),
+      this.service.findOne(params.id),
     )
   }
 

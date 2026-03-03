@@ -41,6 +41,9 @@ export class AuthRepository{
                             }
                         }
                     }
+                },
+                cart:{
+                    create:{}
                 }
             },         
         })

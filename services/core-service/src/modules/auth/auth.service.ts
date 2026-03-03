@@ -132,7 +132,6 @@ export class AuthService {
   }
 
   async generateTokens(payload: GenerateTokensDTO) {
-
     const data = GenerateTokensSchema.parse(payload);
 
     const accessSecret = this.config.get<string>('jwt.access.key')!;
@@ -149,7 +148,7 @@ export class AuthService {
       },
       {
         secret: accessSecret,
-        expiresIn: (accessExpires as StringValue),
+        expiresIn: accessExpires as StringValue,
       },
     );
 
@@ -161,7 +160,7 @@ export class AuthService {
       },
       {
         secret: refreshSecret,
-        expiresIn: (refreshExpires as StringValue),
+        expiresIn: refreshExpires as StringValue,
       },
     );
 

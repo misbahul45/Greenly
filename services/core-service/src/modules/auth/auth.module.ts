@@ -12,6 +12,7 @@ import { UserVerifiedPublisher } from './publisher/user_verified.publisher';
 import { UserForgotPasswordPublisher } from './publisher/user_forgot_password.publisher';
 import { JwtRefreshStrategy } from './strategies/jwt.refresh.strategy';
 import { JwtAccessStrategy } from './strategies/jwt.access.strategy';
+import { UserResendTokenPublisher } from './publisher/user_resend_token.publisher';
 
 @Module({
   imports: [
@@ -37,8 +38,9 @@ import { JwtAccessStrategy } from './strategies/jwt.access.strategy';
     UserLoginPublisher,
     UserVerifiedPublisher,
     UserForgotPasswordPublisher,
+    UserResendTokenPublisher,
     JwtAccessStrategy,
-    JwtRefreshStrategy
+    JwtRefreshStrategy,
   ],
 
   exports: [AuthService],

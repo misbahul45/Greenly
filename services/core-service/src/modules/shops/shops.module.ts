@@ -8,6 +8,8 @@ import { FinanceModule } from './finance/finance.module';
 import { ShopsService } from './shops.service';
 import { ShopsController } from './shops.controller';
 import { RouterModule } from '@nestjs/core';
+import { ShopsRepository } from './shops.repository';
+import { ShopCreatedPublisher } from './publisher/shop.created.publisher';
 
 @Module({
   imports: [
@@ -32,7 +34,7 @@ import { RouterModule } from '@nestjs/core';
       },
     ]),
   ],
-  providers: [ShopsService],
+  providers: [ShopsService, ShopsRepository, ShopCreatedPublisher, ],
   controllers: [ShopsController],
 })
 export class ShopsModule {}
