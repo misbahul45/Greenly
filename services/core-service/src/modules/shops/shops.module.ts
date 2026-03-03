@@ -5,8 +5,34 @@ import { FollowerModule } from './follower/follower.module';
 import { OrderModule } from './order/order.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { FinanceModule } from './finance/finance.module';
+import { ShopsService } from './shops.service';
+import { ShopsController } from './shops.controller';
+import { RouterModule } from '@nestjs/core';
 
 @Module({
-  imports: [ApplicationModule, MemberModule, FollowerModule, OrderModule, DashboardModule, FinanceModule],
+  imports: [
+    ApplicationModule,
+    MemberModule,
+    FollowerModule,
+    OrderModule,
+    DashboardModule,
+    FinanceModule,
+
+    RouterModule.register([
+      {
+        path: 'shops/:id',
+        children: [
+          { path: 'application', module: ApplicationModule },
+          { path: 'members', module: MemberModule },
+          { path: '' , module: FollowerModule },
+          { path: 'orders', module: OrderModule },
+          { path: 'dashboard', module: DashboardModule },
+          { path: 'finance', module: FinanceModule },
+        ],
+      },
+    ]),
+  ],
+  providers: [ShopsService],
+  controllers: [ShopsController],
 })
 export class ShopsModule {}

@@ -1,4 +1,17 @@
-import { Controller } from '@nestjs/common';
+import { Controller, Delete, Get, Patch, Post } from '@nestjs/common';
 
-@Controller('member')
-export class MemberController {}
+@Controller('')
+export class MemberController {
+
+    @Post()
+    addMember(){}
+
+    @Get()
+    findMany(){}
+
+    @Patch('/:memberId')
+    updateMember(){}
+
+    @Delete('/:memberId')
+    deleteMember(){}
+}

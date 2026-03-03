@@ -1,4 +1,16 @@
-import { Controller } from '@nestjs/common';
+import { Controller, Get, Post } from '@nestjs/common';
 
-@Controller('finance')
-export class FinanceController {}
+@Controller()
+export class FinanceController {
+    @Get('/balance')
+    balance(){}
+
+    @Get('/ledger')
+    ledger(){}
+
+    @Post('/payout')
+    payout(){}
+
+    @Get('/payouts')
+    findPayouts(){}
+}

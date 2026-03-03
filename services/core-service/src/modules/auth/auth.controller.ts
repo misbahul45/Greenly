@@ -21,6 +21,8 @@ import {
   type VerifyEmailDTO,
   VerifyPasswordSchema,
   type VerifyPasswordDTO,
+  ResendTokenSchema,
+  type ResendTokenDTO,
 } from './auth.dto';
 
 import ErrorHandler from 'src/libs/errors/handler.error';
@@ -109,6 +111,15 @@ export class AuthController {
     return ErrorHandler(() =>
       this.authService.forgotPassword(dto.email)
     );
+  }
+
+  @Public()
+  @Post('resend-token')
+  resendToken(
+    @Body(new ZodValidationPipe(ResendTokenSchema))
+    dto:ResendTokenDTO
+  ){
+    return ErrorHandler(()=>this.authService.resendToken(dto.email))
   }
 
 

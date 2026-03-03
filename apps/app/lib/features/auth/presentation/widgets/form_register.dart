@@ -26,7 +26,7 @@ class _FormRegisterState extends State<FormRegister> {
     emailController.dispose();
     passwordController.dispose();
     confirmPasswordController.dispose();
-    super.dispose(); // ✅ jangan lupa
+    super.dispose(); 
   }
 
   void handleSubmit() {

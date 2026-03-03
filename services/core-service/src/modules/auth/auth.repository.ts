@@ -144,6 +144,18 @@ export class AuthRepository{
         })
     }
 
+    async markAllToken(userId:number){
+        return await this.db.authToken.updateMany({
+            where:{
+                userId
+            },
+            data:{
+                usedAt:new Date()
+            }
+        })
+    }
+
+
     async saveToken(payload: {
         userId: number;
         token: string;

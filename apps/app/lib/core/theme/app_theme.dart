@@ -24,9 +24,6 @@ class AppTheme {
       error: Colors.red,
       onError: Colors.white,
 
-      background: backgroundColor,
-      onBackground: Colors.black,
-
       surface: Colors.white,
       onSurface: Colors.black,
     ),

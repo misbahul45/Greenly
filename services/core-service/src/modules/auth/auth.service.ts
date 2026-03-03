@@ -13,6 +13,7 @@ import { UserRegisteredPublisher } from './publisher/user_registered.publisher';
 import { UserVerifiedPublisher } from './publisher/user_verified.publisher';
 import { UserForgotPasswordPublisher } from './publisher/user_forgot_password.publisher';
 import { UserLoginPublisher } from './publisher/user_login.publisher';
+import { UserResendTokenPublisher } from './publisher/user_resend_token.publisher';
 
 @Injectable()
 export class AuthService {
@@ -23,7 +24,8 @@ export class AuthService {
     private readonly registerPublisher:UserRegisteredPublisher,
     private readonly verifiedPublisher:UserVerifiedPublisher,
     private readonly forgotPasswordPublisher:UserForgotPasswordPublisher,
-    private readonly loginPublisher:UserLoginPublisher
+    private readonly loginPublisher:UserLoginPublisher,
+    private readonly resendTokenPublisher:UserResendTokenPublisher
   ){}
 
   async register(dto: RegisterDTO) {
@@ -272,12 +274,6 @@ export class AuthService {
       throw new AppError('Your email is not verified. Please verify to continue.', 403);
     }
 
-    const emailConfig = this.config.get('emailJs', { infer: true });
-
-    if (!emailConfig) {
-      throw new Error('Email config not found');
-    }
-
     const rawOtp = generateOtp();
     const hashedOtp = hashValue(rawOtp);
     const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
@@ -300,6 +296,33 @@ export class AuthService {
     return {
       message: `Password reset sent to ${email}`,
     };
+  }
+
+  async resendToken(email:string){
+    const existedUser=await this.repo.checkUserByEmail(email)
+    if(!existedUser){
+      throw new AppError('User not found', 404)
+    }
+    await this.repo.markAllToken(existedUser.id)
+  
+    const rawOtp = generateOtp();
+    const hashedOtp = hashValue(rawOtp);
+    const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
+
+    await this.repo.saveToken({
+      userId:existedUser.id,
+      token:hashedOtp,
+      expiresAt,
+      tokenType:AuthTokenType.RESET_PASSWORD
+    })
+
+    await this.resendTokenPublisher.publishEmail({
+      email:existedUser.email,
+      name:existedUser.profile?.fullName || 'anonymus',
+      otp:rawOtp,
+      action:'Resend Token'
+    })
+
   }
 
   async changePassword(dto: ChangePasswordDTO) {

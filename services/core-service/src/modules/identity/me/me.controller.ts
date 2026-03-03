@@ -31,4 +31,7 @@ export class MeController {
             )
         ))
     }
+
+    @Get('/following/shops')
+    followingShop(){}
 }

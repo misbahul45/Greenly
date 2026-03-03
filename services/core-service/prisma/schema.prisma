@@ -168,6 +168,7 @@ model Shop {
   balance     Decimal    @default(0) @db.Decimal(15,2)
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
+  deletedAt   DateTime?
 
   owner       User            @relation("ShopOwner", fields: [ownerId], references: [id])
   members     ShopMember[]

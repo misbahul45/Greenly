@@ -1,4 +1,16 @@
-import { Controller } from '@nestjs/common';
+import { Controller, Get, Patch } from '@nestjs/common';
 
-@Controller('order')
-export class OrderController {}
+@Controller()
+export class OrderController {
+    @Get()
+    findMany(){}
+
+    @Get('/:id')
+    findOne(){}
+
+    @Patch('/:id/status')
+    updateStatus(){}
+
+    @Patch('/:id/refund/:refundId')
+    updateRefund(){}
+}
