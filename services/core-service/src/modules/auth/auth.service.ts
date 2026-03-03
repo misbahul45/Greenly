@@ -323,6 +323,10 @@ export class AuthService {
       action:'Resend Token'
     })
 
+    return {
+      message: `Resend token sent to ${email}`,
+    };
+
   }
 
   async changePassword(dto: ChangePasswordDTO) {
