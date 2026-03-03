@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { OrderQueryDTO } from './order.dto';
 import { OrderRepository } from './order.repository';
 import { AppError } from '../../../libs/errors/app.error';
+import { OrderStatus } from '../../../../generated/prisma/enums';
 
 @Injectable()
 export class OrderService {
@@ -66,7 +67,7 @@ export class OrderService {
   async updateStatus(
     shopId: number,
     orderId: number,
-    status: string,
+    status: OrderStatus,
   ) {
     const order = await this.repo.findOne(shopId, orderId);
 
@@ -98,8 +99,6 @@ export class OrderService {
     }
 
     const updated = await this.repo.updateRefund(
-      shopId,
-      orderId,
       refundId,
     );
 
