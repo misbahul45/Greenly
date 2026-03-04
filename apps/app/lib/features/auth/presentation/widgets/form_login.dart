@@ -1,9 +1,16 @@
+import 'package:flutter/material.dart';
 import 'package:app/features/auth/auth_validation.dart';
 import 'package:app/shared/ui/TextValidation.dart';
-import 'package:flutter/material.dart';
 
 class FormLogin extends StatefulWidget {
-  const FormLogin({super.key});
+  final void Function(String email, String password) onSubmit;
+  final bool isLoading;
+
+  const FormLogin({
+    super.key,
+    required this.onSubmit,
+    required this.isLoading,
+  });
 
   @override
   State<FormLogin> createState() => _FormLoginState();
@@ -25,12 +32,12 @@ class _FormLoginState extends State<FormLogin> {
   }
 
   void handleSubmit() {
-    if (!_formKey.currentState!.validate()) {
-      print("Form Tidak Valid ❌");
-      return;
-    }
+    if (!_formKey.currentState!.validate()) return;
 
-    print("Login Valid ✅");
+    widget.onSubmit(
+      emailController.text.trim(),
+      passwordController.text.trim(),
+    );
   }
 
   void togglePassword() {
@@ -39,7 +46,7 @@ class _FormLoginState extends State<FormLogin> {
     });
   }
 
-  void toggleForgotPassword(){
+  void toggleForgotPassword() {
     Navigator.pushNamed(context, "/forgot-password");
   }
 
@@ -55,7 +62,7 @@ class _FormLoginState extends State<FormLogin> {
         key: _formKey,
         child: Column(
           mainAxisSize: MainAxisSize.min,
-          children: [   
+          children: [
             /// EMAIL
             Textvalidation(
               hint: "Email",
@@ -86,19 +93,36 @@ class _FormLoginState extends State<FormLogin> {
             Align(
               alignment: Alignment.centerRight,
               child: TextButton(
-                onPressed: toggleForgotPassword, 
-                child: const Text("forgot password?")
+                onPressed: toggleForgotPassword,
+                child: const Text("Forgot password?"),
               ),
             ),
 
             const SizedBox(height: 16),
-      
-            /// BUTTON
+
+            /// BUTTON WITH LOADING
             SizedBox(
               width: double.infinity,
+              height: 50,
               child: ElevatedButton(
-                onPressed: handleSubmit,
-                child: const Text("My Account"),
+                onPressed: widget.isLoading ? null : handleSubmit,
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 300),
+                  child: widget.isLoading
+                      ? const SizedBox(
+                          key: ValueKey("loading"),
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Text(
+                          "My Account",
+                          key: ValueKey("text"),
+                        ),
+                ),
               ),
             ),
 
@@ -108,9 +132,12 @@ class _FormLoginState extends State<FormLogin> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 const Text("Don't have an account?"),
-                TextButton(onPressed: toggleRegister, child: const Text("Create account"))
+                TextButton(
+                  onPressed: toggleRegister,
+                  child: const Text("Create account"),
+                ),
               ],
-            )
+            ),
           ],
         ),
       ),

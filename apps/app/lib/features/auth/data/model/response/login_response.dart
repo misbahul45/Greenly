@@ -1,16 +1,15 @@
+import 'package:app/features/auth/data/model/data/login_data.dart';
+
 class LoginResponse {
-  final String accessToken;
-  final String refreshToken;
+  final LoginData data;
 
   LoginResponse({
-    required this.accessToken,
-    required this.refreshToken,
+    required this.data,
   });
 
   factory LoginResponse.fromJson(Map<String, dynamic> json) {
     return LoginResponse(
-      accessToken: json['accessToken'] ?? '',
-      refreshToken: json['refreshToken'] ?? '',
+      data: LoginData.fromJson(json['data']),
     );
   }
 }
