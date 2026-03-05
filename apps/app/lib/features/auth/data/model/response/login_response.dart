@@ -9,7 +9,7 @@ class LoginResponse {
 
   factory LoginResponse.fromJson(Map<String, dynamic> json) {
     return LoginResponse(
-      data: LoginData.fromJson(json['data']),
+      data: LoginData.fromJson(json),
     );
   }
 }

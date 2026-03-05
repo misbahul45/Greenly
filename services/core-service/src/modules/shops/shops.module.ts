@@ -10,6 +10,8 @@ import { ShopsController } from './shops.controller';
 import { RouterModule } from '@nestjs/core';
 import { ShopsRepository } from './shops.repository';
 import { ShopCreatedPublisher } from './publisher/shop.created.publisher';
+import { ShopApplicationVerifiedPublisher } from './publisher/shop.application.updated.publisher';
+import { EmailConsume } from './consumer/email.consume';
 
 @Module({
   imports: [
@@ -34,7 +36,13 @@ import { ShopCreatedPublisher } from './publisher/shop.created.publisher';
       },
     ]),
   ],
-  providers: [ShopsService, ShopsRepository, ShopCreatedPublisher, ],
+  providers: [
+    ShopsService,
+    ShopsRepository,
+    ShopCreatedPublisher,
+    ShopApplicationVerifiedPublisher,
+    EmailConsume
+  ],
   controllers: [ShopsController],
 })
 export class ShopsModule {}

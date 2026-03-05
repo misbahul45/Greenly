@@ -26,10 +26,12 @@ class ApiClient {
 
       final decoded =
           res.body.isNotEmpty ? jsonDecode(res.body) : <String, dynamic>{};
+      
+      print("LOGIN RESPONSE -> $decoded");
 
-      final bool status = decoded["status"] == true;
+      final bool isSuccess = decoded["status"] == "success";
 
-      if (res.statusCode >= 200 && res.statusCode < 300 && status) {
+      if (res.statusCode >= 200 && res.statusCode < 300 && isSuccess) {
         return ApiResponse<T>.fromJson(
           decoded,
           fromJsonT ?? (data) => data as T,
@@ -37,8 +39,8 @@ class ApiClient {
       }
 
       return ApiResponse<T>(
-        status: false,
-        statusCode: res.statusCode,
+        status: decoded["status"] ?? "error",
+        statusCode: decoded["statusCode"] ?? res.statusCode,
         path: decoded["path"] ?? "",
         message: decoded["message"] ?? "Unknown error",
         timestamp: decoded["timestamp"] ?? "",
@@ -46,7 +48,7 @@ class ApiClient {
       );
     } catch (e) {
       return ApiResponse<T>(
-        status: false,
+        status: "error",
         statusCode: 0,
         path: "",
         message: "Network error",

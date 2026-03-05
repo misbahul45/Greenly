@@ -36,4 +36,13 @@ class AuthService {
       fromJsonT: (json) => VerifyEmailResponse.fromJson(json),
     );
   }
+
+  static Future<ApiResponse<dynamic>> resendOtp(String email) async {
+    return await ApiClient.post<dynamic>(
+      "$_baseUrl/auth/resend",
+      {
+        "email": email,
+      },
+    );
+  }
 }

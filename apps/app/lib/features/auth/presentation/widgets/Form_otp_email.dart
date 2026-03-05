@@ -4,7 +4,19 @@ import 'package:flutter/material.dart';
 import 'package:app/shared/ui/otp_field.dart';
 
 class FormOtpEmail extends StatefulWidget {
-  const FormOtpEmail({super.key});
+  final void Function(String otp) onSubmitOtp;
+  final void Function(String email) onResendOtp;
+
+  final bool isLoading;
+  final String? errorMessage;
+
+  const FormOtpEmail({
+    super.key,
+    required this.onSubmitOtp,
+    required this.onResendOtp,
+    required this.isLoading,
+    this.errorMessage,
+  });
 
   @override
   State<FormOtpEmail> createState() => _FormOtpEmailState();
@@ -25,17 +37,35 @@ class _FormOtpEmailState extends State<FormOtpEmail> {
     super.dispose();
   }
 
+  /// VERIFY OTP
   void handleSubmitOtp() {
-    print("OTP: ${otpController.text}");
+    if (otpController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("OTP harus diisi"),
+        ),
+      );
+      return;
+    }
+
+    widget.onSubmitOtp(
+      otpController.text.trim(),
+    );
   }
 
+  /// RESEND OTP
   void handleResend() {
-    if (_formKey.currentState!.validate()) {
-      print("Resend to: ${emailController.text}");
-      setState(() {
-        showOtp = true;
-      });
+    if (!_formKey.currentState!.validate()) {
+      return;
     }
+
+    widget.onResendOtp(
+      emailController.text.trim(),
+    );
+
+    setState(() {
+      showOtp = true;
+    });
   }
 
   void toggleView() {
@@ -47,14 +77,30 @@ class _FormOtpEmailState extends State<FormOtpEmail> {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
       child: Form(
         key: _formKey,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
 
-            /// 🔹 OTP VIEW
+            /// ERROR MESSAGE
+            if (widget.errorMessage != null)
+              Container(
+                padding: const EdgeInsets.all(12),
+                margin: const EdgeInsets.only(bottom: 16),
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: Colors.red.shade100,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  widget.errorMessage!,
+                  style: const TextStyle(color: Colors.red),
+                ),
+              ),
+
+            /// OTP VIEW
             if (showOtp) ...[
               OtpField(
                 length: 6,
@@ -63,37 +109,61 @@ class _FormOtpEmailState extends State<FormOtpEmail> {
                 },
               ),
 
-              const SizedBox(height: 16),
+              const SizedBox(height: 20),
 
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: handleSubmitOtp,
-                  child: const Text("Verify OTP"),
+                  onPressed: widget.isLoading ? null : handleSubmitOtp,
+                  child: widget.isLoading
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                          ),
+                        )
+                      : const Text("Verify OTP"),
                 ),
               ),
+
+              const SizedBox(height: 10),
+
               TextButton(
                 onPressed: toggleView,
                 child: const Text("Resend Code"),
               ),
             ]
 
-            /// 🔹 EMAIL INPUT VIEW
+            /// EMAIL VIEW
             else ...[
               Textvalidation(
-                hint: "Email", 
+                hint: "Email",
                 controller: emailController,
                 validator: AuthValidation.email,
                 prefixIcon: Icons.email,
               ),
-              const SizedBox(height: 16),
+
+              const SizedBox(height: 20),
+
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: handleResend,
-                  child: const Text("Send OTP"),
+                  onPressed: widget.isLoading ? null : handleResend,
+                  child: widget.isLoading
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                          ),
+                        )
+                      : const Text("Send OTP"),
                 ),
               ),
+
+              const SizedBox(height: 10),
+
               TextButton(
                 onPressed: toggleView,
                 child: const Text("Back to OTP"),

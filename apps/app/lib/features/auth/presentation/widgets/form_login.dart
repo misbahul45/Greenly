@@ -5,11 +5,13 @@ import 'package:app/shared/ui/TextValidation.dart';
 class FormLogin extends StatefulWidget {
   final void Function(String email, String password) onSubmit;
   final bool isLoading;
+  final String? errorMessage;
 
   const FormLogin({
     super.key,
     required this.onSubmit,
     required this.isLoading,
+    this.errorMessage,
   });
 
   @override
@@ -63,17 +65,13 @@ class _FormLoginState extends State<FormLogin> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            /// EMAIL
             Textvalidation(
               hint: "Email",
               controller: emailController,
               prefixIcon: Icons.email,
               validator: AuthValidation.email,
             ),
-
             const SizedBox(height: 16),
-
-            /// PASSWORD
             Textvalidation(
               hint: "Password",
               controller: passwordController,
@@ -89,7 +87,6 @@ class _FormLoginState extends State<FormLogin> {
                 ),
               ),
             ),
-
             Align(
               alignment: Alignment.centerRight,
               child: TextButton(
@@ -97,10 +94,26 @@ class _FormLoginState extends State<FormLogin> {
                 child: const Text("Forgot password?"),
               ),
             ),
-
-            const SizedBox(height: 16),
-
-            /// BUTTON WITH LOADING
+            const SizedBox(height: 12),
+            if (widget.errorMessage != null) ...[
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                margin: const EdgeInsets.only(bottom: 12),
+                decoration: BoxDecoration(
+                  color: Colors.red.shade50,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.red.shade200),
+                ),
+                child: Text(
+                  widget.errorMessage!,
+                  style: const TextStyle(
+                    color: Colors.red,
+                    fontSize: 14,
+                  ),
+                ),
+              ),
+            ],
             SizedBox(
               width: double.infinity,
               height: 50,
@@ -125,9 +138,7 @@ class _FormLoginState extends State<FormLogin> {
                 ),
               ),
             ),
-
             const SizedBox(height: 16),
-
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [

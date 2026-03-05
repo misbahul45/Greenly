@@ -1,9 +1,10 @@
 class ApiResponse<T> {
-  final bool status;
+  final String status;
   final int statusCode;
   final String path;
   final String message;
   final T? data;
+  final dynamic metaData;
   final String timestamp;
 
   ApiResponse({
@@ -13,6 +14,7 @@ class ApiResponse<T> {
     required this.message,
     required this.timestamp,
     this.data,
+    this.metaData,
   });
 
   factory ApiResponse.fromJson(
@@ -20,14 +22,15 @@ class ApiResponse<T> {
     T Function(dynamic json) fromJsonT,
   ) {
     return ApiResponse<T>(
-      status: json['status'] ?? false,
+      status: json['status'] ?? 'error',
       statusCode: json['statusCode'] ?? 0,
       path: json['path'] ?? '',
       message: json['message'] ?? '',
       timestamp: json['timestamp'] ?? '',
+      metaData: json['metaData'],
       data: json['data'] != null ? fromJsonT(json['data']) : null,
     );
   }
 
-  bool get isSuccess => status;
+  bool get isSuccess => status == "success";
 }

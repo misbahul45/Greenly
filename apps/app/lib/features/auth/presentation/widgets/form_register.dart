@@ -3,7 +3,22 @@ import 'package:app/shared/ui/TextValidation.dart';
 import 'package:flutter/material.dart';
 
 class FormRegister extends StatefulWidget {
-  const FormRegister({super.key});
+  final void Function(
+    String name,
+    String email,
+    String password,
+    String confirmPassword,
+  ) onSubmit;
+
+  final bool isLoading;
+  final String? errorMessage;
+
+  const FormRegister({
+    super.key,
+    required this.onSubmit,
+    required this.isLoading,
+    this.errorMessage,
+  });
 
   @override
   State<FormRegister> createState() => _FormRegisterState();
@@ -12,10 +27,10 @@ class FormRegister extends StatefulWidget {
 class _FormRegisterState extends State<FormRegister> {
   final _formKey = GlobalKey<FormState>();
 
+  final nameController = TextEditingController();
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
   final confirmPasswordController = TextEditingController();
-  final nameController=TextEditingController();
 
   bool obscurePassword = true;
   bool obscureConfirmPassword = true;
@@ -23,15 +38,15 @@ class _FormRegisterState extends State<FormRegister> {
 
   @override
   void dispose() {
+    nameController.dispose();
     emailController.dispose();
     passwordController.dispose();
     confirmPasswordController.dispose();
-    super.dispose(); 
+    super.dispose();
   }
 
   void handleSubmit() {
     if (!_formKey.currentState!.validate()) {
-      print("Form Tidak Valid ❌");
       return;
     }
 
@@ -44,8 +59,12 @@ class _FormRegisterState extends State<FormRegister> {
       return;
     }
 
-    print("Form Valid ✅");
-    print("Email: ${emailController.text}");
+    widget.onSubmit(
+      nameController.text.trim(),
+      emailController.text.trim(),
+      passwordController.text.trim(),
+      confirmPasswordController.text.trim(),
+    );
   }
 
   void togglePassword() {
@@ -60,27 +79,46 @@ class _FormRegisterState extends State<FormRegister> {
     });
   }
 
-  void toggleLogin() {
-    Navigator.pushNamed(context, '/login');
+  void goToLogin() {
+    Navigator.pushNamed(context, "/login");
   }
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
       child: Form(
         key: _formKey,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            /// Name
+
+            /// ERROR MESSAGE
+            if (widget.errorMessage != null)
+              Container(
+                padding: const EdgeInsets.all(12),
+                margin: const EdgeInsets.only(bottom: 16),
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: Colors.red.shade100,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  widget.errorMessage!,
+                  style: const TextStyle(color: Colors.red),
+                ),
+              ),
+
+            /// FULLNAME
             Textvalidation(
-              hint: "Fullname", 
+              hint: "Fullname",
               controller: nameController,
-              prefixIcon: Icons.account_balance_rounded,
+              prefixIcon: Icons.person,
               validator: AuthValidation.name,
             ),
-                    
+
+            const SizedBox(height: 16),
+
             /// EMAIL
             Textvalidation(
               hint: "Email",
@@ -101,7 +139,9 @@ class _FormRegisterState extends State<FormRegister> {
               suffixIcon: IconButton(
                 onPressed: togglePassword,
                 icon: Icon(
-                  obscurePassword ? Icons.visibility : Icons.visibility_off,
+                  obscurePassword
+                      ? Icons.visibility
+                      : Icons.visibility_off,
                 ),
               ),
             ),
@@ -112,8 +152,8 @@ class _FormRegisterState extends State<FormRegister> {
             Textvalidation(
               hint: "Confirm Password",
               controller: confirmPasswordController,
-              obscure: obscureConfirmPassword,
               prefixIcon: Icons.lock_outline,
+              obscure: obscureConfirmPassword,
               validator: (value) => AuthValidation.confirmPassword(
                 value,
                 passwordController.text,
@@ -130,7 +170,7 @@ class _FormRegisterState extends State<FormRegister> {
 
             const SizedBox(height: 16),
 
-            /// AGREEMENT CHECKBOX
+            /// AGREEMENT
             Row(
               children: [
                 Checkbox(
@@ -142,29 +182,43 @@ class _FormRegisterState extends State<FormRegister> {
                   },
                 ),
                 const Expanded(
-                  child: Text("Saya menyetujui syarat & ketentuan"),
+                  child: Text(
+                    "Saya menyetujui syarat & ketentuan",
+                  ),
                 ),
               ],
             ),
 
-            const SizedBox(height: 16),
+            const SizedBox(height: 20),
 
             /// REGISTER BUTTON
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: handleSubmit,
-                child: const Text("Create Account"),
+                onPressed: widget.isLoading ? null : handleSubmit,
+                child: widget.isLoading
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                        ),
+                      )
+                    : const Text("Create Account"),
               ),
             ),
 
             const SizedBox(height: 18),
 
+            /// LOGIN LINK
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Text("Have an account"),
-                TextButton(onPressed: toggleLogin, child: const Text("Login")),
+                const Text("Have an account?"),
+                TextButton(
+                  onPressed: goToLogin,
+                  child: const Text("Login"),
+                ),
               ],
             ),
           ],

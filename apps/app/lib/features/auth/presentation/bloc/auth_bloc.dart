@@ -24,24 +24,20 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     final response = await AuthService.login(
       LoginDto(email: event.email, password: event.password),
     );
+    print("LOGIN RESPONSE Data -> ${response.data}");
 
-    if (response.status && response.data != null) {
-        final loginData = response.data!.data;
+    if (response.isSuccess && response.data != null) {
+      final loginData = response.data!.data;
 
-        /// SAVE SECURELY
-        await AuthStorage.saveTokens(
-          accessToken: loginData.tokens.accessToken,
-          refreshToken: loginData.tokens.refreshToken,
-        );
+      /// SAVE SECURELY
+      await AuthStorage.saveTokens(
+        accessToken: loginData.tokens.accessToken,
+        refreshToken: loginData.tokens.refreshToken,
+      );
 
-        await AuthStorage.saveUser(loginData.user);
+      await AuthStorage.saveUser(loginData.user);
 
-        emit(
-          AuthAuthenticated(
-            user: loginData.user,
-            tokens: loginData.tokens,
-          ),
-        );
+      emit(AuthAuthenticated(user: loginData.user, tokens: loginData.tokens));
     } else {
       emit(AuthError(response.message));
     }
@@ -54,6 +50,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     emit(AuthLoading());
 
     final token = await AuthStorage.getAccessToken();
+    final refreshToken = await AuthStorage.getRefreshToken();
+
     final user = await AuthStorage.getUser();
 
     if (token != null && user != null) {
@@ -62,7 +60,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
           user: user,
           tokens: TokenModel(
             accessToken: token,
-            refreshToken: "", // optional load later
+            refreshToken: refreshToken!, 
           ),
         ),
       );
@@ -70,6 +68,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       emit(AuthUnauthenticated());
     }
   }
+
   Future<void> _onLogout(
     AuthLogoutRequested event,
     Emitter<AuthState> emit,

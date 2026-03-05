@@ -18,14 +18,15 @@ class AuthStorage {
   }
 
   static Future<void> saveUser(UserModel user) async {
-    await _storage.write(
-      key: _userKey,
-      value: jsonEncode(user.toJson()),
-    );
+    await _storage.write(key: _userKey, value: jsonEncode(user.toJson()));
   }
 
   static Future<String?> getAccessToken() async {
     return await _storage.read(key: _accessTokenKey);
+  }
+
+  static Future<String?> getRefreshToken() async {
+    return await _storage.read(key: _refreshTokenKey);
   }
 
   static Future<UserModel?> getUser() async {

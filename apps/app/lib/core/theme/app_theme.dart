@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 
 class AppTheme {
-  static const Color primaryColor = Color(0xFF84B179);
-  static const Color secondaryColor = Color(0xFFA2CB8B);
-  static const Color tertiaryColor = Color(0xFFC7EABB);
-  static const Color backgroundColor = Color(0xFFE8F5BD);
+  static const Color primaryColor = Color(0xFF2E7D32); // hijau tua
+  static const Color secondaryColor = Color(0xFF4CAF50); // hijau sedang
+  static const Color tertiaryColor = Color(0xFFA5D6A7); // hijau soft
+  static const Color backgroundColor = Colors.white; // background putih
 
   static ThemeData lightTheme = ThemeData(
     useMaterial3: true,
@@ -16,7 +16,7 @@ class AppTheme {
       onPrimary: Colors.white,
 
       secondary: secondaryColor,
-      onSecondary: Colors.black,
+      onSecondary: Colors.white,
 
       tertiary: tertiaryColor,
       onTertiary: Colors.black,
@@ -41,7 +41,9 @@ class AppTheme {
       style: ElevatedButton.styleFrom(
         backgroundColor: primaryColor,
         foregroundColor: Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
         padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
       ),
     ),
@@ -50,13 +52,15 @@ class AppTheme {
       style: OutlinedButton.styleFrom(
         foregroundColor: primaryColor,
         side: const BorderSide(color: primaryColor),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
       ),
     ),
 
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
-      fillColor: tertiaryColor.withOpacity(0.3),
+      fillColor: const Color(0xFFF5F5F5), // abu soft supaya tetap terlihat
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
         borderSide: BorderSide.none,
@@ -70,7 +74,9 @@ class AppTheme {
     cardTheme: CardThemeData(
       color: Colors.white,
       elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+      ),
     ),
   );
 }

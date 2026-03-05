@@ -19,26 +19,50 @@ class LoginScreen extends StatelessWidget {
                 if (state is AuthAuthenticated) {
                   Navigator.pushReplacementNamed(context, "/home");
                 }
-
-                if (state is AuthError) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text(state.message)),
-                  );
-                }
               },
               builder: (context, state) {
                 final isLoading = state is AuthLoading;
+                String? errorMessage;
 
-                return FormLogin(
-                  isLoading: isLoading,
-                  onSubmit: (email, password) {
-                    context.read<AuthBloc>().add(
-                          AuthLoginRequested(
-                            email: email,
-                            password: password,
-                          ),
-                        );
-                  },
+                if (state is AuthError) {
+                  errorMessage = state.message;
+                }
+
+                return Padding(
+                  padding: const EdgeInsets.all(4),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      const Text(
+                        "Greenly Mart",
+                        style: TextStyle(
+                          fontSize: 28,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      const Text(
+                        "Login untuk melanjutkan ke aplikasi",
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: Colors.grey,
+                        ),
+                      ),
+                      const SizedBox(height: 32),
+                      FormLogin(
+                        isLoading: isLoading,
+                        errorMessage: errorMessage,
+                        onSubmit: (email, password) {
+                          context.read<AuthBloc>().add(
+                                AuthLoginRequested(
+                                  email: email,
+                                  password: password,
+                                ),
+                              );
+                        },
+                      ),
+                    ],
+                  ),
                 );
               },
             ),
