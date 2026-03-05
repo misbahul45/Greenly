@@ -113,6 +113,7 @@ class _FormOtpEmailState extends State<FormOtpEmail> {
 
               SizedBox(
                 width: double.infinity,
+                height: 50,
                 child: ElevatedButton(
                   onPressed: widget.isLoading ? null : handleSubmitOtp,
                   child: widget.isLoading
@@ -148,6 +149,7 @@ class _FormOtpEmailState extends State<FormOtpEmail> {
 
               SizedBox(
                 width: double.infinity,
+                height: 50,
                 child: ElevatedButton(
                   onPressed: widget.isLoading ? null : handleResend,
                   child: widget.isLoading

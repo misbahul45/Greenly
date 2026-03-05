@@ -1,4 +1,5 @@
 import 'package:app/features/auth/presentation/screens/register_screen.dart';
+import 'package:app/features/auth/presentation/screens/verify_email_screen.dart';
 import 'package:flutter/material.dart';
 
 /// AUTH SCREENS
@@ -24,8 +25,8 @@ class RouterGenerate {
       // case AuthRoutes.forgotPassword:
       //   return _page(const ForgotPasswordScreen());
 
-      // case AuthRoutes.verifyEmail:
-      //   return _page(const VerifyEmailScreen());
+      case AuthRoutes.verifyEmail:
+        return _page(const VerifyEmailScreen());
 
       // case AppRoutes.home:
       //   return _page(const HomeScreen());

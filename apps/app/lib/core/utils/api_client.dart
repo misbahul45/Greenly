@@ -27,7 +27,7 @@ class ApiClient {
       final decoded =
           res.body.isNotEmpty ? jsonDecode(res.body) : <String, dynamic>{};
       
-      print("LOGIN RESPONSE -> $decoded");
+      print("RESPONSE -> $decoded");
 
       final bool isSuccess = decoded["status"] == "success";
 

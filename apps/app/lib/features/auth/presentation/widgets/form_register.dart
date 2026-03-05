@@ -194,6 +194,7 @@ class _FormRegisterState extends State<FormRegister> {
             /// REGISTER BUTTON
             SizedBox(
               width: double.infinity,
+              height: 50,
               child: ElevatedButton(
                 onPressed: widget.isLoading ? null : handleSubmit,
                 child: widget.isLoading

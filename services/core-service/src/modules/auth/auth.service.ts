@@ -49,7 +49,6 @@ export class AuthService {
       action:'Verify email'
     })
 
-
     return {
       message: 'User registered',
       data: {
@@ -297,7 +296,10 @@ export class AuthService {
     };
   }
 
-  async resendToken(email:string){
+  async resendToken(email:string, action:AuthTokenType){
+    if(!action){
+      throw new AppError('for must be added', 404)
+    }
     const existedUser=await this.repo.checkUserByEmail(email)
     if(!existedUser){
       throw new AppError('User not found', 404)
@@ -312,7 +314,7 @@ export class AuthService {
       userId:existedUser.id,
       token:hashedOtp,
       expiresAt,
-      tokenType:AuthTokenType.RESET_PASSWORD
+      tokenType:action
     })
 
     await this.resendTokenPublisher.publishEmail({

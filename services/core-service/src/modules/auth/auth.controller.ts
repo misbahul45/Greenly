@@ -5,6 +5,7 @@ import {
   Get,
   Patch,
   UseGuards,
+  Query,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 
@@ -118,9 +119,10 @@ export class AuthController {
   @Post('resend-token')
   resendToken(
     @Body(new ZodValidationPipe(ResendTokenSchema))
-    dto:ResendTokenDTO
+    dto:ResendTokenDTO,
+    @Query('for') tokenType: AuthTokenType
   ){
-    return ErrorHandler(()=>this.authService.resendToken(dto.email))
+    return ErrorHandler(()=>this.authService.resendToken(dto.email, tokenType))
   }
 
 

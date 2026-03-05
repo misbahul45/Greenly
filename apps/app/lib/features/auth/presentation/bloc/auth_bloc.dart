@@ -48,7 +48,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     Emitter<AuthState> emit,
   ) async {
     emit(AuthLoading());
-
+    await AuthStorage.clear();
     final token = await AuthStorage.getAccessToken();
     final refreshToken = await AuthStorage.getRefreshToken();
 

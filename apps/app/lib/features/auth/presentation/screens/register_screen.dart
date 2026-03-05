@@ -11,7 +11,6 @@ class RegisterScreen extends StatefulWidget {
 }
 
 class _RegisterScreenState extends State<RegisterScreen> {
-
   bool isLoading = false;
   String? errorMessage;
 
@@ -21,7 +20,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
     String password,
     String confirmPassword,
   ) async {
-
     setState(() {
       isLoading = true;
       errorMessage = null;
@@ -35,27 +33,26 @@ class _RegisterScreenState extends State<RegisterScreen> {
         confirmPassword: confirmPassword,
       ),
     );
+    print(response);
 
     setState(() {
       isLoading = false;
     });
 
     if (response.isSuccess) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Register berhasil")));
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Register berhasil"),
-        ),
-      );
+      await Future.delayed(const Duration(seconds: 2));
+
+      if (!mounted) return;
 
       Navigator.pushReplacementNamed(context, "/verify-email");
-
     } else {
-
       setState(() {
         errorMessage = response.message;
       });
-
     }
   }
 
@@ -69,14 +66,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
               padding: const EdgeInsets.all(16),
               child: Column(
                 children: [
-
                   /// TITLE
                   const Text(
                     "Greenly Mart",
-                    style: TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
                   ),
 
                   const SizedBox(height: 8),
@@ -84,10 +77,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   /// SUBTITLE
                   const Text(
                     "Buat akun baru untuk melanjutkan",
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Colors.grey,
-                    ),
+                    style: TextStyle(fontSize: 16, color: Colors.grey),
                   ),
 
                   const SizedBox(height: 32),
