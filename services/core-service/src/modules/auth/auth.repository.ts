@@ -165,9 +165,6 @@ export class AuthRepository{
         expiresAt: Date;
         tokenType:AuthTokenType;
     }) {
-
-        const hashedToken = await bcrypt.hash(payload.token, 10);
-
           await this.db.authToken.updateMany({
             where: {
                 userId: payload.userId,
@@ -181,7 +178,7 @@ export class AuthRepository{
         return this.db.authToken.create({
             data: {
                 userId: payload.userId,
-                tokenHash: hashedToken,
+                tokenHash: payload.token,
                 type:payload.tokenType,
                 expiresAt: payload.expiresAt,
             },

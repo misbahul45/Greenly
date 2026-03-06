@@ -1,10 +1,3 @@
-Oke 👌
-Kita generate **semua module yang dibutuhkan** berdasarkan schema kamu, **tanpa `auth/` dan tanpa `shops/`**.
-
-Artinya kita hanya generate module level domain utama selain dua itu.
-
----
-
 # 📦 MODULE YANG PERLU DIGENERATE
 
 Berikut module yang harus ada di folder `modules/`:

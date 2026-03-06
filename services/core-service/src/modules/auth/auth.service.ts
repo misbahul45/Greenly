@@ -106,10 +106,12 @@ export class AuthService {
     const decoded = this.jwt.decode(refreshToken) as any;
 
     const expiresAt = new Date(decoded.exp * 1000);
+    
+    const hashedRefreshToken = await bcrypt.hash(refreshToken, 10);
 
     await this.repo.saveToken({
       userId:user.id,
-      token:refreshToken,
+      token:hashedRefreshToken,
       expiresAt,
       tokenType:AuthTokenType.REFRESH_TOKEN
     })
@@ -196,10 +198,12 @@ export class AuthService {
     const decoded = this.jwt.decode(refreshToken) as any;
 
     const expiresAt = new Date(decoded.exp * 1000);
+    
+    const hashedRefreshToken = await bcrypt.hash(refreshToken, 10);
 
     await this.repo.saveToken({
       userId:existedUser.id,
-      token:refreshToken,
+      token:hashedRefreshToken,
       expiresAt,
       tokenType:AuthTokenType.REFRESH_TOKEN
     })
@@ -246,10 +250,12 @@ export class AuthService {
     const decoded = this.jwt.decode(refreshToken) as any;
 
     const expiresAt = new Date(decoded.exp * 1000);
+    
+    const hashedRefreshToken = await bcrypt.hash(refreshToken, 10);
 
     await this.repo.saveToken({
       userId:user.id,
-      token:refreshToken,
+      token:hashedRefreshToken,
       expiresAt,
       tokenType:AuthTokenType.REFRESH_TOKEN
     })
@@ -269,6 +275,25 @@ export class AuthService {
     }
 
     if(!existedUser.emailVerified){
+        await this.repo.markAllToken(existedUser.id)
+  
+        const rawOtp = generateOtp();
+        const hashedOtp = hashValue(rawOtp);
+        const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
+
+        await this.repo.saveToken({
+          userId:existedUser.id,
+          token:hashedOtp,
+          expiresAt,
+          tokenType:'VERIFY_EMAIL'
+        })
+
+        await this.resendTokenPublisher.publishEmail({
+          email:existedUser.email,
+          name:existedUser.profile?.fullName || 'anonymus',
+          otp:rawOtp,
+          action:'Resend Token'
+        })
       throw new AppError('Your email is not verified. Please verify to continue.', 403);
     }
 

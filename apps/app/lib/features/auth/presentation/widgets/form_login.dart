@@ -81,9 +81,7 @@ class _FormLoginState extends State<FormLogin> {
               suffixIcon: IconButton(
                 onPressed: togglePassword,
                 icon: Icon(
-                  obscurePassword
-                      ? Icons.visibility
-                      : Icons.visibility_off,
+                  obscurePassword ? Icons.visibility : Icons.visibility_off,
                 ),
               ),
             ),
@@ -91,7 +89,10 @@ class _FormLoginState extends State<FormLogin> {
               alignment: Alignment.centerRight,
               child: TextButton(
                 onPressed: toggleForgotPassword,
-                child: const Text("Forgot password?"),
+                child: const Text(
+                  "Forgot password?",
+                  style: TextStyle(fontSize: 15),
+                ),
               ),
             ),
             const SizedBox(height: 12),
@@ -109,7 +110,7 @@ class _FormLoginState extends State<FormLogin> {
                   widget.errorMessage!,
                   style: const TextStyle(
                     color: Colors.red,
-                    fontSize: 14,
+                    fontSize: 15,
                   ),
                 ),
               ),
@@ -134,6 +135,10 @@ class _FormLoginState extends State<FormLogin> {
                       : const Text(
                           "My Account",
                           key: ValueKey("text"),
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                 ),
               ),
@@ -142,10 +147,16 @@ class _FormLoginState extends State<FormLogin> {
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Text("Don't have an account?"),
+                const Text(
+                  "Don't have an account?",
+                  style: TextStyle(fontSize: 15),
+                ),
                 TextButton(
                   onPressed: toggleRegister,
-                  child: const Text("Create account"),
+                  child: const Text(
+                    "Create account",
+                    style: TextStyle(fontSize: 15),
+                  ),
                 ),
               ],
             ),

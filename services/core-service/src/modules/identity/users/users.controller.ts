@@ -42,6 +42,7 @@ export class UsersController {
   }
 
 
+  @Roles('SUPER_ADMIN')
   @Get(':id')
   async findOne(
     @Param(new ZodValidationPipe(userIdParamSchema))

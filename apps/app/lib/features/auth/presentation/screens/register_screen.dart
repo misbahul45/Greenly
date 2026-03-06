@@ -1,3 +1,4 @@
+import 'package:app/core/theme/app_theme.dart';
 import 'package:app/features/auth/auth_service.dart';
 import 'package:app/features/auth/data/model/dto/register_dto.dart';
 import 'package:app/features/auth/presentation/widgets/form_register.dart';
@@ -33,7 +34,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
         confirmPassword: confirmPassword,
       ),
     );
-    print(response);
 
     setState(() {
       isLoading = false;
@@ -59,36 +59,34 @@ class _RegisterScreenState extends State<RegisterScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                children: [
-                  /// TITLE
-                  const Text(
-                    "Greenly Mart",
-                    style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: AppTheme.backgroundGradient,
+        ),
+        child: SafeArea(
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 600),
+              child: SingleChildScrollView(
+                child: Padding(
+                  padding: const EdgeInsets.all(6),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Image.asset(
+                        "assets/images/logo.png",
+                        height: 200,
+                      ),
+                      const SizedBox(height: 16),
+                      FormRegister(
+                        isLoading: isLoading,
+                        errorMessage: errorMessage,
+                        onSubmit: handleRegister,
+                      ),
+                    ],
                   ),
-
-                  const SizedBox(height: 8),
-
-                  /// SUBTITLE
-                  const Text(
-                    "Buat akun baru untuk melanjutkan",
-                    style: TextStyle(fontSize: 16, color: Colors.grey),
-                  ),
-
-                  const SizedBox(height: 32),
-
-                  /// FORM REGISTER
-                  FormRegister(
-                    isLoading: isLoading,
-                    errorMessage: errorMessage,
-                    onSubmit: handleRegister,
-                  ),
-                ],
+                ),
               ),
             ),
           ),

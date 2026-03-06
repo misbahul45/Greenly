@@ -53,7 +53,10 @@ class _FormRegisterState extends State<FormRegister> {
     if (!isAgree) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text("Kamu harus menyetujui syarat & ketentuan"),
+          content: Text(
+            "Kamu harus menyetujui syarat & ketentuan",
+            style: TextStyle(fontSize: 15),
+          ),
         ),
       );
       return;
@@ -85,6 +88,8 @@ class _FormRegisterState extends State<FormRegister> {
 
   @override
   Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+
     return Padding(
       padding: const EdgeInsets.all(20),
       child: Form(
@@ -92,8 +97,6 @@ class _FormRegisterState extends State<FormRegister> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-
-            /// ERROR MESSAGE
             if (widget.errorMessage != null)
               Container(
                 padding: const EdgeInsets.all(12),
@@ -105,31 +108,26 @@ class _FormRegisterState extends State<FormRegister> {
                 ),
                 child: Text(
                   widget.errorMessage!,
-                  style: const TextStyle(color: Colors.red),
+                  style: const TextStyle(
+                    color: Colors.red,
+                    fontSize: 15,
+                  ),
                 ),
               ),
-
-            /// FULLNAME
             Textvalidation(
               hint: "Fullname",
               controller: nameController,
               prefixIcon: Icons.person,
               validator: AuthValidation.name,
             ),
-
             const SizedBox(height: 16),
-
-            /// EMAIL
             Textvalidation(
               hint: "Email",
               controller: emailController,
               prefixIcon: Icons.email,
               validator: AuthValidation.email,
             ),
-
             const SizedBox(height: 16),
-
-            /// PASSWORD
             Textvalidation(
               hint: "Password",
               controller: passwordController,
@@ -139,16 +137,11 @@ class _FormRegisterState extends State<FormRegister> {
               suffixIcon: IconButton(
                 onPressed: togglePassword,
                 icon: Icon(
-                  obscurePassword
-                      ? Icons.visibility
-                      : Icons.visibility_off,
+                  obscurePassword ? Icons.visibility : Icons.visibility_off,
                 ),
               ),
             ),
-
             const SizedBox(height: 16),
-
-            /// CONFIRM PASSWORD
             Textvalidation(
               hint: "Confirm Password",
               controller: confirmPasswordController,
@@ -167,10 +160,7 @@ class _FormRegisterState extends State<FormRegister> {
                 ),
               ),
             ),
-
             const SizedBox(height: 16),
-
-            /// AGREEMENT
             Row(
               children: [
                 Checkbox(
@@ -184,41 +174,55 @@ class _FormRegisterState extends State<FormRegister> {
                 const Expanded(
                   child: Text(
                     "Saya menyetujui syarat & ketentuan",
+                    style: TextStyle(fontSize: 15),
                   ),
                 ),
               ],
             ),
-
             const SizedBox(height: 20),
-
-            /// REGISTER BUTTON
             SizedBox(
               width: double.infinity,
               height: 50,
               child: ElevatedButton(
                 onPressed: widget.isLoading ? null : handleSubmit,
-                child: widget.isLoading
-                    ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 300),
+                  child: widget.isLoading
+                      ? const SizedBox(
+                          key: ValueKey("loading"),
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : Text(
+                          "Create Account",
+                          key: const ValueKey("text"),
+                          style: textTheme.titleMedium?.copyWith(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                          ),
                         ),
-                      )
-                    : const Text("Create Account"),
+                ),
               ),
             ),
-
             const SizedBox(height: 18),
-
-            /// LOGIN LINK
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Text("Have an account?"),
+                Text(
+                  "Have an account?",
+                  style: textTheme.bodyMedium?.copyWith(fontSize: 15),
+                ),
                 TextButton(
                   onPressed: goToLogin,
-                  child: const Text("Login"),
+                  child: Text(
+                    "Login",
+                    style: textTheme.bodyMedium?.copyWith(fontSize: 15),
+                  ),
                 ),
               ],
             ),
