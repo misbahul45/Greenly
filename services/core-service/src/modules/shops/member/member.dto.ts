@@ -39,17 +39,13 @@ export const UpdateMemberRoleSchema = z.object({
 export type UpdateMemberRoleDTO =
   z.infer<typeof UpdateMemberRoleSchema>;
 
-export const ShopMemberQuerySchema = z.object({
-  page: z.coerce.number().int().positive().default(1),
-
-  limit: z.coerce.number().int().min(1).max(100).default(10),
-
-  role: memberRoleEnum.optional(),
-
-  sortBy: z.enum(["id"]).default("id"),
-
-  sortOrder: z.enum(["asc", "desc"]).default("asc"),
-});
+  export const ShopMemberQuerySchema = z.object({
+    page: z.coerce.number().int().positive().default(1),
+    limit: z.coerce.number().int().min(1).max(100).default(10),
+    role: memberRoleEnum.optional(),
+    sortBy: z.enum(["id", "userId", "role", "createdAt"]).default("id"),
+    sortOrder: z.enum(["asc", "desc"]).default("asc"),
+  });
 
 export type ShopMemberQueryDTO =
   z.infer<typeof ShopMemberQuerySchema>;

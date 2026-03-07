@@ -109,7 +109,19 @@ export class UsersRepositository {
     passwordHash: string
   }) {
     return this.db.user.create({ 
-      data, 
+      data: {
+        email: data.email,
+        passwordHash: data.passwordHash,
+        emailVerified: new Date(),
+        profile: {
+          create: {
+            fullName: 'created user',
+          },
+        },
+        cart: {
+          create:{}
+        }
+      }, 
       include:{
         profile:true
     } })

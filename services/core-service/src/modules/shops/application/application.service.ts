@@ -10,8 +10,6 @@ import {
 } from './application.dto';
 import { ApplicationRepository } from './application.repository';
 import { ApplicationStatus } from '../../../../generated/prisma/enums';
-import { connect } from 'node:tls';
-import { ShopMemberIdParamSchema } from '../member/member.dto';
 
 @Injectable()
 export class ApplicationService {

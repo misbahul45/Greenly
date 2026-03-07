@@ -23,13 +23,11 @@ export class RolesService {
     ])
 
     return {
-      data: {
-        items: data,
-        meta: {
-          total,
-          page,
-          lastPage: Math.ceil(total / limit),
-        },
+      data: data,
+      meta: {
+        total,
+        page,
+        lastPage: Math.ceil(total / limit),
       },
       message: 'Roles fetched successfully',
     }

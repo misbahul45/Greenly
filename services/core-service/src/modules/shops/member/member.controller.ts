@@ -28,7 +28,7 @@ import {
   ShopMemberQuerySchema,
 } from './member.dto';
 
-@Controller('/shops/:shopId/members')
+@Controller('')
 export class MemberController {
   constructor(private readonly service: MemberService) {}
 

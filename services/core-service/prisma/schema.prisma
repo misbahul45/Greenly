@@ -221,7 +221,7 @@ model ShopMember {
   shopId Int
   userId Int
   role   String
-
+  deletedAt DateTime?
   shop   Shop @relation(fields: [shopId], references: [id])
   user   User @relation(fields: [userId], references: [id])
 

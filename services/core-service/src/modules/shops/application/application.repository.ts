@@ -144,12 +144,11 @@ export class ApplicationRepository {
         return {
             data,
             meta: {
-            total,
-            page: Math.floor(skip / take) + 1,
-            limit: take,
-            totalPages: Math.ceil(total / take),
+                total,
+                page: Math.floor(skip / take) + 1,
+                totalPages: Math.ceil(total / take),
             },
-        };
+          };
         }
 
     async findMyApplications(userId: number) {

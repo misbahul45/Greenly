@@ -36,25 +36,55 @@ export class MemberService {
     
     return {
       message: 'member added',
-      data: [],
+      data: newMember,
     };
   }
 
   async findMany(shopId: number, query: ShopMemberQueryDTO) {
+    const { page, limit, role, sortBy, sortOrder } = query
+    
+    const [members, total] = await Promise.all([
+        this.repo.findMany(shopId,
+          {
+            page,
+            limit,
+            role,
+            sortBy,
+            sortOrder
+          }
+        ),
+        this.repo.count(shopId, {
+          page,
+          limit,
+          role,
+          sortBy,
+          sortOrder
+        })
+      ])
+      
     return {
       message: 'member list',
-      data: [],
+      data: members,
       meta: {
         page: query.page,
-        limit: query.limit,
+        total,
+        lastPage: Math.ceil(total / limit),
       },
     };
   }
 
   async findMember(shopId: number, memberId: number) {
+    const exitedShop = await this.repo.findShopById(shopId)
+    if (!exitedShop) {
+      throw new AppError('Shop not found', 404)
+    }
+    const exitedMember = await this.repo.findMemberByShopIdAndUserId(shopId, memberId)
+    if (!exitedMember) {
+      throw new AppError('Member not found', 404)
+    }
     return {
       message: 'member detail',
-      data: [],
+      data: exitedMember,
     };
   }
 
@@ -63,6 +93,16 @@ export class MemberService {
     memberId: number,
     body: UpdateMemberRoleDTO,
   ) {
+    const exitedShop = await this.repo.findShopById(shopId)
+    if (!exitedShop) {
+      throw new AppError('Shop not found', 404)
+    }
+    const exitedMember = await this.repo.findMemberByShopIdAndUserId(shopId, memberId)
+    if (!exitedMember) {
+      throw new AppError('Member not found', 404)
+    }
+    await this.repo.updateMemberRole(shopId, memberId, body)
+    
     return {
       message: 'member updated',
       data: [],
@@ -70,9 +110,19 @@ export class MemberService {
   }
 
   async deleteMember(shopId: number, memberId: number) {
+    const exitedShop = await this.repo.findShopById(shopId)
+    if (!exitedShop) {
+      throw new AppError('Shop not found', 404)
+    }
+    const exitedMember = await this.repo.findMemberByShopIdAndUserId(shopId, memberId)
+    if (!exitedMember) {
+      throw new AppError('Member not found', 404)
+    }
+    const deletedMember = await this.repo.deleteMember(shopId, memberId)
+    
     return {
       message: 'member deleted',
-      data: [],
+      data: deletedMember,
     };
   }
 }
