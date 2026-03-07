@@ -5,6 +5,7 @@ import { randomAvatarUrl } from "../../common/utils/random-avatar";
 import { generateOtp, hashValue } from "../../common/utils/crypto";
 import { AuthTokenType, UserStatus } from "../../../generated/prisma/enums";
 import * as bcrypt from 'bcrypt'
+import { AuthToken } from "generated/prisma/client";
 @Injectable()
 export class AuthRepository{
     constructor(
@@ -97,6 +98,15 @@ export class AuthRepository{
                 type:tokenType
             },
         })
+    }
+  
+    async findUserRefreshTokens(userId: number): Promise<AuthToken[]> {
+        return await this.db.authToken.findMany({
+            where: {
+                userId: userId,
+                type: AuthTokenType.REFRESH_TOKEN,
+            },
+        });
     }
 
     async findAuthTokenById(id:number, tokenType:AuthTokenType){

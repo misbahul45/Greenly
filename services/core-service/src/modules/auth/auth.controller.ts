@@ -51,18 +51,16 @@ export class AuthController {
   login(
     @Body(new ZodValidationPipe(LoginSchema)) dto: LoginDTO
   ) {
-    console.log('dto login',dto)
     return ErrorHandler(() => this.authService.login(dto));
   }
-
+  
   @Public()
   @UseGuards(JwtRefreshGuard)
-  @Post('refresh')
+  @Post('refresh-token')
   refresh(
     @CurrentUser() payload:UserLogin
   ) {
     return ErrorHandler(() =>{
-
       if(!payload.refreshToken){
         throw new AppError('Invalid refresh token', 403)
       }

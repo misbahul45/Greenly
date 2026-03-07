@@ -107,7 +107,7 @@ export class AuthService {
 
     const expiresAt = new Date(decoded.exp * 1000);
     
-    const hashedRefreshToken = await bcrypt.hash(refreshToken, 10);
+    const hashedRefreshToken = hashValue(refreshToken)
 
     await this.repo.saveToken({
       userId:user.id,
@@ -123,6 +123,7 @@ export class AuthService {
             id: user.id,
             email:user.email,
             name: user.profile?.fullName,
+            roles: user.roles
           },
           tokens:{
             accessToken,
@@ -199,7 +200,7 @@ export class AuthService {
 
     const expiresAt = new Date(decoded.exp * 1000);
     
-    const hashedRefreshToken = await bcrypt.hash(refreshToken, 10);
+    const hashedRefreshToken = hashValue(refreshToken)
 
     await this.repo.saveToken({
       userId:existedUser.id,
@@ -223,14 +224,21 @@ export class AuthService {
   }
 
   async refresh(token: string) {
-    const findAuthToken=await this.repo.findAuthTokenByHash(token, AuthTokenType.REFRESH_TOKEN)
+    const hashedtoken=hashValue(token)
+    const findAuthToken=await this.repo.findAuthTokenByHash(hashedtoken, AuthTokenType.REFRESH_TOKEN)
 
     if(!findAuthToken){
       throw new AppError('Invalid refresh token', 404)
     }
 
-    if(findAuthToken.expiresAt < new Date()){
+    if (findAuthToken.expiresAt < new Date()) {
+      await this.repo.markAllToken(findAuthToken.userId)
+      
       throw new AppError('Refresh token already expired', 400)
+    }
+    
+    if(findAuthToken.usedAt){
+      throw new AppError('Refresh token already used', 400)
     }
 
     const user=await this.repo.checkUserById(findAuthToken.userId)
@@ -251,7 +259,7 @@ export class AuthService {
 
     const expiresAt = new Date(decoded.exp * 1000);
     
-    const hashedRefreshToken = await bcrypt.hash(refreshToken, 10);
+    const hashedRefreshToken = hashValue(refreshToken)
 
     await this.repo.saveToken({
       userId:user.id,
