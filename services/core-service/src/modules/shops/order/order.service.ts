@@ -6,9 +6,7 @@ import { OrderStatus } from '../../../../generated/prisma/enums';
 
 @Injectable()
 export class OrderService {
-  constructor(
-    private readonly repo: OrderRepository,
-  ) {}
+  constructor(private readonly repo: OrderRepository) {}
 
   async findAll(shopId: number, query: OrderQueryDTO) {
     const {
@@ -19,24 +17,29 @@ export class OrderService {
       createdTo,
       sortBy,
       sortOrder,
+      search
     } = query;
+
+    const skip = (page - 1) * limit;
 
     const [orders, total] = await Promise.all([
       this.repo.findMany({
         shopId,
-        skip: (page - 1) * limit,
+        skip,
         take: limit,
         status,
         createdFrom,
         createdTo,
         sortBy,
         sortOrder,
+        search
       }),
       this.repo.count({
         shopId,
         status,
         createdFrom,
         createdTo,
+        search
       }),
     ]);
 
@@ -45,8 +48,8 @@ export class OrderService {
       meta: {
         total,
         page,
-        lastPage: Math.ceil(total / limit),
         limit,
+        lastPage: Math.ceil(total / limit),
       },
       message: 'Orders fetched successfully',
     };
@@ -99,9 +102,7 @@ export class OrderService {
       throw new AppError('Order not found', 404);
     }
 
-    const updated = await this.repo.updateRefund(
-      refundId,
-    );
+    const updated = await this.repo.updateRefund(refundId);
 
     return {
       data: updated,

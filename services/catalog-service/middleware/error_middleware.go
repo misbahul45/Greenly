@@ -3,14 +3,25 @@ package middleware
 import (
 	"net/http"
 
-	"github.com/gin-gonic/gin"
 	"catalog-service/utils"
-)
 
+	"github.com/gin-gonic/gin"
+)
 
 type AppError struct {
 	StatusCode int
 	Message    string
+}
+
+func (e *AppError) Error() string {
+	return e.Message
+}
+
+func NewAppError(status int, msg string) *AppError {
+	return &AppError{
+		StatusCode: status,
+		Message:    msg,
+	}
 }
 
 func ErrorHandler() gin.HandlerFunc {
@@ -19,12 +30,27 @@ func ErrorHandler() gin.HandlerFunc {
 		c.Next()
 
 		if len(c.Errors) > 0 {
-			err := c.Errors.Last()
 
+			err := c.Errors.Last().Err
+
+			// cek apakah AppError
+			if appErr, ok := err.(*AppError); ok {
+
+				utils.Error(
+					c,
+					appErr.StatusCode,
+					appErr.Message,
+					nil,
+				)
+
+				return
+			}
+
+			// fallback error
 			utils.Error(
 				c,
 				http.StatusInternalServerError,
-				err.Error(),
+				"internal server error",
 				nil,
 			)
 		}

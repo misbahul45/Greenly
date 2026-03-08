@@ -19,7 +19,7 @@ import {
 } from '../shops.dto';
 
 
-@Controller('/shops/:shopId/orders')
+@Controller('')
 @Roles('ADMIN')
 export class OrderController {
   constructor(private readonly service: OrderService) {}

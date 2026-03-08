@@ -18,6 +18,7 @@ export const FollowerQuerySchema = z.object({
   sortBy: z.enum(["createdAt"]).default("createdAt"),
 
   sortOrder: z.enum(["asc", "desc"]).default("desc"),
+  search: z.string().optional(),
 }).refine(
   (data) =>
     !data.createdFrom ||

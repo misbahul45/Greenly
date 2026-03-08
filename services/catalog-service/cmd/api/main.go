@@ -2,6 +2,8 @@ package main
 
 import (
 	"catalog-service/databases"
+	"catalog-service/middleware"
+	"catalog-service/utils"
 	"log"
 	"os"
 
@@ -31,6 +33,12 @@ func main() {
 	db := client.Database("catalog")
 
 	r := gin.Default()
+
+	r.Use(middleware.ErrorHandler())
+
+	r.NoRoute(func(c *gin.Context) {
+		utils.NotFound(c, "route not found")
+	})
 
 	api := r.Group("/")
 

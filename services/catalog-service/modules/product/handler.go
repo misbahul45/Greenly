@@ -1,6 +1,7 @@
 package product
 
 import (
+	"catalog-service/middleware"
 	"catalog-service/utils"
 	"strconv"
 
@@ -51,7 +52,7 @@ func (h *productHandler) FindManyProducts(c *gin.Context) {
 
 	res, total, err := h.service.FindMany(query)
 	if err != nil {
-		utils.InternalError(c, "failed to fetch products")
+		c.Error(middleware.NewAppError(500, "failed to fetch products"))
 		return
 	}
 
@@ -66,7 +67,7 @@ func (h *productHandler) FindOneProduct(c *gin.Context) {
 
 	res, err := h.service.FindOne(id)
 	if err != nil {
-		utils.NotFound(c, "product not found")
+		c.Error(middleware.NewAppError(404, "product not found"))
 		return
 	}
 
@@ -78,13 +79,13 @@ func (h *productHandler) CreateProduct(c *gin.Context) {
 	var dto CreateProductDTO
 
 	if err := c.ShouldBindJSON(&dto); err != nil {
-		utils.BadRequest(c, "invalid request")
+		c.Error(middleware.NewAppError(400, "invalid request body"))
 		return
 	}
 
 	res, err := h.service.Create(dto)
 	if err != nil {
-		utils.InternalError(c, "failed to create product")
+		c.Error(middleware.NewAppError(500, "failed to create product"))
 		return
 	}
 
@@ -98,13 +99,13 @@ func (h *productHandler) UpdateProduct(c *gin.Context) {
 	var dto UpdateProductDTO
 
 	if err := c.ShouldBindJSON(&dto); err != nil {
-		utils.BadRequest(c, "invalid request")
+		c.Error(middleware.NewAppError(400, "invalid request body"))
 		return
 	}
 
 	res, err := h.service.Update(id, dto)
 	if err != nil {
-		utils.InternalError(c, "failed to update product")
+		c.Error(middleware.NewAppError(500, "failed to update product"))
 		return
 	}
 
@@ -116,7 +117,7 @@ func (h *productHandler) DeleteProduct(c *gin.Context) {
 	id := c.Param("id")
 
 	if err := h.service.Delete(id); err != nil {
-		utils.InternalError(c, "failed to delete product")
+		c.Error(middleware.NewAppError(500, "failed to delete product"))
 		return
 	}
 

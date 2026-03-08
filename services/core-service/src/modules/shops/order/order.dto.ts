@@ -39,6 +39,7 @@ export const OrderQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(100).default(10),
   status: orderStatusEnum.optional(),
   createdFrom: z.coerce.date().optional(),
+  search: z.string().optional(),
   createdTo: z.coerce.date().optional(),
   sortBy: orderSortFieldEnum.default("createdAt"),
   sortOrder: orderSortOrderEnum.default("desc"),

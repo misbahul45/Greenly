@@ -84,6 +84,7 @@ export const ShopApplicationQuerySchema = z.object({
   status: applicationStatusEnum.optional(),
 
   shopId: z.coerce.number().int().positive().optional(),
+  search: z.string().optional(),
 
   createdFrom: z.coerce.date().optional(),
   createdTo: z.coerce.date().optional(),

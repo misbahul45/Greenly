@@ -24,17 +24,17 @@ import { EmailConsume } from './consumer/email.consume';
 
     RouterModule.register([
       {
-        path: 'shops/:id',
+        path: 'shops/:shopId',
         children: [
           { path: 'application', module: ApplicationModule },
           { path: 'members', module: MemberModule },
-          { path: '' , module: FollowerModule },
+          { path: '', module: FollowerModule },
           { path: 'orders', module: OrderModule },
           { path: 'dashboard', module: DashboardModule },
           { path: 'finance', module: FinanceModule },
         ],
       },
-    ]),
+    ])
   ],
   providers: [
     ShopsService,

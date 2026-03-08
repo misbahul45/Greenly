@@ -55,10 +55,12 @@ export class ShopsController {
 
   @Get('me')
   findMyShop(
-    @CurrentUser() user:UserLogin
+    @CurrentUser() user: UserLogin,
+    @Query(new ZodValidationPipe(ShopQuerySchema))
+    query: ShopQueryDTO,
   ) {
     return ErrorHandler(()=>
-        this.service.findMyShop(user.sub)
+        this.service.findMyShop(user.sub, query)
     )
   }
 

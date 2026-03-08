@@ -45,6 +45,7 @@ export type UpdateMemberRoleDTO =
     role: memberRoleEnum.optional(),
     sortBy: z.enum(["id", "userId", "role", "createdAt"]).default("id"),
     sortOrder: z.enum(["asc", "desc"]).default("asc"),
+    search: z.string().optional(),
   });
 
 export type ShopMemberQueryDTO =

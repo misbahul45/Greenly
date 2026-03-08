@@ -31,6 +31,7 @@ export const LedgerQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(100).default(10),
 
   type: ledgerTypeEnum.optional(),
+  search: z.string().optional(),
 
   createdFrom: z.coerce.date().optional(),
   createdTo: z.coerce.date().optional(),

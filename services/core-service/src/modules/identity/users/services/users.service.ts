@@ -8,6 +8,8 @@ import { ConfigService } from '@nestjs/config'
 import { AppError } from '../../../../libs/errors/app.error'
 import { ScheduleService } from './schedule.service'
 import { DeletedUserPublisher } from '../publisher/deleted.user.publisher'
+import { transformUser } from 'src/common/utils/transform'
+import { UserResponse } from '../types'
 
 @Injectable()
 
@@ -19,7 +21,7 @@ export class UsersService {
     private readonly deletedUserPublisher:DeletedUserPublisher
 ) {}
 
-  async findAll(query: UserQueryDTO) {
+  async findAll(query: UserQueryDTO) : Promise<ApiResponse<UserResponse[]>>  {
     const { page, limit, status, search, sortBy, sortOrder } = query
 
     const [users, total] = await Promise.all([
@@ -38,7 +40,7 @@ export class UsersService {
     ])
 
     return {
-      data:users,
+      data:users.map(transformUser),
       meta: {
         total,
         page,
@@ -48,18 +50,23 @@ export class UsersService {
       message: 'Users fetched successfully',
     }
   }
-  async findOne(id: number) {
+  async findOne(id: number) : Promise<ApiResponse<UserResponse>>  {
     const user = await this.repo.findUser(id,)
 
-    if (!user) throw new NotFoundException('User not found')
-
+    if (!user) {
+      throw new AppError('User not found', 404)
+    }
+    if (user.deletedAt) {
+      throw new AppError('User not found', 404)
+    }
+    
     return {
-      data: user,
+      data: transformUser(user),
       message: 'User fetched successfully',
     }
   }
 
-  async create(email: string, password: string) {
+  async create(email: string, password: string) : Promise<ApiResponse<UserResponse>> {
     const existing = await this.repo.findUserByEmail(email)
 
     if (existing) {
@@ -72,14 +79,14 @@ export class UsersService {
       email,
       passwordHash,
     })
-
+    
     return {
-      data: user,
+      data: transformUser(user),
       message: 'User created successfully',
     }
   }
 
-  async update(id: number, data: any) {
+  async update(id: number, data: any) : Promise<ApiResponse<UserResponse>> {
     const user = await this.repo.findUser(id)
 
     if (!user) throw new NotFoundException('User not found')
@@ -87,12 +94,12 @@ export class UsersService {
     const updated = await this.repo.updateUser(id, data)
 
     return {
-      data: updated,
+      data: transformUser(updated),
       message: 'User updated successfully',
     }
   }
 
-  async remove(user:UserLogin) {
+  async remove(user:UserLogin) : Promise<ApiResponse<null>> {
     const findUser = await this.repo.findUser(user.sub) as any
     if (!findUser) throw new NotFoundException('User not found')
     
@@ -120,13 +127,14 @@ export class UsersService {
     })
 
     return {
+      data: null,
       message: 'Check your validation otp for delete your Accoount',
     }
   }
 
 
 
-  async verifyRemove(payload:VerifyDeleteDTO){
+  async verifyRemove(payload:VerifyDeleteDTO) : Promise<ApiResponse<null>> {
       const hashedOtp = hashValue(payload.token);
       const findToken=await this.repo.findAuthToken(hashedOtp, AuthTokenType.DELETE_USER)
 
@@ -144,11 +152,12 @@ export class UsersService {
 
       await this.schedule.cleanUpUser()
       return{
+        data: null,
         message:'User sucessfully deleted'
       }
   }
 
-  async bannedUser(params:UserIdParamDTO){
+  async bannedUser(params:UserIdParamDTO) : Promise<ApiResponse<null>> {
     const findUser=await this.repo.findUser(params.id)
 
     if(!findUser){
@@ -158,6 +167,10 @@ export class UsersService {
     await this.repo.updateUser(params.id, {
       status:UserStatus.BANNED
     })
-  }
 
+    return {
+      data: null,
+      message: 'User banned successfully',
+    }
+  }
 }

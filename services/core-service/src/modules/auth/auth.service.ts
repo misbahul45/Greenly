@@ -4,7 +4,6 @@ import { AuthRepository } from './auth.repository';
 import { AppError } from '../../libs/errors/app.error';
 import * as bcrypt from 'bcrypt'
 import { ConfigService } from '@nestjs/config';
-import { sendEmail } from '../../common/utils/email';
 import { generateOtp, hashValue } from '../../common/utils/crypto';
 import { JwtService } from '@nestjs/jwt';
 import { StringValue } from 'ms';
@@ -14,6 +13,7 @@ import { UserVerifiedPublisher } from './publisher/user_verified.publisher';
 import { UserForgotPasswordPublisher } from './publisher/user_forgot_password.publisher';
 import { UserLoginPublisher } from './publisher/user_login.publisher';
 import { UserResendTokenPublisher } from './publisher/user_resend_token.publisher';
+import { ChangePasswordResponse, LoginResponse, RefreshTokenResponse, RegisterResponse, VerifyEmailResponse } from './types';
 
 @Injectable()
 export class AuthService {
@@ -28,7 +28,7 @@ export class AuthService {
     private readonly resendTokenPublisher:UserResendTokenPublisher
   ){}
 
-  async register(dto: RegisterDTO) {
+  async register(dto: RegisterDTO) : Promise<ApiResponse<RegisterResponse>> {
     const existedUser = await this.repo.checkUserByEmail(dto.email);
 
     if (existedUser) {
@@ -59,7 +59,7 @@ export class AuthService {
     };
   }
 
-  async verify(dto:VerifyEmailDTO, type:AuthTokenType){
+  async verify(dto:VerifyEmailDTO, type:AuthTokenType): Promise<ApiResponse<VerifyEmailResponse>>{
     const hashedOtp = hashValue(dto.token);
     const findToken=await this.repo.findAuthTokenByHash(hashedOtp, AuthTokenType.VERIFY_EMAIL)
 
@@ -122,7 +122,7 @@ export class AuthService {
           user:{
             id: user.id,
             email:user.email,
-            name: user.profile?.fullName,
+            name: user.profile?.fullName || 'Anonymus',
             roles: user.roles
           },
           tokens:{
@@ -172,7 +172,7 @@ export class AuthService {
     };
   }
 
-  async login(dto: LoginDTO) {
+  async login(dto: LoginDTO) : Promise<ApiResponse<LoginResponse>> {
     const existedUser = await this.repo.checkUserByEmail(dto.email);
 
     if (!existedUser) {
@@ -210,20 +210,23 @@ export class AuthService {
     })
 
     return {
-      tokens:{
-        accessToken,
-        refreshToken,
+      data: {
+        tokens:{
+          accessToken,
+          refreshToken,
+        },
+        user:{
+          id:existedUser.id,
+          name:existedUser.profile?.fullName || 'Anonymus',
+          email:existedUser.email,
+          roles:existedUser.roles.map((role)=>role.role.name) || []
+        }
       },
-      user:{
-        id:existedUser.id,
-        name:existedUser.profile?.fullName,
-        email:existedUser.email,
-        roles:existedUser.roles.map((role)=>role.role)
-      }
+      message: 'Login successful'
     };
   }
 
-  async refresh(token: string) {
+  async refresh(token: string) : Promise<ApiResponse<RefreshTokenResponse>> {
     const hashedtoken=hashValue(token)
     const findAuthToken=await this.repo.findAuthTokenByHash(hashedtoken, AuthTokenType.REFRESH_TOKEN)
 
@@ -270,12 +273,15 @@ export class AuthService {
 
     await this.repo.markTokenUsed(findAuthToken.id)
     return {
-      accessToken,
-      refreshToken
+      data: {
+        accessToken,
+        refreshToken
+      },
+      message:'Successfully refresh token'
     };
   }
 
-  async forgotPassword(email: string) {
+  async forgotPassword(email: string) : Promise<ApiResponse<null>> {
     const existedUser=await this.repo.checkUserByEmail(email)
 
     if(!existedUser){
@@ -325,11 +331,12 @@ export class AuthService {
 
 
     return {
+      data : null,
       message: `Password reset sent to ${email}`,
     };
   }
 
-  async resendToken(email:string, action:AuthTokenType){
+  async resendToken(email:string, action:AuthTokenType) : Promise<ApiResponse<null>> {
     if(!action){
       throw new AppError('for must be added', 404)
     }
@@ -358,12 +365,13 @@ export class AuthService {
     })
 
     return {
+      data:null,
       message: `Resend token sent to ${email}`,
     };
 
   }
 
-  async changePassword(dto: ChangePasswordDTO) {
+  async changePassword(dto: ChangePasswordDTO) : Promise<ApiResponse<ChangePasswordResponse>> {
     const findToken=await this.repo.findAuthTokenById(dto.tokenId, AuthTokenType.RESET_PASSWORD)
 
     if(!findToken){
@@ -390,6 +398,7 @@ export class AuthService {
     await this.repo.deactiveAllAuthToken(userId);
     
     return {
+      data:null,
       message: 'Logged out successfully',
     };
   }

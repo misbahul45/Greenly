@@ -6,6 +6,7 @@ import {
   Post,
   Query,
   Param,
+  Delete,
 } from '@nestjs/common';
 import { Roles } from '../../auth/decorators/roles.decorator';
 import { ZodValidationPipe } from '../../../libs/pipes/zod-validation.pipe';
@@ -21,7 +22,6 @@ import {
 } from './application.dto';
 import { ApplicationService } from './application.service';
 import ErrorHandler from '../../../libs/errors/handler.error';
-import { type ShopIdParamDTO, ShopIdParamSchema } from '../shops.dto';
 import { CurrentUser } from '../../auth/decorators/current-user.decorator';
 
 @Controller()
@@ -30,17 +30,17 @@ export class ApplicationController {
 
   @Post()
   create(
+    @Param(new ZodValidationPipe(ShopApplicationShopIdParamSchema))
+    params: ShopApplicationShopIdParamDTO,
     @Body(new ZodValidationPipe(CreateShopApplicationSchema))
     body: CreateShopApplicationDTO,
-    @Param(new ZodValidationPipe(ShopIdParamSchema)) 
-    params: ShopIdParamDTO,
   ) {
     return ErrorHandler(() =>
       this.service.create(params.shopId, body),
     );
   }
 
-  @Patch(':shopId')
+  @Patch()
   update(
     @Param(new ZodValidationPipe(ShopApplicationShopIdParamSchema))
     param: ShopApplicationShopIdParamDTO,
@@ -53,7 +53,7 @@ export class ApplicationController {
   }
 
   @Roles('SUPER_ADMIN')
-  @Patch(':shopId/review')
+  @Patch('review')
   review(
     @Param(new ZodValidationPipe(ShopApplicationShopIdParamSchema))
     param: ShopApplicationShopIdParamDTO,
@@ -66,7 +66,7 @@ export class ApplicationController {
   }
 
   @Roles('SUPER_ADMIN')
-  @Get(':shopId')
+  @Get()
   findOne(
     @Param(new ZodValidationPipe(ShopApplicationShopIdParamSchema))
     param: ShopApplicationShopIdParamDTO,
@@ -77,7 +77,7 @@ export class ApplicationController {
   }
 
   @Roles('SUPER_ADMIN')
-  @Get()
+  @Get('list')
   findAll(
     @Query(new ZodValidationPipe(ShopApplicationQuerySchema))
     query: ShopApplicationQueryDTO,
@@ -87,13 +87,24 @@ export class ApplicationController {
     );
   }
 
-  @Get('/me')
+  @Get('me')
   findMyApplications(
-    @CurrentUser() 
-    user:UserLogin
+    @CurrentUser() user: UserLogin,
+    @Query(new ZodValidationPipe(ShopApplicationQuerySchema))
+    query: ShopApplicationQueryDTO,
   ) {
     return ErrorHandler(() =>
-      this.service.findMyApplications(user.sub),
+      this.service.findMyApplications(user.sub, query)
+    );
+  }
+
+  @Delete()
+  delete(
+    @Param(new ZodValidationPipe(ShopApplicationShopIdParamSchema))
+    param: ShopApplicationShopIdParamDTO,
+  ) {
+    return ErrorHandler(() =>
+      this.service.delete(param.shopId),
     );
   }
 }

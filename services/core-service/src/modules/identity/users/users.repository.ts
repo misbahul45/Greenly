@@ -49,6 +49,9 @@ export class UsersRepositository {
       orderBy: {
         [params.sortBy]: params.sortOrder,
       },
+      include: {
+        profile: true,
+      },
     })
   }
 

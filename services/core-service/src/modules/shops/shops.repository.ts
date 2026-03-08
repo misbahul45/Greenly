@@ -1,59 +1,44 @@
-import { Injectable } from "@nestjs/common";
-import { DatabaseService } from "../../libs/database/database.service";
-import { ShopStatus } from "../../../generated/prisma/enums";
-import { Prisma } from "../../../generated/prisma/browser";
+import { Injectable } from "@nestjs/common"
+import { DatabaseService } from "../../libs/database/database.service"
+import { ShopStatus } from "../../../generated/prisma/enums"
+import { Prisma } from "../../../generated/prisma/browser"
+import { ShopFilters, ShopQueryParams } from "./types"
 
 @Injectable()
 export class ShopsRepository {
   constructor(private readonly db: DatabaseService) {}
 
-  private buildWhere(params: {
-    search?: string;
-    status?: ShopStatus;
-    ownerId?: number;
-    createdFrom?: Date;
-    createdTo?: Date;
-  }): Prisma.ShopWhereInput {
+  private buildWhere(params: ShopFilters): Prisma.ShopWhereInput {
     const where: Prisma.ShopWhereInput = {
-      deletedAt: null,
-    };
+      deletedAt: null
+    }
 
     if (params.status) {
-      where.status = params.status;
+      where.status = params.status
     }
 
     if (params.ownerId) {
-      where.ownerId = params.ownerId;
+      where.ownerId = params.ownerId
     }
 
     if (params.search) {
       where.name = {
-        contains: params.search,
-      };
+        contains: params.search
+      }
     }
 
     if (params.createdFrom || params.createdTo) {
       where.createdAt = {
         ...(params.createdFrom && { gte: params.createdFrom }),
-        ...(params.createdTo && { lte: params.createdTo }),
-      };
+        ...(params.createdTo && { lte: params.createdTo })
+      }
     }
 
-    return where;
+    return where
   }
 
-  async getShops(params: {
-    skip: number;
-    take: number;
-    search?: string;
-    status?: ShopStatus;
-    ownerId?: number;
-    createdFrom?: Date;
-    createdTo?: Date;
-    sortBy: keyof Prisma.ShopOrderByWithRelationInput;
-    sortOrder: "asc" | "desc";
-  }) {
-    const where = this.buildWhere(params);
+  async findMany(params: ShopQueryParams) {
+    const where = this.buildWhere(params)
 
     const data = await this.db.shop.findMany({
       skip: params.skip,
@@ -63,127 +48,113 @@ export class ShopsRepository {
         owner: {
           select: {
             email: true,
-            profile: true,
-          },
-        },
+            profile: true
+          }
+        }
       },
       orderBy: {
-        [params.sortBy]: params.sortOrder,
-      },
-    });
+        [params.sortBy]: params.sortOrder
+      }
+    })
 
     return data.map(({ owner, ...shop }) => ({
       ...shop,
       owner: {
         email: owner.email,
         fullName: owner.profile?.fullName,
-        avatarUrl: owner.profile?.avatarUrl,
-      },
-    }));
+        avatarUrl: owner.profile?.avatarUrl
+      }
+    }))
   }
 
-  async countShop(params: {
-    search?: string;
-    status?: ShopStatus;
-    ownerId?: number;
-    createdFrom?: Date;
-    createdTo?: Date;
-  }) {
-    const where = this.buildWhere(params);
-    return this.db.shop.count({ where });
+  async count(params: ShopFilters) {
+    const where = this.buildWhere(params)
+    return this.db.shop.count({ where })
   }
 
-  async myShop(userId: number) {
-    const data = await this.db.shop.findMany({
-      where: {
-        ownerId: userId,
-        deletedAt: null,
-      },
-      include: {
-        owner: {
-          select: {
-            email: true,
-            profile: true,
-          },
-        },
-      },
-    });
+  async findAll(params: ShopQueryParams) {
+    const { skip, take, ...filters } = params
 
-    return data.map(({ owner, ...shop }) => ({
-      ...shop,
-      owner: {
-        email: owner.email,
-        fullName: owner.profile?.fullName,
-        avatarUrl: owner.profile?.avatarUrl,
-      },
-    }));
+    const [data, total] = await Promise.all([
+      this.findMany(params),
+      this.count(filters)
+    ])
+
+    return {
+      data,
+      meta: {
+        total,
+        page: Math.floor(skip / take) + 1,
+        limit: take,
+        lastPage: Math.ceil(total / take)
+      }
+    }
+  }
+
+  async findMyShop(userId: number, params: ShopQueryParams) {
+    return this.findAll({
+      ...params,
+      ownerId: userId
+    })
   }
 
   async findOne(id: number) {
     const data = await this.db.shop.findFirst({
       where: {
         id,
-        deletedAt: null,
+        deletedAt: null
       },
       include: {
         owner: {
           select: {
             email: true,
-            profile: true,
-          },
-        },
-      },
-    });
+            profile: true
+          }
+        }
+      }
+    })
 
-    if (!data) return null;
+    if (!data) return null
 
-    const { owner, ...shop } = data;
+    const { owner, ...shop } = data
 
     return {
       ...shop,
       owner: {
         email: owner.email,
         fullName: owner.profile?.fullName,
-        avatarUrl: owner.profile?.avatarUrl,
-      },
-    };
+        avatarUrl: owner.profile?.avatarUrl
+      }
+    }
   }
 
-  async findByNameAndOwner(
-    shopName: string,
-    userId: number
-  ) {
+  async findByNameAndOwner(name: string, userId: number) {
     return this.db.shop.findFirst({
       where: {
+        name,
         ownerId: userId,
-        name: shopName,
-        deletedAt: null,
-      },
-    });
+        deletedAt: null
+      }
+    })
   }
 
   async create(data: Prisma.ShopCreateInput) {
-    return this.db.shop.create({
-      data,
-    });
+    return this.db.shop.create({ data })
   }
 
-  async update(
-    id: number,
-    data: Prisma.ShopUpdateInput
-  ) {
+  async update(id: number, data: Prisma.ShopUpdateInput) {
     return this.db.shop.update({
       where: { id },
-      data,
-    });
+      data
+    })
   }
 
   async softDelete(id: number) {
     return this.db.shop.update({
       where: { id },
       data: {
-        deletedAt: new Date(),
-      },
-    });
+        deletedAt: new Date()
+      }
+    })
   }
 }
