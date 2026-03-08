@@ -4,13 +4,15 @@ class AppTheme {
   static const Color primaryColor = Color(0xFF2E7D32);
   static const Color secondaryColor = Color(0xFF4CAF50);
   static const Color tertiaryColor = Color(0xFFA5D6A7);
+
   static const Color backgroundColor = Colors.white;
+  static const Color textColor = Colors.black;
 
   static const LinearGradient backgroundGradient = LinearGradient(
     begin: Alignment.topCenter,
     end: Alignment.bottomCenter,
     colors: [
-      Color(0xFFE8F5E9),
+      Colors.white,
       Colors.white,
     ],
   );
@@ -18,6 +20,8 @@ class AppTheme {
   static ThemeData lightTheme = ThemeData(
     useMaterial3: true,
     brightness: Brightness.light,
+
+    scaffoldBackgroundColor: backgroundColor,
 
     colorScheme: const ColorScheme(
       brightness: Brightness.light,
@@ -33,11 +37,21 @@ class AppTheme {
       onSurface: Colors.black,
     ),
 
-    scaffoldBackgroundColor: Colors.transparent,
+    textTheme: const TextTheme(
+      bodyLarge: TextStyle(color: textColor),
+      bodyMedium: TextStyle(color: textColor),
+      bodySmall: TextStyle(color: textColor),
+      titleLarge: TextStyle(color: textColor),
+      titleMedium: TextStyle(color: textColor),
+      titleSmall: TextStyle(color: textColor),
+      headlineLarge: TextStyle(color: textColor),
+      headlineMedium: TextStyle(color: textColor),
+      headlineSmall: TextStyle(color: textColor),
+    ),
 
     appBarTheme: const AppBarTheme(
-      backgroundColor: primaryColor,
-      foregroundColor: Colors.white,
+      backgroundColor: Colors.white,
+      foregroundColor: Colors.black,
       elevation: 0,
       centerTitle: true,
     ),
@@ -66,6 +80,8 @@ class AppTheme {
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
       fillColor: const Color(0xFFF5F5F5),
+      hintStyle: const TextStyle(color: Colors.grey),
+      labelStyle: const TextStyle(color: textColor),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
         borderSide: BorderSide.none,
@@ -78,7 +94,7 @@ class AppTheme {
 
     cardTheme: CardThemeData(
       color: Colors.white,
-      elevation: 2,
+      elevation: 1,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
       ),

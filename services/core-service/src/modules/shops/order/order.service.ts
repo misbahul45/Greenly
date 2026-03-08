@@ -46,6 +46,7 @@ export class OrderService {
         total,
         page,
         lastPage: Math.ceil(total / limit),
+        limit,
       },
       message: 'Orders fetched successfully',
     };

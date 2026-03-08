@@ -1,16 +1,15 @@
-import 'package:app/features/auth/presentation/screens/register_screen.dart';
-import 'package:app/features/auth/presentation/screens/verify_email_screen.dart';
 import 'package:flutter/material.dart';
 
 /// AUTH SCREENS
 import 'package:app/features/auth/presentation/screens/login_screen.dart';
-// import 'package:app/features/auth/presentation/screens/register_screen.dart';
-// import 'package:app/features/auth/presentation/screens/forgot_password_screen.dart';
-// import 'package:app/features/auth/presentation/screens/verify_email_screen.dart';
+import 'package:app/features/auth/presentation/screens/forgot_password_screen.dart';
+import 'package:app/features/auth/presentation/screens/register_screen.dart';
+import 'package:app/features/auth/presentation/screens/verify_email_screen.dart';
 
 // /// APP SCREENS
-
+import 'package:app/features/app/presentation/home_screen.dart';
 import 'auth_routes.dart';
+import 'app_routes.dart';
 
 class RouterGenerate {
   static Route<dynamic> generateRoute(RouteSettings settings) {
@@ -22,14 +21,14 @@ class RouterGenerate {
        case AuthRoutes.register:
          return _page(const RegisterScreen());
 
-      // case AuthRoutes.forgotPassword:
-      //   return _page(const ForgotPasswordScreen());
+       case AuthRoutes.forgotPassword:
+         return _page(const ForgotPasswordScreen());
 
       case AuthRoutes.verifyEmail:
         return _page(const VerifyEmailScreen());
 
-      // case AppRoutes.home:
-      //   return _page(const HomeScreen());
+       case AppRoutes.home:
+         return _page(const HomeScreen());
 
       // case AppRoutes.profile:
       //   return _page(const ProfileScreen());

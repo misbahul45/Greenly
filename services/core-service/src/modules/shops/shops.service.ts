@@ -37,6 +37,7 @@ export class ShopsService {
       meta: {
         total,
         page,
+        limit,
         lastPage: Math.ceil(total / limit),
       },
       message: 'Shops fetched successfully',

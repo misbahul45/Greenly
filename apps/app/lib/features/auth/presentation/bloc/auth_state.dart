@@ -1,5 +1,5 @@
-import 'package:app/shared/model/token_model.dart';
-import 'package:app/shared/model/user_model.dart';
+import 'package:app/shared/model/data/token_model.dart';
+import 'package:app/shared/model/data/user_model.dart';
 import 'package:equatable/equatable.dart';
 
 class AuthState extends Equatable {
@@ -34,3 +34,5 @@ class AuthError extends AuthState {
   @override
   List<Object?> get props => [message];
 }
+
+class AuthOtpResent extends AuthState {}

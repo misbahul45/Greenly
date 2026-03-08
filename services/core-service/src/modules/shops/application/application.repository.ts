@@ -144,9 +144,10 @@ export class ApplicationRepository {
         return {
             data,
             meta: {
-                total,
-                page: Math.floor(skip / take) + 1,
-                totalPages: Math.ceil(total / take),
+              total,
+              limit: take,
+              page: Math.floor(skip / take) + 1,
+              totalPage: Math.ceil(total / take),
             },
           };
         }

@@ -21,16 +21,26 @@ class ApiResponse<T> {
     Map<String, dynamic> json,
     T Function(dynamic json) fromJsonT,
   ) {
+    final rawStatus = json['status'];
+
+    String statusValue = "error";
+
+    if (rawStatus is String) {
+      statusValue = rawStatus;
+    } else if (rawStatus is bool) {
+      statusValue = rawStatus ? "success" : "error";
+    }
+
     return ApiResponse<T>(
-      status: json['status'] ?? 'error',
-      statusCode: json['statusCode'] ?? 0,
-      path: json['path'] ?? '',
-      message: json['message'] ?? '',
-      timestamp: json['timestamp'] ?? '',
+      status: statusValue,
+      statusCode: json['statusCode'] is int ? json['statusCode'] : 0,
+      path: json['path']?.toString() ?? '',
+      message: json['message']?.toString() ?? '',
+      timestamp: json['timestamp']?.toString() ?? '',
       metaData: json['metaData'],
       data: json['data'] != null ? fromJsonT(json['data']) : null,
     );
   }
 
-  bool get isSuccess => status == "success";
+  bool get isSuccess => status.toLowerCase() == "success";
 }

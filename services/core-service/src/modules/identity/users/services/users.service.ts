@@ -5,7 +5,6 @@ import * as bcrypt from 'bcrypt'
 import { generateOtp, hashValue } from '../../../../common/utils/crypto'
 import { AuthTokenType, UserStatus } from '../../../../../generated/prisma/enums'
 import { ConfigService } from '@nestjs/config'
-import { sendEmail } from '../../../../common/utils/email'
 import { AppError } from '../../../../libs/errors/app.error'
 import { ScheduleService } from './schedule.service'
 import { DeletedUserPublisher } from '../publisher/deleted.user.publisher'
@@ -43,6 +42,7 @@ export class UsersService {
       meta: {
         total,
         page,
+        limit,
         lastPage: Math.ceil(total / limit),
       },
       message: 'Users fetched successfully',

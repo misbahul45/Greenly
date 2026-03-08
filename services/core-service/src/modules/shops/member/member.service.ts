@@ -68,6 +68,7 @@ export class MemberService {
       meta: {
         page: query.page,
         total,
+        limit: limit,
         lastPage: Math.ceil(total / limit),
       },
     };

@@ -1,5 +1,5 @@
 import 'package:app/features/auth/auth_validation.dart';
-import 'package:app/shared/ui/TextValidation.dart';
+import 'package:app/shared/ui/text_validation.dart';
 import 'package:flutter/material.dart';
 import 'package:app/shared/ui/otp_field.dart';
 
@@ -138,7 +138,7 @@ class _FormOtpEmailState extends State<FormOtpEmail> {
 
             /// EMAIL VIEW
             else ...[
-              Textvalidation(
+              TextValidation(
                 hint: "Email",
                 controller: emailController,
                 validator: AuthValidation.email,

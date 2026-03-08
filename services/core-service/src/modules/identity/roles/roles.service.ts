@@ -27,6 +27,7 @@ export class RolesService {
       meta: {
         total,
         page,
+        limit:limit,
         lastPage: Math.ceil(total / limit),
       },
       message: 'Roles fetched successfully',

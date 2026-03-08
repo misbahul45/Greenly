@@ -1,5 +1,5 @@
 import 'package:app/features/auth/auth_validation.dart';
-import 'package:app/shared/ui/TextValidation.dart';
+import 'package:app/shared/ui/text_validation.dart';
 import 'package:flutter/material.dart';
 
 class FormRegister extends StatefulWidget {
@@ -114,21 +114,21 @@ class _FormRegisterState extends State<FormRegister> {
                   ),
                 ),
               ),
-            Textvalidation(
+            TextValidation(
               hint: "Fullname",
               controller: nameController,
               prefixIcon: Icons.person,
               validator: AuthValidation.name,
             ),
             const SizedBox(height: 16),
-            Textvalidation(
+            TextValidation(
               hint: "Email",
               controller: emailController,
               prefixIcon: Icons.email,
               validator: AuthValidation.email,
             ),
             const SizedBox(height: 16),
-            Textvalidation(
+            TextValidation(
               hint: "Password",
               controller: passwordController,
               prefixIcon: Icons.lock,
@@ -142,7 +142,7 @@ class _FormRegisterState extends State<FormRegister> {
               ),
             ),
             const SizedBox(height: 16),
-            Textvalidation(
+            TextValidation(
               hint: "Confirm Password",
               controller: confirmPasswordController,
               prefixIcon: Icons.lock_outline,
