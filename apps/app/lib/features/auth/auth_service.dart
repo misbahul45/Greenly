@@ -10,7 +10,7 @@ import 'package:app/features/auth/data/model/response/verify_email_response.dart
 import 'package:app/shared/model/data/token_model.dart';
 
 class AuthService {
-  static String get _baseUrl => ENV.API;
+  static String get _baseUrl => "${ENV.API}/core";
 
   static Future<ApiResponse<RegisterResponse>> register(RegisterDto payload) async {
     return await ApiClient.post<RegisterResponse>(
