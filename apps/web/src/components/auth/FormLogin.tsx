@@ -51,9 +51,9 @@ export default function FormLogin() {
           position: "bottom-right",
         });
 
-        navigate({
-          to:result.data?.user.roles.includes('SUPER_ADMIN')?'/admin/dashboard':'/seller/dashboard'
-        })
+        // navigate({
+        //   to:result.data?.user.roles.includes('SUPER_ADMIN')?'/admin/dashboard':result.data?.user.roles.includes('ADMIN') ? '/seller/dashboard':'/register/shop'
+        // })
       } catch (error: any) {
         console.log(error)
         toast.error("Login gagal", {
@@ -177,7 +177,7 @@ export default function FormLogin() {
           </Button>
         </Field>
 
-        <p className="text-sm text-muted-foreground text-center">
+        {/* <p className="text-sm text-muted-foreground text-center">
           Belum punya akun <span className="font-medium">Greenly Mart</span>?{" "}
           <Link
             to="/auth/regiister"
@@ -185,7 +185,8 @@ export default function FormLogin() {
           >
             Daftar
           </Link>
-        </p>
+        </p> */}
+
       </CardFooter>
     </Card>
   )
