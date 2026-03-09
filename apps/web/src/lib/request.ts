@@ -4,7 +4,7 @@ import type { ApiResponse } from "#/types/api.response";
 import { createApi } from "#/server/api";
 
 export const serverRequest = async <T>(
-  ctx: any,
+  _: any,
   fn: (api: ReturnType<typeof createApi>) => Promise<T>
 ) => {
   const session = await useAppSession();
@@ -48,5 +48,5 @@ export const apiRequest = async <T>(
 ): Promise<T> => {
   const res = await promise;
   if (res.data.status !== "success") throw new Error(res.data.message);
-  return res.data.data;
+  return res!.data!.data;
 };
