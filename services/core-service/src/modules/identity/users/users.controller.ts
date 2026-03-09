@@ -42,15 +42,14 @@ export class UsersController {
   }
 
 
+  @Roles('SUPER_ADMIN')
   @Get(':id')
   async findOne(
     @Param(new ZodValidationPipe(userIdParamSchema))
     params: UserIdParamDTO,
-    @Query(new ZodValidationPipe(userQuerySchema))
-    query: UserQueryDTO,
   ) {
     return ErrorHandler(() =>
-      this.service.findOne(params.id, query.include),
+      this.service.findOne(params.id),
     )
   }
 

@@ -137,7 +137,7 @@ async function main() {
    |--------------------------------------------------------------------------
    */
 
-     const users = [
+  const users = [
     { email: 'rani@gmail.com', password: 'rani12345', fullName: 'Rani', role: 'SUPER_ADMIN' },
     { email: 'nesa@gmail.com', password: 'nesa12345', fullName: 'Nesa', role: 'ADMIN' },
   ]

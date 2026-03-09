@@ -5,6 +5,7 @@ import {
   Get,
   Patch,
   UseGuards,
+  Query,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 
@@ -21,6 +22,8 @@ import {
   type VerifyEmailDTO,
   VerifyPasswordSchema,
   type VerifyPasswordDTO,
+  ResendTokenSchema,
+  type ResendTokenDTO,
 } from './auth.dto';
 
 import ErrorHandler from 'src/libs/errors/handler.error';
@@ -50,15 +53,14 @@ export class AuthController {
   ) {
     return ErrorHandler(() => this.authService.login(dto));
   }
-
+  
   @Public()
   @UseGuards(JwtRefreshGuard)
-  @Post('refresh')
+  @Post('refresh-token')
   refresh(
     @CurrentUser() payload:UserLogin
   ) {
     return ErrorHandler(() =>{
-
       if(!payload.refreshToken){
         throw new AppError('Invalid refresh token', 403)
       }
@@ -109,6 +111,16 @@ export class AuthController {
     return ErrorHandler(() =>
       this.authService.forgotPassword(dto.email)
     );
+  }
+
+  @Public()
+  @Post('resend-token')
+  resendToken(
+    @Body(new ZodValidationPipe(ResendTokenSchema))
+    dto:ResendTokenDTO,
+    @Query('for') tokenType: AuthTokenType
+  ){
+    return ErrorHandler(()=>this.authService.resendToken(dto.email, tokenType))
   }
 
 

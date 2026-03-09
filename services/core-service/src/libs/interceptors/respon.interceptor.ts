@@ -14,6 +14,7 @@ interface SuccessResponse<T> {
   path: string;
   message: string;
   data: T;
+  meta?: any;
   timestamp: string;
 }
 
@@ -41,14 +42,23 @@ export class ResponseInterceptor<T>
             ? data.data
             : data;
 
+        const metadata =
+          data && typeof data === 'object' && 'meta' in data
+            ? data.meta
+            : undefined;
+
         const statusCode = response.statusCode;
 
         return {
-          status: statusCode >= 200 && statusCode < 300 ? 'success' : 'error',
+          status:
+            statusCode >= 200 && statusCode < 300
+              ? 'success'
+              : 'error',
           statusCode,
           path: request.url,
           message,
           data: responseData,
+          metaData: metadata,
           timestamp: new Date().toISOString(),
         };
       }),

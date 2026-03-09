@@ -12,29 +12,42 @@ export const serverRequest = async <T>(
   let accessToken = session?.data?.accessToken;
   const refreshToken = session?.data?.refreshToken;
 
-  const api = createApi(accessToken);
+  let api = createApi(accessToken, refreshToken);
 
   try {
     return await fn(api);
   } catch (error: any) {
     if (error.response?.status === 401) {
-      if (!refreshToken) throw new Error("Unauthenticated");
+      if (!refreshToken) {
+        await session.clear();
+        throw new Error("Unauthenticated");
+      }
 
       try {
-        const res = await axios.post(
-          `${import.meta.env.VITE_API_URL || process.env.API_URL}/auth/refresh`,
+        const refreshRes = await axios.post(
+          `${process.env.API_URL}/auth/refresh-token`,
           {},
           {
-            headers: { Authorization: `Bearer ${refreshToken}` },
-            withCredentials: true,
+            headers: {
+              "x-refresh-token": refreshToken,
+            },
           }
         );
 
-        accessToken = res.data.data.accessToken;
-        const apiRetry = createApi(accessToken);
-        return await fn(apiRetry);
-      } catch {
-        throw new Error("Unauthenticated");
+        const newAccessToken = refreshRes.data.data.accessToken;
+        const newRefreshToken = refreshRes.data.data.refreshToken;
+
+        await session.update({
+          accessToken: newAccessToken,
+          refreshToken: newRefreshToken,
+        });
+
+        api = createApi(newAccessToken, newRefreshToken);
+
+        return await fn(api);
+      } catch (e) {
+        await session.clear();
+        throw new Error("Session expired");
       }
     }
 
@@ -47,6 +60,14 @@ export const apiRequest = async <T>(
   promise: Promise<{ data: ApiResponse<T> }>
 ): Promise<T> => {
   const res = await promise;
-  if (res.data.status !== "success") throw new Error(res.data.message);
-  return res!.data!.data;
+
+  if (res.data.status !== "success") {
+    throw new Error(res.data.message);
+  }
+
+  if (!res.data.data) {
+    throw new Error("No data");
+  }
+
+  return res.data.data;
 };

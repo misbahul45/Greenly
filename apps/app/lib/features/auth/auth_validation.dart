@@ -37,10 +37,6 @@ class AuthValidation {
       return "Password minimal 8 karakter";
     }
 
-    if (!RegExp(r'[A-Z]').hasMatch(value)) {
-      return "Password harus mengandung huruf besar";
-    }
-
     if (!RegExp(r'[0-9]').hasMatch(value)) {
       return "Password harus mengandung angka";
     }

@@ -4,7 +4,6 @@ import { AuthRepository } from './auth.repository';
 import { AppError } from '../../libs/errors/app.error';
 import * as bcrypt from 'bcrypt'
 import { ConfigService } from '@nestjs/config';
-import { sendEmail } from '../../common/utils/email';
 import { generateOtp, hashValue } from '../../common/utils/crypto';
 import { JwtService } from '@nestjs/jwt';
 import { StringValue } from 'ms';
@@ -13,6 +12,8 @@ import { UserRegisteredPublisher } from './publisher/user_registered.publisher';
 import { UserVerifiedPublisher } from './publisher/user_verified.publisher';
 import { UserForgotPasswordPublisher } from './publisher/user_forgot_password.publisher';
 import { UserLoginPublisher } from './publisher/user_login.publisher';
+import { UserResendTokenPublisher } from './publisher/user_resend_token.publisher';
+import { ChangePasswordResponse, LoginResponse, RefreshTokenResponse, RegisterResponse, VerifyEmailResponse } from './types';
 
 @Injectable()
 export class AuthService {
@@ -23,10 +24,11 @@ export class AuthService {
     private readonly registerPublisher:UserRegisteredPublisher,
     private readonly verifiedPublisher:UserVerifiedPublisher,
     private readonly forgotPasswordPublisher:UserForgotPasswordPublisher,
-    private readonly loginPublisher:UserLoginPublisher
+    private readonly loginPublisher:UserLoginPublisher,
+    private readonly resendTokenPublisher:UserResendTokenPublisher
   ){}
 
-  async register(dto: RegisterDTO) {
+  async register(dto: RegisterDTO) : Promise<ApiResponse<RegisterResponse>> {
     const existedUser = await this.repo.checkUserByEmail(dto.email);
 
     if (existedUser) {
@@ -47,7 +49,6 @@ export class AuthService {
       action:'Verify email'
     })
 
-
     return {
       message: 'User registered',
       data: {
@@ -58,7 +59,7 @@ export class AuthService {
     };
   }
 
-  async verify(dto:VerifyEmailDTO, type:AuthTokenType){
+  async verify(dto:VerifyEmailDTO, type:AuthTokenType): Promise<ApiResponse<VerifyEmailResponse>>{
     const hashedOtp = hashValue(dto.token);
     const findToken=await this.repo.findAuthTokenByHash(hashedOtp, AuthTokenType.VERIFY_EMAIL)
 
@@ -105,10 +106,12 @@ export class AuthService {
     const decoded = this.jwt.decode(refreshToken) as any;
 
     const expiresAt = new Date(decoded.exp * 1000);
+    
+    const hashedRefreshToken = hashValue(refreshToken)
 
     await this.repo.saveToken({
       userId:user.id,
-      token:refreshToken,
+      token:hashedRefreshToken,
       expiresAt,
       tokenType:AuthTokenType.REFRESH_TOKEN
     })
@@ -119,7 +122,8 @@ export class AuthService {
           user:{
             id: user.id,
             email:user.email,
-            name: user.profile?.fullName,
+            name: user.profile?.fullName || 'Anonymus',
+            roles: user.roles
           },
           tokens:{
             accessToken,
@@ -130,7 +134,6 @@ export class AuthService {
   }
 
   async generateTokens(payload: GenerateTokensDTO) {
-
     const data = GenerateTokensSchema.parse(payload);
 
     const accessSecret = this.config.get<string>('jwt.access.key')!;
@@ -147,7 +150,7 @@ export class AuthService {
       },
       {
         secret: accessSecret,
-        expiresIn: (accessExpires as StringValue),
+        expiresIn: accessExpires as StringValue,
       },
     );
 
@@ -159,7 +162,7 @@ export class AuthService {
       },
       {
         secret: refreshSecret,
-        expiresIn: (refreshExpires as StringValue),
+        expiresIn: refreshExpires as StringValue,
       },
     );
 
@@ -169,7 +172,7 @@ export class AuthService {
     };
   }
 
-  async login(dto: LoginDTO) {
+  async login(dto: LoginDTO) : Promise<ApiResponse<LoginResponse>> {
     const existedUser = await this.repo.checkUserByEmail(dto.email);
 
     if (!existedUser) {
@@ -196,37 +199,49 @@ export class AuthService {
     const decoded = this.jwt.decode(refreshToken) as any;
 
     const expiresAt = new Date(decoded.exp * 1000);
+    
+    const hashedRefreshToken = hashValue(refreshToken)
 
     await this.repo.saveToken({
       userId:existedUser.id,
-      token:refreshToken,
+      token:hashedRefreshToken,
       expiresAt,
       tokenType:AuthTokenType.REFRESH_TOKEN
     })
 
     return {
-      tokens:{
-        accessToken,
-        refreshToken,
+      data: {
+        tokens:{
+          accessToken,
+          refreshToken,
+        },
+        user:{
+          id:existedUser.id,
+          name:existedUser.profile?.fullName || 'Anonymus',
+          email:existedUser.email,
+          roles:existedUser.roles.map((role)=>role.role.name) || []
+        }
       },
-      user:{
-        id:existedUser.id,
-        name:existedUser.profile?.fullName,
-        email:existedUser.email,
-        roles:existedUser.roles.map((role)=>role.role)
-      }
+      message: 'Login successful'
     };
   }
 
-  async refresh(token: string) {
-    const findAuthToken=await this.repo.findAuthTokenByHash(token, AuthTokenType.REFRESH_TOKEN)
+  async refresh(token: string) : Promise<ApiResponse<RefreshTokenResponse>> {
+    const hashedtoken=hashValue(token)
+    const findAuthToken=await this.repo.findAuthTokenByHash(hashedtoken, AuthTokenType.REFRESH_TOKEN)
 
     if(!findAuthToken){
       throw new AppError('Invalid refresh token', 404)
     }
 
-    if(findAuthToken.expiresAt < new Date()){
+    if (findAuthToken.expiresAt < new Date()) {
+      await this.repo.markAllToken(findAuthToken.userId)
+      
       throw new AppError('Refresh token already expired', 400)
+    }
+    
+    if(findAuthToken.usedAt){
+      throw new AppError('Refresh token already used', 400)
     }
 
     const user=await this.repo.checkUserById(findAuthToken.userId)
@@ -246,22 +261,27 @@ export class AuthService {
     const decoded = this.jwt.decode(refreshToken) as any;
 
     const expiresAt = new Date(decoded.exp * 1000);
+    
+    const hashedRefreshToken = hashValue(refreshToken)
 
     await this.repo.saveToken({
       userId:user.id,
-      token:refreshToken,
+      token:hashedRefreshToken,
       expiresAt,
       tokenType:AuthTokenType.REFRESH_TOKEN
     })
 
     await this.repo.markTokenUsed(findAuthToken.id)
     return {
-      accessToken,
-      refreshToken
+      data: {
+        accessToken,
+        refreshToken
+      },
+      message:'Successfully refresh token'
     };
   }
 
-  async forgotPassword(email: string) {
+  async forgotPassword(email: string) : Promise<ApiResponse<null>> {
     const existedUser=await this.repo.checkUserByEmail(email)
 
     if(!existedUser){
@@ -269,13 +289,26 @@ export class AuthService {
     }
 
     if(!existedUser.emailVerified){
+        await this.repo.markAllToken(existedUser.id)
+  
+        const rawOtp = generateOtp();
+        const hashedOtp = hashValue(rawOtp);
+        const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
+
+        await this.repo.saveToken({
+          userId:existedUser.id,
+          token:hashedOtp,
+          expiresAt,
+          tokenType:'VERIFY_EMAIL'
+        })
+
+        await this.resendTokenPublisher.publishEmail({
+          email:existedUser.email,
+          name:existedUser.profile?.fullName || 'anonymus',
+          otp:rawOtp,
+          action:'Resend Token'
+        })
       throw new AppError('Your email is not verified. Please verify to continue.', 403);
-    }
-
-    const emailConfig = this.config.get('emailJs', { infer: true });
-
-    if (!emailConfig) {
-      throw new Error('Email config not found');
     }
 
     const rawOtp = generateOtp();
@@ -298,11 +331,47 @@ export class AuthService {
 
 
     return {
+      data : null,
       message: `Password reset sent to ${email}`,
     };
   }
 
-  async changePassword(dto: ChangePasswordDTO) {
+  async resendToken(email:string, action:AuthTokenType) : Promise<ApiResponse<null>> {
+    if(!action){
+      throw new AppError('for must be added', 404)
+    }
+    const existedUser=await this.repo.checkUserByEmail(email)
+    if(!existedUser){
+      throw new AppError('User not found', 404)
+    }
+    await this.repo.markAllToken(existedUser.id)
+  
+    const rawOtp = generateOtp();
+    const hashedOtp = hashValue(rawOtp);
+    const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
+
+    await this.repo.saveToken({
+      userId:existedUser.id,
+      token:hashedOtp,
+      expiresAt,
+      tokenType:action
+    })
+
+    await this.resendTokenPublisher.publishEmail({
+      email:existedUser.email,
+      name:existedUser.profile?.fullName || 'anonymus',
+      otp:rawOtp,
+      action:'Resend Token'
+    })
+
+    return {
+      data:null,
+      message: `Resend token sent to ${email}`,
+    };
+
+  }
+
+  async changePassword(dto: ChangePasswordDTO) : Promise<ApiResponse<ChangePasswordResponse>> {
     const findToken=await this.repo.findAuthTokenById(dto.tokenId, AuthTokenType.RESET_PASSWORD)
 
     if(!findToken){
@@ -329,6 +398,7 @@ export class AuthService {
     await this.repo.deactiveAllAuthToken(userId);
     
     return {
+      data:null,
       message: 'Logged out successfully',
     };
   }

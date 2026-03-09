@@ -62,8 +62,6 @@ export const ForgotPasswordSchema = z.object({
 export type ForgotPasswordDTO = z.infer<typeof ForgotPasswordSchema>;
 
 
-
-
 export const ChangePasswordSchema = z.object({
   tokenId:z.number().min(1),
   newPassword: z
@@ -82,3 +80,11 @@ export const GenerateTokensSchema = z.object({
 });
 
 export type GenerateTokensDTO =  z.infer<typeof GenerateTokensSchema>;
+
+
+export const ResendTokenSchema = z.object({
+  email: z.string().email().toLowerCase(),
+})
+
+
+export type ResendTokenDTO =  z.infer<typeof ResendTokenSchema>;

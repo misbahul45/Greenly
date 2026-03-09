@@ -6,11 +6,9 @@ export default async function ErrorHandler<T>(
   try {
     return await fn();
   } catch (error) {
-     console.error('REAL ERROR:', error);
     if (error instanceof AppError) {
       throw error;
     }
-
     throw new AppError(
       'Internal server error',
       500,

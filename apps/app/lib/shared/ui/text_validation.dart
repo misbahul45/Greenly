@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-class Textvalidation extends StatelessWidget {
+class TextValidation extends StatelessWidget {
   final String hint;
   final TextEditingController controller;
   final bool obscure;
@@ -9,7 +9,7 @@ class Textvalidation extends StatelessWidget {
   final IconData? prefixIcon;  
   final Widget? suffixIcon;    
 
-  const Textvalidation({
+  const TextValidation({
     super.key,
     required this.hint,
     required this.controller,

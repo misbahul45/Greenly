@@ -1,4 +1,16 @@
-import { Controller } from '@nestjs/common';
+import { Controller, Get } from '@nestjs/common';
 
-@Controller('dashboard')
-export class DashboardController {}
+@Controller()
+export class DashboardController {
+    @Get('/summary')
+    summary(){}
+
+    @Get('revenue')
+    findRevenue(){}
+
+    @Get('/recent-orders')
+    findOrder(){
+
+    }
+    
+}

@@ -1,5 +1,7 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common'
 import { RolesRepositository } from './roles.repository'
+import { RolesResponse } from './types'
+import { Role } from 'generated/prisma/client'
 
 @Injectable()
 export class RolesService {
@@ -9,33 +11,34 @@ export class RolesService {
     page?: number
     limit?: number
     includePermissions?: boolean
-  }) {
+    search?: string
+  }) : Promise<ApiResponse<RolesResponse[]>> {
     const page = query?.page ?? 1
     const limit = query?.limit ?? 10
-
+  
     const [data, total] = await Promise.all([
       this.repo.getRoles({
         skip: (page - 1) * limit,
         take: limit,
         includePermissions: query?.includePermissions,
+        search: query?.search,
       }),
-      this.repo.countRoles(),
+      this.repo.countRoles(query?.search),
     ])
-
+  
     return {
-      data: {
-        items: data,
-        meta: {
-          total,
-          page,
-          lastPage: Math.ceil(total / limit),
-        },
+      data,
+      meta: {
+        total,
+        page,
+        limit,
+        lastPage: Math.ceil(total / limit),
       },
       message: 'Roles fetched successfully',
     }
   }
 
-  async findOne(id: number) {
+  async findOne(id: number) : Promise<ApiResponse<Role>> {
     const role = await this.repo.findRole(id)
 
     if (!role) throw new NotFoundException('Role not found')
@@ -46,7 +49,7 @@ export class RolesService {
     }
   }
 
-  async create(name: string) {
+  async create(name: string) : Promise<ApiResponse<Role>> {
     const existing = await this.repo.findRoleByName(name)
 
     if (existing) {
@@ -61,7 +64,7 @@ export class RolesService {
     }
   }
 
-  async update(id: number, name: string) {
+  async update(id: number, name: string) : Promise<ApiResponse<Role>> {
     const role = await this.repo.findRole(id)
 
     if (!role) throw new NotFoundException('Role not found')
@@ -74,7 +77,7 @@ export class RolesService {
     }
   }
 
-  async remove(id: number) {
+  async remove(id: number) : Promise<ApiResponse<null>> {
     const role = await this.repo.findRole(id)
 
     if (!role) throw new NotFoundException('Role not found')
@@ -88,7 +91,7 @@ export class RolesService {
     const deleted = await this.repo.deleteRole(id)
 
     return {
-      data: deleted,
+      data: null,
       message: 'Role deleted successfully',
     }
   }

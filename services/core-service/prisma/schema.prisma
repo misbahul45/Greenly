@@ -162,12 +162,13 @@ model UserRole {
 model Shop {
   id          Int        @id @default(autoincrement())
   ownerId     Int
-  name        String
+  name        String    
   description String?
   status      ShopStatus @default(PENDING)
   balance     Decimal    @default(0) @db.Decimal(15,2)
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
+  deletedAt   DateTime?
 
   owner       User            @relation("ShopOwner", fields: [ownerId], references: [id])
   members     ShopMember[]
@@ -220,7 +221,7 @@ model ShopMember {
   shopId Int
   userId Int
   role   String
-
+  deletedAt DateTime?
   shop   Shop @relation(fields: [shopId], references: [id])
   user   User @relation(fields: [userId], references: [id])
 

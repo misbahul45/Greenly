@@ -45,10 +45,11 @@ export class MeRepositository{
         return await this.db.userProfile.update({
             where:{
                 id:userProfileId
-            },
-            data:{
-                ...data
-            }
+          },
+          
+          data:{
+              ...data
+          },
         })
     }
     

@@ -11,18 +11,36 @@ export class RolesRepositository {
     skip?: number
     take?: number
     includePermissions?: boolean
+    search?: string
   }) {
     return this.db.role.findMany({
       skip: params?.skip,
       take: params?.take,
+  
+      where: params?.search
+        ? {
+            name: {
+              contains: params.search,
+            },
+          }
+        : undefined,
+  
       include: params?.includePermissions
         ? { permissions: true }
         : undefined,
     })
   }
 
-  async countRoles() {
-    return this.db.role.count()
+  async countRoles(search?: string) {
+    return this.db.role.count({
+      where: search
+        ? {
+            name: {
+              contains: search,
+            },
+          }
+        : undefined,
+    })
   }
 
   async findRole(id: number) {

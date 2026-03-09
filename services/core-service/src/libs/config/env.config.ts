@@ -16,7 +16,7 @@ export default () => ({
   jwt: {
     access: {
       key: process.env.JWT_ACCESS_SECRET_KEY,
-      duration: process.env.JWT_ACCESS_EXPIRES || '15m',
+      duration: process.env.JWT_ACCESS_EXPIRES || '1m',
     },
     refresh: {
       key: process.env.JWT_REFRESH_SECRET_KEY,

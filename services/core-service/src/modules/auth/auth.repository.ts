@@ -5,6 +5,7 @@ import { randomAvatarUrl } from "../../common/utils/random-avatar";
 import { generateOtp, hashValue } from "../../common/utils/crypto";
 import { AuthTokenType, UserStatus } from "../../../generated/prisma/enums";
 import * as bcrypt from 'bcrypt'
+import { AuthToken } from "generated/prisma/client";
 @Injectable()
 export class AuthRepository{
     constructor(
@@ -41,6 +42,9 @@ export class AuthRepository{
                             }
                         }
                     }
+                },
+                cart:{
+                    create:{}
                 }
             },         
         })
@@ -95,6 +99,15 @@ export class AuthRepository{
             },
         })
     }
+  
+    async findUserRefreshTokens(userId: number): Promise<AuthToken[]> {
+        return await this.db.authToken.findMany({
+            where: {
+                userId: userId,
+                type: AuthTokenType.REFRESH_TOKEN,
+            },
+        });
+    }
 
     async findAuthTokenById(id:number, tokenType:AuthTokenType){
         return await this.db.authToken.findUnique({
@@ -144,15 +157,24 @@ export class AuthRepository{
         })
     }
 
+    async markAllToken(userId:number){
+        return await this.db.authToken.updateMany({
+            where:{
+                userId
+            },
+            data:{
+                usedAt:new Date()
+            }
+        })
+    }
+
+
     async saveToken(payload: {
         userId: number;
         token: string;
         expiresAt: Date;
         tokenType:AuthTokenType;
     }) {
-
-        const hashedToken = await bcrypt.hash(payload.token, 10);
-
           await this.db.authToken.updateMany({
             where: {
                 userId: payload.userId,
@@ -166,7 +188,7 @@ export class AuthRepository{
         return this.db.authToken.create({
             data: {
                 userId: payload.userId,
-                tokenHash: hashedToken,
+                tokenHash: payload.token,
                 type:payload.tokenType,
                 expiresAt: payload.expiresAt,
             },

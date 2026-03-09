@@ -40,8 +40,8 @@ class _OtpFieldState extends State<OtpField> {
 
   void checkCompleted() {
     String otp = controllers.map((c) => c.text).join();
-
-    if (otp.length == widget.length && !otp.contains("")) {
+  
+    if (otp.length == widget.length && !otp.contains(RegExp(r'\s'))) {
       widget.onCompleted?.call(otp);
     }
   }
