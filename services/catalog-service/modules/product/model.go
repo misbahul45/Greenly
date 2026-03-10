@@ -4,12 +4,10 @@ import (
 	"time"
 
 	"catalog-service/utils"
-
-	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type CategoryInfo struct {
-	ID   primitive.ObjectID `json:"id"`
+	ID   string `json:"id"`
 	Name string             `json:"name"`
 	Slug string             `json:"slug"`
 }
@@ -30,7 +28,7 @@ type ImageInfo struct {
 }
 
 type ResponseProduct struct {
-	ID          primitive.ObjectID `json:"id"`
+	ID          string `json:"id"`
 	Name        string             `json:"name"`
 	Description string             `json:"description"`
 	SKU         string             `json:"sku"`

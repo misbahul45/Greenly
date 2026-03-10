@@ -76,7 +76,7 @@ export class AuthRepository{
             }
         })
     }
-    async checkUserById(id:number){
+    async checkUserById(id:string){
         return await this.db.user.findUnique({
             where:{
                 id:id
@@ -100,7 +100,7 @@ export class AuthRepository{
         })
     }
   
-    async findUserRefreshTokens(userId: number): Promise<AuthToken[]> {
+    async findUserRefreshTokens(userId: string): Promise<AuthToken[]> {
         return await this.db.authToken.findMany({
             where: {
                 userId: userId,
@@ -109,7 +109,7 @@ export class AuthRepository{
         });
     }
 
-    async findAuthTokenById(id:number, tokenType:AuthTokenType){
+    async findAuthTokenById(id:string, tokenType:AuthTokenType){
         return await this.db.authToken.findUnique({
             where:{
                 id:id,
@@ -118,7 +118,7 @@ export class AuthRepository{
         })
     }
 
-    async verifyEmail(userId:number){
+    async verifyEmail(userId:string){
         return await this.db.user.update({
             where:{
                 id:userId
@@ -146,7 +146,7 @@ export class AuthRepository{
         })
     }
 
-    async markTokenUsed(tokenId:number){
+    async markTokenUsed(tokenId:string){
         return await this.db.authToken.update({
             where:{
                 id:tokenId
@@ -157,7 +157,7 @@ export class AuthRepository{
         })
     }
 
-    async markAllToken(userId:number, type:AuthTokenType){
+    async markAllToken(userId:string, type:AuthTokenType){
         return await this.db.authToken.updateMany({
             where:{
               userId,
@@ -171,7 +171,7 @@ export class AuthRepository{
 
 
     async saveToken(payload: {
-        userId: number;
+        userId: string;
         token: string;
         expiresAt: Date;
         tokenType:AuthTokenType;
@@ -195,7 +195,7 @@ export class AuthRepository{
             },
         });
     }
-    async getUserPermissions(userId: number): Promise<string[]> {
+    async getUserPermissions(userId: string): Promise<string[]> {
         const user = await this.db.user.findUnique({
             where: { id: userId },
             include: {
@@ -224,7 +224,7 @@ export class AuthRepository{
         return [...permissions]
     }
 
-    async changePassword(userId:number, passwordHash:string){
+    async changePassword(userId:string, passwordHash:string){
         return await this.db.user.update({
             where:{
                 id:userId,
@@ -235,7 +235,7 @@ export class AuthRepository{
         })
     }
 
-    async deactiveAllAuthToken(userId:number){
+    async deactiveAllAuthToken(userId:string){
         return await this.db.authToken.updateMany({
             where:{
                 userId,

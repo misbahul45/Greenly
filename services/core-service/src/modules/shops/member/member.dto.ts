@@ -1,15 +1,15 @@
 import { z } from "zod";
 
 export const ShopMemberShopIdParamSchema = z.object({
-  shopId: z.coerce.number().int().positive(),
+  shopId: z.coerce.string(),
 });
 
 export type ShopMemberShopIdParamDTO =
   z.infer<typeof ShopMemberShopIdParamSchema>;
 
 export const ShopMemberIdParamSchema = z.object({
-  shopId: z.coerce.number().int().positive(),
-  memberId: z.coerce.number().int().positive(),
+  shopId: z.coerce.string(),
+  memberId: z.coerce.string(),
 });
 
 export type ShopMemberIdParamDTO =
@@ -25,7 +25,7 @@ export type MemberRoleDTO =
   z.infer<typeof memberRoleEnum>;
 
 export const AddMemberSchema = z.object({
-  userId: z.coerce.number().int().positive(),
+  userId: z.string(),
   role: memberRoleEnum,
 });
 

@@ -442,7 +442,7 @@ export class AuthService {
     };
   }
 
-  async logout(userId:number) : Promise<ApiResponse<null>> {
+  async logout(userId:string) : Promise<ApiResponse<null>> {
     await this.repo.deactiveAllAuthToken(userId);
     
     return {

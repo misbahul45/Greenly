@@ -1,5 +1,5 @@
 export interface RegisterResponse {
-  id: number
+  id:string
   email: string
   name: string
 }
@@ -10,7 +10,7 @@ export interface LoginResponse {
     refreshToken: string;
   };
   user: {
-    id: number;
+    id:string;
     email: string;
     name: string;
     roles: string[]
@@ -23,13 +23,13 @@ export interface RefreshTokenResponse {
 }
 
 export interface ChangePasswordResponse {
-  id: number;
+  id:string;
   email: string;
 }
 
 export interface VerifyEmailResponse {
   user: {
-    id: number;
+    id:string;
     email: string ;
     name: string | null;
     roles: string[] | any;
@@ -41,6 +41,6 @@ export interface VerifyEmailResponse {
 }
 
 export interface ChnagePasswordResponse{
-  id:number;
+  id:string;
   email:string;
 }

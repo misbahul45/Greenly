@@ -91,14 +91,14 @@ export class ShopsRepository {
     }
   }
 
-  async findMyShop(userId: number, params: ShopQueryParams) {
+  async findMyShop(userId: string, params: ShopQueryParams) {
     return this.findAll({
       ...params,
       ownerId: userId
     })
   }
 
-  async findOne(id: number) {
+  async findOne(id: string) {
     const data = await this.db.shop.findFirst({
       where: {
         id,
@@ -128,7 +128,7 @@ export class ShopsRepository {
     }
   }
 
-  async findByNameAndOwner(name: string, userId: number) {
+  async findByNameAndOwner(name: string, userId: string) {
     return this.db.shop.findFirst({
       where: {
         name,
@@ -142,14 +142,14 @@ export class ShopsRepository {
     return this.db.shop.create({ data })
   }
 
-  async update(id: number, data: Prisma.ShopUpdateInput) {
+  async update(id: string, data: Prisma.ShopUpdateInput) {
     return this.db.shop.update({
       where: { id },
       data
     })
   }
 
-  async softDelete(id: number) {
+  async softDelete(id: string) {
     return this.db.shop.update({
       where: { id },
       data: {

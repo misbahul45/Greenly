@@ -30,7 +30,7 @@ export class ShopsService {
     }
   }
 
-  async findMyShop(userId: number, query: ShopQueryDTO): Promise<ApiResponse<Shop[]>> {
+  async findMyShop(userId: string, query: ShopQueryDTO): Promise<ApiResponse<Shop[]>> {
     const { page, limit, search, sortBy, sortOrder } = query
 
     const skip = (page - 1) * limit
@@ -50,7 +50,7 @@ export class ShopsService {
     }
   }
 
-  async findOne(id: number): Promise<ApiResponse<Shop>> {
+  async findOne(id: string): Promise<ApiResponse<Shop>> {
     const shop = await this.repo.findOne(id)
 
     if (!shop) {
@@ -63,7 +63,7 @@ export class ShopsService {
     }
   }
 
-  async create(userId: number, body: CreateShopDTO): Promise<ApiResponse<Shop>> {
+  async create(userId: string, body: CreateShopDTO): Promise<ApiResponse<Shop>> {
     const existing = await this.repo.findByNameAndOwner(body.name, userId)
 
     if (existing) {
@@ -85,7 +85,7 @@ export class ShopsService {
     }
   }
 
-  async update(id: number, body: UpdateShopDTO): Promise<ApiResponse<Shop>> {
+  async update(id: string, body: UpdateShopDTO): Promise<ApiResponse<Shop>> {
     const shop = await this.repo.findOne(id)
 
     if (!shop) {
@@ -108,7 +108,7 @@ export class ShopsService {
     }
   }
 
-  async delete(id: number): Promise<ApiResponse<null>> {
+  async delete(id: string): Promise<ApiResponse<null>> {
     const shop = await this.repo.findOne(id)
 
     if (!shop) {

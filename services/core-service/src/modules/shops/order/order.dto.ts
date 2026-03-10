@@ -2,7 +2,8 @@ import { z } from "zod";
 import { ShopIdParamSchema } from "../shops.dto";
 
 export const OrderIdParamSchema = z.object({
-  id: z.coerce.number().int().positive(),
+  id: z.string(),
+  shopId:z.string()
 });
 
 export type OrderIdParamDTO =

@@ -4,7 +4,7 @@ import { ShopStatus } from "../../../generated/prisma/enums"
 export interface ShopFilters {
   search?: string
   status?: ShopStatus
-  ownerId?: number
+  ownerId?: string
   createdFrom?: Date
   createdTo?: Date
 }

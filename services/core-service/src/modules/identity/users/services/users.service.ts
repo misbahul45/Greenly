@@ -50,7 +50,7 @@ export class UsersService {
       message: 'Users fetched successfully',
     }
   }
-  async findOne(id: number) : Promise<ApiResponse<UserResponse>>  {
+  async findOne(id: string) : Promise<ApiResponse<UserResponse>>  {
     const user = await this.repo.findUser(id,)
 
     if (!user) {
@@ -86,7 +86,7 @@ export class UsersService {
     }
   }
 
-  async update(id: number, data: any) : Promise<ApiResponse<UserResponse>> {
+  async update(id: string, data: any) : Promise<ApiResponse<UserResponse>> {
     const user = await this.repo.findUser(id)
 
     if (!user) throw new NotFoundException('User not found')

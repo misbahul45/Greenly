@@ -76,7 +76,7 @@ enum UserStatus {
 }
 
 model User {
-  id             Int       @id @default(autoincrement())
+  id String @id @default(cuid())
   email          String    @unique
   passwordHash   String
   createdAt      DateTime  @default(now())
@@ -103,8 +103,8 @@ model User {
 }
 
 model UserProfile {
-  id        Int     @id @default(autoincrement())
-  userId    Int     @unique
+  id String @id @default(cuid())
+  userId    String     @unique
   fullName  String
   phone     String?
   avatarUrl String?
@@ -117,7 +117,7 @@ model UserProfile {
 }
 
 model Role {
-  id          Int          @id @default(autoincrement())
+  id String @id @default(cuid())
   name        String       @unique
   permissions Permission[]
   users       UserRole[]
@@ -126,8 +126,8 @@ model Role {
 }
 
 model AuthToken {
-  id          Int          @id @default(autoincrement())
-  userId     Int
+  id String @id @default(cuid())
+  userId     String
   tokenHash  String        @unique
   type       AuthTokenType
   expiresAt  DateTime
@@ -141,8 +141,8 @@ model AuthToken {
   @@map("auth_tokens")
 }
 
-model Permission {          email: null,
-  id    Int    @id @default(autoincrement())
+model Permission {         
+  id String @id @default(cuid())
   name  String @unique
   roles Role[]
 
@@ -150,8 +150,8 @@ model Permission {          email: null,
 }
 
 model UserRole {
-  userId Int
-  roleId Int
+  userId String
+  roleId String
 
   user   User @relation(fields: [userId], references: [id])
   role   Role @relation(fields: [roleId], references: [id])
@@ -161,8 +161,8 @@ model UserRole {
 }
 
 model Shop {
-  id          Int        @id @default(autoincrement())
-  ownerId     Int
+  id String @id @default(cuid())
+  ownerId     String
   name        String    
   description String?
   status      ShopStatus @default(PENDING)
@@ -181,11 +181,12 @@ model Shop {
 
   @@map("shops")
   @@index([ownerId])
+
 }
 
 model ShopFollower {
-  userId    Int
-  shopId    Int
+  userId    String
+  shopId    String
   createdAt DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -197,8 +198,8 @@ model ShopFollower {
 }
 
 model ShopApplication {
-  id          Int              @id @default(autoincrement())
-  shopId      Int              @unique
+  id String @id @default(cuid())
+  shopId      String              @unique
   idCardUrl   String
   selfieUrl   String?
   nib         String?
@@ -218,21 +219,22 @@ model ShopApplication {
   @@map("shop_applications")
 }
 model ShopMember {
-  id     Int @id @default(autoincrement())
-  shopId Int
-  userId Int
+   id String @id @default(cuid())
+  shopId String
+  userId String
   role   String
   deletedAt DateTime?
   shop   Shop @relation(fields: [shopId], references: [id])
   user   User @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
 
   @@unique([shopId, userId])
   @@map("shop_members")
 }
 
 model Cart {
-  id        Int      @id @default(autoincrement())
-  userId    Int      @unique
+  id String @id @default(cuid())
+  userId    String      @unique
   updatedAt DateTime @updatedAt
 
   user  User       @relation(fields: [userId], references: [id])
@@ -242,21 +244,22 @@ model Cart {
 }
 
 model CartItem {
-  id        Int @id @default(autoincrement())
-  cartId    Int
-  productId Int
+   id String @id @default(cuid())
+  cartId    String
+  productId String
   quantity  Int
 
   cart Cart @relation(fields: [cartId], references: [id])
+  createdAt DateTime @default(now())
 
   @@unique([cartId, productId])
   @@map("cart_items")
 }
 
 model Order {
-  id          Int         @id @default(autoincrement())
-  userId      Int
-  shopId      Int
+    id String @id @default(cuid())
+  userId      String
+  shopId      String
   shopName    String
   totalAmount Decimal     @db.Decimal(15,2)
   status      OrderStatus @default(PENDING)
@@ -273,21 +276,22 @@ model Order {
 }
 
 model OrderItem {
-  id          Int     @id @default(autoincrement())
-  orderId     Int
-  productId   Int
+  id String @id @default(cuid())
+  orderId     String
+  productId   String
   productName String
   price       Decimal @db.Decimal(15,2)
   quantity    Int
 
   order Order @relation(fields: [orderId], references: [id])
+  createdAt       DateTime      @default(now())
 
   @@map("order_items")
 }
 
 model Payment {
-  id              Int           @id @default(autoincrement())
-  orderId         Int           @unique
+  id String @id @default(cuid())
+  orderId         String           @unique
   grossAmount     Decimal       @db.Decimal(15,2)
   gatewayFee      Decimal       @db.Decimal(15,2)
   marketplaceFee  Decimal       @db.Decimal(15,2)
@@ -307,8 +311,8 @@ model Payment {
 }
 
 model Refund {
-  id        Int          @id @default(autoincrement())
-  paymentId Int
+   id String @id @default(cuid())
+  paymentId String
   amount    Decimal      @db.Decimal(15,2)
   reason    String
   status    RefundStatus @default(PENDING)
@@ -320,8 +324,8 @@ model Refund {
 }
 
 model ShopLedger {
-  id          Int        @id @default(autoincrement())
-  shopId      Int
+   id String @id @default(cuid())
+  shopId      String
   type        LedgerType
   amount      Decimal    @db.Decimal(15,2)
   reference   String
@@ -335,8 +339,8 @@ model ShopLedger {
 }
 
 model Payout {
-  id        Int      @id @default(autoincrement())
-  shopId    Int
+   id String @id @default(cuid())
+  shopId    String
   amount    Decimal  @db.Decimal(15,2)
   status    PayoutStatus @default(PENDING)
   createdAt DateTime @default(now())
@@ -349,7 +353,7 @@ model Payout {
 }
 
 model Promotion {
-  id          Int           @id @default(autoincrement())
+  id String @id @default(cuid())
   code        String        @unique
   discountVal Decimal       @db.Decimal(15,2)
   type        PromotionType
@@ -361,8 +365,8 @@ model Promotion {
 }
 
 model Notification {
-  id        Int      @id @default(autoincrement())
-  userId    Int
+  id String @id @default(cuid())
+  userId    String
   title     String
   message   String
   isRead    Boolean  @default(false)
@@ -374,8 +378,8 @@ model Notification {
 }
 
 model UserEvent {
-  id        Int      @id @default(autoincrement())
-  userId    Int
+  id String @id @default(cuid())
+  userId    String
   eventType String
   metadata  Json?
   createdAt DateTime @default(now())
