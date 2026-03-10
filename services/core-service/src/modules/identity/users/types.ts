@@ -1,9 +1,5 @@
-export interface FindUsersResponse {
-  
-}
-
 export interface UserResponse {
-  id: number
+  id: string
   email: string
   name: string | null
   status: string
