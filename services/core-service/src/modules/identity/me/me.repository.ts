@@ -8,7 +8,7 @@ export class MeRepositository{
         private readonly db:DatabaseService
     ){}   
 
-    async getUserById(id: number) {
+    async getUserById(id: string) {
         return this.db.user.findUnique({
             where: { id },
                 include: {
@@ -33,7 +33,7 @@ export class MeRepositository{
         })
     }
 
-    async getRepoByIdUser(userId:number){
+    async getRepoByIdUser(userId:string){
         return await this.db.userProfile.findUnique({
             where:{
                 userId
@@ -41,7 +41,7 @@ export class MeRepositository{
         })
     }
 
-    async updateUserProfile(userProfileId:number, data:UpdateProfileDTO){
+    async updateUserProfile(userProfileId:string, data:UpdateProfileDTO){
         return await this.db.userProfile.update({
             where:{
                 id:userProfileId
@@ -57,7 +57,7 @@ export class MeRepositository{
         })
     }
   
-    async findAllFollowedShop(userId: number, query: UserFollowingShopDTO) {
+    async findAllFollowedShop(userId: string, query: UserFollowingShopDTO) {
       const { page, limit, shopId, search, createdFrom, createdTo, sortOrder } = query
     
       const skip = (page - 1) * limit
@@ -101,7 +101,7 @@ export class MeRepositository{
       })
     }
   
-    async countFollowedShop(userId: number, query?: UserFollowingShopDTO) {
+    async countFollowedShop(userId: string, query?: UserFollowingShopDTO) {
       return await this.db.shopFollower.count({
         where: {
           userId,

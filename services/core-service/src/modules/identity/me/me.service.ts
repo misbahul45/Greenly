@@ -24,7 +24,7 @@ export class MeService {
       }
     }
 
-  async updateProfile(userId: number, payload: UpdateProfileDTO): Promise<ApiResponse<ProfileResponse>>{
+  async updateProfile(userId: string, payload: UpdateProfileDTO): Promise<ApiResponse<ProfileResponse>>{
         const profile=await this.repo.getRepoByIdUser(userId)
         if(!profile){
             throw new AppError('User did not exist', 404)
@@ -39,7 +39,7 @@ export class MeService {
   }
   
   async followingShop(
-    userId: number,
+    userId: string,
     query: UserFollowingShopDTO
   ): Promise<ApiResponse<ShopResponse[]>> {
   
