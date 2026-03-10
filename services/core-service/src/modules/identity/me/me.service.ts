@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { MeRepositository } from './me.repository';
 import { AppError } from '../../../libs/errors/app.error';
-import { type UpdateProfileDTO } from './me.dto';
-import { MeResponse, ProfileResponse } from './types';
+import { type UserFollowingShopDTO, type UpdateProfileDTO } from './me.dto';
+import { MeResponse, ProfileResponse, ShopResponse } from './types';
 import { toMeResponse, toProfileResponse } from 'src/common/utils/transform';
 
 @Injectable()
@@ -24,9 +24,8 @@ export class MeService {
       }
     }
 
-    async updateProfile(userId:number, payload:UpdateProfileDTO) : Promise<ApiResponse<ProfileResponse>>{
+  async updateProfile(userId: number, payload: UpdateProfileDTO): Promise<ApiResponse<ProfileResponse>>{
         const profile=await this.repo.getRepoByIdUser(userId)
-
         if(!profile){
             throw new AppError('User did not exist', 404)
         }
@@ -37,5 +36,29 @@ export class MeService {
             message:'Successfully update user',
             data:toProfileResponse(updatedProfile)
         }
+  }
+  
+  async followingShop(
+    userId: number,
+    query: UserFollowingShopDTO
+  ): Promise<ApiResponse<ShopResponse[]>> {
+  
+    const [shops, total] = await Promise.all([
+      this.repo.findAllFollowedShop(userId, query),
+      this.repo.countFollowedShop(userId, query),
+    ])
+  
+    const data = shops.map((item) => item.shop) ||[]
+  
+    return {
+      data,
+      meta: {
+        page: query.page,
+        limit: query.limit,
+        total,
+        lastPage: Math.ceil(total / query.limit) || 1,
+      },
+      message: "Successfully get followed shops",
     }
+  }
 }

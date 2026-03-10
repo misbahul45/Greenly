@@ -68,6 +68,11 @@ export const ChangePasswordSchema = z.object({
     .string()
     .min(8)
     .max(100),
+  confirmNewPassword: z
+    .string()
+}).refine((data) => data.newPassword === data.confirmNewPassword, {
+  message: 'Passwords do not match',
+  path: ['confirmNewPassword'],
 });
 
 export type ChangePasswordDTO = z.infer<typeof ChangePasswordSchema>;

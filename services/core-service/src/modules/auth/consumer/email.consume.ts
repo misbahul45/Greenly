@@ -54,8 +54,6 @@ export class EmailConsume implements OnModuleInit {
   async sendVerificationOtp(
     @Payload() payload: PayloadEmail
   ) {
-    console.log("Received event:", payload);
-
     const emailConfig = this.config.get("emailJs", { infer: true });
 
     if (!emailConfig) {

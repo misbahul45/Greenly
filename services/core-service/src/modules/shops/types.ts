@@ -20,3 +20,5 @@ export interface ShopOwner {
   fullName?: string | null
   avatarUrl?: string | null
 }
+
+

@@ -33,3 +33,10 @@ export interface ProfileResponse {
   avatarUrl: string | null;
   photoUrl: string | null;
 }
+
+export interface ShopResponse {
+  id: number;
+  name: string | null;
+  status: ShopStatus;
+  description: string | null;
+}

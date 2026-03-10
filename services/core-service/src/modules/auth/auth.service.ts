@@ -14,6 +14,7 @@ import { UserForgotPasswordPublisher } from './publisher/user_forgot_password.pu
 import { UserLoginPublisher } from './publisher/user_login.publisher';
 import { UserResendTokenPublisher } from './publisher/user_resend_token.publisher';
 import { ChangePasswordResponse, LoginResponse, RefreshTokenResponse, RegisterResponse, VerifyEmailResponse } from './types';
+import { AuthToken } from 'generated/prisma/client';
 
 @Injectable()
 export class AuthService {
@@ -59,10 +60,9 @@ export class AuthService {
     };
   }
 
-  async verify(dto:VerifyEmailDTO, type:AuthTokenType): Promise<ApiResponse<VerifyEmailResponse>>{
+  async verifyEmail(dto:VerifyEmailDTO, type:AuthTokenType): Promise<ApiResponse<VerifyEmailResponse>>{
     const hashedOtp = hashValue(dto.token);
-    const findToken=await this.repo.findAuthTokenByHash(hashedOtp, AuthTokenType.VERIFY_EMAIL)
-
+    const findToken=await this.repo.findAuthTokenByHash(hashedOtp, type)
     if (!findToken) {
       throw new AppError(
         "Token verification not found",
@@ -131,6 +131,47 @@ export class AuthService {
           }
         },
     }
+  }
+  
+  async verifyPassword(dto: VerifyEmailDTO, type: AuthTokenType): Promise<ApiResponse<AuthToken>> {
+    const hashedOtp = hashValue(dto.token);
+    const findToken=await this.repo.findAuthTokenByHash(hashedOtp, type)
+    if (!findToken) {
+      throw new AppError(
+        "Token verification not found",
+        404
+      );
+    }
+
+    if (findToken.expiresAt < new Date()) {
+      throw new AppError(
+        "Token has expired",
+        400
+      );
+    }
+
+    if (findToken.usedAt) {
+      throw new AppError(
+        "Token already used",
+        400
+      );
+    }
+
+    if (findToken.type !== type) {
+      throw new AppError(
+        "Invalid token type",
+        400
+      );
+    }
+    
+    findToken.usedAt = new Date();
+    await this.repo.markAllToken(findToken.userId, findToken.type);
+    
+    return {
+      data: findToken,
+      message: 'Token verified successfully'
+    };
+    
   }
 
   async generateTokens(payload: GenerateTokensDTO) {
@@ -235,7 +276,7 @@ export class AuthService {
     }
 
     if (findAuthToken.expiresAt < new Date()) {
-      await this.repo.markAllToken(findAuthToken.userId)
+      await this.repo.markAllToken(findAuthToken.userId, AuthTokenType.REFRESH_TOKEN)
       
       throw new AppError('Refresh token already expired', 400)
     }
@@ -289,7 +330,7 @@ export class AuthService {
     }
 
     if(!existedUser.emailVerified){
-        await this.repo.markAllToken(existedUser.id)
+        await this.repo.markAllToken(existedUser.id, AuthTokenType.VERIFY_EMAIL)
   
         const rawOtp = generateOtp();
         const hashedOtp = hashValue(rawOtp);
@@ -344,7 +385,7 @@ export class AuthService {
     if(!existedUser){
       throw new AppError('User not found', 404)
     }
-    await this.repo.markAllToken(existedUser.id)
+    await this.repo.markAllToken(existedUser.id, action)
   
     const rawOtp = generateOtp();
     const hashedOtp = hashValue(rawOtp);
@@ -368,7 +409,6 @@ export class AuthService {
       data:null,
       message: `Resend token sent to ${email}`,
     };
-
   }
 
   async changePassword(dto: ChangePasswordDTO) : Promise<ApiResponse<ChangePasswordResponse>> {
@@ -382,19 +422,27 @@ export class AuthService {
       throw new AppError('Token did not verified', 400)
     }
 
-    const passwordHash=await bcrypt.hash(dto.newPassword, 10)
-
-    const user=await this.repo.changePassword(findToken.userId, passwordHash)
+    const passwordHash = await bcrypt.hash(dto.newPassword, 10)
+    
+    const findUser = await this.repo.checkUserById(findToken.userId)
+    
+    const isMatchPass = await bcrypt.compare(dto.newPassword, findUser?.passwordHash!)
+    
+    if (isMatchPass) {
+      throw new AppError('New password is same as old password', 400)
+    }
+    
+    await this.repo.changePassword(findToken.userId, passwordHash)
     return {
-      message: 'Password changed successfully',
+      message: 'Successfully changed password',
       data:{
-        id: user.id,
-        email:user.email,
+        id: findUser?.id!,
+        email:findUser?.email!,
       },
     };
   }
 
-  async logout(userId:number) {
+  async logout(userId:number) : Promise<ApiResponse<null>> {
     await this.repo.deactiveAllAuthToken(userId);
     
     return {

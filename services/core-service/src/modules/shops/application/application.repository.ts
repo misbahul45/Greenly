@@ -179,7 +179,7 @@ export class ApplicationRepository {
         total,
         limit: take,
         page: Math.floor(skip / take) + 1,
-        totalPage: Math.ceil(total / take),
+        lastPage: Math.ceil(total / take),
       },
     };
   }
@@ -236,7 +236,7 @@ export class ApplicationRepository {
         total,
         limit: take,
         page: Math.floor(skip / take) + 1,
-        totalPage: Math.ceil(total / take),
+        lastPage: Math.ceil(total / take),
       },
     };
   }

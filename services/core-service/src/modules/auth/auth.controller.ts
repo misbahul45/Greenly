@@ -81,7 +81,7 @@ export class AuthController {
     return ErrorHandler(() =>{
       const token = body.token
        const dto = VerifyEmailSchema.parse({ token })
-        return this.authService.verify(dto, AuthTokenType.VERIFY_EMAIL)
+        return this.authService.verifyEmail(dto, AuthTokenType.VERIFY_EMAIL)
       }
     )
   }
@@ -95,9 +95,7 @@ export class AuthController {
   ) {
 
     return ErrorHandler(() =>{
-      const token = body.token
-       const dto = VerifyEmailSchema.parse({ token })
-        return this.authService.verify(dto, AuthTokenType.RESET_PASSWORD)
+        return this.authService.verifyPassword(body, AuthTokenType.RESET_PASSWORD)
       }
     )
   }
@@ -123,7 +121,7 @@ export class AuthController {
     return ErrorHandler(()=>this.authService.resendToken(dto.email, tokenType))
   }
 
-
+  @Public()
   @Patch('change-password')
   changePassword(
     @Body(new ZodValidationPipe(ChangePasswordSchema))

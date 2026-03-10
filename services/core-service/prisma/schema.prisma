@@ -108,6 +108,7 @@ model UserProfile {
   fullName  String
   phone     String?
   avatarUrl String?
+  photoUrl  String?
   address   String?
 
   user      User    @relation(fields: [userId], references: [id])

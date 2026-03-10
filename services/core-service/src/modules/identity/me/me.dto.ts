@@ -1,3 +1,4 @@
+import { email } from "node_modules/zod/v4/core/regexes";
 import { z } from "zod";
 
 export const UpdateProfileSchema = z.object({
@@ -17,11 +18,46 @@ export const UpdateProfileSchema = z.object({
     .string()
     .url("Avatar harus berupa URL valid")
     .optional(),
-
+  
+  photoUrl: z
+    .string()
+    .url("Avatar harus berupa URL valid")
+    .optional(),
+  
   address: z
     .string()
     .max(255)
     .optional(),
 });
 
-export type UpdateProfileDTO=z.infer<typeof UpdateProfileSchema>
+export type UpdateProfileDTO = z.infer<typeof UpdateProfileSchema>
+
+
+export const UserFollowingShopSchema = z.object({
+  page: z.coerce.number().int().positive().default(1),
+
+  limit: z.coerce.number().int().min(1).max(100).default(10),
+
+  shopId: z.coerce.number().int().positive().optional(),
+
+  search: z.string().optional(),
+
+  createdFrom: z.coerce.date().optional(),
+
+  createdTo: z.coerce.date().optional(),
+
+  sortBy: z.enum(["createdAt"]).default("createdAt"),
+
+  sortOrder: z.enum(["asc", "desc"]).default("desc"),
+}).refine(
+  (data) =>
+    !data.createdFrom ||
+    !data.createdTo ||
+    data.createdFrom <= data.createdTo,
+  {
+    message: "createdFrom must be before createdTo",
+    path: ["createdFrom"],
+  }
+);
+
+export type UserFollowingShopDTO = z.infer<typeof UserFollowingShopSchema>;

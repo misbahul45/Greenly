@@ -91,7 +91,7 @@ export class AuthRepository{
         })    
     }
 
-    async findAuthTokenByHash(tokenHash:string, tokenType:AuthTokenType){
+  async findAuthTokenByHash(tokenHash: string, tokenType: AuthTokenType) {
         return await this.db.authToken.findUnique({
             where:{
                 tokenHash,
@@ -157,10 +157,11 @@ export class AuthRepository{
         })
     }
 
-    async markAllToken(userId:number){
+    async markAllToken(userId:number, type:AuthTokenType){
         return await this.db.authToken.updateMany({
             where:{
-                userId
+              userId,
+              type,
             },
             data:{
                 usedAt:new Date()

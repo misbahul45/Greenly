@@ -88,7 +88,7 @@ export class RolesService {
       throw new BadRequestException('Role is still assigned to users')
     }
 
-    const deleted = await this.repo.deleteRole(id)
+    await this.repo.deleteRole(id)
 
     return {
       data: null,

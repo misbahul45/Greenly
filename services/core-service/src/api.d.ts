@@ -12,10 +12,10 @@ interface ApiResponse<T, M = undefined> {
   message: string
   meta?: M extends undefined
     ? {
-        total?: number
-        page?: number
-        limit?: number
-        lastPage?: number
+        total: number
+        page: number
+        limit: number
+        lastPage: number
       }
     : M
 }

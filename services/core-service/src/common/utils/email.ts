@@ -30,6 +30,8 @@ export const sendEmail = async ({
     template_params: {
       to_email: email,
       token: token,
+      action: action,
+      name,
       reply_to:"grennlyMart@gmail.com"
     }
   }
