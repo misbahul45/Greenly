@@ -89,7 +89,7 @@ export class UsersRepositository {
     return this.db.user.count({ where })
   }
 
-  async findUser(id: string) {
+  async findUserById(id: string) {
     return this.db.user.findUnique({
       where: { id },
       include:{
@@ -133,7 +133,10 @@ export class UsersRepositository {
   async updateUser(id: string, data: Prisma.UserUpdateInput) {
     return this.db.user.update({
       where: { id },
-      data,
+      data: {
+        status: data.status,
+        isActive:data.isActive
+      },
     })
   }
 

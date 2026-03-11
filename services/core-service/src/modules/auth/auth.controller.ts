@@ -64,7 +64,6 @@ export class AuthController {
       if(!payload.refreshToken){
         throw new AppError('Invalid refresh token', 403)
       }
-
         return this.authService.refresh(payload.refreshToken)
       }
     );
