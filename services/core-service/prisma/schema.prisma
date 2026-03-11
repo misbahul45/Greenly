@@ -81,6 +81,7 @@ model User {
   passwordHash   String
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
+  followingCount Int @default(0)
   emailVerified   DateTime?   
   status UserStatus @default(PENDING_VERIFICATION)
   deletedAt DateTime?
@@ -167,6 +168,7 @@ model Shop {
   description String?
   status      ShopStatus @default(PENDING)
   balance     Decimal    @default(0) @db.Decimal(15,2)
+  followerCount Int @default(0) 
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
   deletedAt   DateTime?

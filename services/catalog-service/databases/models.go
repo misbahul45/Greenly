@@ -1,10 +1,39 @@
 package databases
 
 import (
+	"context"
 	"time"
 
 	"github.com/lucsky/cuid"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
+
+func CreateFavoriteIndexes(collection *mongo.Collection) error {
+	indexes := []mongo.IndexModel{
+		{
+			Keys: bson.D{
+				{Key: "user_id", Value: 1},
+				{Key: "product_id", Value: 1},
+			},
+			Options: options.Index().SetUnique(true),
+		},
+		{
+			Keys: bson.D{
+				{Key: "user_id", Value: 1},
+			},
+		},
+		{
+			Keys: bson.D{
+				{Key: "product_id", Value: 1},
+			},
+		},
+	}
+
+	_, err := collection.Indexes().CreateMany(context.Background(), indexes)
+	return err
+}
 
 func NewID() string {
 	return cuid.New()
@@ -32,6 +61,13 @@ func (b *Base) BeforeUpdate() {
 	b.UpdatedAt = time.Now()
 }
 
+type FavoriteProduct struct {
+	Base
+	UserID    string `bson:"user_id" json:"userId"`
+	ProductID string `bson:"product_id" json:"productId"`
+	ShopID    string `bson:"shop_id" json:"shopId"`
+}
+
 type Category struct {
 	Base
 	Name     string  `bson:"name" json:"name"`
@@ -41,16 +77,13 @@ type Category struct {
 
 type Product struct {
 	Base
-
 	ShopID     string `bson:"shop_id" json:"shopId"`
 	CategoryID string `bson:"category_id" json:"categoryId"`
-
 	Name        string `bson:"name" json:"name"`
 	Description string `bson:"description" json:"description"`
 	SKU         string `bson:"sku" json:"sku"`
-
-	IsActive bool `bson:"is_active" json:"isActive"`
-
+	FavoriteCount int `bson:"favorite_count" json:"favoriteCount"`
+	IsActive    bool   `bson:"is_active" json:"isActive"`
 	InventoryID *string  `bson:"inventory_id,omitempty" json:"inventoryId,omitempty"`
 	PriceID     *string  `bson:"price_id,omitempty" json:"priceId,omitempty"`
 	ImageIDs    []string `bson:"image_ids,omitempty" json:"imageIds,omitempty"`
@@ -75,38 +108,31 @@ type Inventory struct {
 
 type Price struct {
 	Base
-	ProductID string `bson:"product_id" json:"productId"`
-
-	Amount   float64 `bson:"amount" json:"amount"`
-	Currency string  `bson:"currency" json:"currency"`
+	ProductID string  `bson:"product_id" json:"productId"`
+	Amount    float64 `bson:"amount" json:"amount"`
+	Currency  string  `bson:"currency" json:"currency"`
 }
 
 type ProductDiscount struct {
 	Base
-	ProductID string `bson:"product_id" json:"productId"`
-
-	Name string `bson:"name" json:"name"`
-
-	Percentage  float64 `bson:"percentage,omitempty" json:"percentage,omitempty"`
-	FixedAmount float64 `bson:"fixed_amount,omitempty" json:"fixedAmount,omitempty"`
-
-	ValidFrom time.Time `bson:"valid_from" json:"validFrom"`
-	ValidTo   time.Time `bson:"valid_to" json:"validTo"`
-
-	IsActive bool `bson:"is_active" json:"isActive"`
+	ProductID   string    `bson:"product_id" json:"productId"`
+	Name        string    `bson:"name" json:"name"`
+	Percentage  float64   `bson:"percentage,omitempty" json:"percentage,omitempty"`
+	FixedAmount float64   `bson:"fixed_amount,omitempty" json:"fixedAmount,omitempty"`
+	ValidFrom   time.Time `bson:"valid_from" json:"validFrom"`
+	ValidTo     time.Time `bson:"valid_to" json:"validTo"`
+	IsActive    bool      `bson:"is_active" json:"isActive"`
 }
 
 type ActivePrice struct {
-	ProductID string `bson:"product_id" json:"productId"`
-
+	ProductID  string    `bson:"product_id" json:"productId"`
 	FinalPrice float64   `bson:"final_price" json:"finalPrice"`
 	UpdatedAt  time.Time `bson:"updated_at" json:"updatedAt"`
 }
 
 type EcoAttribute struct {
 	Base
-	ProductID string `bson:"product_id" json:"productId"`
-
+	ProductID       string  `bson:"product_id" json:"productId"`
 	CarbonFootprint float64 `bson:"carbon_footprint" json:"carbonFootprint"`
 	Recyclable      bool    `bson:"recyclable" json:"recyclable"`
 	MaterialType    string  `bson:"material_type" json:"materialType"`
