@@ -106,7 +106,7 @@ export class MemberService {
     
     return {
       message: 'member updated',
-      data: [],
+      data: null,
     };
   }
 
@@ -119,11 +119,11 @@ export class MemberService {
     if (!exitedMember) {
       throw new AppError('Member not found', 404)
     }
-    const deletedMember = await this.repo.deleteMember(shopId, memberId)
+    await this.repo.deleteMember(shopId, memberId)
     
     return {
       message: 'member deleted',
-      data: deletedMember,
+      data: null,
     };
   }
 }

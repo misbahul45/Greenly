@@ -7,15 +7,19 @@ import (
 
 func ProductRouter(rg *gin.RouterGroup, db *mongo.Database) {
 
-	repo := NewProductRepository(db)
-	service := NewProductService(repo)
-	handler := NewProductHandler(service)
+	repo := NewRepository(db)
+	service := NewService(repo)
+	handler := NewHandler(service)
 
 	products := rg.Group("/products")
+	{
+		products.GET("", handler.FindMany)
+		products.GET("/:id", handler.FindOne)
+		products.GET("/slug/:slug", handler.FindOneBySlug)
 
-	products.GET("", handler.FindManyProducts)
-	products.GET("/:id", handler.FindOneProduct)
-	products.POST("", handler.CreateProduct)
-	products.PUT("/:id", handler.UpdateProduct)
-	products.DELETE("/:id", handler.DeleteProduct)
+		products.POST("", handler.Create)
+		products.PATCH("/:id", handler.Update)
+
+		products.DELETE("/:id", handler.Delete)
+	}
 }

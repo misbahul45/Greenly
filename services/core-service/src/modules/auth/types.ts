@@ -40,7 +40,7 @@ export interface VerifyEmailResponse {
   };
 }
 
-export interface ChnagePasswordResponse{
+export interface ChangePasswordResponse{
   id:string;
   email:string;
 }

@@ -3,123 +3,160 @@ package product
 import (
 	"catalog-service/middleware"
 	"catalog-service/utils"
-	"strconv"
+	"errors"
 
 	"github.com/gin-gonic/gin"
 )
 
-type ProductHandler interface {
-	FindManyProducts(c *gin.Context)
-	FindOneProduct(c *gin.Context)
-	CreateProduct(c *gin.Context)
-	UpdateProduct(c *gin.Context)
-	DeleteProduct(c *gin.Context)
+type Handler interface {
+	FindMany(c *gin.Context)
+	FindOne(c *gin.Context)
+	FindOneBySlug(c *gin.Context)
+	Create(c *gin.Context)
+	Update(c *gin.Context)
+	Delete(c *gin.Context)
 }
 
-type productHandler struct {
-	service ProductService
+type handler struct {
+	service Service
 }
 
-func NewProductHandler(service ProductService) ProductHandler {
-	return &productHandler{service: service}
+func NewHandler(service Service) Handler {
+	return &handler{
+		service: service,
+	}
 }
 
-func (h *productHandler) FindManyProducts(c *gin.Context) {
+func (h *handler) FindMany(c *gin.Context) {
 
-	pageStr := c.DefaultQuery("page", "1")
-	limitStr := c.DefaultQuery("limit", "10")
-	search := c.Query("search")
+	var query ProductQuery
 
-	page, err := strconv.Atoi(pageStr)
-	if err != nil || page <= 0 {
-		page = 1
-	}
-
-	limit, err := strconv.Atoi(limitStr)
-	if err != nil || limit <= 0 {
-		limit = 10
-	}
-
-	if limit > 100 {
-		limit = 100
-	}
-
-	query := ProductQuery{
-		Page:   page,
-		Limit:  limit,
-		Search: search,
-	}
-
-	res, total, err := h.service.FindMany(query)
-	if err != nil {
-		c.Error(middleware.NewAppError(500, "failed to fetch products"))
+	if err := c.ShouldBindQuery(&query); err != nil {
+		c.Error(middleware.NewAppError(400, "Invalid query params", nil))
 		return
 	}
 
-	meta := utils.NewPaginationMeta(total, int64(page), int64(limit))
+	res, total, err := h.service.FindMany(c.Request.Context(), query)
+	if err != nil {
+		c.Error(middleware.NewAppError(500, "Failed to fetch products", nil))
+		return
+	}
 
-	utils.OKWithMeta(c, res.Items, meta)
+	meta := utils.NewPaginationMeta(total, int64(query.Page), int64(query.Limit))
+
+	utils.OKWithMeta(c, res, meta)
 }
 
-func (h *productHandler) FindOneProduct(c *gin.Context) {
+func (h *handler) FindOne(c *gin.Context) {
 
 	id := c.Param("id")
 
-	res, err := h.service.FindOne(id)
+	res, err := h.service.FindOne(c.Request.Context(), id)
 	if err != nil {
-		c.Error(middleware.NewAppError(404, "product not found"))
+
+		if errors.Is(err, ErrProductNotFound) {
+			c.Error(middleware.NewAppError(404, err.Error(), nil))
+			return
+		}
+
+		c.Error(middleware.NewAppError(500, "Internal server error", nil))
 		return
 	}
 
 	utils.OK(c, res)
 }
 
-func (h *productHandler) CreateProduct(c *gin.Context) {
+func (h *handler) FindOneBySlug(c *gin.Context) {
+
+	slug := c.Param("slug")
+
+	res, err := h.service.FindOneBySlug(c.Request.Context(), slug)
+	if err != nil {
+
+		if errors.Is(err, ErrProductNotFound) {
+			c.Error(middleware.NewAppError(404, err.Error(), nil))
+			return
+		}
+
+		c.Error(middleware.NewAppError(500, "Internal server error", nil))
+		return
+	}
+
+	utils.OK(c, res)
+}
+
+func (h *handler) Create(c *gin.Context) {
 
 	var dto CreateProductDTO
 
 	if err := c.ShouldBindJSON(&dto); err != nil {
-		c.Error(middleware.NewAppError(400, "invalid request body"))
+		c.Error(middleware.NewAppError(400, "Invalid request body", nil))
 		return
 	}
 
-	res, err := h.service.Create(dto)
+	res, err := h.service.Create(c.Request.Context(), dto)
 	if err != nil {
-		c.Error(middleware.NewAppError(500, "failed to create product"))
+
+		if errors.Is(err, ErrSlugExists) {
+			c.Error(middleware.NewAppError(409, err.Error(), nil))
+			return
+		}
+
+		c.Error(middleware.NewAppError(500, "Internal server error", nil))
 		return
 	}
 
 	utils.Created(c, res)
 }
 
-func (h *productHandler) UpdateProduct(c *gin.Context) {
+func (h *handler) Update(c *gin.Context) {
 
 	id := c.Param("id")
 
 	var dto UpdateProductDTO
 
 	if err := c.ShouldBindJSON(&dto); err != nil {
-		c.Error(middleware.NewAppError(400, "invalid request body"))
+		c.Error(middleware.NewAppError(400, "Invalid request body", nil))
 		return
 	}
 
-	res, err := h.service.Update(id, dto)
+	res, err := h.service.Update(c.Request.Context(), id, dto)
+
 	if err != nil {
-		c.Error(middleware.NewAppError(500, "failed to update product"))
+
+		if errors.Is(err, ErrProductNotFound) {
+			c.Error(middleware.NewAppError(404, err.Error(), nil))
+			return
+		}
+
+		if errors.Is(err, ErrSlugExists) {
+			c.Error(middleware.NewAppError(409, err.Error(), nil))
+			return
+		}
+
+		c.Error(middleware.NewAppError(500, "Internal server error", nil))
 		return
 	}
 
 	utils.OK(c, res)
 }
 
-func (h *productHandler) DeleteProduct(c *gin.Context) {
+func (h *handler) Delete(c *gin.Context) {
 
 	id := c.Param("id")
 
-	if err := h.service.Delete(id); err != nil {
-		c.Error(middleware.NewAppError(500, "failed to delete product"))
+	err := h.service.Delete(c.Request.Context(), id)
+
+	if err != nil {
+
+		if errors.Is(err, ErrProductNotFound) {
+			c.Error(middleware.NewAppError(404, err.Error(), nil))
+			return
+		}
+
+		c.Error(middleware.NewAppError(500, "Internal server error", nil))
 		return
 	}
 
-	utils.OK(c, "deleted")
+	c.Status(204)
 }
