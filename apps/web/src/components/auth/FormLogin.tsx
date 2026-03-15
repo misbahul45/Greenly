@@ -177,7 +177,7 @@ export default function FormLogin() {
           </Button>
         </Field>
 
-        <p className="text-sm text-muted-foreground text-center">
+        {/* <p className="text-sm text-muted-foreground text-center">
           Belum punya akun <span className="font-medium">Greenly Mart</span>?{" "}
           <Link
             to="/auth/regiister"
@@ -185,7 +185,7 @@ export default function FormLogin() {
           >
             Daftar
           </Link>
-        </p>
+        </p> */}
       </CardFooter>
     </Card>
   )
