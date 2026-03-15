@@ -38,8 +38,9 @@ export class RolesService {
     }
   }
 
-  async findOne(id: string) : Promise<ApiResponse<Role>> {
+  async findOne(id: string): Promise<ApiResponse<Role>> {
     const role = await this.repo.findRole(id)
+  
 
     if (!role) throw new NotFoundException('Role not found')
 
