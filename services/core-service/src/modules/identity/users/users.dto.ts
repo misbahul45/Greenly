@@ -12,7 +12,7 @@ export const userSortOrderEnum = z.enum(['asc', 'desc'])
 
 
 export const userIdParamSchema = z.object({
-  id: z.coerce.number().int().positive(),
+  id: z.coerce.string(),
 })
 
 export type UserIdParamDTO = z.infer<typeof userIdParamSchema>

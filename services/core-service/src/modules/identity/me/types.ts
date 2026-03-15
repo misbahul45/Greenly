@@ -1,7 +1,7 @@
 import { ShopStatus } from "generated/prisma/enums";
 
 export interface MeResponse {
-  id: number;
+  id: string;
   name: string;
   emailVerified: Date;
 
@@ -16,7 +16,7 @@ export interface MeResponse {
   roles: string[];
 
   shop: {
-    id: number;
+    id: string;
     name: string | null;
     status: ShopStatus;
   }[];
@@ -26,10 +26,17 @@ export interface MeResponse {
 
 
 export interface ProfileResponse {
-  id: number;
+  id: string;
   fullName: string | null;
   phoneNumber: string | null;
   address: string | null;
   avatarUrl: string | null;
   photoUrl: string | null;
+}
+
+export interface ShopResponse {
+  id: string;
+  name: string | null;
+  status: ShopStatus;
+  description: string | null;
 }

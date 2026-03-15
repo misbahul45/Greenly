@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 export const ShopIdParamSchema = z.object({
-  shopId: z.coerce.number().int().positive(),
+  shopId: z.string(),
 });
 
 export type ShopIdParamDTO = z.infer<typeof ShopIdParamSchema>;

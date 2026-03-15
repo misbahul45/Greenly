@@ -15,7 +15,7 @@ export class MemberService {
     private readonly repo: MemberRepository,
   ) {}
   
-  async addMember(shopId: number, body: AddMemberDTO) {
+  async addMember(shopId: string, body: AddMemberDTO) {
     const existedMember = await this.repo.findMemberByShopIdAndUserId(shopId, body.userId)
     
     if (existedMember) {
@@ -40,7 +40,7 @@ export class MemberService {
     };
   }
 
-  async findMany(shopId: number, query: ShopMemberQueryDTO) {
+  async findMany(shopId: string, query: ShopMemberQueryDTO) {
     const { page, limit, role, sortBy, sortOrder } = query
     
     const [members, total] = await Promise.all([
@@ -74,7 +74,7 @@ export class MemberService {
     };
   }
 
-  async findMember(shopId: number, memberId: number) {
+  async findMember(shopId: string, memberId: string) {
     const exitedShop = await this.repo.findShopById(shopId)
     if (!exitedShop) {
       throw new AppError('Shop not found', 404)
@@ -90,8 +90,8 @@ export class MemberService {
   }
 
   async updateMember(
-    shopId: number,
-    memberId: number,
+    shopId: string,
+    memberId: string,
     body: UpdateMemberRoleDTO,
   ) {
     const exitedShop = await this.repo.findShopById(shopId)
@@ -106,11 +106,11 @@ export class MemberService {
     
     return {
       message: 'member updated',
-      data: [],
+      data: null,
     };
   }
 
-  async deleteMember(shopId: number, memberId: number) {
+  async deleteMember(shopId: string, memberId: string) {
     const exitedShop = await this.repo.findShopById(shopId)
     if (!exitedShop) {
       throw new AppError('Shop not found', 404)
@@ -119,11 +119,11 @@ export class MemberService {
     if (!exitedMember) {
       throw new AppError('Member not found', 404)
     }
-    const deletedMember = await this.repo.deleteMember(shopId, memberId)
+    await this.repo.deleteMember(shopId, memberId)
     
     return {
       message: 'member deleted',
-      data: deletedMember,
+      data: null,
     };
   }
 }

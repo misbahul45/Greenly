@@ -6,6 +6,7 @@ import envConfig from './libs/config/env.config';
 import { APP_GUARD } from '@nestjs/core';
 import { JwtAccessGuard } from './modules/auth/guards/jwt.access.guard';
 import { ScheduleModule } from '@nestjs/schedule';
+import { RolesGuard } from './modules/auth/guards/roles.guard';
 @Module({
   imports: [
     ModulesModule, 
@@ -21,6 +22,10 @@ import { ScheduleModule } from '@nestjs/schedule';
     {
       provide: APP_GUARD,
       useClass: JwtAccessGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: RolesGuard,
     },
   ]
 })

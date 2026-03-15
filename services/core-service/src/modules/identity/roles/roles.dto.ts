@@ -2,13 +2,13 @@ import { Search } from '@nestjs/common'
 import { z } from 'zod'
 
 export const roleIdParamSchema = z.object({
-  id: z.coerce.number().int().positive(),
+  id: z.string(),
 })
 
 export type RoleIdParamDTO = z.infer<typeof roleIdParamSchema>
 
 export const assignRoleParamSchema = z.object({
-  roleId: z.coerce.number().int().positive(),
+  roleId: z.string(),
 })
 
 export type AssignRoleParamDTO = z.infer<typeof assignRoleParamSchema>

@@ -2,7 +2,8 @@ import { z } from "zod";
 import { ShopIdParamSchema } from "../shops.dto";
 
 export const OrderIdParamSchema = z.object({
-  id: z.coerce.number().int().positive(),
+  id: z.string(),
+  shopId:z.string()
 });
 
 export type OrderIdParamDTO =
@@ -58,7 +59,7 @@ export type OrderQueryDTO =
   z.infer<typeof OrderQuerySchema>;
 
 export const CreateOrderItemSchema = z.object({
-  productId: z.coerce.number().int().positive(),
+  productId: z.string(),
   quantity: z.coerce.number().int().positive(),
 });
 
@@ -82,7 +83,7 @@ export const RefundParamSchema = ShopIdParamSchema
   .merge(OrderIdParamSchema)
   .merge(
     z.object({
-      refundId: z.coerce.number().int().positive(),
+      refundId: z.string(),
     }),
   );
 

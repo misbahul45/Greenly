@@ -38,7 +38,7 @@ export class RolesService {
     }
   }
 
-  async findOne(id: number) : Promise<ApiResponse<Role>> {
+  async findOne(id: string) : Promise<ApiResponse<Role>> {
     const role = await this.repo.findRole(id)
 
     if (!role) throw new NotFoundException('Role not found')
@@ -64,7 +64,7 @@ export class RolesService {
     }
   }
 
-  async update(id: number, name: string) : Promise<ApiResponse<Role>> {
+  async update(id: string, name: string) : Promise<ApiResponse<Role>> {
     const role = await this.repo.findRole(id)
 
     if (!role) throw new NotFoundException('Role not found')
@@ -77,7 +77,7 @@ export class RolesService {
     }
   }
 
-  async remove(id: number) : Promise<ApiResponse<null>> {
+  async remove(id: string) : Promise<ApiResponse<null>> {
     const role = await this.repo.findRole(id)
 
     if (!role) throw new NotFoundException('Role not found')
@@ -88,7 +88,7 @@ export class RolesService {
       throw new BadRequestException('Role is still assigned to users')
     }
 
-    const deleted = await this.repo.deleteRole(id)
+    await this.repo.deleteRole(id)
 
     return {
       data: null,
@@ -96,7 +96,7 @@ export class RolesService {
     }
   }
 
-  async attachPermissions(id: number, permissions: string[]) {
+  async attachPermissions(id: string, permissions: string[]) {
     const role = await this.repo.findRole(id)
 
     if (!role) throw new NotFoundException('Role not found')
@@ -109,7 +109,7 @@ export class RolesService {
     }
   }
 
-  async replacePermissions(id: number, permissions: string[]) {
+  async replacePermissions(id: string, permissions: string[]) {
     const role = await this.repo.findRole(id)
 
     if (!role) throw new NotFoundException('Role not found')

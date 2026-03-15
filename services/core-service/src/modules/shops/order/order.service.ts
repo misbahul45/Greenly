@@ -8,7 +8,7 @@ import { OrderStatus } from '../../../../generated/prisma/enums';
 export class OrderService {
   constructor(private readonly repo: OrderRepository) {}
 
-  async findAll(shopId: number, query: OrderQueryDTO) {
+  async findAll(shopId: string, query: OrderQueryDTO) {
     const {
       page,
       limit,
@@ -55,7 +55,7 @@ export class OrderService {
     };
   }
 
-  async findOne(shopId: number, orderId: number) {
+  async findOne(shopId: string, orderId: string) {
     const order = await this.repo.findOne(shopId, orderId);
 
     if (!order) {
@@ -69,8 +69,8 @@ export class OrderService {
   }
 
   async updateStatus(
-    shopId: number,
-    orderId: number,
+    shopId: string,
+    orderId: string,
     status: OrderStatus,
   ) {
     const order = await this.repo.findOne(shopId, orderId);
@@ -92,9 +92,9 @@ export class OrderService {
   }
 
   async updateRefund(
-    shopId: number,
-    orderId: number,
-    refundId: number,
+    shopId: string,
+    orderId: string,
+    refundId: string,
   ) {
     const order = await this.repo.findOne(shopId, orderId);
 

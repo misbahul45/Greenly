@@ -50,8 +50,8 @@ export class UsersService {
       message: 'Users fetched successfully',
     }
   }
-  async findOne(id: number) : Promise<ApiResponse<UserResponse>>  {
-    const user = await this.repo.findUser(id,)
+  async findOne(id: string) : Promise<ApiResponse<UserResponse>>  {
+    const user = await this.repo.findUserById(id)
 
     if (!user) {
       throw new AppError('User not found', 404)
@@ -69,8 +69,8 @@ export class UsersService {
   async create(email: string, password: string) : Promise<ApiResponse<UserResponse>> {
     const existing = await this.repo.findUserByEmail(email)
 
-    if (existing) {
-      throw new BadRequestException('Email already registered')
+    if (existing?.email) {
+      throw new AppError('Email already registered', 400)
     }
 
     const passwordHash = await bcrypt.hash(password, 10)
@@ -86,10 +86,10 @@ export class UsersService {
     }
   }
 
-  async update(id: number, data: any) : Promise<ApiResponse<UserResponse>> {
-    const user = await this.repo.findUser(id)
+  async update(id: string, data: any) : Promise<ApiResponse<UserResponse>> {
+    const user = await this.repo.findUserById(id)
 
-    if (!user) throw new NotFoundException('User not found')
+    if (!user) throw new AppError('User not found', 404)
 
     const updated = await this.repo.updateUser(id, data)
 
@@ -100,7 +100,7 @@ export class UsersService {
   }
 
   async remove(user:UserLogin) : Promise<ApiResponse<null>> {
-    const findUser = await this.repo.findUser(user.sub) as any
+    const findUser = await this.repo.findUserById(user.sub) as any
     if (!findUser) throw new NotFoundException('User not found')
     
     const rawOtp = generateOtp();
@@ -142,7 +142,7 @@ export class UsersService {
         throw new AppError('Invalid otp token', 400)
       }
 
-      const findUser=await this.repo.findUser(findToken.userId)
+      const findUser=await this.repo.findUserById(findToken.userId)
 
       // soft delete
 
@@ -157,20 +157,4 @@ export class UsersService {
       }
   }
 
-  async bannedUser(params:UserIdParamDTO) : Promise<ApiResponse<null>> {
-    const findUser=await this.repo.findUser(params.id)
-
-    if(!findUser){
-      throw new AppError('User not found', 404)
-    }
-
-    await this.repo.updateUser(params.id, {
-      status:UserStatus.BANNED
-    })
-
-    return {
-      data: null,
-      message: 'User banned successfully',
-    }
-  }
 }

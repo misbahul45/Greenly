@@ -1,31 +1,50 @@
 package product
 
-
 type CreateProductDTO struct {
-	Name        string `json:"name"`
+	ShopID     string  `json:"shopId" binding:"required"`
+	CategoryID string  `json:"categoryId" binding:"required"`
+
+	Name        string `json:"name" binding:"required"`
+	Slug        string `json:"slug"`
 	Description string `json:"description"`
-	SKU         string `json:"sku"`
-	IsActive    bool   `json:"isActive"`
-	CategoryID  string `json:"categoryId"`
-	Price       *PriceInfo       `json:"price,omitempty"`
-	Inventory   *InventoryInfo   `json:"inventory,omitempty"`
-	Images      []ImageInfo      `json:"images,omitempty"`
+	SKU         string `json:"sku" binding:"required"`
+
+	IsActive bool `json:"isActive"`
+
+	InventoryID *string  `json:"inventoryId"`
+	PriceID     *string  `json:"priceId"`
+	ImageIDs    []string `json:"imageIds"`
+	DiscountIDs []string `json:"discountIds"`
+	EcoID       *string  `json:"ecoId"`
 }
 
 type UpdateProductDTO struct {
-	Name        string `json:"name"`
-	Description string `json:"description"`
-	SKU         string `json:"sku"`
-	IsActive    bool   `json:"isActive"`
-	CategoryID  string `json:"categoryId"`
-	Price       *PriceInfo       `json:"price,omitempty"`
-	Inventory   *InventoryInfo   `json:"inventory,omitempty"`
-	Images      []ImageInfo      `json:"images,omitempty"`
+	CategoryID *string `json:"categoryId"`
+
+	Name        *string `json:"name"`
+	Slug        *string `json:"slug"`
+	Description *string `json:"description"`
+	SKU         *string `json:"sku"`
+
+	IsActive *bool `json:"isActive"`
+
+	InventoryID *string  `json:"inventoryId"`
+	PriceID     *string  `json:"priceId"`
+	ImageIDs    []string `json:"imageIds"`
+	DiscountIDs []string `json:"discountIds"`
+	EcoID       *string  `json:"ecoId"`
 }
 
-
 type ProductQuery struct {
-	Page   int
-	Limit  int
-	Search string
+	Page   int    `form:"page"`
+	Limit  int    `form:"limit"`
+	Search string `form:"search"`
+
+	CategoryID string `form:"categoryId"`
+	ShopID     string `form:"shopId"`
+
+	IsActive *bool `form:"isActive"`
+
+	SortBy    string `form:"sortBy"`
+	SortOrder string `form:"sortOrder"`
 }

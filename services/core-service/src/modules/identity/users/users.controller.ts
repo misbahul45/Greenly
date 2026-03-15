@@ -94,15 +94,4 @@ export class UsersController {
       this.service.verifyRemove(body)
     ))
   }
-
-  @Roles('ADMIN','SUPER_ADMIN')
-  @Post('/banned/:id')
-  async BanUnser(
-    @Param(new ZodValidationPipe(userIdParamSchema))
-    params: UserIdParamDTO,
-  ){
-    return ErrorHandler(()=>(
-      this.service.bannedUser(params)
-    ))
-  }
 }

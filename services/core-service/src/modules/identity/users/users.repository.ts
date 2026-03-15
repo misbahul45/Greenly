@@ -89,7 +89,7 @@ export class UsersRepositository {
     return this.db.user.count({ where })
   }
 
-  async findUser(id: number) {
+  async findUserById(id: string) {
     return this.db.user.findUnique({
       where: { id },
       include:{
@@ -130,14 +130,17 @@ export class UsersRepositository {
     } })
   }
 
-  async updateUser(id: number, data: Prisma.UserUpdateInput) {
+  async updateUser(id: string, data: Prisma.UserUpdateInput) {
     return this.db.user.update({
       where: { id },
-      data,
+      data: {
+        status: data.status,
+        isActive:data.isActive
+      },
     })
   }
 
-  async softDeleteUser(id: number) {
+  async softDeleteUser(id: string) {
     return this.db.user.update({
       where: { id },
       data: {
@@ -149,7 +152,7 @@ export class UsersRepositository {
   }
 
   async saveAuthDeleteToken(
-    userId:number,
+    userId:string,
     payload:{
         tokenHash:string,
         expiresAt:Date,
@@ -192,7 +195,7 @@ export class UsersRepositository {
       })
     }
 
-    async markTokenUsed(tokenId:number){
+    async markTokenUsed(tokenId:string){
         return await this.db.authToken.update({
             where:{
                 id:tokenId
