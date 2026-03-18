@@ -1,3 +1,4 @@
+
 import 'package:app/features/auth/auth_validation.dart';
 import 'package:app/shared/ui/text_validation.dart';
 import 'package:flutter/material.dart';
@@ -130,10 +131,21 @@ class _FormOtpEmailState extends State<FormOtpEmail> {
 
               const SizedBox(height: 10),
 
-              TextButton(
-                onPressed: toggleView,
-                child: const Text("Resend Code"),
-              ),
+              Row(
+                children: [
+                  ElevatedButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                    },
+                    child: const Text("Back"),
+                  ),
+                  const SizedBox(width: 10),
+                  TextButton(
+                    onPressed: toggleView,
+                    child: const Text("Resend Code"),
+                  ),
+                ],
+              )
             ]
 
             /// EMAIL VIEW

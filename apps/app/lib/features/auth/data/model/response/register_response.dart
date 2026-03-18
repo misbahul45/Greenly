@@ -1,5 +1,5 @@
 class RegisterResponse {
-  final int id;
+  final String id;
   final String name;
   final String email;
 

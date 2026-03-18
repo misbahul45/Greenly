@@ -82,7 +82,7 @@ class _FormForgotPasswordState extends State<FormForgotPassword> {
                         height: 20,
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
-                    : const Text("Send Reset OTP"),
+                    : const Text("Reset Password"),
               ),
             ),
 

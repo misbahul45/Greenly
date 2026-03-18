@@ -4,7 +4,7 @@ import 'package:app/shared/model/data/user_model.dart';
 import 'package:app/core/config/env.dart';
 
 class MeService {
-  static String get _baseUrl => ENV.API;
+  static String get _baseUrl => "${ENV.API}/core";
 
   static Future<ApiResponse<UserModel>> getMe() async {
     return await ApiClient.get<UserModel>(

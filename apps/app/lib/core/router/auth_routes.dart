@@ -4,4 +4,5 @@ class AuthRoutes {
   static const String forgotPassword = '/forgot-password';
   static const String verifyEmail = '/verify-email';
   static const String changePassword = '/change-password';
+  static const String verifyPassword = '/verify-password';
 }
