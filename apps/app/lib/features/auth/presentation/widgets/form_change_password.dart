@@ -1,4 +1,5 @@
 import 'package:app/features/auth/auth_validation.dart';
+import 'package:app/shared/ui/text_validation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:app/features/auth/presentation/bloc/auth_bloc.dart';
@@ -95,44 +96,31 @@ class _FormChangePasswordState extends State<FormChangePassword> {
                   style: const TextStyle(color: Colors.red),
                 ),
               ),
-            TextFormField(
+            TextValidation(
+              hint: 'New Password',
               controller: newPasswordController,
-              obscureText: obscurePassword,
-              decoration: InputDecoration(
-                hintText: "Password Baru",
-                prefixIcon: const Icon(Icons.lock),
-                suffixIcon: IconButton(
-                  onPressed: togglePassword,
-                  icon: Icon(
-                    obscurePassword
-                        ? Icons.visibility
-                        : Icons.visibility_off,
-                  ),
-                ),
-                border: const OutlineInputBorder(),
-              ),
+              obscure: obscurePassword,
+              prefixIcon: Icons.lock,
               validator: AuthValidation.password,
+              suffixIcon: IconButton(
+                onPressed: togglePassword,
+                icon: Icon(
+                  obscurePassword ? Icons.visibility : Icons.visibility_off,
+                ),
+              ),
             ),
             const SizedBox(height: 16),
-            TextFormField(
+            TextValidation(
               controller: confirmNewPasswordController,
-              obscureText: obscureConfirmPassword,
-              decoration: InputDecoration(
-                hintText: "Konfirmasi Password",
-                prefixIcon: const Icon(Icons.lock_outline),
-                suffixIcon: IconButton(
-                  onPressed: toggleConfirmPassword,
-                  icon: Icon(
-                    obscureConfirmPassword
-                        ? Icons.visibility
-                        : Icons.visibility_off,
-                  ),
+              obscure: obscureConfirmPassword,
+              hint: 'Confirm New Password',
+              prefixIcon: Icons.lock,
+              validator: AuthValidation.password,
+              suffixIcon: IconButton(
+                onPressed: togglePassword,
+                icon: Icon(
+                  obscurePassword ? Icons.visibility : Icons.visibility_off,
                 ),
-                border: const OutlineInputBorder(),
-              ),
-              validator: (value) => AuthValidation.confirmPassword(
-                value,
-                newPasswordController.text,
               ),
             ),
             const SizedBox(height: 24),
