@@ -56,7 +56,7 @@ function SidebarContent({
         <div className="rounded-2xl bg-white/20 backdrop-blur-md p-3">
           <div className="flex items-center gap-3">
             <img
-              src="/Sidebar/logoGreenly.png"
+              src="/Sidebar/LogoGreenly.png"
               alt="Greenly Mart Logo"
               className="h-10 w-auto object-contain"
             />
