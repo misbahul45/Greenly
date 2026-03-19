@@ -38,39 +38,22 @@ function SidebarContent({
   onNavigate?: () => void
 }) {
   return (
-    <div className="relative h-full overflow-hidden">
-      {/* BG IMAGE */}
-      <div
-        aria-hidden="true"
-        className="absolute inset-0"
-        style={{
-          backgroundImage: "url('/Sidebar/bgsidebar.png')",
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-          backgroundRepeat: "no-repeat",
-          filter: "saturate(1.15) contrast(1.05)",
-        }}
-      />
-
-      {/* OVERLAY */}
-      <div
-        aria-hidden="true"
-        className="absolute inset-0 bg-gradient-to-b from-[#f2f4ea]/40 via-[#f2f4ea]/22 to-[#f2f4ea]/12"
-      />
-
+    <div className="relative h-full overflow-hidden bg-gradient-to-b from-[#1B5E20] to-[#4CAF50] text-white">
+      
       {/* TEXTURE */}
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-0 opacity-[0.08]"
+        className="pointer-events-none absolute inset-0 opacity-[0.05]"
         style={{
-          backgroundImage: "radial-gradient(rgba(0,0,0,0.08) 1px, transparent 1px)",
+          backgroundImage: "radial-gradient(rgba(255,255,255,0.2) 1px, transparent 1px)",
           backgroundSize: "14px 14px",
         }}
       />
 
       <div className="relative flex h-full flex-col p-4">
-        {/* BRAND SELLER */}
-        <div className="rounded-2xl bg-white/70 p-3 ring-1 ring-black/5 backdrop-blur-sm">
+        
+        {/* BRAND */}
+        <div className="rounded-2xl bg-white/20 backdrop-blur-md p-3">
           <div className="flex items-center gap-3">
             <img
               src="/Sidebar/logoGreenly.png"
@@ -78,13 +61,17 @@ function SidebarContent({
               className="h-10 w-auto object-contain"
             />
             <div className="leading-tight">
-              <div className="text-sm font-semibold">Greenly Mart</div>
-              <div className="text-xs text-muted-foreground">Admin Penjual</div>
+              <div className="text-sm font-semibold">
+                Greenly Mart
+              </div>
+              <div className="text-xs text-white/80">
+                Admin Penjual
+              </div>
             </div>
           </div>
         </div>
 
-        {/* MENU (scroll only here) */}
+        {/* MENU */}
         <div className="mt-5 flex-1 overflow-y-auto pr-1 [scrollbar-width:thin]">
           <nav className="flex flex-col gap-1">
             {NAV_ITEMS_SELLER.map((item) => {
@@ -96,23 +83,31 @@ function SidebarContent({
                   to={item.to}
                   onClick={onNavigate}
                   className={[
-                    "group flex items-center gap-3 rounded-xl px-3 py-2 text-sm transition",
-                    "hover:bg-white/70 hover:ring-1 hover:ring-black/5 backdrop-blur-sm",
-                    active ? "bg-white/80 font-semibold ring-1 ring-black/5" : "text-foreground/80",
+                    "group flex items-center gap-3 rounded-xl px-3 py-2 text-sm transition-all duration-200",
+                    active
+                      ? "bg-white/20 text-white font-semibold backdrop-blur-sm"
+                      : "text-white/80 hover:bg-white/10",
                   ].join(" ")}
                 >
+                  {/* ICON */}
                   <span
                     className={[
-                      "grid h-9 w-9 place-items-center rounded-xl transition",
+                      "grid h-9 w-9 place-items-center rounded-xl transition-all",
                       active
-                        ? "bg-[#2f6b3b] text-white"
-                        : "bg-white/60 text-foreground/80 group-hover:bg-white",
+                        ? "bg-white text-[#1B5E20]"
+                        : "bg-white/10 text-white group-hover:bg-white/20",
                     ].join(" ")}
                   >
                     {item.icon}
                   </span>
+
+                  {/* LABEL */}
                   <span>{item.label}</span>
-                  {active && <span className="ml-auto h-2 w-2 rounded-full bg-[#2f6b3b]" />}
+
+                  {/* ACTIVE DOT */}
+                  {active && (
+                    <span className="ml-auto h-2 w-2 rounded-full bg-white" />
+                  )}
                 </Link>
               )
             })}
@@ -120,9 +115,13 @@ function SidebarContent({
         </div>
 
         {/* FOOTER */}
-        <div className="mt-4 rounded-2xl bg-white/70 p-3 text-xs text-muted-foreground ring-1 ring-black/5 backdrop-blur-sm">
-          <div className="font-medium text-foreground/80">TOKO: Tani Sejahtera</div>
-          <div className="mt-1">Admin Penjual • v1.0</div>
+        <div className="mt-4 rounded-2xl bg-white/20 backdrop-blur-md p-3 text-xs">
+          <div className="font-medium">
+            TOKO: Tani Sejahtera
+          </div>
+          <div className="mt-1 text-white/80">
+            Admin Penjual • v1.0
+          </div>
         </div>
       </div>
     </div>
@@ -136,7 +135,8 @@ export default function SidebarSeller({
   open: boolean
   onClose: () => void
 }) {
-  const pathname = useRouterState({ select: (s) => s.location.pathname }) ?? "/"
+  const pathname =
+    useRouterState({ select: (s) => s.location.pathname }) ?? "/"
 
   React.useEffect(() => {
     if (!open) return
@@ -158,13 +158,13 @@ export default function SidebarSeller({
   return (
     <>
       {/* DESKTOP */}
-      <aside className="hidden w-[260px] shrink-0 border-r sm:block">
+      <aside className="hidden w-[260px] shrink-0 sm:block">
         <div className="sticky top-0 h-screen">
           <SidebarContent pathname={pathname} />
         </div>
       </aside>
 
-      {/* MOBILE DRAWER */}
+      {/* MOBILE */}
       <div
         className={[
           "fixed inset-0 z-50 sm:hidden",
@@ -172,6 +172,7 @@ export default function SidebarSeller({
         ].join(" ")}
         aria-hidden={!open}
       >
+        {/* OVERLAY */}
         <div
           className={[
             "absolute inset-0 bg-black/30 transition-opacity",
@@ -180,21 +181,22 @@ export default function SidebarSeller({
           onClick={onClose}
         />
 
+        {/* DRAWER */}
         <div
           className={[
-            "absolute left-0 top-0 h-full w-[85vw] max-w-[320px] border-r bg-white shadow-xl transition-transform",
+            "absolute left-0 top-0 h-full w-[85vw] max-w-[320px] shadow-xl transition-transform",
             open ? "translate-x-0" : "-translate-x-full",
           ].join(" ")}
-          role="dialog"
-          aria-modal="true"
         >
-          <div className="flex items-center justify-between border-b bg-white/70 px-4 py-3 backdrop-blur">
-            <div className="text-sm font-semibold">Menu</div>
+          {/* HEADER */}
+          <div className="flex items-center justify-between px-4 py-3 text-white bg-gradient-to-b from-[#1B5E20] to-[#4CAF50]">
+            <div className="text-sm font-semibold">
+              Menu
+            </div>
             <button
               type="button"
               onClick={onClose}
-              className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-white ring-1 ring-black/5"
-              aria-label="Close sidebar"
+              className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-white/20 backdrop-blur"
             >
               <X className="h-5 w-5" />
             </button>

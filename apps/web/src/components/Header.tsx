@@ -45,7 +45,7 @@ export default function Header({
   }, [])
 
   return (
-    <header className="sticky top-0 z-40 border-b bg-white/80 backdrop-blur">
+    <header className="sticky top-0 z-40 border-b bg-white backdrop-blur">
       <div className="px-3 py-2 sm:px-6 sm:py-3">
         <div className="flex items-center justify-between gap-2">
           {/* LEFT */}

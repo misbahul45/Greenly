@@ -31,7 +31,7 @@ function RootDocument() {
       <head>
         <HeadContent />
       </head>
-      <body className="bg-[#F5F1E8]">
+      <body className="bg-background">
         <Toaster />
         <TanStackQueryProvider>
           <Outlet />
