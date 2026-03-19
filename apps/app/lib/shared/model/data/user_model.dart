@@ -1,7 +1,7 @@
 import 'shop_model.dart';
 
 class UserModel {
-  final int id;
+  final String id;
   final String name;
   final String email;
   final String status;
@@ -19,7 +19,7 @@ class UserModel {
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
     return UserModel(
-      id: json['id'] ?? 0,
+      id: json['id'] ?? '',
       name: json['profile']?['fullName'] ?? '',
       email: json['email'] ?? '',
       status: json['status'] ?? '',

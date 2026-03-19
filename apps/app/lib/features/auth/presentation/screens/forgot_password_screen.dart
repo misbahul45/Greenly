@@ -1,7 +1,10 @@
 import 'package:app/core/theme/app_theme.dart';
-import 'package:app/features/auth/auth_service.dart';
+import 'package:app/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:app/features/auth/presentation/bloc/auth_event.dart';
+import 'package:app/features/auth/presentation/bloc/auth_state.dart';
 import 'package:app/features/auth/presentation/widgets/form_forgot_password.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 class ForgotPasswordScreen extends StatefulWidget {
   const ForgotPasswordScreen({super.key});
@@ -11,35 +14,6 @@ class ForgotPasswordScreen extends StatefulWidget {
 }
 
 class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
-
-  bool isLoading = false;
-  String? errorMessage;
-
-  Future<void> handleSubmit(String email) async {
-    setState(() {
-      isLoading = true;
-      errorMessage = null;
-    });
-
-    final response = await AuthService.forgotPassword(email);
-
-    setState(() {
-      isLoading = false;
-    });
-
-    if (response.isSuccess) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Link reset password telah dikirim"),
-        ),
-      );
-    } else {
-      setState(() {
-        errorMessage = response.message;
-      });
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -49,31 +23,103 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         decoration: const BoxDecoration(
           gradient: AppTheme.backgroundGradient,
         ),
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 500),
-            child:Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Image.asset(
-                  "assets/images/logo.png",
-                  height: 200,
-                ),
-                const Text(
-                  "Masukkan email akun kamu untuk menerima otp reset password.",
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Colors.grey,
+        child: BlocConsumer<AuthBloc, AuthState>(
+          listener: (context, state) {
+            if (state is AuthError) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text(state.message)),
+              );
+              if (state.message.contains('Please verify') && state.email != null) {
+                context.read<AuthBloc>().add(
+                  AuthResendOtpRequested(
+                    state.email!,OtpType.verifyEmail 
+                  ),
+                );
+
+                Navigator.pushNamed(
+                  context,
+                  "/verify-email",
+                  arguments:{
+                    "email": state.email,
+                    "type": OtpType.verifyEmail,
+                  },
+                );
+              }
+            }
+
+            if(state is AuthForgotPasswordSuccess){
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text(
+                      "OTP reset password telah dikirim ke email kamu",
+                    ),
+                  ),
+                );
+
+                Navigator.pushNamed(
+                  context, 
+                  "/verify-password",
+                  arguments:{
+                    "type": OtpType.forgotPassword,
+                  },
+                );
+              }
+          },
+          builder: (context, state) {
+            final isLoading = state is AuthLoading;
+            String? errorMessage;
+
+            if (state is AuthError) {
+              errorMessage = state.message;
+            }
+
+            return Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 600),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      /// LOGO
+                      Image.asset(
+                        "assets/images/logo.png",
+                        height: 200,
+                      ),
+
+                      const SizedBox(height: 20),
+
+                      /// TEXT
+                      SizedBox(
+                        width: double.infinity,
+                        child: Text(
+                          "Masukkan email akun kamu untuk menerima OTP reset password.",
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: Colors.grey,
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(height: 30),
+
+                      /// FORM
+                      FormForgotPassword(
+                        onSubmit: (email) {
+                          context.read<AuthBloc>().add(
+                                AuthForgotPasswordRequested(email),
+                              );
+                        },
+                        isLoading: isLoading,
+                        errorMessage: errorMessage,
+                      ),
+                    ],
                   ),
                 ),
-                FormForgotPassword(
-                  onSubmit: handleSubmit,
-                  isLoading: isLoading,
-                  errorMessage: errorMessage,
-                ),
-              ],
-            )
-          ),
+              ),
+            );
+          },
         ),
       ),
     );

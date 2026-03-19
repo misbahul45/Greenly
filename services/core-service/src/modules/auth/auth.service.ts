@@ -123,7 +123,7 @@ export class AuthService {
             id: user.id,
             email:user.email,
             name: user.profile?.fullName || 'Anonymus',
-            roles: user.roles
+            roles: user.roles.map((role)=>role.role.name)
           },
           tokens:{
             accessToken,
@@ -217,7 +217,7 @@ export class AuthService {
     const existedUser = await this.repo.checkUserByEmail(dto.email);
 
     if (!existedUser) {
-      throw new AppError('Invalid email or password', 401);
+      throw new AppError('User not found', 404);
     }
 
     if (!existedUser.emailVerified) {

@@ -12,10 +12,8 @@ class LoginScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body:Container(
-        decoration: const BoxDecoration(
-          gradient: AppTheme.backgroundGradient,
-        ),
+      body: Container(
+        decoration: const BoxDecoration(gradient: AppTheme.backgroundGradient),
         child: SafeArea(
           child: Center(
             child: ConstrainedBox(
@@ -26,11 +24,28 @@ class LoginScreen extends StatelessWidget {
                     if (state is AuthAuthenticated) {
                       Navigator.pushReplacementNamed(context, "/home");
                     }
-                  },
+                    if (state is AuthError) {
+                        if (state.message.contains('Please verify') && state.email != null) {
+                          context.read<AuthBloc>().add(
+                            AuthResendOtpRequested(
+                              state.email!, OtpType.verifyEmail 
+                            ),
+                          );
+
+                          Navigator.pushNamed(
+                            context,
+                            "/verify-email",
+                            arguments: {
+                              "type": OtpType.verifyEmail,
+                            },                         
+                          );
+                        }
+                     }
+                    },
                   builder: (context, state) {
                     final isLoading = state is AuthLoading;
                     String? errorMessage;
-    
+
                     if (state is AuthError) {
                       errorMessage = state.message;
                     }
@@ -39,20 +54,17 @@ class LoginScreen extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
-                          Image.asset(
-                            "assets/images/logo.png",
-                            height: 200,
-                          ),
+                          Image.asset("assets/images/logo.png", height: 200),
                           FormLogin(
                             isLoading: isLoading,
                             errorMessage: errorMessage,
                             onSubmit: (email, password) {
                               context.read<AuthBloc>().add(
-                                    AuthLoginRequested(
-                                      email: email,
-                                      password: password,
-                                    ),
-                                  );
+                                AuthLoginRequested(
+                                  email: email,
+                                  password: password,
+                                ),
+                              );
                             },
                           ),
                         ],
@@ -64,7 +76,7 @@ class LoginScreen extends StatelessWidget {
             ),
           ),
         ),
-      )
+      ),
     );
   }
 }

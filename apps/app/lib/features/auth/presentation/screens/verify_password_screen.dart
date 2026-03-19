@@ -6,21 +6,21 @@ import 'package:app/features/auth/presentation/widgets/Form_otp_email.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-class VerifyEmailScreen extends StatelessWidget {
-  const VerifyEmailScreen({super.key});
+class VerifyPasswordScreen extends StatelessWidget {
+  const VerifyPasswordScreen({super.key});
 
   /// VERIFY OTP
   void handleVerifyOtp(BuildContext context, String otp) {
     context.read<AuthBloc>().add(
-          AuthVerifyEmailRequested(otp),
-        );
+          AuthVerifyPasswordRequested(otp),
+      );
   }
 
   /// RESEND OTP
   void handleResendOtp(BuildContext context, String email, OtpType type) {
     context.read<AuthBloc>().add(
           AuthResendOtpRequested(email, type),
-        );
+    );
   }
 
   @override
@@ -41,14 +41,18 @@ class VerifyEmailScreen extends StatelessWidget {
                   child: BlocConsumer<AuthBloc, AuthState>(
                     listener: (context, state) {
                       /// SUCCESS VERIFY
-                      if (state is AuthAuthenticated) {
+                      if (state is TokenResetPassword) {
+
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
-                            content: Text("Email berhasil diverifikasi"),
+                            content: Text("OTP berhasil diverifikasi"),
                           ),
                         );
 
-                        Navigator.pushReplacementNamed(context, "/home");
+                        Navigator.pushReplacementNamed(
+                          context,
+                          "/change-password",
+                        );
                       }
 
                       /// OTP RESENT
@@ -76,9 +80,9 @@ class VerifyEmailScreen extends StatelessWidget {
                         children: [
                           /// TITLE
                           const Text(
-                            "Verify Email",
+                            "Verify OTP Forgot Password",
                             style: TextStyle(
-                              fontSize: 28,
+                              fontSize: 24,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
@@ -104,7 +108,7 @@ class VerifyEmailScreen extends StatelessWidget {
                             onSubmitOtp: (otp) =>
                                 handleVerifyOtp(context, otp),
                             onResendOtp: (email) =>
-                                handleResendOtp(context, email, OtpType.verifyEmail),
+                                handleResendOtp(context, email, OtpType.forgotPassword),
                           ),
                         ],
                       );

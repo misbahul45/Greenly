@@ -29,10 +29,25 @@ class AuthUnauthenticated extends AuthState {}
 
 class AuthError extends AuthState {
   final String message;
-  const AuthError(this.message);
+  final String? email;
+
+  const AuthError(this.message, {this.email});
 
   @override
-  List<Object?> get props => [message];
+  List<Object?> get props => [message, email];
 }
 
 class AuthOtpResent extends AuthState {}
+
+class AuthForgotPasswordSuccess extends AuthState {}
+
+class TokenResetPassword extends AuthState {
+  final String tokenId;
+
+  const TokenResetPassword(this.tokenId);
+
+  @override
+  List<Object?> get props => [tokenId];
+}
+
+class AuthChangePasswordSuccess extends AuthState{}

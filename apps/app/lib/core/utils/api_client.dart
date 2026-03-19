@@ -9,9 +9,7 @@ class ApiClient {
     final accessToken = await AuthStorage.getAccessToken();
     final refreshToken = await AuthStorage.getRefreshToken();
 
-    final headers = <String, String>{
-      "Content-Type": "application/json",
-    };
+    final headers = <String, String>{"Content-Type": "application/json"};
 
     if (accessToken != null) {
       headers["Authorization"] = "Bearer $accessToken";
@@ -44,11 +42,13 @@ class ApiClient {
       final streamed = await req.send();
       final res = await http.Response.fromStream(streamed);
 
-      final dynamic decodedBody =
-          res.body.isNotEmpty ? jsonDecode(res.body) : {};
+      final dynamic decodedBody = res.body.isNotEmpty
+          ? jsonDecode(res.body)
+          : {};
 
-      final Map<String, dynamic> decoded =
-          decodedBody is Map<String, dynamic> ? decodedBody : {};
+      final Map<String, dynamic> decoded = decodedBody is Map<String, dynamic>
+          ? decodedBody
+          : {};
 
       if (res.statusCode == 401 && retry) {
         final refresh = await AuthService.refreshToken();
@@ -99,16 +99,15 @@ class ApiClient {
       }
 
       return ApiResponse<T>(
-        status: decoded["status"] is String
-            ? decoded["status"]
-            : "error",
+        status: decoded["status"] is String ? decoded["status"] : "error",
         statusCode: decoded["statusCode"] is int
             ? decoded["statusCode"]
             : res.statusCode,
         path: decoded["path"]?.toString() ?? "",
         message: decoded["message"]?.toString() ?? "Unknown error",
         timestamp:
-            decoded["timestamp"]?.toString() ?? DateTime.now().toIso8601String(),
+            decoded["timestamp"]?.toString() ??
+            DateTime.now().toIso8601String(),
         data: null,
         metaData: decoded["metaData"],
       );
@@ -128,11 +127,7 @@ class ApiClient {
     String url, {
     T Function(dynamic json)? fromJsonT,
   }) {
-    return request<T>(
-      method: "GET",
-      url: url,
-      fromJsonT: fromJsonT,
-    );
+    return request<T>(method: "GET", url: url, fromJsonT: fromJsonT);
   }
 
   static Future<ApiResponse<T>> post<T>(
@@ -144,6 +139,43 @@ class ApiClient {
       method: "POST",
       url: url,
       body: body,
+      fromJsonT: fromJsonT,
+    );
+  }
+
+  static Future<ApiResponse<T>> put<T>(
+    String url,
+    Map<String, dynamic> body, {
+    T Function(dynamic json)? fromJsonT,
+  }) {
+    return request<T>(
+      method: "PUT",
+      url: url,
+      body: body,
+      fromJsonT: fromJsonT,
+    );
+  }
+
+  static Future<ApiResponse<T>> patch<T>(
+    String url,
+    Map<String, dynamic> body, {
+    T Function(dynamic json)? fromJsonT,
+  }) {
+    return request<T>(
+      method: "PATCH",
+      url: url,
+      body: body,
+      fromJsonT: fromJsonT,
+    );
+  }
+
+  static Future<ApiResponse<T>> delete<T>(
+    String url, {
+    T Function(dynamic json)? fromJsonT,
+  }) {
+    return request<T>(
+      method: "DELETE",
+      url: url,
       fromJsonT: fromJsonT,
     );
   }

@@ -1,11 +1,15 @@
 import 'package:app/core/config/env.dart';
 import 'package:app/core/utils/api_client.dart';
 import 'package:app/core/utils/api_response.dart';
+import 'package:app/features/auth/data/model/dto/change_password_dto.dart';
+import 'package:app/features/auth/data/model/dto/forgot_password_dto.dart';
 import 'package:app/features/auth/data/model/dto/login_dto.dart';
 import 'package:app/features/auth/data/model/dto/register_dto.dart';
 import 'package:app/features/auth/data/model/dto/verify_email_dto.dart';
+import 'package:app/features/auth/data/model/dto/verify_password_dto.dart';
 import 'package:app/features/auth/data/model/response/login_response.dart';
 import 'package:app/features/auth/data/model/response/register_response.dart';
+import 'package:app/features/auth/data/model/response/veify_password_response.dart';
 import 'package:app/features/auth/data/model/response/verify_email_response.dart';
 import 'package:app/shared/model/data/token_model.dart';
 
@@ -38,6 +42,15 @@ class AuthService {
     );
   }
 
+  Future<ApiResponse<VerifyPasswordResponse>> verifyPassword(VerifyPasswordDto payload) async {
+    return await ApiClient.post<VerifyPasswordResponse>(
+      "$_baseUrl/auth/verify-password",
+      payload.toJson(),
+      fromJsonT: (json) => VerifyPasswordResponse.fromJson(json),
+    );
+  }
+
+
   Future<ApiResponse<dynamic>> resendOtp(String email, String tokenFor) async {
     return await ApiClient.post<dynamic>(
       "$_baseUrl/auth/resend-token?for=$tokenFor",
@@ -47,12 +60,17 @@ class AuthService {
     );
   }
   
-  static Future<ApiResponse<dynamic>> forgotPassword(String email) async {
+  Future<ApiResponse<dynamic>> forgotPassword(ForgotPasswordDto payload) async {
     return await ApiClient.post<dynamic>(
       "$_baseUrl/auth/forgot-password",
-      {
-        "email": email,
-      },
+      payload.toJson(),
+    );
+  }
+
+  Future<ApiResponse<dynamic>> changePassword(ChangePasswordDto payload) async {
+    return await ApiClient.patch<dynamic>(
+      "$_baseUrl/auth/change-password",
+      payload.toJson(),
     );
   }
   
