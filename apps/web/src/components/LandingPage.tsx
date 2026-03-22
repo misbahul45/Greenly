@@ -25,6 +25,13 @@ function Container({ children }: { children: React.ReactNode }) {
 
 export default function LandingPage() {
 
+  const [showPopup, setShowPopup] = useState(false)
+
+const [nama, setNama] = useState("")
+const [wa, setWa] = useState("")
+const [email, setEmail] = useState("")
+const [pesan, setPesan] = useState("")
+
   const steps = [
     {
       title: "Daftar Gratis",
@@ -76,67 +83,65 @@ export default function LandingPage() {
       desc: "Badge seller terpercaya meningkatkan kepercayaan."
     }
   ]
-const navItems = [
-  { label: "Beranda", href: "#beranda" },
-  { label: "Cara Kerja", href: "#cara" },
-  { label: "Keuntungan", href: "#keuntungan" },
-  { label: "Kontak", href: "#kontak" },
-]
 
-const [active, setActive] = useState("Beranda")
+  const navItems = [
+    { label: "Beranda", href: "#beranda" },
+    { label: "Cara Kerja", href: "#cara" },
+    { label: "Keuntungan", href: "#keuntungan" },
+    { label: "Kontak", href: "#kontak" },
+  ]
+
+  const [active, setActive] = useState("Beranda")
   return (
     <div className="min-h-screen bg-white">
 
       {/* NAVBAR */}
-<nav className="border-b sticky top-0 bg-white z-50">
-  <Container>
-    <div className="flex items-center justify-between h-16">
+      <nav className="border-b sticky top-0 bg-white z-50">
+        <Container>
+          <div className="flex items-center justify-between h-16">
 
-      {/* LOGO */}
-      <div className="flex items-center gap-3">
-        <img
-          src="/Sidebar/LogoGreenly.png"
-          alt="Greenly Mart"
-          className="h-12 w-auto object-contain"
-        />
-        <span className="font-bold text-lg">Greenly Mart</span>
-      </div>
+            {/* LOGO */}
+            <div className="flex items-center gap-3">
+              <img
+                src="/Sidebar/LogoGreenly.png"
+                alt="Greenly Mart"
+                className="h-12 w-auto object-contain"
+              />
+              <span className="font-bold text-lg">Greenly Mart</span>
+            </div>
 
-      {/* NAV MENU */}
-      <div className="bg-gray-100 rounded-full p-1 flex gap-1 border">
+            {/* NAV MENU */}
+            <div className="bg-gray-100 rounded-full p-1 flex gap-1 border">
 
-        {navItems.map((item) => (
-          <a
-            key={item.label}
-            href={item.href}
-            onClick={() => setActive(item.label)}
-            className={`px-5 py-2 rounded-full text-sm font-medium transition
-            ${
-              active === item.label
-                ? "bg-white shadow text-green-700"
-                : "text-gray-600 hover:text-gray-900"
-            }`}
-          >
-            {item.label}
-          </a>
-        ))}
+              {navItems.map((item) => (
+                <a
+                  key={item.label}
+                  href={item.href}
+                  onClick={() => setActive(item.label)}
+                  className={`px-5 py-2 rounded-full text-sm font-medium transition
+            ${active === item.label
+                      ? "bg-white shadow text-green-700"
+                      : "text-gray-600 hover:text-gray-900"
+                    }`}
+                >
+                  {item.label}
+                </a>
+              ))}
 
-      </div>
+            </div>
 
-      {/* CTA */}
-      <Button asChild className="bg-green-600 hover:bg-green-700">
-        <Link to="/auth/login">
-          Daftar Jadi Seller
-        </Link>
-      </Button>
+            {/* CTA */}
+            <Button asChild className="bg-green-600 hover:bg-green-700">
+              <Link to="/auth/login">
+                Daftar Jadi Seller
+              </Link>
+            </Button>
 
-    </div>
-  </Container>
-</nav>
-
+          </div>
+        </Container>
+      </nav>
 
       {/* HERO */}
-
       <section id="beranda" className="py-20">
         <Container>
 
@@ -162,20 +167,23 @@ const [active, setActive] = useState("Beranda")
               <div className="flex gap-4">
 
                 <Button size="lg" className="bg-green-600 hover:bg-green-700">
-                  Daftar Jadi Seller
+                  <Link to="/auth/login">
+                    Daftar Jadi Seller
+                  </Link>
                 </Button>
 
-                <Button variant="outline" size="lg">
+                <Button
+                  variant="outline"
+                  size="lg"
+                  onClick={() =>
+                    document.getElementById("cara")?.scrollIntoView({ behavior: "smooth" })
+                  }
+                >
                   Lihat Cara Kerja
                 </Button>
 
               </div>
 
-              <div className="flex gap-8 mt-10 text-sm text-muted-foreground">
-                <span>1,200+ Petani</span>
-                <span>50k+ Produk</span>
-                <span>24+ Kota</span>
-              </div>
 
             </div>
 
@@ -214,10 +222,10 @@ const [active, setActive] = useState("Beranda")
 
                 <div className="flex items-end gap-2 h-20">
 
-                  {[40,60,30,80,90,70].map((h,i)=>(
+                  {[40, 60, 30, 80, 90, 70].map((h, i) => (
                     <div
                       key={i}
-                      style={{height:`${h}%`}}
+                      style={{ height: `${h}%` }}
                       className="flex-1 bg-green-500 rounded-t"
                     />
                   ))}
@@ -232,9 +240,7 @@ const [active, setActive] = useState("Beranda")
         </Container>
       </section>
 
-
       {/* CARA KERJA */}
-
       <section id="cara" className="py-24 bg-muted/30">
         <Container>
 
@@ -251,13 +257,16 @@ const [active, setActive] = useState("Beranda")
           </div>
 
 
-          <div className="grid md:grid-cols-4 gap-10 text-center">
+          <div className="relative grid md:grid-cols-4 gap-10 text-center">
 
-            {steps.map((step,index)=>(
-              <div key={index}>
+            {/* GARIS */}
+            <div className="hidden md:block absolute top-8 left-[12.5%] right-[12.5%] h-[2px] bg-green-200 z-0"></div>
+
+            {steps.map((step, index) => (
+              <div key={index} className="relative z-10">
 
                 <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4 font-bold text-lg">
-                  {index+1}
+                  {index + 1}
                 </div>
 
                 <h3 className="font-semibold mb-2">
@@ -276,9 +285,7 @@ const [active, setActive] = useState("Beranda")
         </Container>
       </section>
 
-
       {/* KEUNTUNGAN */}
-
       <section id="keuntungan" className="py-24">
         <Container>
 
@@ -294,15 +301,19 @@ const [active, setActive] = useState("Beranda")
 
           </div>
 
-
           <div className="grid md:grid-cols-3 gap-6">
 
-            {benefits.map((b,index)=>(
-              <Card key={index}>
+            {benefits.map((b, index) => (
+
+              <Card
+                key={index}
+                className="group transition-all duration-300 hover:-translate-y-2 hover:scale-[1.02] hover:shadow-xl cursor-pointer"
+              >
 
                 <CardContent className="p-6">
 
-                  <div className="text-green-600 mb-4">
+                  {/* ICON */}
+                  <div className="text-green-600 mb-4 group-hover:text-green-700 transition">
                     {b.icon}
                   </div>
 
@@ -317,6 +328,7 @@ const [active, setActive] = useState("Beranda")
                 </CardContent>
 
               </Card>
+
             ))}
 
           </div>
@@ -324,70 +336,111 @@ const [active, setActive] = useState("Beranda")
         </Container>
       </section>
 
-
       {/* CONTACT */}
+<section id="kontak" className="py-24 bg-green-50">
+  <Container>
 
-      <section id="kontak" className="py-24 bg-green-50">
-        <Container>
+    <div className="grid md:grid-cols-2 gap-16">
 
-          <div className="grid md:grid-cols-2 gap-16">
+      {/* LEFT */}
+      <div>
+        <h2 className="text-3xl font-bold mb-4">
+          Hubungi Kami
+        </h2>
 
-            <div>
+        <p className="text-muted-foreground mb-6">
+          Ada pertanyaan? Tim kami siap membantu
+          mengembangkan bisnis pertanian Anda.
+        </p>
 
-              <h2 className="text-3xl font-bold mb-4">
-                Hubungi Kami
-              </h2>
+        <div className="space-y-3 text-sm">
+          <p>Email: halo@greenlymart.id</p>
+          <p>WhatsApp: +62 812 3456 7890</p>
+          <p>Surabaya, Jawa Timur</p>
+        </div>
+      </div>
 
-              <p className="text-muted-foreground mb-6">
-                Ada pertanyaan? Tim kami siap membantu
-                mengembangkan bisnis pertanian Anda.
-              </p>
+      {/* FORM */}
+      <Card>
+        <CardContent className="p-6 space-y-4">
+ 
+          <Input
+            placeholder="Nama Lengkap"
+            value={nama}
+            onChange={(e) => setNama(e.target.value)}
+          />
 
-              <div className="space-y-3 text-sm">
+          <Input
+            placeholder="Nomor WA"
+            value={wa}
+            onChange={(e) => setWa(e.target.value)}
+          />
 
-                <p>
-                  Email: halo@greenlymart.id
-                </p>
+          <Input
+            placeholder="Email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
 
-                <p>
-                  WhatsApp: +62 812 3456 7890
-                </p>
+          <Textarea
+            placeholder="Pesan Anda"
+            value={pesan}
+            onChange={(e) => setPesan(e.target.value)}
+          />
 
-                <p>
-                  Surabaya, Jawa Timur
-                </p>
+          <Button
+            className="w-full bg-green-600 hover:bg-green-700"
+            onClick={() => {
+              setShowPopup(true)
 
-              </div>
+              // RESET INPUT
+              setNama("")
+              setWa("")
+              setEmail("")
+              setPesan("")
+            }}
+          >
+            Kirim Pesan Sekarang
+          </Button>
 
-            </div>
+        </CardContent>
+      </Card>
 
+    </div>
 
-            <Card>
-              <CardContent className="p-6 space-y-4">
+    {/* POPUP */}
+    {showPopup && (
+      <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
 
-                <Input placeholder="Nama Lengkap" />
+        <div className="bg-white rounded-xl p-8 w-[350px] text-center shadow-lg">
 
-                <Input placeholder="Nomor WA" />
-
-                <Input placeholder="Email" />
-
-                <Textarea placeholder="Pesan Anda" />
-
-                <Button className="w-full bg-green-600 hover:bg-green-700">
-                  Kirim Pesan Sekarang
-                </Button>
-
-              </CardContent>
-            </Card>
-
+          <div className="w-16 h-16 mx-auto mb-4 rounded-full border-2 border-green-300 flex items-center justify-center">
+            <span className="text-green-500 text-3xl">✔</span>
           </div>
 
-        </Container>
-      </section>
+          <h2 className="text-xl font-bold mb-2">
+            Berhasil!
+          </h2>
 
+          <p className="text-gray-500 text-sm mb-6">
+            Pesan Anda berhasil dikirim
+          </p>
+
+          <Button
+            className="bg-green-600 hover:bg-green-700"
+            onClick={() => setShowPopup(false)}
+          >
+            OK
+          </Button>
+
+        </div>
+      </div>
+    )}
+
+  </Container>
+</section>
 
       {/* FOOTER */}
-
       <footer className="bg-slate-900 text-white py-10">
         <Container>
 
@@ -413,11 +466,32 @@ const [active, setActive] = useState("Beranda")
               </h4>
 
               <ul className="space-y-2 text-sm text-gray-400">
-                <li>Beranda</li>
-                <li>Cara Kerja</li>
-                <li>Keuntungan</li>
-                <li>Kontak</li>
-              </ul>
+
+  <li>
+    <a href="#beranda" className="hover:text-white transition">
+      Beranda
+    </a>
+  </li>
+
+  <li>
+    <a href="#cara" className="hover:text-white transition">
+      Cara Kerja
+    </a>
+  </li>
+
+  <li>
+    <a href="#keuntungan" className="hover:text-white transition">
+      Keuntungan
+    </a>
+  </li>
+
+  <li>
+    <a href="#kontak" className="hover:text-white transition">
+      Kontak
+    </a>
+  </li>
+
+</ul>
 
             </div>
 
