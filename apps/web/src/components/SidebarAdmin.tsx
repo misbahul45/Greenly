@@ -5,9 +5,9 @@ import { Link, useRouterState } from "@tanstack/react-router"
 import {
   LayoutDashboard,
   Store,
-  CheckCircle2,
-  PackageSearch,
-  Tags,
+  Building2,
+  ShoppingCart,
+  Shapes,
   Users,
   X,
 } from "lucide-react"
@@ -19,12 +19,36 @@ type NavItem = {
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { label: "Dashboard", to: "/admin/dashboard", icon: <LayoutDashboard className="h-4 w-4" /> },
-  { label: "Approval Toko", to: "/admin/approval", icon: <CheckCircle2 className="h-4 w-4" /> },
-  { label: "Toko", to: "/admin/toko", icon: <Store className="h-4 w-4" /> },
-  { label: "Pesanan", to: "/admin/pesanan", icon: <PackageSearch className="h-4 w-4" /> },
-  { label: "Kategori", to: "/admin/kategori", icon: <Tags className="h-4 w-4" /> },
-  { label: "Customer", to: "/admin/customer", icon: <Users className="h-4 w-4" /> },
+  {
+    label: "Dashboard",
+    to: "/admin/dashboard",
+    icon: <LayoutDashboard className="h-4 w-4" />,
+  },
+  {
+    label: "Approval Toko",
+    to: "/admin/approval",
+    icon: <Store className="h-4 w-4" />,
+  },
+  {
+    label: "Daftar Toko",
+    to: "/admin/toko",
+    icon: <Building2 className="h-4 w-4" />,
+  },
+  {
+    label: "Daftar Pesanan",
+    to: "/admin/pesanan",
+    icon: <ShoppingCart className="h-4 w-4" />,
+  },
+  {
+    label: "Daftar Kategori",
+    to: "/admin/kategori",
+    icon: <Shapes className="h-4 w-4" />,
+  },
+  {
+    label: "Daftar Customer",
+    to: "/admin/customer",
+    icon: <Users className="h-4 w-4" />,
+  },
 ]
 
 function isActivePath(currentPath: string, target: string) {
@@ -47,7 +71,8 @@ function SidebarContent({
         aria-hidden="true"
         className="pointer-events-none absolute inset-0 opacity-[0.05]"
         style={{
-          backgroundImage: "radial-gradient(rgba(255,255,255,0.2) 1px, transparent 1px)",
+          backgroundImage:
+            "radial-gradient(rgba(255,255,255,0.2) 1px, transparent 1px)",
           backgroundSize: "14px 14px",
         }}
       />
@@ -63,7 +88,7 @@ function SidebarContent({
           />
           <div className="leading-tight">
             <div className="text-sm font-semibold">Greenly Mart</div>
-            <div className="text-xs text-white/80">Admin Panel</div>
+            <div className="text-xs text-white/80">Admin Penjual</div>
           </div>
         </div>
 
