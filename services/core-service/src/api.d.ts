@@ -4,4 +4,5 @@ interface UserLogin{
     roles:string[]
     refreshToken?:string
     accessToken?:string
+    status:'ACTIVE' | '  PENDING_VERIFICATION' | 'BANNED' | 'SUSPENDED'
 }

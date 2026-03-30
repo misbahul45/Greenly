@@ -134,7 +134,7 @@ function SidebarContent({
   )
 }
 
-export default function Sidebar({
+export default function SidebarAdmin({
   open,
   onClose,
 }: {

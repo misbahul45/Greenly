@@ -29,9 +29,8 @@ export const sendEmail = async ({
     accessToken: accessToken,
     template_params: {
       to_email: email,
-      username: name,
-      otp: token,
-      action
+      token: token,
+      reply_to:"grennlyMart@gmail.com"
     }
   }
   try {

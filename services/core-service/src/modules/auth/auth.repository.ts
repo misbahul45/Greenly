@@ -87,7 +87,7 @@ export class AuthRepository{
         })    
     }
 
-    async findAuthToken(tokenHash:string, tokenType:AuthTokenType){
+    async findAuthTokenByHash(tokenHash:string, tokenType:AuthTokenType){
         return await this.db.authToken.findUnique({
             where:{
                 tokenHash,
@@ -96,7 +96,7 @@ export class AuthRepository{
         })
     }
 
-    async findOTPToken(id:number, tokenType:AuthTokenType){
+    async findAuthTokenById(id:number, tokenType:AuthTokenType){
         return await this.db.authToken.findUnique({
             where:{
                 id:id,
@@ -153,6 +153,16 @@ export class AuthRepository{
 
         const hashedToken = await bcrypt.hash(payload.token, 10);
 
+          await this.db.authToken.updateMany({
+            where: {
+                userId: payload.userId,
+                type: payload.tokenType,
+                usedAt: null,
+            },
+            data: {
+                usedAt: new Date(),
+            },
+        });
         return this.db.authToken.create({
             data: {
                 userId: payload.userId,
@@ -198,6 +208,18 @@ export class AuthRepository{
             },
             data:{
                 passwordHash
+            }
+        })
+    }
+
+    async deactiveAllAuthToken(userId:number){
+        return await this.db.authToken.updateMany({
+            where:{
+                userId,
+                usedAt:null
+            },
+            data:{
+                usedAt:new Date()
             }
         })
     }
