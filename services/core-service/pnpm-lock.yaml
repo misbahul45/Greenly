@@ -50,6 +50,9 @@ importers:
       bcrypt:
         specifier: ^6.0.0
         version: 6.0.0
+      comander:
+        specifier: 0.0.1-security
+        version: 0.0.1-security
       commander:
         specifier: ^14.0.3
         version: 14.0.3
@@ -1811,6 +1814,9 @@ packages:
 
   color-name@1.1.4:
     resolution: {integrity: sha512-dOy+3AuW3a2wNbZHIuMZpTcgjGuLU/uBL/ubcZF9OXbDo8ff4O8yVp5Bf0efS8uEoYo5q4Fx7dY9OgQGXgAsQA==}
+
+  comander@0.0.1-security:
+    resolution: {integrity: sha512-cxCGvHkaEtEsBsKjz8XrAiaOIkecgmMvhetsaxQYt35e8MEW4ATPevJTrzOrpAd1NyWmgIpLrwPLhQoHvnj89w==}
 
   combined-stream@1.0.8:
     resolution: {integrity: sha512-FQN4MRfuJeHf7cBbBMJFXhKSDq+2kAArBlmRBvcvFE5BB1HZKXtSFASDhdlz9zOYwxh8lDdnvmMOe/+5cdoEdg==}
@@ -5553,6 +5559,8 @@ snapshots:
       color-name: 1.1.4
 
   color-name@1.1.4: {}
+
+  comander@0.0.1-security: {}
 
   combined-stream@1.0.8:
     dependencies:

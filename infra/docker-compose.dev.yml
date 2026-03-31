@@ -110,17 +110,31 @@ services:
 
     develop:
       watch:
-        # 🔥 Sync source → hot reload
         - action: sync
-          path: ../services/core-service
-          target: /app
-          ignore:
-            - node_modules/
-            - dist/
+          path: ../services/core-service/src
+          target: /app/src
 
-        # 🔥 Rebuild kalau dependency berubah
+        - action: sync
+          path: ../services/core-service/package.json
+          target: /app/package.json
+
+        - action: sync
+          path: ../services/core-service/tsconfig.json
+          target: /app/tsconfig.json
+
+        - action: sync
+          path: ../services/core-service/tsconfig.build.json
+          target: /app/tsconfig.build.json
+
+        - action: sync
+          path: ../services/core-service/nest-cli.json
+          target: /app/nest-cli.json
+
         - action: rebuild
           path: ../services/core-service/package.json
+
+        - action: rebuild
+          path: ../services/core-service/pnpm-lock.yaml
 
     labels:
       - "traefik.enable=true"
