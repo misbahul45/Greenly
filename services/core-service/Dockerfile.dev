@@ -2,16 +2,14 @@ FROM node:20-alpine
 
 WORKDIR /app
 
-RUN npm install -g pnpm
+RUN corepack enable
 
+# copy dependency files dulu (cache layer)
 COPY package.json pnpm-lock.yaml ./
 
-ENV NODE_ENV=development
+RUN pnpm install
 
-RUN pnpm install --prod=false --frozen-lockfile
-
+# ⭐ COPY SOURCE supaya container punya project valid
 COPY . .
-
-EXPOSE 3000
 
 CMD ["pnpm", "run", "start:dev"]
