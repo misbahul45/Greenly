@@ -7,137 +7,155 @@ export const Route = createFileRoute("/_authed/seller/dashboard")({
 function SellerDashboard() {
   return (
     <div className="space-y-6">
-     {/* STATS */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {[
-          { title: "Belum Bayar", value: 2 },
-          { title: "Perlu Diproses", value: 12 },
-          { title: "Telah Diproses", value: 8 },
-          { title: "Produk Habis", value: 4 },
-        ].map((item, i) => (
-          <div
-            key={i}
-            className="bg-white rounded-xl p-4 shadow-sm ring-1 ring-black/5 hover:shadow-md transition"
-          >
-            <p className="text-sm text-muted-foreground">{item.title}</p>
-            <p className="text-xl font-bold">{item.value}</p>
-          </div>
-        ))}
+
+      {/* HEADER */}
+      <div>
+        <h1 className="text-2xl font-semibold text-gray-800">
+          Seller Dashboard
+        </h1>
+        <p className="text-sm text-gray-500">
+          Ini halaman dashboard penjual untuk memantau performa toko Anda hari ini.
+        </p>
       </div>
 
-      {/* CHART + SIDE */}
-      <div className="grid md:grid-cols-3 gap-6">
+      {/* YANG PERLU DILAKUKAN */}
+      <div>
+        <h2 className="text-sm font-semibold text-gray-600 mb-3">
+          Yang Perlu Dilakukan
+        </h2>
 
-        {/* CHART */}
-        <div className="md:col-span-2 bg-white rounded-xl p-5 shadow-sm ring-1 ring-black/5">
-          <h3 className="font-semibold mb-4">Grafik Penjualan</h3>
-
-          <div className="flex items-end gap-2 h-40">
-            {[40, 60, 30, 80, 90, 70, 100].map((h, i) => (
-              <div
-                key={i}
-                className="flex-1 bg-green-500 rounded-t hover:bg-green-600 transition"
-                style={{ height: `${h}%` }}
-              />
-            ))}
-          </div>
-
-          <p className="mt-4 font-bold text-lg">
-            Rp 12.450.000
-          </p>
-        </div>
-
-        {/* SIDE STATS */}
-        <div className="space-y-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
           {[
-            { title: "Pengunjung", value: "4.281" },
-            { title: "Produk Dilihat", value: "18.102" },
-            { title: "Pesanan", value: "142" },
+            { title: "Belum Bayar", value: 2 },
+            { title: "Pengiriman Perlu Diproses", value: 12 },
+            { title: "Pengiriman Telah Diproses", value: 8 },
+            { title: "Menunggu Respon Pengembalian", value: 0 },
+            { title: "Menunggu Respon Pembatalan", value: 1 },
+            { title: "Produk Diblokir", value: 0 },
+            { title: "Produk Habis", value: 4, danger: true },
           ].map((item, i) => (
             <div
               key={i}
-              className="bg-white p-4 rounded-xl shadow-sm ring-1 ring-black/5"
+              className="bg-white rounded-xl p-4 text-center shadow-sm ring-1 ring-black/5"
             >
-              <p className="text-sm text-muted-foreground">{item.title}</p>
-              <p className="font-bold">{item.value}</p>
+              <p
+                className={`text-xl font-bold ${
+                  item.danger ? "text-red-500" : "text-gray-800"
+                }`}
+              >
+                {item.value}
+              </p>
+              <p className="text-xs text-gray-500 mt-1">{item.title}</p>
             </div>
           ))}
         </div>
-
       </div>
 
-      {/* EXTRA SECTION */}
-      <div className="grid md:grid-cols-3 gap-6">
+      {/* DATA TOKO */}
+<div>
+  <div className="flex justify-between items-center mb-3">
+    <h2 className="text-sm font-semibold text-gray-600">
+      Data Toko Saya
+    </h2>
 
-        {/* PESANAN TERBARU */}
-        <div className="md:col-span-2 bg-white rounded-xl p-5 shadow-sm ring-1 ring-black/5">
-          <h3 className="font-semibold mb-4">Pesanan Terbaru</h3>
+    {/* FILTER */}
+    <div className="flex gap-2 text-xs">
+      <button className="px-3 py-1 rounded-md bg-gray-100 text-gray-800">
+        7 Hari Terakhir
+      </button>
+      <button className="px-3 py-1 rounded-md text-gray-500 hover:bg-gray-100">
+        30 Hari
+      </button>
+    </div>
+  </div>
 
-          <div className="space-y-3">
-            {[
-              { name: "Beras Organik 5kg", price: "Rp 85.000", status: "Selesai" },
-              { name: "Sayur Bayam", price: "Rp 12.000", status: "Diproses" },
-              { name: "Cabai Merah", price: "Rp 45.000", status: "Selesai" },
-            ].map((item, i) => (
-              <div
-                key={i}
-                className="flex justify-between items-center bg-gray-50 p-3 rounded-lg"
-              >
-                <div>
-                  <p className="text-sm font-medium">{item.name}</p>
-                  <p className="text-xs text-muted-foreground">{item.price}</p>
-                </div>
+        <div className="grid md:grid-cols-3 gap-6">
 
-                <span
-                  className={`text-xs px-2 py-1 rounded-full ${
-                    item.status === "Selesai"
-                      ? "bg-green-100 text-green-600"
-                      : "bg-yellow-100 text-yellow-600"
-                  }`}
-                >
-                  {item.status}
-                </span>
+          {/* CHART */}
+          <div className="md:col-span-2 bg-white rounded-xl p-5 shadow-sm ring-1 ring-black/5">
+            <div className="flex justify-between items-center mb-4">
+              <div>
+                <p className="text-xs text-gray-400">GRAFIK PENJUALAN</p>
+                <h2 className="text-xl font-semibold text-gray-800">
+                  Rp 12.450.000
+                </h2>
               </div>
-            ))}
-          </div>
-        </div>
+              <span className="text-green-500 text-sm font-medium">
+                +12.5%
+              </span>
+            </div>
 
-        {/* RIGHT SIDE */}
-        <div className="space-y-4">
-
-          {/* PRODUK TERLARIS */}
-          <div className="bg-white rounded-xl p-5 shadow-sm ring-1 ring-black/5">
-            <h3 className="font-semibold mb-4">Produk Terlaris</h3>
-
-            <div className="space-y-3">
-              {[
-                { name: "Beras Organik", sold: 120 },
-                { name: "Cabai Merah", sold: 90 },
-                { name: "Bayam Segar", sold: 75 },
-              ].map((item, i) => (
-                <div key={i} className="flex justify-between text-sm">
-                  <span>{item.name}</span>
-                  <span className="font-bold">{item.sold}</span>
-                </div>
+            {/* CHART BAR */}
+            <div className="flex items-end gap-2 h-40">
+              {[30, 40, 60, 80, 50, 70, 100].map((h, i) => (
+                <div
+                  key={i}
+                  className={`flex-1 rounded-md ${
+                    i === 6 ? "bg-green-500" : "bg-green-200"
+                  }`}
+                  style={{ height: `${h}%` }}
+                />
               ))}
             </div>
           </div>
 
-          {/* QUICK ACTION */}
-          <div className="bg-white rounded-xl p-5 shadow-sm ring-1 ring-black/5">
-            <h3 className="font-semibold mb-4">Aksi Cepat</h3>
-
-            <div className="flex flex-col gap-3">
-              <button className="bg-green-600 text-white py-2 rounded-lg text-sm hover:bg-green-700 transition">
-                + Tambah Produk
-              </button>
-
-              <button className="border py-2 rounded-lg text-sm hover:bg-gray-100 transition">
-                Lihat Pesanan
-              </button>
-            </div>
+          {/* SIDE STATS */}
+          <div className="space-y-4">
+            {[
+              { title: "Total Pengunjung Unik", value: "4.281", change: "+28.2%" },
+              { title: "Produk Dilihat", value: "18.102", change: "+15.4%" },
+              { title: "Pesanan", value: "142", change: "-2.1%", red: true },
+              { title: "Tingkat Konversi", value: "3.32%", change: "+0.4%" },
+            ].map((item, i) => (
+              <div
+                key={i}
+                className="bg-white p-4 rounded-xl shadow-sm ring-1 ring-black/5 flex justify-between"
+              >
+                <div>
+                  <p className="text-xs text-gray-400">{item.title}</p>
+                  <p className="text-lg font-semibold">{item.value}</p>
+                </div>
+                <span
+                  className={`text-sm font-medium ${
+                    item.red ? "text-red-500" : "text-green-500"
+                  }`}
+                >
+                  {item.change}
+                </span>
+              </div>
+            ))}
           </div>
 
+        </div>
+      </div>
+
+      {/* BOTTOM SECTION */}
+      <div className="grid md:grid-cols-2 gap-6">
+
+        {/* PROMO */}
+        <div className="bg-white rounded-xl p-5 shadow-sm ring-1 ring-black/5 flex justify-between items-center">
+          <div>
+            <p className="font-medium">Promosi Menarik</p>
+            <p className="text-sm text-gray-500">
+              Tingkatkan penjualan dengan Flash Sale atau Diskon Toko.
+            </p>
+          </div>
+
+          <button className="text-green-600 font-medium text-sm">
+            Buat Promo
+          </button>
+        </div>
+
+        {/* RATING */}
+        <div className="bg-white rounded-xl p-5 shadow-sm ring-1 ring-black/5 flex justify-between items-center">
+          <div>
+            <p className="font-medium">Peringkat Toko</p>
+            <p className="text-sm text-gray-500">⭐ 4.8 / 5.0</p>
+          </div>
+
+          <button className="text-green-600 font-medium text-sm">
+            Cek Ulasan
+          </button>
         </div>
 
       </div>

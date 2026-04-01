@@ -18,11 +18,31 @@ type NavItem = {
 }
 
 const NAV_ITEMS_SELLER: NavItem[] = [
-  { label: "Dashboard", to: "/seller/dashboard", icon: <LayoutDashboard className="h-4 w-4" /> },
-  { label: "Pesanan Masuk", to: "/seller/pesanan", icon: <ShoppingBag className="h-4 w-4" /> },
-  { label: "Produk", to: "/seller/produk", icon: <Package className="h-4 w-4" /> },
-  { label: "Chat", to: "/seller/chat", icon: <MessageCircle className="h-4 w-4" /> },
-  { label: "Customer", to: "/seller/customer", icon: <Users className="h-4 w-4" /> },
+  {
+    label: "Dashboard",
+    to: "/seller/dashboard",
+    icon: <LayoutDashboard className="h-5 w-5" strokeWidth={2.2} />,
+  },
+  {
+    label: "Pesanan Masuk",
+    to: "/seller/pesanan",
+    icon: <ShoppingBag className="h-5 w-5" strokeWidth={2.2} />,
+  },
+  {
+    label: "Produk",
+    to: "/seller/produk",
+    icon: <Package className="h-5 w-5" strokeWidth={2.2} />,
+  },
+  {
+    label: "Chat",
+    to: "/seller/chat",
+    icon: <MessageCircle className="h-5 w-5" strokeWidth={2.2} />,
+  },
+  {
+    label: "Customer",
+    to: "/seller/customer",
+    icon: <Users className="h-5 w-5" strokeWidth={2.2} />,
+  },
 ]
 
 function isActivePath(currentPath: string, target: string) {
@@ -39,19 +59,20 @@ function SidebarContent({
 }) {
   return (
     <div className="relative h-full overflow-hidden bg-gradient-to-b from-[#1B5E20] to-[#4CAF50] text-white">
-      
+
       {/* TEXTURE */}
       <div
         aria-hidden="true"
         className="pointer-events-none absolute inset-0 opacity-[0.05]"
         style={{
-          backgroundImage: "radial-gradient(rgba(255,255,255,0.2) 1px, transparent 1px)",
+          backgroundImage:
+            "radial-gradient(rgba(255,255,255,0.2) 1px, transparent 1px)",
           backgroundSize: "14px 14px",
         }}
       />
 
       <div className="relative flex h-full flex-col p-4">
-        
+
         {/* BRAND */}
         <div className="rounded-2xl bg-white/20 backdrop-blur-md p-3">
           <div className="flex items-center gap-3">
@@ -74,6 +95,7 @@ function SidebarContent({
         {/* MENU */}
         <div className="mt-5 flex-1 overflow-y-auto pr-1 [scrollbar-width:thin]">
           <nav className="flex flex-col gap-1">
+
             {NAV_ITEMS_SELLER.map((item) => {
               const active = isActivePath(pathname, item.to)
 
@@ -83,7 +105,7 @@ function SidebarContent({
                   to={item.to}
                   onClick={onNavigate}
                   className={[
-                    "group flex items-center gap-3 rounded-xl px-3 py-2 text-sm transition-all duration-200",
+                    "group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-all duration-200 ",
                     active
                       ? "bg-white/20 text-white font-semibold backdrop-blur-sm"
                       : "text-white/80 hover:bg-white/10",
@@ -92,9 +114,9 @@ function SidebarContent({
                   {/* ICON */}
                   <span
                     className={[
-                      "grid h-9 w-9 place-items-center rounded-xl transition-all",
+                      "flex h-10 w-10 items-center justify-center rounded-xl transition-all",
                       active
-                        ? "bg-white text-[#1B5E20]"
+                        ? "bg-white text-green-700 shadow-sm"
                         : "bg-white/10 text-white group-hover:bg-white/20",
                     ].join(" ")}
                   >
@@ -111,6 +133,7 @@ function SidebarContent({
                 </Link>
               )
             })}
+
           </nav>
         </div>
 
@@ -123,6 +146,7 @@ function SidebarContent({
             Admin Penjual • v1.0
           </div>
         </div>
+
       </div>
     </div>
   )
