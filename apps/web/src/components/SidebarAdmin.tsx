@@ -175,7 +175,7 @@ export default function SidebarAdmin({
   return (
     <>
       {/* DESKTOP */}
-      <aside className="hidden w-[260px] shrink-0 sm:block">
+      <aside className="hidden shrink-0 sm:block">
         <div className="sticky top-0 h-screen">
           <SidebarContent pathname={pathname} />
         </div>

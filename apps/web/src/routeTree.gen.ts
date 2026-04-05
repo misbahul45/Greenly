@@ -26,6 +26,7 @@ import { Route as AuthedSellerChatRouteImport } from './routes/_authed/seller/ch
 import { Route as AuthedAdminTokoRouteImport } from './routes/_authed/admin/toko'
 import { Route as AuthedAdminPesananRouteImport } from './routes/_authed/admin/pesanan'
 import { Route as AuthedAdminKategoriRouteImport } from './routes/_authed/admin/kategori'
+import { Route as AuthedAdminDashboard2RouteImport } from './routes/_authed/admin/dashboard2'
 import { Route as AuthedAdminDashboardRouteImport } from './routes/_authed/admin/dashboard'
 import { Route as AuthedAdminCustomerRouteImport } from './routes/_authed/admin/customer'
 import { Route as AuthedAdminApprovalRouteImport } from './routes/_authed/admin/approval'
@@ -114,6 +115,11 @@ const AuthedAdminKategoriRoute = AuthedAdminKategoriRouteImport.update({
   path: '/kategori',
   getParentRoute: () => AuthedAdminRoute,
 } as any)
+const AuthedAdminDashboard2Route = AuthedAdminDashboard2RouteImport.update({
+  id: '/dashboard2',
+  path: '/dashboard2',
+  getParentRoute: () => AuthedAdminRoute,
+} as any)
 const AuthedAdminDashboardRoute = AuthedAdminDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -141,6 +147,7 @@ export interface FileRoutesByFullPath {
   '/admin/approval': typeof AuthedAdminApprovalRoute
   '/admin/customer': typeof AuthedAdminCustomerRoute
   '/admin/dashboard': typeof AuthedAdminDashboardRoute
+  '/admin/dashboard2': typeof AuthedAdminDashboard2Route
   '/admin/kategori': typeof AuthedAdminKategoriRoute
   '/admin/pesanan': typeof AuthedAdminPesananRoute
   '/admin/toko': typeof AuthedAdminTokoRoute
@@ -162,6 +169,7 @@ export interface FileRoutesByTo {
   '/admin/approval': typeof AuthedAdminApprovalRoute
   '/admin/customer': typeof AuthedAdminCustomerRoute
   '/admin/dashboard': typeof AuthedAdminDashboardRoute
+  '/admin/dashboard2': typeof AuthedAdminDashboard2Route
   '/admin/kategori': typeof AuthedAdminKategoriRoute
   '/admin/pesanan': typeof AuthedAdminPesananRoute
   '/admin/toko': typeof AuthedAdminTokoRoute
@@ -185,6 +193,7 @@ export interface FileRoutesById {
   '/_authed/admin/approval': typeof AuthedAdminApprovalRoute
   '/_authed/admin/customer': typeof AuthedAdminCustomerRoute
   '/_authed/admin/dashboard': typeof AuthedAdminDashboardRoute
+  '/_authed/admin/dashboard2': typeof AuthedAdminDashboard2Route
   '/_authed/admin/kategori': typeof AuthedAdminKategoriRoute
   '/_authed/admin/pesanan': typeof AuthedAdminPesananRoute
   '/_authed/admin/toko': typeof AuthedAdminTokoRoute
@@ -208,6 +217,7 @@ export interface FileRouteTypes {
     | '/admin/approval'
     | '/admin/customer'
     | '/admin/dashboard'
+    | '/admin/dashboard2'
     | '/admin/kategori'
     | '/admin/pesanan'
     | '/admin/toko'
@@ -229,6 +239,7 @@ export interface FileRouteTypes {
     | '/admin/approval'
     | '/admin/customer'
     | '/admin/dashboard'
+    | '/admin/dashboard2'
     | '/admin/kategori'
     | '/admin/pesanan'
     | '/admin/toko'
@@ -251,6 +262,7 @@ export interface FileRouteTypes {
     | '/_authed/admin/approval'
     | '/_authed/admin/customer'
     | '/_authed/admin/dashboard'
+    | '/_authed/admin/dashboard2'
     | '/_authed/admin/kategori'
     | '/_authed/admin/pesanan'
     | '/_authed/admin/toko'
@@ -392,6 +404,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedAdminKategoriRouteImport
       parentRoute: typeof AuthedAdminRoute
     }
+    '/_authed/admin/dashboard2': {
+      id: '/_authed/admin/dashboard2'
+      path: '/dashboard2'
+      fullPath: '/admin/dashboard2'
+      preLoaderRoute: typeof AuthedAdminDashboard2RouteImport
+      parentRoute: typeof AuthedAdminRoute
+    }
     '/_authed/admin/dashboard': {
       id: '/_authed/admin/dashboard'
       path: '/dashboard'
@@ -420,6 +439,7 @@ interface AuthedAdminRouteChildren {
   AuthedAdminApprovalRoute: typeof AuthedAdminApprovalRoute
   AuthedAdminCustomerRoute: typeof AuthedAdminCustomerRoute
   AuthedAdminDashboardRoute: typeof AuthedAdminDashboardRoute
+  AuthedAdminDashboard2Route: typeof AuthedAdminDashboard2Route
   AuthedAdminKategoriRoute: typeof AuthedAdminKategoriRoute
   AuthedAdminPesananRoute: typeof AuthedAdminPesananRoute
   AuthedAdminTokoRoute: typeof AuthedAdminTokoRoute
@@ -429,6 +449,7 @@ const AuthedAdminRouteChildren: AuthedAdminRouteChildren = {
   AuthedAdminApprovalRoute: AuthedAdminApprovalRoute,
   AuthedAdminCustomerRoute: AuthedAdminCustomerRoute,
   AuthedAdminDashboardRoute: AuthedAdminDashboardRoute,
+  AuthedAdminDashboard2Route: AuthedAdminDashboard2Route,
   AuthedAdminKategoriRoute: AuthedAdminKategoriRoute,
   AuthedAdminPesananRoute: AuthedAdminPesananRoute,
   AuthedAdminTokoRoute: AuthedAdminTokoRoute,
