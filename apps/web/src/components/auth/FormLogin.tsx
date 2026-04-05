@@ -50,7 +50,7 @@ export default function FormLogin() {
         });
 
         navigate({
-          to:result.data?.user.roles.includes('SUPER_ADMIN')?'/admin/dashboard':'/seller/dashboard'
+          to:result.user.roles.includes('SUPER_ADMIN')?'/admin/dashboard':'/seller/dashboard'
         })
       } catch (error: any) {
         console.log(error)

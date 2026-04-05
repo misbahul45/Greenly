@@ -13,20 +13,32 @@ export const loginFn = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const api = createApi();
 
-     const res = await api.post<ApiResponse<LoginResponse>>("/auth/login", data);
+    //  const res = await api.post<ApiResponse<LoginResponse>>("/auth/login", data);
 
-     const tokens = res.data.data?.tokens;
-     if (!tokens?.accessToken || !tokens?.refreshToken) {
-       throw new Error("Login failed: tokens not returned by API");
-    }
+    //  const tokens = res.data.data?.tokens;
+    //  if (!tokens?.accessToken || !tokens?.refreshToken) {
+    //    throw new Error("Login failed: tokens not returned by API");
+    // }
+     const dummyLoginResponse: LoginResponse = {
+        tokens: {
+          accessToken: "dummy-access-token-123456",
+          refreshToken: "dummy-refresh-token-abcdef",
+        },
+        user: {
+          id: 1,
+          email: "admin@example.com",
+          name: "Admin User",
+          roles: ["ADMIN"],
+        },
+      };
 
-    const { accessToken, refreshToken } = dataLogin.tokens;
+    const { accessToken, refreshToken } = dummyLoginResponse.tokens;
 
     const session = await useAppSession();
     await session.update({ accessToken, refreshToken });
 
     // return res.data;
-    return res.data
+    return dummyLoginResponse;
   });
 
 export const getCurrentUserFn =
