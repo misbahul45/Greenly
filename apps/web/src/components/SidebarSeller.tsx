@@ -1,4 +1,5 @@
 "use client"
+import { User } from "lucide-react"
 
 import * as React from "react"
 import { Link, useRouterState } from "@tanstack/react-router"
@@ -25,12 +26,12 @@ const NAV_ITEMS_SELLER: NavItem[] = [
   },
   {
     label: "Pesanan Masuk",
-    to: "/seller/pesanan",
+    to: "/seller/pesanandua",
     icon: <ShoppingBag className="h-5 w-5" strokeWidth={2.2} />,
   },
   {
     label: "Produk",
-    to: "/seller/produk",
+    to: "/seller/produkdua",
     icon: <Package className="h-5 w-5" strokeWidth={2.2} />,
   },
   {
@@ -137,15 +138,20 @@ function SidebarContent({
           </nav>
         </div>
 
-        {/* FOOTER */}
-        <div className="mt-4 rounded-2xl bg-white/20 backdrop-blur-md p-3 text-xs">
-          <div className="font-medium">
-            TOKO: Tani Sejahtera
-          </div>
-          <div className="mt-1 text-white/80">
-            Admin Penjual • v1.0
-          </div>
-        </div>
+     <div className="mt-4 rounded-2xl bg-white/20 backdrop-blur-md p-3 flex items-center gap-3">
+
+  {/* AVATAR */}
+  <div className="h-10 w-10 rounded-full bg-white/20 flex items-center justify-center">
+    <User className="h-5 w-5 text-white" />
+  </div>
+
+  {/* TEXT */}
+  <div className="text-xs leading-tight">
+    <div className="font-medium">Penjual</div>
+    <div className="text-white/80">penjual@greenly.com</div>
+  </div>
+
+</div>
 
       </div>
     </div>

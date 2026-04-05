@@ -1,5 +1,5 @@
 "use client"
-
+import { User } from "lucide-react"
 import * as React from "react"
 import { Link, useRouterState } from "@tanstack/react-router"
 import {
@@ -26,22 +26,22 @@ const NAV_ITEMS: NavItem[] = [
   },
   {
     label: "Approval Toko",
-    to: "/admin/approval",
+    to: "/admin/approval2",
     icon: <Store className="h-4 w-4" />,
   },
   {
     label: "Daftar Toko",
-    to: "/admin/toko",
+    to: "/admin/tokotoko",
     icon: <Building2 className="h-4 w-4" />,
   },
   {
     label: "Daftar Pesanan",
-    to: "/admin/pesanan",
+    to: "/admin/pesanini",
     icon: <ShoppingCart className="h-4 w-4" />,
   },
   {
     label: "Daftar Kategori",
-    to: "/admin/kategori",
+    to: "/admin/daftarkategori",
     icon: <Shapes className="h-4 w-4" />,
   },
   {
@@ -88,7 +88,7 @@ function SidebarContent({
           />
           <div className="leading-tight">
             <div className="text-sm font-semibold">Greenly Mart</div>
-            <div className="text-xs text-white/80">Admin Penjual</div>
+            <div className="text-xs text-white/80">Super Admin</div>
           </div>
         </div>
 
@@ -136,10 +136,20 @@ function SidebarContent({
         </div>
 
         {/* FOOTER */}
-        <div className="mt-4 rounded-2xl bg-white/20 backdrop-blur-md p-3 text-xs">
-          <div className="font-medium">INI ADMIN UTAMA</div>
-          <div className="mt-1 text-white/80">v1.0 • Greenly Mart</div>
-        </div>
+  <div className="mt-4 rounded-2xl bg-white/20 backdrop-blur-md p-3 flex items-center gap-3">
+
+  {/* AVATAR */}
+  <div className="h-10 w-10 rounded-full bg-white/20 flex items-center justify-center">
+    <User className="h-5 w-5 text-white" />
+  </div>
+
+  {/* TEXT */}
+  <div className="text-xs leading-tight">
+    <div className="font-medium">Super Admin</div>
+    <div className="text-white/80">super.admin@greenly.com</div>
+  </div>
+
+</div>
       </div>
     </div>
   )
