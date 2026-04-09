@@ -4,12 +4,15 @@ WORKDIR /app
 
 RUN corepack enable
 
-# copy dependency files dulu (cache layer)
+# 🔥 PENTING: paksa development mode
+ENV NODE_ENV=development
+
 COPY package.json pnpm-lock.yaml ./
 
-RUN pnpm install
+# 🔥 pastikan devDependencies ke-install
+RUN pnpm install --shamefully-hoist --prod=false
 
-# ⭐ COPY SOURCE supaya container punya project valid
 COPY . .
 
-CMD ["pnpm", "run", "start:dev"]
+# 🔥 install ulang karena pakai volume + sync
+CMD ["sh", "-c", "pnpm install --shamefully-hoist --prod=false && pnpm run start:dev"]
