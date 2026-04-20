@@ -1,8 +1,8 @@
 package main
 
 import (
-	"catalog-service/modules/category"
-	"catalog-service/modules/product"
+	"catalog-service/modules/categories"
+	"catalog-service/modules/products"
 
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/mongo"

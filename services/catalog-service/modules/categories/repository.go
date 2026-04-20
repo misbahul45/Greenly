@@ -17,6 +17,9 @@ type Repository interface {
 	FindBySlug(ctx context.Context, slug string) (databases.Category, error)
 	Update(ctx context.Context, id string, category databases.Category) (databases.Category, error)
 	Delete(ctx context.Context, id string) error
+	CountProductByCategory(ctx context.Context, categoryID string) (int, error)
+	FindByParentID(ctx context.Context, parentID *string) ([]databases.Category, error)
+	FindAllActive(ctx context.Context) ([]databases.Category, error)
 }
 
 type repository struct {
@@ -97,6 +100,10 @@ func (r *repository) FindById(
 		},
 	).Decode(&category)
 
+	if err == mongo.ErrNoDocuments {
+		return databases.Category{}, ErrCategoryNotFound
+	}
+
 	return category, err
 }
 
@@ -114,6 +121,10 @@ func (r *repository) FindBySlug(
 			"deleted_at": bson.M{"$eq": nil},
 		},
 	).Decode(&category)
+
+	if err == mongo.ErrNoDocuments {
+		return databases.Category{}, ErrCategoryNotFound
+	}
 
 	return category, err
 }
@@ -133,7 +144,7 @@ func (r *repository) Update(
 		},
 	}
 
-	_, err := r.collection.UpdateOne(
+	res, err := r.collection.UpdateOne(
 		ctx,
 		bson.M{
 			"_id":        id,
@@ -146,6 +157,10 @@ func (r *repository) Update(
 		return databases.Category{}, err
 	}
 
+	if res.MatchedCount == 0 {
+		return databases.Category{}, ErrCategoryNotFound
+	}
+
 	return category, nil
 }
 
@@ -156,7 +171,7 @@ func (r *repository) Delete(
 
 	now := time.Now()
 
-	_, err := r.collection.UpdateOne(
+	res, err := r.collection.UpdateOne(
 		ctx,
 		bson.M{
 			"_id":        id,
@@ -169,5 +184,94 @@ func (r *repository) Delete(
 		},
 	)
 
-	return err
+	if err != nil {
+		return err
+	}
+
+	if res.MatchedCount == 0 {
+		return ErrCategoryNotFound
+	}
+
+	return nil
+}
+
+func (r *repository) CountProductByCategory(
+	ctx context.Context,
+	categoryID string,
+) (int, error) {
+
+	count, err := r.collection.Database().Collection("products").CountDocuments(
+		ctx,
+		bson.M{
+			"category_id": categoryID,
+			"is_active":   true,
+			"deleted_at":  bson.M{"$eq": nil},
+		},
+	)
+
+	if err != nil {
+		return 0, err
+	}
+
+	return int(count), nil
+}
+
+func (r *repository) FindByParentID(
+	ctx context.Context,
+	parentID *string,
+) ([]databases.Category, error) {
+
+	filter := bson.M{
+		"deleted_at": bson.M{"$eq": nil},
+	}
+
+	if parentID != nil && *parentID != "" {
+		filter["parent_id"] = *parentID
+	} else {
+		filter["$or"] = []bson.M{
+			{"parent_id": bson.M{"$exists": false}},
+			{"parent_id": nil},
+		}
+	}
+
+	cursor, err := r.collection.Find(ctx, filter)
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	var categories []databases.Category
+	if err := cursor.All(ctx, &categories); err != nil {
+		return nil, err
+	}
+
+	return categories, nil
+}
+
+func (r *repository) FindAllActive(
+	ctx context.Context,
+) ([]databases.Category, error) {
+
+	filter := bson.M{
+		"deleted_at": bson.M{"$eq": nil},
+		"is_active": true,
+	}
+
+	opts := options.Find().SetSort(bson.D{
+		{Key: "order", Value: 1},
+		{Key: "name", Value: 1},
+	})
+
+	cursor, err := r.collection.Find(ctx, filter, opts)
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	var categories []databases.Category
+	if err := cursor.All(ctx, &categories); err != nil {
+		return nil, err
+	}
+
+	return categories, nil
 }

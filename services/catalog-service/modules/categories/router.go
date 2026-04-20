@@ -23,6 +23,7 @@ func CategoryRouter(rg *gin.RouterGroup, db *mongo.Database) {
 				middleware.RequireRole("ADMIN", "SUPERADMIN"),
 				handler.Create,
 			)
+			categories.GET("/tree", handler.FindCategoryTree)
 	
 			categories.PUT(
 				"/:id",
