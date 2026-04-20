@@ -1,11 +1,13 @@
 package middleware
 
 import (
+	"catalog-service/internal/coreclient"
+
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
 )
 
-func ShopMemberRequired() gin.HandlerFunc {
+func ShopMemberRequired(coreSvc coreclient.Client) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		userRaw, exists := c.Get("user")
 		if !exists {
@@ -23,17 +25,21 @@ func ShopMemberRequired() gin.HandlerFunc {
 			return
 		}
 
-		for _, membership := range user.ShopMemberships {
-			if membership.ShopID == shopID {
-				c.Set("shopID", shopID)
-				c.Set("shopRoles", membership.Roles)
-				c.Next()
-				return
-			}
+		membership, err := coreSvc.ValidateShopMembership(
+			c.Request.Context(),
+			shopID,
+			user.ID,
+		)
+		if err != nil {
+			c.Error(NewAppError(403, "Forbidden: Not a member of this shop", nil))
+			c.Abort()
+			return
 		}
 
-		c.Error(NewAppError(403, "Forbidden: Not a member of this shop", nil))
-		c.Abort()
+		c.Set("shopID", shopID)
+		c.Set("shopRoles", membership.Roles)
+
+		c.Next()
 	}
 }
 
@@ -56,9 +62,9 @@ func extractShopID(c *gin.Context) string {
 	type BodyStruct struct {
 		ShopID string `json:"shopId"`
 	}
+
 	var body BodyStruct
 	if c.ShouldBindBodyWith(&body, binding.JSON) == nil && body.ShopID != "" {
-		c.Request.Body = c.Request.Body
 		return body.ShopID
 	}
 

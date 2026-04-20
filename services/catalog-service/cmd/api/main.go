@@ -2,6 +2,7 @@ package main
 
 import (
 	"catalog-service/databases"
+	"catalog-service/internal/coreclient"
 	"catalog-service/middleware"
 	"catalog-service/utils"
 	"log"
@@ -24,13 +25,25 @@ func main() {
 	}
 
 	mongoURI := os.Getenv("MONGODB_URL")
+	if mongoURI == "" {
+		log.Fatal("MONGODB_URL is required")
+	}
 
+	coreServiceURL := os.Getenv("CORE_SERVICE_URL")
+	if coreServiceURL == "" {
+		log.Fatal("CORE_SERVICE_URL is required")
+	}
+
+	// MongoDB connection
 	client, err := databases.Connect(mongoURI)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	db := client.Database("catalog")
+
+	// External Core Service Client
+	coreSvc := coreclient.NewClient(coreServiceURL)
 
 	r := gin.Default()
 
@@ -42,7 +55,8 @@ func main() {
 
 	api := r.Group("/")
 
-	Routes(api, db)
+	Routes(api, db, coreSvc)
 
+	log.Println("Server running on port " + PORT)
 	r.Run(":" + PORT)
 }
