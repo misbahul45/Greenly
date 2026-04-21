@@ -1,27 +1,27 @@
 package main
 
 import (
+	"log"
+	"os"
+
 	"catalog-service/databases"
 	"catalog-service/internal/coreclient"
 	"catalog-service/middleware"
 	"catalog-service/utils"
-	"log"
-	"os"
 
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 )
 
 func main() {
-
 	err := godotenv.Load()
 	if err != nil {
 		log.Fatal("Error loading .env file")
 	}
 
-	PORT := os.Getenv("PORT")
+ PORT := os.Getenv("PORT")
 	if PORT == "" {
-		PORT = "3000"
+	 PORT = "8081"
 	}
 
 	mongoURI := os.Getenv("MONGODB_URL")
@@ -34,19 +34,15 @@ func main() {
 		log.Fatal("CORE_SERVICE_URL is required")
 	}
 
-	// MongoDB connection
 	client, err := databases.Connect(mongoURI)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	db := client.Database("catalog")
-
-	// External Core Service Client
 	coreSvc := coreclient.NewClient(coreServiceURL)
 
 	r := gin.Default()
-
 	r.Use(middleware.ErrorHandler())
 
 	r.NoRoute(func(c *gin.Context) {
@@ -54,8 +50,9 @@ func main() {
 	})
 
 	api := r.Group("/")
-
 	Routes(api, db, coreSvc)
+
+	go initRabbitMQ(db)
 
 	log.Println("Server running on port " + PORT)
 	r.Run(":" + PORT)

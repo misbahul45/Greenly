@@ -13,7 +13,6 @@ func ProductRouter(
 	db *mongo.Database,
 	coreSvc coreclient.Client,
 ) {
-
 	repo := NewRepository(db)
 	service := NewService(repo)
 	handler := NewHandler(service)
@@ -21,37 +20,33 @@ func ProductRouter(
 	products := rg.Group("/products")
 	{
 		products.GET("", handler.FindMany)
+		products.GET("/search", handler.Search)
 		products.GET("/:id", handler.FindOne)
 		products.GET("/slug/:slug", handler.FindOneBySlug)
 
 		products.POST("",
-			middleware.AuthMiddleware(),
-			middleware.ShopMemberRequired(coreSvc),
-			middleware.RequireShopRole("admin", "product_manager"),
+			middleware.JWTAuthMiddleware(),
+			middleware.SellerOnly(),
 			handler.Create)
 
 		products.PUT("/:id",
-			middleware.AuthMiddleware(),
-			middleware.ShopMemberRequired(coreSvc),
-			middleware.RequireShopRole("admin", "product_manager"),
+			middleware.JWTAuthMiddleware(),
+			middleware.SellerOnly(),
 			handler.Update)
 
-		products.PATCH("/:id/toggle-active",
-			middleware.AuthMiddleware(),
-			middleware.ShopMemberRequired(coreSvc),
-			middleware.RequireShopRole("admin", "product_manager"),
+		products.PATCH("/:id/toggle",
+			middleware.JWTAuthMiddleware(),
+			middleware.SellerOnly(),
 			handler.ToggleProduct)
 
-		products.PUT("/bulk",
-			middleware.AuthMiddleware(),
-			middleware.ShopMemberRequired(coreSvc),
-			middleware.RequireShopRole("admin", "product_manager"),
+		products.PATCH("/bulk",
+			middleware.JWTAuthMiddleware(),
+			middleware.SellerOnly(),
 			handler.BulkUpdate)
 
 		products.DELETE("/:id",
-			middleware.AuthMiddleware(),
-			middleware.ShopMemberRequired(coreSvc),
-			middleware.RequireShopRole("admin"),
+			middleware.JWTAuthMiddleware(),
+			middleware.SellerOnly(),
 			handler.Delete)
 	}
 }

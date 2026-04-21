@@ -29,6 +29,7 @@ type Repository interface {
 	UpdateInventoryStock(ctx context.Context, productID string, stock int) error
 	UpdateImages(ctx context.Context, productID string, imageURLs []string) error
 	BulkUpdateOne(ctx context.Context, id string, update bson.M) error
+	EnableProductsByShop(ctx context.Context, shopID string) error
 }
 
 type repository struct {
@@ -192,5 +193,13 @@ func (r *repository) UpdateImages(ctx context.Context, productID string, imageUR
 
 func (r *repository) BulkUpdateOne(ctx context.Context, id string, update bson.M) error {
 	_, err := r.productCollection.UpdateOne(ctx, bson.M{"_id": id, "deleted_at": bson.M{"$eq": nil}}, update)
+	return err
+}
+
+func (r *repository) EnableProductsByShop(ctx context.Context, shopID string) error {
+	_, err := r.productCollection.UpdateMany(ctx, 
+		bson.M{"shop_id": shopID, "deleted_at": bson.M{"$eq": nil}},
+		bson.M{"$set": bson.M{"is_active": true, "updated_at": time.Now()}},
+	)
 	return err
 }

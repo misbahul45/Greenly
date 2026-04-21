@@ -23,6 +23,7 @@ type Service interface {
 	ToggleActive(ctx context.Context, id string, shopID string) (databases.Product, error)
 	BulkUpdate(ctx context.Context, dto BulkUpdateProductDTO, shopID string) (BulkUpdateResponse, error)
 	ValidateShopAndCategory(ctx context.Context, shopID, categoryID string) error
+	EnableProductsByShop(ctx context.Context, shopID string) error
 }
 
 type service struct {
@@ -391,6 +392,10 @@ func (s *service) ValidateShopAndCategory(ctx context.Context, shopID, categoryI
 		return err
 	}
 	return nil
+}
+
+func (s *service) EnableProductsByShop(ctx context.Context, shopID string) error {
+	return s.repository.EnableProductsByShop(ctx, shopID)
 }
 
 func (s *service) validateCategory(ctx context.Context, categoryID string) error {
