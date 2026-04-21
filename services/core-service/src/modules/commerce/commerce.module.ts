@@ -4,6 +4,6 @@ import { CheckoutModule } from './checkout/checkout.module';
 import { OrderModule } from './order/order.module';
 
 @Module({
-  imports: [CartModule, CheckoutModule, OrderModule]
+  imports: [CartModule, CheckoutModule, OrderModule],
 })
 export class CommerceModule {}

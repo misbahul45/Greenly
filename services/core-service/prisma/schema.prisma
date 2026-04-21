@@ -68,6 +68,7 @@ enum LedgerType {
   CREDIT
   DEBIT
 }
+
 enum UserStatus {
   ACTIVE
   SUSPENDED
@@ -76,16 +77,16 @@ enum UserStatus {
 }
 
 model User {
-  id String @id @default(cuid())
-  email          String    @unique
+  id             String     @id @default(cuid())
+  email          String     @unique
   passwordHash   String
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
-  followingCount Int @default(0)
-  emailVerified   DateTime?   
-  status UserStatus @default(PENDING_VERIFICATION)
-  deletedAt DateTime?
-  isActive Boolean @default(true)
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+  followingCount Int        @default(0)
+  emailVerified  DateTime?
+  status         UserStatus @default(PENDING_VERIFICATION)
+  deletedAt      DateTime?
+  isActive       Boolean    @default(true)
 
   profile        UserProfile?
   shopMember     ShopMember[]
@@ -93,32 +94,32 @@ model User {
   cart           Cart?
   orders         Order[]
   notifications  Notification[]
-  ownedShop      Shop[]     @relation("ShopOwner")
+  ownedShop      Shop[]         @relation("ShopOwner")
   followingShops ShopFollower[]
   events         UserEvent[]
-  tokens         AuthToken[] 
+  tokens         AuthToken[]
 
-  @@map("users")
   @@index([email])
   @@index([deletedAt])
+  @@map("users")
 }
 
 model UserProfile {
-  id String @id @default(cuid())
-  userId    String     @unique
+  id        String  @id @default(cuid())
+  userId    String  @unique
   fullName  String
   phone     String?
   avatarUrl String?
   photoUrl  String?
   address   String?
 
-  user      User    @relation(fields: [userId], references: [id])
+  user User @relation(fields: [userId], references: [id])
 
   @@map("user_profiles")
 }
 
 model Role {
-  id String @id @default(cuid())
+  id          String       @id @default(cuid())
   name        String       @unique
   permissions Permission[]
   users       UserRole[]
@@ -127,23 +128,23 @@ model Role {
 }
 
 model AuthToken {
-  id String @id @default(cuid())
-  userId     String
-  tokenHash  String        @unique
-  type       AuthTokenType
-  expiresAt  DateTime
-  usedAt     DateTime?
-  createdAt  DateTime      @default(now())
+  id        String        @id @default(cuid())
+  userId    String
+  tokenHash String        @unique
+  type      AuthTokenType
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime      @default(now())
 
-  user       User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([type])
   @@map("auth_tokens")
 }
 
-model Permission {         
-  id String @id @default(cuid())
+model Permission {
+  id    String @id @default(cuid())
   name  String @unique
   roles Role[]
 
@@ -154,36 +155,37 @@ model UserRole {
   userId String
   roleId String
 
-  user   User @relation(fields: [userId], references: [id])
-  role   Role @relation(fields: [roleId], references: [id])
+  user User @relation(fields: [userId], references: [id])
+  role Role @relation(fields: [roleId], references: [id])
 
   @@id([userId, roleId])
   @@map("user_roles")
 }
 
 model Shop {
-  id String @id @default(cuid())
-  ownerId     String
-  name        String    
-  description String?
-  status      ShopStatus @default(PENDING)
-  balance     Decimal    @default(0) @db.Decimal(15,2)
-  followerCount Int @default(0) 
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
-  deletedAt   DateTime?
+  id            String     @id @default(cuid())
+  ownerId       String
+  name          String
+  description   String?
+  status        ShopStatus @default(PENDING)
+  balance       Decimal    @default(0) @db.Decimal(15, 2)
+  followerCount Int        @default(0)
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+  deletedAt     DateTime?
 
-  owner       User            @relation("ShopOwner", fields: [ownerId], references: [id])
-  members     ShopMember[]
-  followers   ShopFollower[]
-  application ShopApplication?
-  orders      Order[]
-  payouts     Payout[]
-  ledger      ShopLedger[]
+  owner          User             @relation("ShopOwner", fields: [ownerId], references: [id])
+  members        ShopMember[]
+  followers      ShopFollower[]
+  application    ShopApplication?
+  orders         Order[]
+  payouts        Payout[]
+  ledger         ShopLedger[]
+  promotionShops PromotionShop[]
 
-  @@map("shops")
   @@index([ownerId])
-
+  @@index([deletedAt])
+  @@map("shops")
 }
 
 model ShopFollower {
@@ -200,8 +202,8 @@ model ShopFollower {
 }
 
 model ShopApplication {
-  id String @id @default(cuid())
-  shopId      String              @unique
+  id          String            @id @default(cuid())
+  shopId      String            @unique
   idCardUrl   String
   selfieUrl   String?
   nib         String?
@@ -212,31 +214,32 @@ model ShopApplication {
   accountName String
   status      ApplicationStatus @default(PENDING)
   notes       String?
-  createdAt   DateTime         @default(now())
+  createdAt   DateTime          @default(now())
   reviewedAt  DateTime?
-  updatedAt   DateTime         @updatedAt
+  updatedAt   DateTime          @updatedAt
 
-  shop        Shop @relation(fields: [shopId], references: [id])
+  shop Shop @relation(fields: [shopId], references: [id])
 
   @@map("shop_applications")
 }
+
 model ShopMember {
-   id String @id @default(cuid())
-  shopId String
-  userId String
-  role   String
+  id        String    @id @default(cuid())
+  shopId    String
+  userId    String
+  role      String
   deletedAt DateTime?
-  shop   Shop @relation(fields: [shopId], references: [id])
-  user   User @relation(fields: [userId], references: [id])
-  createdAt DateTime @default(now())
+  shop      Shop      @relation(fields: [shopId], references: [id])
+  user      User      @relation(fields: [userId], references: [id])
+  createdAt DateTime  @default(now())
 
   @@unique([shopId, userId])
   @@map("shop_members")
 }
 
 model Cart {
-  id String @id @default(cuid())
-  userId    String      @unique
+  id        String   @id @default(cuid())
+  userId    String   @unique
   updatedAt DateTime @updatedAt
 
   user  User       @relation(fields: [userId], references: [id])
@@ -246,12 +249,12 @@ model Cart {
 }
 
 model CartItem {
-   id String @id @default(cuid())
+  id        String @id @default(cuid())
   cartId    String
   productId String
   quantity  Int
 
-  cart Cart @relation(fields: [cartId], references: [id])
+  cart      Cart     @relation(fields: [cartId], references: [id])
   createdAt DateTime @default(now())
 
   @@unique([cartId, productId])
@@ -259,18 +262,21 @@ model CartItem {
 }
 
 model Order {
-    id String @id @default(cuid())
-  userId      String
-  shopId      String
-  shopName    String
-  totalAmount Decimal     @db.Decimal(15,2)
-  status      OrderStatus @default(PENDING)
-  createdAt   DateTime    @default(now())
+  id             String      @id @default(cuid())
+  userId         String
+  shopId         String
+  shopName       String
+  totalAmount    Decimal     @db.Decimal(15, 2)
+  status         OrderStatus @default(PENDING)
+  promotionId    String?
+  discountAmount Decimal?    @db.Decimal(15, 2)
+  createdAt      DateTime    @default(now())
 
-  user    User    @relation(fields: [userId], references: [id])
-  shop    Shop    @relation(fields: [shopId], references: [id])
-  items   OrderItem[]
-  payment Payment?
+  user      User        @relation(fields: [userId], references: [id])
+  shop      Shop        @relation(fields: [shopId], references: [id])
+  promotion Promotion?  @relation(fields: [promotionId], references: [id])
+  items     OrderItem[]
+  payment   Payment?
 
   @@index([userId])
   @@index([shopId])
@@ -278,44 +284,43 @@ model Order {
 }
 
 model OrderItem {
-  id String @id @default(cuid())
+  id          String  @id @default(cuid())
   orderId     String
   productId   String
   productName String
-  price       Decimal @db.Decimal(15,2)
+  price       Decimal @db.Decimal(15, 2)
   quantity    Int
 
-  order Order @relation(fields: [orderId], references: [id])
-  createdAt       DateTime      @default(now())
+  order     Order    @relation(fields: [orderId], references: [id])
+  createdAt DateTime @default(now())
 
   @@map("order_items")
 }
 
 model Payment {
-  id String @id @default(cuid())
-  orderId         String           @unique
-  grossAmount     Decimal       @db.Decimal(15,2)
-  gatewayFee      Decimal       @db.Decimal(15,2)
-  marketplaceFee  Decimal       @db.Decimal(15,2)
-  netAmount       Decimal       @db.Decimal(15,2)
-  method          String
-  status          PaymentStatus @default(PENDING)
-  transactionId   String?
-  createdAt       DateTime      @default(now())
-  paidAt          DateTime?
-  updatedAt       DateTime      @updatedAt
+  id             String        @id @default(cuid())
+  orderId        String        @unique
+  grossAmount    Decimal       @db.Decimal(15, 2)
+  gatewayFee     Decimal       @db.Decimal(15, 2)
+  marketplaceFee Decimal       @db.Decimal(15, 2)
+  netAmount      Decimal       @db.Decimal(15, 2)
+  method         String
+  status         PaymentStatus @default(PENDING)
+  transactionId  String?
+  createdAt      DateTime      @default(now())
+  paidAt         DateTime?
+  updatedAt      DateTime      @updatedAt
 
-
-  order   Order   @relation(fields: [orderId], references: [id])
+  order   Order    @relation(fields: [orderId], references: [id])
   refunds Refund[]
 
   @@map("payments")
 }
 
 model Refund {
-   id String @id @default(cuid())
+  id        String       @id @default(cuid())
   paymentId String
-  amount    Decimal      @db.Decimal(15,2)
+  amount    Decimal      @db.Decimal(15, 2)
   reason    String
   status    RefundStatus @default(PENDING)
   createdAt DateTime     @default(now())
@@ -326,10 +331,10 @@ model Refund {
 }
 
 model ShopLedger {
-   id String @id @default(cuid())
+  id          String     @id @default(cuid())
   shopId      String
   type        LedgerType
-  amount      Decimal    @db.Decimal(15,2)
+  amount      Decimal    @db.Decimal(15, 2)
   reference   String
   description String?
   createdAt   DateTime   @default(now())
@@ -341,11 +346,11 @@ model ShopLedger {
 }
 
 model Payout {
-   id String @id @default(cuid())
+  id        String       @id @default(cuid())
   shopId    String
-  amount    Decimal  @db.Decimal(15,2)
+  amount    Decimal      @db.Decimal(15, 2)
   status    PayoutStatus @default(PENDING)
-  createdAt DateTime @default(now())
+  createdAt DateTime     @default(now())
   paidAt    DateTime?
 
   shop Shop @relation(fields: [shopId], references: [id])
@@ -355,19 +360,60 @@ model Payout {
 }
 
 model Promotion {
-  id String @id @default(cuid())
-  code        String        @unique
-  discountVal Decimal       @db.Decimal(15,2)
-  type        PromotionType
-  startDate   DateTime
-  endDate     DateTime
-  isActive    Boolean       @default(true)
+  id                String             @id @default(cuid())
+  code              String             @unique
+  name              String
+  description       String?
+  discountVal       Decimal            @db.Decimal(15, 2)
+  type              PromotionType
+  minPurchaseAmount Decimal?           @db.Decimal(15, 2)
+  maxDiscountAmount Decimal?           @db.Decimal(15, 2)
+  usageLimit        Int?
+  usedCount         Int                @default(0)
+  userLimit         Int?               @default(1)
+  startDate         DateTime
+  endDate           DateTime
+  isActive          Boolean            @default(true)
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  deletedAt         DateTime?
+  orders            Order[]
+  promotionShops    PromotionShop[]
+  promotionProducts PromotionProduct[]
 
+  @@index([code, isActive])
+  @@index([startDate, endDate])
+  @@index([deletedAt])
   @@map("promotions")
 }
 
+model PromotionShop {
+  id          String   @id @default(cuid())
+  promotionId String
+  shopId      String
+  createdAt   DateTime @default(now())
+
+  promotion Promotion @relation(fields: [promotionId], references: [id])
+  shop      Shop      @relation(fields: [shopId], references: [id])
+
+  @@unique([promotionId, shopId])
+  @@map("promotion_shops")
+}
+
+model PromotionProduct {
+  id          String   @id @default(cuid())
+  promotionId String
+  productId   String
+  createdAt   DateTime @default(now())
+
+  promotion Promotion @relation(fields: [promotionId], references: [id])
+
+  @@unique([promotionId, productId])
+  @@map("promotion_products")
+}
+
 model Notification {
-  id String @id @default(cuid())
+  id        String   @id @default(cuid())
   userId    String
   title     String
   message   String
@@ -380,7 +426,7 @@ model Notification {
 }
 
 model UserEvent {
-  id String @id @default(cuid())
+  id        String   @id @default(cuid())
   userId    String
   eventType String
   metadata  Json?
