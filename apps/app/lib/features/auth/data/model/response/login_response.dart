@@ -6,7 +6,6 @@ class LoginResponse {
   LoginResponse({required this.data});
 
   factory LoginResponse.fromJson(Map<String, dynamic> json) {
-    print('logins res ${json.toString()}');
     return LoginResponse(data: LoginData.fromJson(json));
   }
 }

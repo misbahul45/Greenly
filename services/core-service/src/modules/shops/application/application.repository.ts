@@ -13,7 +13,7 @@ export class ApplicationRepository {
   }
 
   async updateByShopId(
-    shopId: number,
+    shopId: string,
     data: Prisma.ShopApplicationUncheckedUpdateInput
   ) {
     const shopApplication = await this.db.shopApplication.update({
@@ -50,7 +50,7 @@ export class ApplicationRepository {
     return shopApplication;
   }
 
-  async findShopApplicationByShopId(shopId: number) {
+  async findShopApplicationByShopId(shopId: string) {
     return this.db.shopApplication.findUnique({
       where: { shopId },
       include: {
@@ -61,7 +61,7 @@ export class ApplicationRepository {
 
   private buildWhere(params: {
     status?: ApplicationStatus;
-    shopId?: number;
+    shopId?: string;
     createdFrom?: Date;
     createdTo?: Date;
     search?: string;
@@ -110,7 +110,7 @@ export class ApplicationRepository {
     skip: number;
     take: number;
     status?: ApplicationStatus;
-    shopId?: number;
+    shopId?: string;
     createdFrom?: Date;
     createdTo?: Date;
     search?: string;
@@ -145,7 +145,7 @@ export class ApplicationRepository {
 
   async count(params: {
     status?: ApplicationStatus;
-    shopId?: number;
+    shopId?: string;
     createdFrom?: Date;
     createdTo?: Date;
     search?: string;
@@ -161,7 +161,7 @@ export class ApplicationRepository {
     skip: number;
     take: number;
     status?: ApplicationStatus;
-    shopId?: number;
+    shopId?: string;
     createdFrom?: Date;
     createdTo?: Date;
     search?: string;
@@ -179,13 +179,13 @@ export class ApplicationRepository {
         total,
         limit: take,
         page: Math.floor(skip / take) + 1,
-        totalPage: Math.ceil(total / take),
+        lastPage: Math.ceil(total / take),
       },
     };
   }
 
   async findMyApplications(
-    userId: number,
+    userId: string,
     params: {
       skip: number;
       take: number;
@@ -236,12 +236,12 @@ export class ApplicationRepository {
         total,
         limit: take,
         page: Math.floor(skip / take) + 1,
-        totalPage: Math.ceil(total / take),
+        lastPage: Math.ceil(total / take),
       },
     };
   }
 
-  async deleteApplicationById(id:number){
+  async deleteApplicationById(id:string){
     return await this.db.shopApplication.delete({
         where:{
             id

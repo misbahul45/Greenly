@@ -13,11 +13,6 @@ async function bootstrap() {
   const queue = configService.get<string>('rabbitmq.queue') ?? 'greenly_queue';
   const url = configService.get<string>('rabbitmq.url') ?? 'amqp://guest:guest@rabbitmq:5672/';
 
-  console.log({
-    queue,
-    url
-  })
-
   app.connectMicroservice({
     transport: Transport.RMQ,
     options: {

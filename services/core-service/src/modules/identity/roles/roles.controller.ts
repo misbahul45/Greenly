@@ -26,6 +26,7 @@ import {
   type AttachPermissionDTO,
   type ReplacePermissionDTO,
 } from './roles.dto'
+import { CurrentUser } from 'src/modules/auth/decorators/current-user.decorator'
 
 @Controller('roles')
 export class RolesController {
@@ -36,6 +37,7 @@ export class RolesController {
   async findAll(
     @Query(new ZodValidationPipe(roleQuerySchema))
     query: RoleQueryDTO,
+    @CurrentUser() user:any
   ) {
     return ErrorHandler(() =>
       this.rolesService.findAll(query),

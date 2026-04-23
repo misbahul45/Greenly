@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 export const ShopApplicationShopIdParamSchema = z.object({
-  shopId: z.coerce.number().int().positive(),
+  shopId: z.string(),
 });
 
 export type ShopApplicationShopIdParamDTO =
@@ -83,7 +83,7 @@ export const ShopApplicationQuerySchema = z.object({
 
   status: applicationStatusEnum.optional(),
 
-  shopId: z.coerce.number().int().positive().optional(),
+  shopId: z.coerce.string(),
   search: z.string().optional(),
 
   createdFrom: z.coerce.date().optional(),

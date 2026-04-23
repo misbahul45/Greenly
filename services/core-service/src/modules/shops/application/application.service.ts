@@ -17,7 +17,7 @@ import { AppError } from '../../../libs/errors/app.error';
 export class ApplicationService {
   constructor(private readonly repo: ApplicationRepository) {}
 
-  async create(shopId: number, body: CreateShopApplicationDTO) : Promise<ApiResponse<CreateShopApplicationResponse>> {
+  async create(shopId: string, body: CreateShopApplicationDTO) : Promise<ApiResponse<CreateShopApplicationResponse>> {
     const existing = await this.repo.findShopApplicationByShopId(shopId);
 
     if (existing && existing.status !== ApplicationStatus.REJECTED) {
@@ -49,7 +49,7 @@ export class ApplicationService {
     };
   }
 
-  async update(shopId: number, body: CreateShopApplicationDTO) : Promise<ApiResponse<UpdateShopApplicationResponse>> {
+  async update(shopId: string, body: CreateShopApplicationDTO) : Promise<ApiResponse<UpdateShopApplicationResponse>> {
     const existing = await this.repo.findShopApplicationByShopId(shopId);
 
     if (!existing) {
@@ -73,7 +73,7 @@ export class ApplicationService {
     };
   }
 
-  async review(shopId: number, body: ReviewShopApplicationDTO) : Promise<ApiResponse<ReviewShopApplicationResponse>> {
+  async review(shopId: string, body: ReviewShopApplicationDTO) : Promise<ApiResponse<ReviewShopApplicationResponse>> {
     const existing = await this.repo.findShopApplicationByShopId(shopId);
 
     if (!existing) {
@@ -99,7 +99,7 @@ export class ApplicationService {
     };
   }
 
-  async findOne(shopId: number) : Promise<ApiResponse<FindShopApplicationResponse>> {
+  async findOne(shopId: string) : Promise<ApiResponse<FindShopApplicationResponse>> {
     const data = await this.repo.findShopApplicationByShopId(shopId);
 
     if (!data) {
@@ -146,7 +146,7 @@ export class ApplicationService {
     };
   }
 
-  async findMyApplications(userId: number, query: ShopApplicationQueryDTO) : Promise<ApiResponse<FindShopApplicationResponse[]>> {
+  async findMyApplications(userId: string, query: ShopApplicationQueryDTO) : Promise<ApiResponse<FindShopApplicationResponse[]>> {
     const { page, limit, sortBy, sortOrder, search } = query;
 
     const skip = (page - 1) * limit;
@@ -166,7 +166,7 @@ export class ApplicationService {
     };
   }
 
-  async delete(applicationId:number) : Promise<ApiResponse<null>> {
+  async delete(applicationId:string) : Promise<ApiResponse<null>> {
     const findApplication = await this.repo.findShopApplicationByShopId(applicationId)
 
     if(!findApplication) throw new AppError('Application not found', 404);

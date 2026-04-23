@@ -1,7 +1,7 @@
 import 'package:app/shared/model/data/role_model.dart';
 
 class UserData {
-  final int id;
+  final String id;
   final String name;
   final String email;
   final List<RoleModel> roles;

@@ -21,7 +21,7 @@ type Response struct {
 	Path       string          `json:"path"`
 	Message    string          `json:"message"`
 	Data       interface{}     `json:"data,omitempty"`
-	Meta       *PaginationMeta `json:"meta,omitempty"`
+	MetaData       *PaginationMeta `json:"metaData,omitempty"`
 	Timestamp  string          `json:"timestamp"`
 }
 
@@ -40,7 +40,7 @@ func NewPaginationMeta(total, page, limit int64) *PaginationMeta {
 	}
 }
 
-func Success(c *gin.Context, statusCode int, message string, data interface{}, meta *PaginationMeta) {
+func Success(c *gin.Context, statusCode int, message string, data interface{}, metaData *PaginationMeta) {
 
 	if message == "" {
 		message = "success"
@@ -52,7 +52,7 @@ func Success(c *gin.Context, statusCode int, message string, data interface{}, m
 		Path:       c.Request.URL.Path,
 		Message:    message,
 		Data:       data,
-		Meta:       meta,
+		MetaData:   metaData,
 		Timestamp:  time.Now().UTC().Format(time.RFC3339),
 	}
 

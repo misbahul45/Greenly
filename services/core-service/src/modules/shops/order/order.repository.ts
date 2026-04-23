@@ -8,7 +8,7 @@ export class OrderRepository {
   constructor(private readonly db: DatabaseService) {}
 
   private buildWhere(params: {
-    shopId: number;
+    shopId: string;
     status?: OrderStatus;
     createdFrom?: Date;
     createdTo?: Date;
@@ -65,7 +65,7 @@ export class OrderRepository {
   }
 
   async findMany(params: {
-    shopId: number;
+    shopId: string;
     skip: number;
     take: number;
     status?: OrderStatus;
@@ -99,7 +99,7 @@ export class OrderRepository {
   }
 
   async count(params: {
-    shopId: number;
+    shopId: string;
     status?: OrderStatus;
     createdFrom?: Date;
     createdTo?: Date;
@@ -112,7 +112,7 @@ export class OrderRepository {
     });
   }
 
-  async findOne(shopId: number, orderId: number) {
+  async findOne(shopId: string, orderId: string) {
     return this.db.order.findFirst({
       where: {
         id: orderId,
@@ -131,8 +131,8 @@ export class OrderRepository {
   }
 
   async updateStatus(
-    shopId: number,
-    orderId: number,
+    shopId: string,
+    orderId: string,
     status: OrderStatus
   ) {
     return this.db.order.update({
@@ -146,7 +146,7 @@ export class OrderRepository {
     });
   }
 
-  async updateRefund(refundId: number) {
+  async updateRefund(refundId: string) {
     return this.db.refund.update({
       where: {
         id: refundId,

@@ -7,7 +7,7 @@ import { Prisma } from "generated/prisma/browser";
 export class MemberRepository {
   constructor(private readonly db: DatabaseService) {}
 
-  async findMemberByShopIdAndUserId(shopId: number, userId: number) {
+  async findMemberByShopIdAndUserId(shopId: string, userId: string) {
     return await this.db.shopMember.findFirst({
       where: {
         userId,
@@ -27,7 +27,7 @@ export class MemberRepository {
     });
   }
 
-  async findShopById(shopId: number) {
+  async findShopById(shopId: string) {
     return await this.db.shop.findUnique({
       where: {
         id: shopId,
@@ -35,7 +35,7 @@ export class MemberRepository {
     });
   }
 
-  async addMember(shopId: number, body: AddMemberDTO) {
+  async addMember(shopId: string, body: AddMemberDTO) {
     return await this.db.shopMember.create({
       data: {
         shopId,
@@ -46,7 +46,7 @@ export class MemberRepository {
   }
 
   async findMany(
-    shopId: number,
+    shopId: string,
     { page = 1, limit = 10, role, sortBy = "createdAt", sortOrder = "desc" }: ShopMemberQueryDTO
   ) {
     const where: Prisma.ShopMemberWhereInput = {
@@ -67,7 +67,7 @@ export class MemberRepository {
     });
   }
 
-  async count(shopId: number, { role }: ShopMemberQueryDTO) {
+  async count(shopId: string, { role }: ShopMemberQueryDTO) {
     const where: Prisma.ShopMemberWhereInput = {
       shopId,
       ...(role && { role }),
@@ -78,7 +78,7 @@ export class MemberRepository {
     });
   }
   
-  async updateMemberRole(shopId: number, memberId: number, body: UpdateMemberRoleDTO) {
+  async updateMemberRole(shopId: string, memberId: string, body: UpdateMemberRoleDTO) {
     return await this.db.shopMember.update({
       where: {
         shopId_userId: {
@@ -92,7 +92,7 @@ export class MemberRepository {
     });
   }
   
-  async deleteMember(shopId: number, memberId: number) {
+  async deleteMember(shopId: string, memberId: string) {
     return await this.db.shopMember.update({
       where: {
         shopId_userId: {

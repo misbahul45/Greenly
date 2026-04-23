@@ -1,6 +1,7 @@
 package main
 
 import (
+	"catalog-service/modules/category"
 	"catalog-service/modules/product"
 
 	"github.com/gin-gonic/gin"
@@ -8,5 +9,6 @@ import (
 )
 
 func Routes(r *gin.RouterGroup, db *mongo.Database) {
+	category.CategoryRouter(r, db)
 	product.ProductRouter(r, db)
 }

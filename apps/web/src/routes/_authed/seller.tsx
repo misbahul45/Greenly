@@ -13,7 +13,7 @@ function SellerLayout() {
   const [sidebarOpen, setSidebarOpen] = React.useState(false)
 
   return (
-    <div className="flex min-h-screen bg-[#F5F1E8]">
+    <div className="flex min-h-screen bg-background">
       <SidebarSeller open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
       <div className="flex min-h-screen flex-1 flex-col">
@@ -24,7 +24,7 @@ function SellerLayout() {
         />
 
         {/* debug biar yakin layout kepanggil */}
-        <div className="px-4 pt-2 text-xs opacity-60">SELLER LAYOUT AKTIF ✅</div>
+        {/* <div className="px-4 pt-2 text-xs opacity-60">SELLER LAYOUT AKTIF ✅</div> */}
 
         <main className="flex-1 px-4 pb-6 pt-4 sm:px-6 sm:pt-6">
           <Outlet />

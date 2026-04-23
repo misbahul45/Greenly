@@ -17,14 +17,15 @@ class VerifyEmailScreen extends StatelessWidget {
   }
 
   /// RESEND OTP
-  void handleResendOtp(BuildContext context, String email) {
+  void handleResendOtp(BuildContext context, String email, OtpType type) {
     context.read<AuthBloc>().add(
-          AuthResendOtpRequested(email, "VERIFY_EMAIL"),
+          AuthResendOtpRequested(email, type),
         );
   }
 
   @override
   Widget build(BuildContext context) {
+
     return Scaffold(
       body: Container(
         decoration: const BoxDecoration(
@@ -103,7 +104,7 @@ class VerifyEmailScreen extends StatelessWidget {
                             onSubmitOtp: (otp) =>
                                 handleVerifyOtp(context, otp),
                             onResendOtp: (email) =>
-                                handleResendOtp(context, email),
+                                handleResendOtp(context, email, OtpType.verifyEmail),
                           ),
                         ],
                       );

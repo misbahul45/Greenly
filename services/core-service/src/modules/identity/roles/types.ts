@@ -1,10 +1,10 @@
 export interface RolePermissionResponse {
-  id: number
+  id: string
   name: string
 }
 
 export interface RolesResponse {
-  id: number
+  id: string
   name: string
   permissions?: RolePermissionResponse[]
 }

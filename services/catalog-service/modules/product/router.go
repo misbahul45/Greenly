@@ -1,21 +1,26 @@
 package product
 
 import (
+	"catalog-service/middleware"
+
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
 func ProductRouter(rg *gin.RouterGroup, db *mongo.Database) {
 
-	repo := NewProductRepository(db)
-	service := NewProductService(repo)
-	handler := NewProductHandler(service)
+	repo := NewRepository(db)
+	service := NewService(repo)
+	handler := NewHandler(service)
 
 	products := rg.Group("/products")
+	{
+		products.GET("", handler.FindMany)
+		products.GET("/:id", handler.FindOne)
+		products.GET("/slug/:slug", handler.FindOneBySlug)
 
-	products.GET("", handler.FindManyProducts)
-	products.GET("/:id", handler.FindOneProduct)
-	products.POST("", handler.CreateProduct)
-	products.PUT("/:id", handler.UpdateProduct)
-	products.DELETE("/:id", handler.DeleteProduct)
+		products.POST("", middleware.AuthMiddleware(), middleware.RequireRole("ADMIN", "SUPERADMIN"), handler.Create)
+		products.PATCH("/:id", middleware.AuthMiddleware(), middleware.RequireRole("ADMIN", "SUPERADMIN"), handler.Update)
+		products.DELETE("/:id", middleware.AuthMiddleware(), middleware.RequireRole("ADMIN", "SUPERADMIN"), handler.Delete)
+	}
 }

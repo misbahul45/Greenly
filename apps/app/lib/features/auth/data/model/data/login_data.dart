@@ -1,17 +1,16 @@
-import 'package:app/features/auth/data/model/data/user_data.dart';
+import 'package:app/features/auth/data/model/data/user_login_data.dart';
 import 'package:app/shared/model/data/token_model.dart';
 
 class LoginData {
   final TokenModel tokens;
-  final UserData user;
+  final UserLoginData user;
 
   LoginData({required this.tokens, required this.user});
 
   factory LoginData.fromJson(Map<String, dynamic> json) {
-    print(json);
     return LoginData(
       tokens: TokenModel.fromJson(json['tokens']),
-      user: UserData.fromJson(json['user']),
+      user: UserLoginData.fromJson(json['user']),
     );
   }
 }

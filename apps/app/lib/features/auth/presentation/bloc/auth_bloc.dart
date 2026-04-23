@@ -1,6 +1,9 @@
 import 'package:app/features/auth/auth_service.dart';
+import 'package:app/features/auth/data/model/dto/change_password_dto.dart';
+import 'package:app/features/auth/data/model/dto/forgot_password_dto.dart';
 import 'package:app/features/auth/data/model/dto/login_dto.dart';
 import 'package:app/features/auth/data/model/dto/verify_email_dto.dart';
+import 'package:app/features/auth/data/model/dto/verify_password_dto.dart';
 import 'package:app/features/auth/presentation/bloc/auth_event.dart';
 import 'package:app/features/auth/presentation/bloc/auth_state.dart';
 import 'package:app/features/auth/presentation/bloc/auth_storage.dart';
@@ -17,6 +20,9 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<AuthLogoutRequested>(_onLogout);
     on<AuthCheckRequested>(_onCheckAuth);
     on<AuthResendOtpRequested>(_onResendOtp);
+    on<AuthForgotPasswordRequested>(_onForgotPassword);
+    on<AuthVerifyPasswordRequested>(_onVerifyPassword);
+    on<AuthChangePasswordRequested>(_onChangePassword);
   }
 
   /// LOGIN
@@ -31,7 +37,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     );
 
     if (!loginResponse.isSuccess || loginResponse.data == null) {
-      emit(AuthError(loginResponse.message));
+      emit(AuthError(loginResponse.message, email: event.email));
       return;
     }
 
@@ -47,7 +53,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     final meResponse = await MeService.getMe();
 
     if (!meResponse.isSuccess || meResponse.data == null) {
-      emit(AuthError(meResponse.message));
+      emit(AuthError(meResponse.message, email: event.email));
       return;
     }
 
@@ -103,8 +109,11 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     Emitter<AuthState> emit,
   ) async {
     emit(AuthLoading());
+    final typeString = event.type == OtpType.verifyEmail
+        ? "VERIFY_EMAIL"
+        : "RESET_PASSWORD";
 
-    final response = await authService.resendOtp(event.email, event.type);
+    final response = await authService.resendOtp(event.email, typeString);
 
     if (!response.isSuccess) {
       emit(AuthError(response.message));
@@ -120,12 +129,10 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     Emitter<AuthState> emit,
   ) async {
     emit(AuthLoading());
-
-    await AuthStorage.clear();
+    AuthStorage.clear();
     final token = await AuthStorage.getAccessToken();
     final refreshToken = await AuthStorage.getRefreshToken();
     final user = await AuthStorage.getUser();
-
     if (token != null && refreshToken != null && user != null) {
       emit(
         AuthAuthenticated(
@@ -136,6 +143,63 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     } else {
       emit(AuthUnauthenticated());
     }
+  }
+
+  ///forgotPassword
+  Future<void> _onForgotPassword(
+    AuthForgotPasswordRequested event,
+    Emitter<AuthState> emit,
+  ) async {
+    emit(AuthLoading());
+
+    final response = await authService.forgotPassword(
+      ForgotPasswordDto(email: event.email),
+    );
+
+    if (!response.isSuccess) {
+      emit(AuthError(response.message, email: event.email));
+      return;
+    }
+    emit(AuthForgotPasswordSuccess());
+  }
+
+  Future<void> _onVerifyPassword(
+    AuthVerifyPasswordRequested event,
+    Emitter<AuthState> emit,
+  ) async {
+    emit(AuthLoading());
+
+    final response = await authService.verifyPassword(
+      VerifyPasswordDto(token: event.otp),
+    );
+
+    final tokenId = response.data?.id;
+
+    if (!response.isSuccess || tokenId == null) {
+      emit(AuthError(response.message));
+      return;
+    }
+
+    emit(TokenResetPassword(tokenId));
+  }
+
+  Future<void> _onChangePassword(
+    AuthChangePasswordRequested event,
+    Emitter<AuthState> emit,
+  ) async {
+    emit(AuthLoading());
+    final response = await authService.changePassword(
+      ChangePasswordDto(
+        tokenId: event.tokenId,
+        newPassword: event.newPassword,
+        confirmNewPassword: event.confirmPassword,
+      ),
+    );
+
+    if (response.isSuccess) {
+      emit(AuthChangePasswordSuccess());
+    }
+    
   }
 
   /// LOGOUT

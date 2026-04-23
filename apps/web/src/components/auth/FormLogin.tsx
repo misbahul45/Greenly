@@ -1,9 +1,7 @@
 "use client"
-
 import * as React from "react"
 import { useForm } from "@tanstack/react-form"
 import { toast } from "sonner"
-import * as z from "zod"
 import { Eye, EyeOff } from "lucide-react"
 import { Link, useNavigate } from "@tanstack/react-router"
 
@@ -51,9 +49,9 @@ export default function FormLogin() {
           position: "bottom-right",
         });
 
-        // navigate({
-        //   to:result.data?.user.roles.includes('SUPER_ADMIN')?'/admin/dashboard':result.data?.user.roles.includes('ADMIN') ? '/seller/dashboard':'/register/shop'
-        // })
+        navigate({
+          to:result.user.roles.includes('SUPER_ADMIN')?'/admin/dashboard':'/seller/dashboard'
+        })
       } catch (error: any) {
         console.log(error)
         toast.error("Login gagal", {
@@ -186,7 +184,6 @@ export default function FormLogin() {
             Daftar
           </Link>
         </p> */}
-
       </CardFooter>
     </Card>
   )
