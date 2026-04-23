@@ -1,4 +1,5 @@
 import { PrismaMariaDb } from '@prisma/adapter-mariadb'
+import 'dotenv/config'
 
 export function createPrismaAdapter() {
   return new PrismaMariaDb({

@@ -98,6 +98,7 @@ export async function seedRbac(prisma: PrismaClient) {
     const user = await prisma.user.upsert({
       where: { email: u.email },
       update: {
+        passwordHash: hashedPassword,
         emailVerified: new Date(),
         status: 'ACTIVE',
         isActive: true,
@@ -115,6 +116,8 @@ export async function seedRbac(prisma: PrismaClient) {
       where: { userId: user.id },
       update: {
         fullName: u.fullName,
+        phone: '',
+        address: '',
       },
       create: {
         userId: user.id,
@@ -136,53 +139,6 @@ export async function seedRbac(prisma: PrismaClient) {
             roleId: role.id
           }
         },
-        update: {},
-        create: {
-          userId: user.id,
-          roleId: role.id,
-        },
-      })
-    }
-  }
-
-     const users = [
-    { email: 'rani@gmail.com', password: 'rani12345', fullName: 'Rani', role: 'SUPER_ADMIN' },
-    { email: 'nesa@gmail.com', password: 'nesa12345', fullName: 'Nesa', role: 'ADMIN' },
-  ]
-
-  for (const u of users) {
-    // Hash password
-    const hashedPassword = await bcrypt.hash(u.password, 10)
-
-    // Upsert user
-    const user = await prisma.user.upsert({
-      where: { email: u.email },
-      update: {},
-      create: {
-        email: u.email,
-        passwordHash: hashedPassword,
-        status: 'ACTIVE',
-        emailVerified:new Date()
-      },
-    })
-
-    // Create user profile
-    await prisma.userProfile.upsert({
-      where: { userId: user.id },
-      update: {},
-      create: {
-        userId: user.id,
-        fullName: u.fullName,
-        phone: '',
-        address: '',
-      },
-    })
-
-    // Assign role
-    const role = await prisma.role.findUnique({ where: { name: u.role } })
-    if (role) {
-      await prisma.userRole.upsert({
-        where: { userId_roleId: { userId: user.id, roleId: role.id } }, // ✅ gunakan compound key
         update: {},
         create: {
           userId: user.id,
