@@ -24,6 +24,7 @@ import {
 import { Input } from "#/components/ui/input"
 import { LoginSchema } from "#/schema/auth"
 import { loginFn } from "#/server/auth"
+import type { LoginResponse } from "#/types/login.response"
 
 
 export default function FormLogin() {
@@ -41,6 +42,19 @@ export default function FormLogin() {
     onSubmit: async ({ value }) => {
       try {
         const result = await loginFn({ data: value });
+        const dummyLoginResponse: LoginResponse = {
+                tokens: {
+                  accessToken: "dummy-access-token-123456",
+                  refreshToken: "dummy-refresh-token-abcdef",
+                },
+                user: {
+                  id: 1,
+                  email: "admin@example.com",
+                  name: "Admin User",
+                  roles: ["ADMIN"],
+                },
+              };
+        
 
         console.log(result)
 
@@ -50,7 +64,7 @@ export default function FormLogin() {
         });
 
         navigate({
-          to:result.user.roles.includes('SUPER_ADMIN')?'/admin/dashboard':'/seller/dashboard'
+          to:dummyLoginResponse.user.roles.includes('SUPER_ADMIN')?'/admin/dashboard':'/seller/dashboard'
         })
       } catch (error: any) {
         console.log(error)
