@@ -9,7 +9,6 @@ import { JwtService } from '@nestjs/jwt';
 import { StringValue } from 'ms';
 import { AuthTokenType } from '../../../generated/prisma/enums';
 import { UserRegisteredPublisher } from './publisher/user_registered.publisher';
-import { UserVerifiedPublisher } from './publisher/user_verified.publisher';
 import { UserForgotPasswordPublisher } from './publisher/user_forgot_password.publisher';
 import { UserLoginPublisher } from './publisher/user_login.publisher';
 import { UserResendTokenPublisher } from './publisher/user_resend_token.publisher';
@@ -23,7 +22,6 @@ export class AuthService {
     private readonly jwt:JwtService,
     private readonly config:ConfigService,
     private readonly registerPublisher:UserRegisteredPublisher,
-    private readonly verifiedPublisher:UserVerifiedPublisher,
     private readonly forgotPasswordPublisher:UserForgotPasswordPublisher,
     private readonly loginPublisher:UserLoginPublisher,
     private readonly resendTokenPublisher:UserResendTokenPublisher

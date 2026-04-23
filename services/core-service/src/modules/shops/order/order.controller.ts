@@ -1,5 +1,5 @@
-import { Controller, Get, Patch, Query, Param, Body } from '@nestjs/common';
-import { Roles } from '../../auth/decorators/roles.decorator';
+import { Controller, Get, Patch, Query, Param, Body, UseGuards } from '@nestjs/common';
+import { ShopMemberGuard, MinRole } from '../guards/shop-member.guard';
 import { ZodValidationPipe } from '../../../libs/pipes/zod-validation.pipe';
 import { OrderService } from './order.service';
 import ErrorHandler from '../../../libs/errors/handler.error';
@@ -20,10 +20,11 @@ import {
 
 
 @Controller('')
-@Roles('ADMIN')
 export class OrderController {
   constructor(private readonly service: OrderService) {}
 
+  @UseGuards(ShopMemberGuard)
+  @MinRole("STAFF")
   @Get()
   findAll(
     @Param(new ZodValidationPipe(ShopIdParamSchema))
@@ -36,6 +37,8 @@ export class OrderController {
     );
   }
 
+  @UseGuards(ShopMemberGuard)
+  @MinRole("STAFF")
   @Get('/:id')
   findOne(
     @Param(
@@ -50,6 +53,8 @@ export class OrderController {
     );
   }
 
+  @UseGuards(ShopMemberGuard)
+  @MinRole("ADMIN")
   @Patch('/:id/status')
   updateStatus(
     @Param(
@@ -62,7 +67,7 @@ export class OrderController {
     body: UpdateOrderStatusDTO,
   ) {
     return ErrorHandler(() =>
-      this.service.updateStatus(
+      this.service.updateOrderStatus(
         params.shopId,
         params.id,
         body.status,
@@ -70,6 +75,8 @@ export class OrderController {
     );
   }
 
+  @UseGuards(ShopMemberGuard)
+  @MinRole("OWNER")
   @Patch('/:id/refund/:refundId')
   updateRefund(
     @Param(new ZodValidationPipe(RefundParamSchema))

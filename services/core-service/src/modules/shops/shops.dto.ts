@@ -26,7 +26,7 @@ export const ShopQuerySchema = z.object({
     .enum(["PENDING", "APPROVED", "REJECTED", "SUSPENDED"])
     .optional(),
 
-  ownerId: z.coerce.number().int().positive().optional(),
+  ownerId: z.string().optional(),
 
   createdFrom: z.coerce.date().optional(),
   createdTo: z.coerce.date().optional(),

@@ -1,18 +1,12 @@
-import { Injectable } from "@nestjs/common";
-import { MessaggingService } from "../../../libs/messagging/messagging.service";
-import { PayloadEmail } from "../../../common/types/event";
+import { Injectable } from '@nestjs/common';
+import { MessaggingService } from '../../../libs/messagging/messagging.service';
+import { PayloadEmail } from '../../../common/types/event';
 
 @Injectable()
-export class UserRegisteredPublisher{
-    constructor(
-        private readonly brocker:MessaggingService
-    ){}
+export class UserRegisteredPublisher {
+  constructor(private readonly broker: MessaggingService) {}
 
-    async publishEmail(payload:PayloadEmail){
-        await this.brocker.publish(
-            'auth.user.registered',
-            payload
-        )
-    }
-
+  async publishEmail(payload: PayloadEmail) {
+    await this.broker.publish('auth.user.registered', payload);
+  }
 }

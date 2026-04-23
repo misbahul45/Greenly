@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 export const FinanceShopIdParamSchema = z.object({
-  shopId: z.coerce.number().int().positive(),
+  shopId: z.string(),
 });
 
 export type FinanceShopIdParamDTO =
@@ -27,28 +27,14 @@ export type FinanceSortOrder =
 
 export const LedgerQuerySchema = z.object({
   page: z.coerce.number().int().positive().default(1),
-
-  limit: z.coerce.number().int().min(1).max(100).default(10),
-
+  limit: z.coerce.number().int().min(1).max(100).default(20),
   type: ledgerTypeEnum.optional(),
   search: z.string().optional(),
-
   createdFrom: z.coerce.date().optional(),
   createdTo: z.coerce.date().optional(),
-
   sortBy: z.enum(["createdAt", "amount"]).default("createdAt"),
-
   sortOrder: financeSortOrderEnum.default("desc"),
-}).refine(
-  (data) =>
-    !data.createdFrom ||
-    !data.createdTo ||
-    data.createdFrom <= data.createdTo,
-  {
-    message: "createdFrom must be before createdTo",
-    path: ["createdFrom"],
-  }
-);
+});
 
 export type LedgerQueryDTO =
   z.infer<typeof LedgerQuerySchema>;
@@ -62,27 +48,13 @@ export type CreatePayoutDTO =
 
 export const PayoutQuerySchema = z.object({
   page: z.coerce.number().int().positive().default(1),
-
   limit: z.coerce.number().int().min(1).max(100).default(10),
-
   status: payoutStatusEnum.optional(),
-
   createdFrom: z.coerce.date().optional(),
   createdTo: z.coerce.date().optional(),
-
   sortBy: z.enum(["createdAt", "paidAt", "amount"]).default("createdAt"),
-
   sortOrder: financeSortOrderEnum.default("desc"),
-}).refine(
-  (data) =>
-    !data.createdFrom ||
-    !data.createdTo ||
-    data.createdFrom <= data.createdTo,
-  {
-    message: "createdFrom must be before createdTo",
-    path: ["createdFrom"],
-  }
-);
+});
 
 export type PayoutQueryDTO =
   z.infer<typeof PayoutQuerySchema>;
