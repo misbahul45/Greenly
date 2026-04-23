@@ -11,21 +11,39 @@ export class RolesRepositository {
     skip?: number
     take?: number
     includePermissions?: boolean
+    search?: string
   }) {
     return this.db.role.findMany({
       skip: params?.skip,
       take: params?.take,
+  
+      where: params?.search
+        ? {
+            name: {
+              contains: params.search,
+            },
+          }
+        : undefined,
+  
       include: params?.includePermissions
         ? { permissions: true }
         : undefined,
     })
   }
 
-  async countRoles() {
-    return this.db.role.count()
+  async countRoles(search?: string) {
+    return this.db.role.count({
+      where: search
+        ? {
+            name: {
+              contains: search,
+            },
+          }
+        : undefined,
+    })
   }
 
-  async findRole(id: number) {
+  async findRole(id: string) {
     return this.db.role.findUnique({
       where: { id },
       include: { permissions: true },
@@ -44,26 +62,26 @@ export class RolesRepositository {
     })
   }
 
-  async updateRole(id: number, name: string) {
+  async updateRole(id: string, name: string) {
     return this.db.role.update({
       where: { id },
       data: { name },
     })
   }
 
-  async deleteRole(id: number) {
+  async deleteRole(id: string) {
     return this.db.role.delete({
       where: { id },
     })
   }
 
-  async countUserRoles(roleId: number) {
+  async countUserRoles(roleId: string) {
     return this.db.userRole.count({
       where: { roleId },
     })
   }
 
-  async attachPermissions(roleId: number, permissions: string[]) {
+  async attachPermissions(roleId: string, permissions: string[]) {
     return this.db.role.update({
       where: { id: roleId },
       data: {
@@ -75,7 +93,7 @@ export class RolesRepositository {
     })
   }
 
-  async replacePermissions(roleId: number, permissions: string[]) {
+  async replacePermissions(roleId: string, permissions: string[]) {
     return this.db.role.update({
       where: { id: roleId },
       data: {

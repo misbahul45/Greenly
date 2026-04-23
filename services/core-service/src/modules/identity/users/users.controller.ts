@@ -42,15 +42,14 @@ export class UsersController {
   }
 
 
+  @Roles('SUPER_ADMIN')
   @Get(':id')
   async findOne(
     @Param(new ZodValidationPipe(userIdParamSchema))
     params: UserIdParamDTO,
-    @Query(new ZodValidationPipe(userQuerySchema))
-    query: UserQueryDTO,
   ) {
     return ErrorHandler(() =>
-      this.service.findOne(params.id, query.include),
+      this.service.findOne(params.id),
     )
   }
 
@@ -93,17 +92,6 @@ export class UsersController {
   ){
     return ErrorHandler(()=>(
       this.service.verifyRemove(body)
-    ))
-  }
-
-  @Roles('ADMIN','SUPER_ADMIN')
-  @Post('/banned/:id')
-  async BanUnser(
-    @Param(new ZodValidationPipe(userIdParamSchema))
-    params: UserIdParamDTO,
-  ){
-    return ErrorHandler(()=>(
-      this.service.bannedUser(params)
     ))
   }
 }

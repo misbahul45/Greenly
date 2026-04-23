@@ -1,9 +1,24 @@
 import 'package:app/features/auth/auth_validation.dart';
-import 'package:app/shared/ui/TextValidation.dart';
+import 'package:app/shared/ui/text_validation.dart';
 import 'package:flutter/material.dart';
 
 class FormRegister extends StatefulWidget {
-  const FormRegister({super.key});
+  final void Function(
+    String name,
+    String email,
+    String password,
+    String confirmPassword,
+  ) onSubmit;
+
+  final bool isLoading;
+  final String? errorMessage;
+
+  const FormRegister({
+    super.key,
+    required this.onSubmit,
+    required this.isLoading,
+    this.errorMessage,
+  });
 
   @override
   State<FormRegister> createState() => _FormRegisterState();
@@ -12,10 +27,10 @@ class FormRegister extends StatefulWidget {
 class _FormRegisterState extends State<FormRegister> {
   final _formKey = GlobalKey<FormState>();
 
+  final nameController = TextEditingController();
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
   final confirmPasswordController = TextEditingController();
-  final nameController=TextEditingController();
 
   bool obscurePassword = true;
   bool obscureConfirmPassword = true;
@@ -23,29 +38,36 @@ class _FormRegisterState extends State<FormRegister> {
 
   @override
   void dispose() {
+    nameController.dispose();
     emailController.dispose();
     passwordController.dispose();
     confirmPasswordController.dispose();
-    super.dispose(); // ✅ jangan lupa
+    super.dispose();
   }
 
   void handleSubmit() {
     if (!_formKey.currentState!.validate()) {
-      print("Form Tidak Valid ❌");
       return;
     }
 
     if (!isAgree) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text("Kamu harus menyetujui syarat & ketentuan"),
+          content: Text(
+            "Kamu harus menyetujui syarat & ketentuan",
+            style: TextStyle(fontSize: 15),
+          ),
         ),
       );
       return;
     }
 
-    print("Form Valid ✅");
-    print("Email: ${emailController.text}");
+    widget.onSubmit(
+      nameController.text.trim(),
+      emailController.text.trim(),
+      passwordController.text.trim(),
+      confirmPasswordController.text.trim(),
+    );
   }
 
   void togglePassword() {
@@ -60,39 +82,53 @@ class _FormRegisterState extends State<FormRegister> {
     });
   }
 
-  void toggleLogin() {
-    Navigator.pushNamed(context, '/login');
+  void goToLogin() {
+    Navigator.pushNamed(context, "/login");
   }
 
   @override
   Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+
     return Padding(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
       child: Form(
         key: _formKey,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            /// Name
-            Textvalidation(
-              hint: "Fullname", 
+            if (widget.errorMessage != null)
+              Container(
+                padding: const EdgeInsets.all(12),
+                margin: const EdgeInsets.only(bottom: 16),
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: Colors.red.shade100,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  widget.errorMessage!,
+                  style: const TextStyle(
+                    color: Colors.red,
+                    fontSize: 15,
+                  ),
+                ),
+              ),
+            TextValidation(
+              hint: "Fullname",
               controller: nameController,
-              prefixIcon: Icons.account_balance_rounded,
+              prefixIcon: Icons.person,
               validator: AuthValidation.name,
             ),
-                    
-            /// EMAIL
-            Textvalidation(
+            const SizedBox(height: 16),
+            TextValidation(
               hint: "Email",
               controller: emailController,
               prefixIcon: Icons.email,
               validator: AuthValidation.email,
             ),
-
             const SizedBox(height: 16),
-
-            /// PASSWORD
-            Textvalidation(
+            TextValidation(
               hint: "Password",
               controller: passwordController,
               prefixIcon: Icons.lock,
@@ -105,15 +141,12 @@ class _FormRegisterState extends State<FormRegister> {
                 ),
               ),
             ),
-
             const SizedBox(height: 16),
-
-            /// CONFIRM PASSWORD
-            Textvalidation(
+            TextValidation(
               hint: "Confirm Password",
               controller: confirmPasswordController,
-              obscure: obscureConfirmPassword,
               prefixIcon: Icons.lock_outline,
+              obscure: obscureConfirmPassword,
               validator: (value) => AuthValidation.confirmPassword(
                 value,
                 passwordController.text,
@@ -127,10 +160,7 @@ class _FormRegisterState extends State<FormRegister> {
                 ),
               ),
             ),
-
             const SizedBox(height: 16),
-
-            /// AGREEMENT CHECKBOX
             Row(
               children: [
                 Checkbox(
@@ -142,29 +172,58 @@ class _FormRegisterState extends State<FormRegister> {
                   },
                 ),
                 const Expanded(
-                  child: Text("Saya menyetujui syarat & ketentuan"),
+                  child: Text(
+                    "Saya menyetujui syarat & ketentuan",
+                    style: TextStyle(fontSize: 15),
+                  ),
                 ),
               ],
             ),
-
-            const SizedBox(height: 16),
-
-            /// REGISTER BUTTON
+            const SizedBox(height: 20),
             SizedBox(
               width: double.infinity,
+              height: 50,
               child: ElevatedButton(
-                onPressed: handleSubmit,
-                child: const Text("Create Account"),
+                onPressed: widget.isLoading ? null : handleSubmit,
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 300),
+                  child: widget.isLoading
+                      ? const SizedBox(
+                          key: ValueKey("loading"),
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : Text(
+                          "Create Account",
+                          key: const ValueKey("text"),
+                          style: textTheme.titleMedium?.copyWith(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                          ),
+                        ),
+                ),
               ),
             ),
-
             const SizedBox(height: 18),
-
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Text("Have an account"),
-                TextButton(onPressed: toggleLogin, child: const Text("Login")),
+                Text(
+                  "Have an account?",
+                  style: textTheme.bodyMedium?.copyWith(fontSize: 15),
+                ),
+                TextButton(
+                  onPressed: goToLogin,
+                  child: Text(
+                    "Login",
+                    style: textTheme.bodyMedium?.copyWith(fontSize: 15),
+                  ),
+                ),
               ],
             ),
           ],

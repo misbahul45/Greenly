@@ -5,10 +5,11 @@ import * as bcrypt from 'bcrypt'
 import { generateOtp, hashValue } from '../../../../common/utils/crypto'
 import { AuthTokenType, UserStatus } from '../../../../../generated/prisma/enums'
 import { ConfigService } from '@nestjs/config'
-import { sendEmail } from '../../../../common/utils/email'
 import { AppError } from '../../../../libs/errors/app.error'
 import { ScheduleService } from './schedule.service'
 import { DeletedUserPublisher } from '../publisher/deleted.user.publisher'
+import { transformUser } from 'src/common/utils/transform'
+import { UserResponse } from '../types'
 
 @Injectable()
 
@@ -20,48 +21,56 @@ export class UsersService {
     private readonly deletedUserPublisher:DeletedUserPublisher
 ) {}
 
-  async findAll(query: UserQueryDTO) {
-    const { page, limit, status, include } = query
+  async findAll(query: UserQueryDTO) : Promise<ApiResponse<UserResponse[]>>  {
+    const { page, limit, status, search, sortBy, sortOrder } = query
 
     const [users, total] = await Promise.all([
       this.repo.getUsers({
         skip: (page - 1) * limit,
         take: limit,
         status,
-        include,
+        search,
+        sortBy,
+        sortOrder,
       }),
-      this.repo.countUsers(status),
+      this.repo.countUsers({
+        status,
+        search,
+      }),
     ])
 
     return {
-      data: {
-        items: users,
-        meta: {
-          total,
-          page,
-          lastPage: Math.ceil(total / limit),
-        },
+      data:users.map(transformUser),
+      meta: {
+        total,
+        page,
+        limit,
+        lastPage: Math.ceil(total / limit),
       },
       message: 'Users fetched successfully',
     }
   }
+  async findOne(id: string) : Promise<ApiResponse<UserResponse>>  {
+    const user = await this.repo.findUserById(id)
 
-  async findOne(id: number, include?: any) {
-    const user = await this.repo.findUser(id, include)
-
-    if (!user) throw new NotFoundException('User not found')
-
+    if (!user) {
+      throw new AppError('User not found', 404)
+    }
+    if (user.deletedAt) {
+      throw new AppError('User not found', 404)
+    }
+    
     return {
-      data: user,
+      data: transformUser(user),
       message: 'User fetched successfully',
     }
   }
 
-  async create(email: string, password: string) {
+  async create(email: string, password: string) : Promise<ApiResponse<UserResponse>> {
     const existing = await this.repo.findUserByEmail(email)
 
-    if (existing) {
-      throw new BadRequestException('Email already registered')
+    if (existing?.email) {
+      throw new AppError('Email already registered', 400)
     }
 
     const passwordHash = await bcrypt.hash(password, 10)
@@ -70,28 +79,28 @@ export class UsersService {
       email,
       passwordHash,
     })
-
+    
     return {
-      data: user,
+      data: transformUser(user),
       message: 'User created successfully',
     }
   }
 
-  async update(id: number, data: any) {
-    const user = await this.repo.findUser(id)
+  async update(id: string, data: any) : Promise<ApiResponse<UserResponse>> {
+    const user = await this.repo.findUserById(id)
 
-    if (!user) throw new NotFoundException('User not found')
+    if (!user) throw new AppError('User not found', 404)
 
     const updated = await this.repo.updateUser(id, data)
 
     return {
-      data: updated,
+      data: transformUser(updated),
       message: 'User updated successfully',
     }
   }
 
-  async remove(user:UserLogin) {
-    const findUser = await this.repo.findUser(user.sub, ['profile']) as any
+  async remove(user:UserLogin) : Promise<ApiResponse<null>> {
+    const findUser = await this.repo.findUserById(user.sub) as any
     if (!findUser) throw new NotFoundException('User not found')
     
     const rawOtp = generateOtp();
@@ -118,13 +127,14 @@ export class UsersService {
     })
 
     return {
+      data: null,
       message: 'Check your validation otp for delete your Accoount',
     }
   }
 
 
 
-  async verifyRemove(payload:VerifyDeleteDTO){
+  async verifyRemove(payload:VerifyDeleteDTO) : Promise<ApiResponse<null>> {
       const hashedOtp = hashValue(payload.token);
       const findToken=await this.repo.findAuthToken(hashedOtp, AuthTokenType.DELETE_USER)
 
@@ -132,7 +142,7 @@ export class UsersService {
         throw new AppError('Invalid otp token', 400)
       }
 
-      const findUser=await this.repo.findUser(findToken.userId)
+      const findUser=await this.repo.findUserById(findToken.userId)
 
       // soft delete
 
@@ -142,20 +152,9 @@ export class UsersService {
 
       await this.schedule.cleanUpUser()
       return{
+        data: null,
         message:'User sucessfully deleted'
       }
-  }
-
-  async bannedUser(params:UserIdParamDTO){
-    const findUser=await this.repo.findUser(params.id)
-
-    if(!findUser){
-      throw new AppError('User not found', 404)
-    }
-
-    await this.repo.updateUser(params.id, {
-      status:UserStatus.BANNED
-    })
   }
 
 }

@@ -1,41 +1,57 @@
 import 'package:flutter/material.dart';
 
 class AppTheme {
-  static const Color primaryColor = Color(0xFF84B179);
-  static const Color secondaryColor = Color(0xFFA2CB8B);
-  static const Color tertiaryColor = Color(0xFFC7EABB);
-  static const Color backgroundColor = Color(0xFFE8F5BD);
+  static const Color primaryColor = Color(0xFF2E7D32);
+  static const Color secondaryColor = Color(0xFF4CAF50);
+  static const Color tertiaryColor = Color(0xFFA5D6A7);
+
+  static const Color backgroundColor = Colors.white;
+  static const Color textColor = Colors.black;
+
+  static const LinearGradient backgroundGradient = LinearGradient(
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+    colors: [
+      Colors.white,
+      Colors.white,
+    ],
+  );
 
   static ThemeData lightTheme = ThemeData(
     useMaterial3: true,
     brightness: Brightness.light,
 
+    scaffoldBackgroundColor: backgroundColor,
+
     colorScheme: const ColorScheme(
       brightness: Brightness.light,
       primary: primaryColor,
       onPrimary: Colors.white,
-
       secondary: secondaryColor,
-      onSecondary: Colors.black,
-
+      onSecondary: Colors.white,
       tertiary: tertiaryColor,
       onTertiary: Colors.black,
-
       error: Colors.red,
       onError: Colors.white,
-
-      background: backgroundColor,
-      onBackground: Colors.black,
-
       surface: Colors.white,
       onSurface: Colors.black,
     ),
 
-    scaffoldBackgroundColor: backgroundColor,
+    textTheme: const TextTheme(
+      bodyLarge: TextStyle(color: textColor),
+      bodyMedium: TextStyle(color: textColor),
+      bodySmall: TextStyle(color: textColor),
+      titleLarge: TextStyle(color: textColor),
+      titleMedium: TextStyle(color: textColor),
+      titleSmall: TextStyle(color: textColor),
+      headlineLarge: TextStyle(color: textColor),
+      headlineMedium: TextStyle(color: textColor),
+      headlineSmall: TextStyle(color: textColor),
+    ),
 
     appBarTheme: const AppBarTheme(
-      backgroundColor: primaryColor,
-      foregroundColor: Colors.white,
+      backgroundColor: Colors.white,
+      foregroundColor: Colors.black,
       elevation: 0,
       centerTitle: true,
     ),
@@ -44,7 +60,9 @@ class AppTheme {
       style: ElevatedButton.styleFrom(
         backgroundColor: primaryColor,
         foregroundColor: Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
         padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
       ),
     ),
@@ -53,13 +71,17 @@ class AppTheme {
       style: OutlinedButton.styleFrom(
         foregroundColor: primaryColor,
         side: const BorderSide(color: primaryColor),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
       ),
     ),
 
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
-      fillColor: tertiaryColor.withOpacity(0.3),
+      fillColor: const Color(0xFFF5F5F5),
+      hintStyle: const TextStyle(color: Colors.grey),
+      labelStyle: const TextStyle(color: textColor),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
         borderSide: BorderSide.none,
@@ -72,8 +94,10 @@ class AppTheme {
 
     cardTheme: CardThemeData(
       color: Colors.white,
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      elevation: 1,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+      ),
     ),
   );
 }

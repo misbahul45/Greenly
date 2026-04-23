@@ -8,14 +8,16 @@ import { AuthRepository } from './auth.repository';
 import { EmailConsume } from './consumer/email.consume';
 import { UserRegisteredPublisher } from './publisher/user_registered.publisher';
 import { UserLoginPublisher } from './publisher/user_login.publisher';
-import { UserVerifiedPublisher } from './publisher/user_verified.publisher';
 import { UserForgotPasswordPublisher } from './publisher/user_forgot_password.publisher';
 import { JwtRefreshStrategy } from './strategies/jwt.refresh.strategy';
 import { JwtAccessStrategy } from './strategies/jwt.access.strategy';
+import { UserResendTokenPublisher } from './publisher/user_resend_token.publisher';
+import { PassportModule } from '@nestjs/passport';
 
 @Module({
   imports: [
     ConfigModule, 
+    PassportModule,
     JwtModule.registerAsync({
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({
@@ -35,10 +37,10 @@ import { JwtAccessStrategy } from './strategies/jwt.access.strategy';
     AuthService,
     UserRegisteredPublisher,
     UserLoginPublisher,
-    UserVerifiedPublisher,
     UserForgotPasswordPublisher,
+    UserResendTokenPublisher,
     JwtAccessStrategy,
-    JwtRefreshStrategy
+    JwtRefreshStrategy,
   ],
 
   exports: [AuthService],

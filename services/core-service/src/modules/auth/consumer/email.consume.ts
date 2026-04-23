@@ -54,8 +54,6 @@ export class EmailConsume implements OnModuleInit {
   async sendVerificationOtp(
     @Payload() payload: PayloadEmail
   ) {
-    console.log("Received event:", payload);
-
     const emailConfig = this.config.get("emailJs", { infer: true });
 
     if (!emailConfig) {
@@ -98,6 +96,30 @@ export class EmailConsume implements OnModuleInit {
     });
 
     console.log("OTP reset sent to:", payload.email);
+  }
+
+  @EventPattern('auth.user.resend.token')
+  async resendToken(
+    @Payload() payload:PayloadEmail
+  ){
+    const emailConfig = this.config.get("emailJs", { infer: true });
+
+    if (!emailConfig) {
+      throw new AppError("Email config not found", 500);
+    }
+
+    await this.breaker.fire({
+      serviceId: emailConfig.serviceId,
+      templateId: emailConfig.templates.verifyEmail,
+      userId: emailConfig.userId,
+      accessToken: emailConfig.accessToken,
+      email: payload.email,
+      name: payload.name,
+      token: payload.otp,
+      action: payload.action,
+    });
+
+    console.log("OTP resend sent to:", payload.email);
   }
 
   @EventPattern("auth.user.deleted")

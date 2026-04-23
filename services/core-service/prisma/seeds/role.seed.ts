@@ -1,30 +1,7 @@
-// prisma/seeds/rbac.seed.ts
-
-import { PrismaClient } from '../../generated/prisma/client'
-import { PrismaMariaDb } from '@prisma/adapter-mariadb'
-import * as dotenv from 'dotenv'
+import { PrismaClient } from '@prisma/client/extension'
 import bcrypt from 'bcryptjs'
 
-dotenv.config()
-
-const adapter = new PrismaMariaDb({
-  host: process.env.DATABASE_HOST,
-  port: parseInt(process.env.DATABASE_PORT || '3306'),
-  user: process.env.DATABASE_USER,
-  password: process.env.DATABASE_PASSWORD,
-  database: process.env.DATABASE_NAME,
-  connectionLimit: 5,
-})
-
-const prisma = new PrismaClient({ adapter })
-
-async function main() {
-  /*
-   |--------------------------------------------------------------------------
-   | 1️⃣ GLOBAL SYSTEM ROLES (Marketplace Level Only)
-   |--------------------------------------------------------------------------
-   */
-
+export async function seedRbac(prisma: PrismaClient) {
   const roles = [
     'SUPER_ADMIN',
     'ADMIN',
@@ -34,44 +11,23 @@ async function main() {
     'CUSTOMER'
   ]
 
-  /*
-   |--------------------------------------------------------------------------
-   | 2️⃣ PERMISSIONS (SYSTEM LEVEL)
-   |--------------------------------------------------------------------------
-   */
-
   const permissions = [
-    // user management
     'user.read',
     'user.update',
     'user.suspend',
     'user.delete',
-
-    // shop approval
     'shop.read',
     'shop.approve',
     'shop.suspend',
     'shop.delete',
-
-    // order monitoring
     'order.read',
     'order.force_cancel',
-
-    // payment & finance
     'payment.read',
     'payment.refund',
     'payout.read',
     'payout.process',
-
-    // system
     'system.manage',
   ]
-
-  /*
-   |--------------------------------------------------------------------------
-   | 3️⃣ CREATE PERMISSIONS
-   |--------------------------------------------------------------------------
-   */
 
   for (const name of permissions) {
     await prisma.permission.upsert({
@@ -81,12 +37,6 @@ async function main() {
     })
   }
 
-  /*
-   |--------------------------------------------------------------------------
-   | 4️⃣ CREATE ROLES
-   |--------------------------------------------------------------------------
-   */
-
   for (const name of roles) {
     await prisma.role.upsert({
       where: { name },
@@ -95,15 +45,8 @@ async function main() {
     })
   }
 
-  /*
-   |--------------------------------------------------------------------------
-   | 5️⃣ ROLE → PERMISSION MAP (SYSTEM LEVEL)
-   |--------------------------------------------------------------------------
-   */
-
   const rolePermissionsMap: Record<string, string[]> = {
     SUPER_ADMIN: permissions,
-
     ADMIN: [
       'user.read',
       'user.update',
@@ -112,7 +55,6 @@ async function main() {
       'order.read',
       'payment.read',
     ],
-
     FINANCE_ADMIN: [
       'payment.read',
       'payment.refund',
@@ -120,22 +62,88 @@ async function main() {
       'payout.process',
       'order.read',
     ],
-
     SUPPORT_ADMIN: [
       'user.read',
       'order.read',
       'order.force_cancel',
     ],
-
     SYSTEM: ['system.manage'],
     CUSTOMER: [],
   }
 
-  /*
-   |--------------------------------------------------------------------------
-   | 6️⃣ ATTACH PERMISSIONS TO ROLES
-   |--------------------------------------------------------------------------
-   */
+  const users = [
+    {
+      email: 'rani@gmail.com',
+      password: 'rani12345',
+      fullName: 'Rani',
+      role: 'SUPER_ADMIN'
+    },
+    {
+      email: 'nesa@gmail.com',
+      password: 'nesa12345',
+      fullName: 'Nesa',
+      role: 'ADMIN'
+    },
+    {
+      email: 'misbahulmuttaqin395@gmail.com',
+      password: 'takin123',
+      fullName: 'Misbahul Muttaqin',
+      role: 'CUSTOMER'
+    },
+  ]
+
+  for (const u of users) {
+    const hashedPassword = await bcrypt.hash(u.password, 10)
+
+    const user = await prisma.user.upsert({
+      where: { email: u.email },
+      update: {
+        emailVerified: new Date(),
+        status: 'ACTIVE',
+        isActive: true,
+      },
+      create: {
+        email: u.email,
+        passwordHash: hashedPassword,
+        status: 'ACTIVE',
+        emailVerified: new Date(),
+        isActive: true,
+      },
+    })
+
+    await prisma.userProfile.upsert({
+      where: { userId: user.id },
+      update: {
+        fullName: u.fullName,
+      },
+      create: {
+        userId: user.id,
+        fullName: u.fullName,
+        phone: '',
+        address: '',
+      },
+    })
+
+    const role = await prisma.role.findUnique({
+      where: { name: u.role }
+    })
+
+    if (role) {
+      await prisma.userRole.upsert({
+        where: {
+          userId_roleId: {
+            userId: user.id,
+            roleId: role.id
+          }
+        },
+        update: {},
+        create: {
+          userId: user.id,
+          roleId: role.id,
+        },
+      })
+    }
+  }
 
      const users = [
     { email: 'rani@gmail.com', password: 'rani12345', fullName: 'Rani', role: 'SUPER_ADMIN' },
@@ -195,21 +203,12 @@ async function main() {
       where: { id: role.id },
       data: {
         permissions: {
-          set: [], // reset dulu supaya idempotent
+          set: [],
           connect: perms.map((name) => ({ name })),
         },
       },
     })
   }
 
-  console.log('✅ Global Roles & Permissions seeded successfully')
+  console.log('✅ RBAC Seeded Successfully')
 }
-
-main()
-  .catch((e) => {
-    console.error(e)
-    process.exit(1)
-  })
-  .finally(async () => {
-    await prisma.$disconnect()
-  })

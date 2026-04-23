@@ -1,13 +1,14 @@
+import { Search } from '@nestjs/common'
 import { z } from 'zod'
 
 export const roleIdParamSchema = z.object({
-  id: z.coerce.number().int().positive(),
+  id: z.string(),
 })
 
 export type RoleIdParamDTO = z.infer<typeof roleIdParamSchema>
 
 export const assignRoleParamSchema = z.object({
-  roleId: z.coerce.number().int().positive(),
+  roleId: z.string(),
 })
 
 export type AssignRoleParamDTO = z.infer<typeof assignRoleParamSchema>
@@ -71,6 +72,7 @@ export const roleQuerySchema = z.object({
     .union([z.literal('true'), z.literal('false')])
     .optional()
     .transform((val) => val === 'true'),
+  search: z.string().optional(),
 })
 
 export type RoleQueryDTO = z.infer<typeof roleQuerySchema>

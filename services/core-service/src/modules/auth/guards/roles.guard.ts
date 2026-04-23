@@ -27,6 +27,7 @@ export class RolesGuard implements CanActivate {
     const hasRole = requiredRoles.some((role) =>
       user.roles?.includes(role),
     )
+    
 
     if (!hasRole) {
       throw new AppError('Insufficient role', 403)

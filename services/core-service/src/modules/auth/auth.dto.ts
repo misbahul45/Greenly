@@ -62,23 +62,34 @@ export const ForgotPasswordSchema = z.object({
 export type ForgotPasswordDTO = z.infer<typeof ForgotPasswordSchema>;
 
 
-
-
 export const ChangePasswordSchema = z.object({
-  tokenId:z.number().min(1),
+  tokenId:z.string(),
   newPassword: z
     .string()
     .min(8)
     .max(100),
+  confirmNewPassword: z
+    .string()
+}).refine((data) => data.newPassword === data.confirmNewPassword, {
+  message: 'Passwords do not match',
+  path: ['confirmNewPassword'],
 });
 
 export type ChangePasswordDTO = z.infer<typeof ChangePasswordSchema>;
 
 
 export const GenerateTokensSchema = z.object({
-  sub: z.number(),
+  sub: z.string(),
   email: z.string().email(),
   roles: z.array(z.string()),
 });
 
 export type GenerateTokensDTO =  z.infer<typeof GenerateTokensSchema>;
+
+
+export const ResendTokenSchema = z.object({
+  email: z.string().email().toLowerCase(),
+})
+
+
+export type ResendTokenDTO =  z.infer<typeof ResendTokenSchema>;

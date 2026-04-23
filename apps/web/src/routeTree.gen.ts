@@ -18,13 +18,22 @@ import { Route as AuthLoginRouteImport } from './routes/auth/login'
 import { Route as AuthedSellerRouteImport } from './routes/_authed/seller'
 import { Route as AuthedAdminRouteImport } from './routes/_authed/admin'
 import { Route as AuthedUserDataRouteImport } from './routes/_authed/user/data'
+import { Route as AuthedSellerProdukduaRouteImport } from './routes/_authed/seller/produkdua'
 import { Route as AuthedSellerProdukRouteImport } from './routes/_authed/seller/produk'
+import { Route as AuthedSellerPesananduaRouteImport } from './routes/_authed/seller/pesanandua'
 import { Route as AuthedSellerPesananRouteImport } from './routes/_authed/seller/pesanan'
 import { Route as AuthedSellerDashboardRouteImport } from './routes/_authed/seller/dashboard'
+import { Route as AuthedSellerCustomerRouteImport } from './routes/_authed/seller/customer'
+import { Route as AuthedSellerChatRouteImport } from './routes/_authed/seller/chat'
+import { Route as AuthedAdminTokotokoRouteImport } from './routes/_authed/admin/tokotoko'
 import { Route as AuthedAdminTokoRouteImport } from './routes/_authed/admin/toko'
+import { Route as AuthedAdminPesaniniRouteImport } from './routes/_authed/admin/pesanini'
 import { Route as AuthedAdminPesananRouteImport } from './routes/_authed/admin/pesanan'
 import { Route as AuthedAdminKategoriRouteImport } from './routes/_authed/admin/kategori'
 import { Route as AuthedAdminDashboardRouteImport } from './routes/_authed/admin/dashboard'
+import { Route as AuthedAdminDaftarkategoriRouteImport } from './routes/_authed/admin/daftarkategori'
+import { Route as AuthedAdminCustomerRouteImport } from './routes/_authed/admin/customer'
+import { Route as AuthedAdminApproval2RouteImport } from './routes/_authed/admin/approval2'
 import { Route as AuthedAdminApprovalRouteImport } from './routes/_authed/admin/approval'
 
 const HomeRoute = HomeRouteImport.update({
@@ -71,9 +80,19 @@ const AuthedUserDataRoute = AuthedUserDataRouteImport.update({
   path: '/user/data',
   getParentRoute: () => AuthedRouteRoute,
 } as any)
+const AuthedSellerProdukduaRoute = AuthedSellerProdukduaRouteImport.update({
+  id: '/produkdua',
+  path: '/produkdua',
+  getParentRoute: () => AuthedSellerRoute,
+} as any)
 const AuthedSellerProdukRoute = AuthedSellerProdukRouteImport.update({
   id: '/produk',
   path: '/produk',
+  getParentRoute: () => AuthedSellerRoute,
+} as any)
+const AuthedSellerPesananduaRoute = AuthedSellerPesananduaRouteImport.update({
+  id: '/pesanandua',
+  path: '/pesanandua',
   getParentRoute: () => AuthedSellerRoute,
 } as any)
 const AuthedSellerPesananRoute = AuthedSellerPesananRouteImport.update({
@@ -86,9 +105,29 @@ const AuthedSellerDashboardRoute = AuthedSellerDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AuthedSellerRoute,
 } as any)
+const AuthedSellerCustomerRoute = AuthedSellerCustomerRouteImport.update({
+  id: '/customer',
+  path: '/customer',
+  getParentRoute: () => AuthedSellerRoute,
+} as any)
+const AuthedSellerChatRoute = AuthedSellerChatRouteImport.update({
+  id: '/chat',
+  path: '/chat',
+  getParentRoute: () => AuthedSellerRoute,
+} as any)
+const AuthedAdminTokotokoRoute = AuthedAdminTokotokoRouteImport.update({
+  id: '/tokotoko',
+  path: '/tokotoko',
+  getParentRoute: () => AuthedAdminRoute,
+} as any)
 const AuthedAdminTokoRoute = AuthedAdminTokoRouteImport.update({
   id: '/toko',
   path: '/toko',
+  getParentRoute: () => AuthedAdminRoute,
+} as any)
+const AuthedAdminPesaniniRoute = AuthedAdminPesaniniRouteImport.update({
+  id: '/pesanini',
+  path: '/pesanini',
   getParentRoute: () => AuthedAdminRoute,
 } as any)
 const AuthedAdminPesananRoute = AuthedAdminPesananRouteImport.update({
@@ -106,6 +145,22 @@ const AuthedAdminDashboardRoute = AuthedAdminDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AuthedAdminRoute,
 } as any)
+const AuthedAdminDaftarkategoriRoute =
+  AuthedAdminDaftarkategoriRouteImport.update({
+    id: '/daftarkategori',
+    path: '/daftarkategori',
+    getParentRoute: () => AuthedAdminRoute,
+  } as any)
+const AuthedAdminCustomerRoute = AuthedAdminCustomerRouteImport.update({
+  id: '/customer',
+  path: '/customer',
+  getParentRoute: () => AuthedAdminRoute,
+} as any)
+const AuthedAdminApproval2Route = AuthedAdminApproval2RouteImport.update({
+  id: '/approval2',
+  path: '/approval2',
+  getParentRoute: () => AuthedAdminRoute,
+} as any)
 const AuthedAdminApprovalRoute = AuthedAdminApprovalRouteImport.update({
   id: '/approval',
   path: '/approval',
@@ -121,13 +176,22 @@ export interface FileRoutesByFullPath {
   '/auth/register': typeof AuthRegisterRoute
   '/demo/tanstack-query': typeof DemoTanstackQueryRoute
   '/admin/approval': typeof AuthedAdminApprovalRoute
+  '/admin/approval2': typeof AuthedAdminApproval2Route
+  '/admin/customer': typeof AuthedAdminCustomerRoute
+  '/admin/daftarkategori': typeof AuthedAdminDaftarkategoriRoute
   '/admin/dashboard': typeof AuthedAdminDashboardRoute
   '/admin/kategori': typeof AuthedAdminKategoriRoute
   '/admin/pesanan': typeof AuthedAdminPesananRoute
+  '/admin/pesanini': typeof AuthedAdminPesaniniRoute
   '/admin/toko': typeof AuthedAdminTokoRoute
+  '/admin/tokotoko': typeof AuthedAdminTokotokoRoute
+  '/seller/chat': typeof AuthedSellerChatRoute
+  '/seller/customer': typeof AuthedSellerCustomerRoute
   '/seller/dashboard': typeof AuthedSellerDashboardRoute
   '/seller/pesanan': typeof AuthedSellerPesananRoute
+  '/seller/pesanandua': typeof AuthedSellerPesananduaRoute
   '/seller/produk': typeof AuthedSellerProdukRoute
+  '/seller/produkdua': typeof AuthedSellerProdukduaRoute
   '/user/data': typeof AuthedUserDataRoute
 }
 export interface FileRoutesByTo {
@@ -139,13 +203,22 @@ export interface FileRoutesByTo {
   '/auth/register': typeof AuthRegisterRoute
   '/demo/tanstack-query': typeof DemoTanstackQueryRoute
   '/admin/approval': typeof AuthedAdminApprovalRoute
+  '/admin/approval2': typeof AuthedAdminApproval2Route
+  '/admin/customer': typeof AuthedAdminCustomerRoute
+  '/admin/daftarkategori': typeof AuthedAdminDaftarkategoriRoute
   '/admin/dashboard': typeof AuthedAdminDashboardRoute
   '/admin/kategori': typeof AuthedAdminKategoriRoute
   '/admin/pesanan': typeof AuthedAdminPesananRoute
+  '/admin/pesanini': typeof AuthedAdminPesaniniRoute
   '/admin/toko': typeof AuthedAdminTokoRoute
+  '/admin/tokotoko': typeof AuthedAdminTokotokoRoute
+  '/seller/chat': typeof AuthedSellerChatRoute
+  '/seller/customer': typeof AuthedSellerCustomerRoute
   '/seller/dashboard': typeof AuthedSellerDashboardRoute
   '/seller/pesanan': typeof AuthedSellerPesananRoute
+  '/seller/pesanandua': typeof AuthedSellerPesananduaRoute
   '/seller/produk': typeof AuthedSellerProdukRoute
+  '/seller/produkdua': typeof AuthedSellerProdukduaRoute
   '/user/data': typeof AuthedUserDataRoute
 }
 export interface FileRoutesById {
@@ -159,13 +232,22 @@ export interface FileRoutesById {
   '/auth/register': typeof AuthRegisterRoute
   '/demo/tanstack-query': typeof DemoTanstackQueryRoute
   '/_authed/admin/approval': typeof AuthedAdminApprovalRoute
+  '/_authed/admin/approval2': typeof AuthedAdminApproval2Route
+  '/_authed/admin/customer': typeof AuthedAdminCustomerRoute
+  '/_authed/admin/daftarkategori': typeof AuthedAdminDaftarkategoriRoute
   '/_authed/admin/dashboard': typeof AuthedAdminDashboardRoute
   '/_authed/admin/kategori': typeof AuthedAdminKategoriRoute
   '/_authed/admin/pesanan': typeof AuthedAdminPesananRoute
+  '/_authed/admin/pesanini': typeof AuthedAdminPesaniniRoute
   '/_authed/admin/toko': typeof AuthedAdminTokoRoute
+  '/_authed/admin/tokotoko': typeof AuthedAdminTokotokoRoute
+  '/_authed/seller/chat': typeof AuthedSellerChatRoute
+  '/_authed/seller/customer': typeof AuthedSellerCustomerRoute
   '/_authed/seller/dashboard': typeof AuthedSellerDashboardRoute
   '/_authed/seller/pesanan': typeof AuthedSellerPesananRoute
+  '/_authed/seller/pesanandua': typeof AuthedSellerPesananduaRoute
   '/_authed/seller/produk': typeof AuthedSellerProdukRoute
+  '/_authed/seller/produkdua': typeof AuthedSellerProdukduaRoute
   '/_authed/user/data': typeof AuthedUserDataRoute
 }
 export interface FileRouteTypes {
@@ -179,13 +261,22 @@ export interface FileRouteTypes {
     | '/auth/register'
     | '/demo/tanstack-query'
     | '/admin/approval'
+    | '/admin/approval2'
+    | '/admin/customer'
+    | '/admin/daftarkategori'
     | '/admin/dashboard'
     | '/admin/kategori'
     | '/admin/pesanan'
+    | '/admin/pesanini'
     | '/admin/toko'
+    | '/admin/tokotoko'
+    | '/seller/chat'
+    | '/seller/customer'
     | '/seller/dashboard'
     | '/seller/pesanan'
+    | '/seller/pesanandua'
     | '/seller/produk'
+    | '/seller/produkdua'
     | '/user/data'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -197,13 +288,22 @@ export interface FileRouteTypes {
     | '/auth/register'
     | '/demo/tanstack-query'
     | '/admin/approval'
+    | '/admin/approval2'
+    | '/admin/customer'
+    | '/admin/daftarkategori'
     | '/admin/dashboard'
     | '/admin/kategori'
     | '/admin/pesanan'
+    | '/admin/pesanini'
     | '/admin/toko'
+    | '/admin/tokotoko'
+    | '/seller/chat'
+    | '/seller/customer'
     | '/seller/dashboard'
     | '/seller/pesanan'
+    | '/seller/pesanandua'
     | '/seller/produk'
+    | '/seller/produkdua'
     | '/user/data'
   id:
     | '__root__'
@@ -216,13 +316,22 @@ export interface FileRouteTypes {
     | '/auth/register'
     | '/demo/tanstack-query'
     | '/_authed/admin/approval'
+    | '/_authed/admin/approval2'
+    | '/_authed/admin/customer'
+    | '/_authed/admin/daftarkategori'
     | '/_authed/admin/dashboard'
     | '/_authed/admin/kategori'
     | '/_authed/admin/pesanan'
+    | '/_authed/admin/pesanini'
     | '/_authed/admin/toko'
+    | '/_authed/admin/tokotoko'
+    | '/_authed/seller/chat'
+    | '/_authed/seller/customer'
     | '/_authed/seller/dashboard'
     | '/_authed/seller/pesanan'
+    | '/_authed/seller/pesanandua'
     | '/_authed/seller/produk'
+    | '/_authed/seller/produkdua'
     | '/_authed/user/data'
   fileRoutesById: FileRoutesById
 }
@@ -300,11 +409,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedUserDataRouteImport
       parentRoute: typeof AuthedRouteRoute
     }
+    '/_authed/seller/produkdua': {
+      id: '/_authed/seller/produkdua'
+      path: '/produkdua'
+      fullPath: '/seller/produkdua'
+      preLoaderRoute: typeof AuthedSellerProdukduaRouteImport
+      parentRoute: typeof AuthedSellerRoute
+    }
     '/_authed/seller/produk': {
       id: '/_authed/seller/produk'
       path: '/produk'
       fullPath: '/seller/produk'
       preLoaderRoute: typeof AuthedSellerProdukRouteImport
+      parentRoute: typeof AuthedSellerRoute
+    }
+    '/_authed/seller/pesanandua': {
+      id: '/_authed/seller/pesanandua'
+      path: '/pesanandua'
+      fullPath: '/seller/pesanandua'
+      preLoaderRoute: typeof AuthedSellerPesananduaRouteImport
       parentRoute: typeof AuthedSellerRoute
     }
     '/_authed/seller/pesanan': {
@@ -321,11 +444,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedSellerDashboardRouteImport
       parentRoute: typeof AuthedSellerRoute
     }
+    '/_authed/seller/customer': {
+      id: '/_authed/seller/customer'
+      path: '/customer'
+      fullPath: '/seller/customer'
+      preLoaderRoute: typeof AuthedSellerCustomerRouteImport
+      parentRoute: typeof AuthedSellerRoute
+    }
+    '/_authed/seller/chat': {
+      id: '/_authed/seller/chat'
+      path: '/chat'
+      fullPath: '/seller/chat'
+      preLoaderRoute: typeof AuthedSellerChatRouteImport
+      parentRoute: typeof AuthedSellerRoute
+    }
+    '/_authed/admin/tokotoko': {
+      id: '/_authed/admin/tokotoko'
+      path: '/tokotoko'
+      fullPath: '/admin/tokotoko'
+      preLoaderRoute: typeof AuthedAdminTokotokoRouteImport
+      parentRoute: typeof AuthedAdminRoute
+    }
     '/_authed/admin/toko': {
       id: '/_authed/admin/toko'
       path: '/toko'
       fullPath: '/admin/toko'
       preLoaderRoute: typeof AuthedAdminTokoRouteImport
+      parentRoute: typeof AuthedAdminRoute
+    }
+    '/_authed/admin/pesanini': {
+      id: '/_authed/admin/pesanini'
+      path: '/pesanini'
+      fullPath: '/admin/pesanini'
+      preLoaderRoute: typeof AuthedAdminPesaniniRouteImport
       parentRoute: typeof AuthedAdminRoute
     }
     '/_authed/admin/pesanan': {
@@ -349,6 +500,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedAdminDashboardRouteImport
       parentRoute: typeof AuthedAdminRoute
     }
+    '/_authed/admin/daftarkategori': {
+      id: '/_authed/admin/daftarkategori'
+      path: '/daftarkategori'
+      fullPath: '/admin/daftarkategori'
+      preLoaderRoute: typeof AuthedAdminDaftarkategoriRouteImport
+      parentRoute: typeof AuthedAdminRoute
+    }
+    '/_authed/admin/customer': {
+      id: '/_authed/admin/customer'
+      path: '/customer'
+      fullPath: '/admin/customer'
+      preLoaderRoute: typeof AuthedAdminCustomerRouteImport
+      parentRoute: typeof AuthedAdminRoute
+    }
+    '/_authed/admin/approval2': {
+      id: '/_authed/admin/approval2'
+      path: '/approval2'
+      fullPath: '/admin/approval2'
+      preLoaderRoute: typeof AuthedAdminApproval2RouteImport
+      parentRoute: typeof AuthedAdminRoute
+    }
     '/_authed/admin/approval': {
       id: '/_authed/admin/approval'
       path: '/approval'
@@ -361,18 +533,28 @@ declare module '@tanstack/react-router' {
 
 interface AuthedAdminRouteChildren {
   AuthedAdminApprovalRoute: typeof AuthedAdminApprovalRoute
+  AuthedAdminApproval2Route: typeof AuthedAdminApproval2Route
+  AuthedAdminCustomerRoute: typeof AuthedAdminCustomerRoute
+  AuthedAdminDaftarkategoriRoute: typeof AuthedAdminDaftarkategoriRoute
   AuthedAdminDashboardRoute: typeof AuthedAdminDashboardRoute
   AuthedAdminKategoriRoute: typeof AuthedAdminKategoriRoute
   AuthedAdminPesananRoute: typeof AuthedAdminPesananRoute
+  AuthedAdminPesaniniRoute: typeof AuthedAdminPesaniniRoute
   AuthedAdminTokoRoute: typeof AuthedAdminTokoRoute
+  AuthedAdminTokotokoRoute: typeof AuthedAdminTokotokoRoute
 }
 
 const AuthedAdminRouteChildren: AuthedAdminRouteChildren = {
   AuthedAdminApprovalRoute: AuthedAdminApprovalRoute,
+  AuthedAdminApproval2Route: AuthedAdminApproval2Route,
+  AuthedAdminCustomerRoute: AuthedAdminCustomerRoute,
+  AuthedAdminDaftarkategoriRoute: AuthedAdminDaftarkategoriRoute,
   AuthedAdminDashboardRoute: AuthedAdminDashboardRoute,
   AuthedAdminKategoriRoute: AuthedAdminKategoriRoute,
   AuthedAdminPesananRoute: AuthedAdminPesananRoute,
+  AuthedAdminPesaniniRoute: AuthedAdminPesaniniRoute,
   AuthedAdminTokoRoute: AuthedAdminTokoRoute,
+  AuthedAdminTokotokoRoute: AuthedAdminTokotokoRoute,
 }
 
 const AuthedAdminRouteWithChildren = AuthedAdminRoute._addFileChildren(
@@ -380,15 +562,23 @@ const AuthedAdminRouteWithChildren = AuthedAdminRoute._addFileChildren(
 )
 
 interface AuthedSellerRouteChildren {
+  AuthedSellerChatRoute: typeof AuthedSellerChatRoute
+  AuthedSellerCustomerRoute: typeof AuthedSellerCustomerRoute
   AuthedSellerDashboardRoute: typeof AuthedSellerDashboardRoute
   AuthedSellerPesananRoute: typeof AuthedSellerPesananRoute
+  AuthedSellerPesananduaRoute: typeof AuthedSellerPesananduaRoute
   AuthedSellerProdukRoute: typeof AuthedSellerProdukRoute
+  AuthedSellerProdukduaRoute: typeof AuthedSellerProdukduaRoute
 }
 
 const AuthedSellerRouteChildren: AuthedSellerRouteChildren = {
+  AuthedSellerChatRoute: AuthedSellerChatRoute,
+  AuthedSellerCustomerRoute: AuthedSellerCustomerRoute,
   AuthedSellerDashboardRoute: AuthedSellerDashboardRoute,
   AuthedSellerPesananRoute: AuthedSellerPesananRoute,
+  AuthedSellerPesananduaRoute: AuthedSellerPesananduaRoute,
   AuthedSellerProdukRoute: AuthedSellerProdukRoute,
+  AuthedSellerProdukduaRoute: AuthedSellerProdukduaRoute,
 }
 
 const AuthedSellerRouteWithChildren = AuthedSellerRoute._addFileChildren(

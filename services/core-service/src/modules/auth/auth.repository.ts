@@ -5,6 +5,7 @@ import { randomAvatarUrl } from "../../common/utils/random-avatar";
 import { generateOtp, hashValue } from "../../common/utils/crypto";
 import { AuthTokenType, UserStatus } from "../../../generated/prisma/enums";
 import * as bcrypt from 'bcrypt'
+import { AuthToken } from "generated/prisma/client";
 @Injectable()
 export class AuthRepository{
     constructor(
@@ -41,6 +42,9 @@ export class AuthRepository{
                             }
                         }
                     }
+                },
+                cart:{
+                    create:{}
                 }
             },         
         })
@@ -72,7 +76,7 @@ export class AuthRepository{
             }
         })
     }
-    async checkUserById(id:number){
+    async checkUserById(id:string){
         return await this.db.user.findUnique({
             where:{
                 id:id
@@ -87,7 +91,7 @@ export class AuthRepository{
         })    
     }
 
-    async findAuthTokenByHash(tokenHash:string, tokenType:AuthTokenType){
+  async findAuthTokenByHash(tokenHash: string, tokenType: AuthTokenType) {
         return await this.db.authToken.findUnique({
             where:{
                 tokenHash,
@@ -95,8 +99,17 @@ export class AuthRepository{
             },
         })
     }
+  
+    async findUserRefreshTokens(userId: string): Promise<AuthToken[]> {
+        return await this.db.authToken.findMany({
+            where: {
+                userId: userId,
+                type: AuthTokenType.REFRESH_TOKEN,
+            },
+        });
+    }
 
-    async findAuthTokenById(id:number, tokenType:AuthTokenType){
+    async findAuthTokenById(id:string, tokenType:AuthTokenType){
         return await this.db.authToken.findUnique({
             where:{
                 id:id,
@@ -105,7 +118,7 @@ export class AuthRepository{
         })
     }
 
-    async verifyEmail(userId:number){
+    async verifyEmail(userId:string){
         return await this.db.user.update({
             where:{
                 id:userId
@@ -133,7 +146,7 @@ export class AuthRepository{
         })
     }
 
-    async markTokenUsed(tokenId:number){
+    async markTokenUsed(tokenId:string){
         return await this.db.authToken.update({
             where:{
                 id:tokenId
@@ -144,15 +157,25 @@ export class AuthRepository{
         })
     }
 
+    async markAllToken(userId:string, type:AuthTokenType){
+        return await this.db.authToken.updateMany({
+            where:{
+              userId,
+              type,
+            },
+            data:{
+                usedAt:new Date()
+            }
+        })
+    }
+
+
     async saveToken(payload: {
-        userId: number;
+        userId: string;
         token: string;
         expiresAt: Date;
         tokenType:AuthTokenType;
     }) {
-
-        const hashedToken = await bcrypt.hash(payload.token, 10);
-
           await this.db.authToken.updateMany({
             where: {
                 userId: payload.userId,
@@ -166,13 +189,13 @@ export class AuthRepository{
         return this.db.authToken.create({
             data: {
                 userId: payload.userId,
-                tokenHash: hashedToken,
+                tokenHash: payload.token,
                 type:payload.tokenType,
                 expiresAt: payload.expiresAt,
             },
         });
     }
-    async getUserPermissions(userId: number): Promise<string[]> {
+    async getUserPermissions(userId: string): Promise<string[]> {
         const user = await this.db.user.findUnique({
             where: { id: userId },
             include: {
@@ -201,7 +224,7 @@ export class AuthRepository{
         return [...permissions]
     }
 
-    async changePassword(userId:number, passwordHash:string){
+    async changePassword(userId:string, passwordHash:string){
         return await this.db.user.update({
             where:{
                 id:userId,
@@ -212,7 +235,7 @@ export class AuthRepository{
         })
     }
 
-    async deactiveAllAuthToken(userId:number){
+    async deactiveAllAuthToken(userId:string){
         return await this.db.authToken.updateMany({
             where:{
                 userId,

@@ -1,572 +1,487 @@
-import { useState } from "react";
-import { Button } from "#/components/ui/button";
-import { Badge } from "#/components/ui/badge";
-import { Card, CardContent } from "#/components/ui/card";
-import { Separator } from "#/components/ui/separator";
+import { useState } from "react"
+import { Button } from "#/components/ui/button"
+import { Badge } from "#/components/ui/badge"
+import { Card, CardContent } from "#/components/ui/card"
+import { Input } from "#/components/ui/input"
+import { Textarea } from "#/components/ui/textarea"
+import { Link } from "@tanstack/react-router"
 import {
-  ShoppingBag,
+  Package,
+  TrendingUp,
   BarChart3,
   Bell,
   MessageCircle,
-  CheckCircle2,
-  TrendingUp,
-  Package,
-  Truck,
-  Trophy,
-  Star,
-  ArrowRight,
-  Leaf,
-  Users,
   ShieldCheck,
-  ChevronRight,
-} from "lucide-react";
+  Menu,
+  X,
+} from "lucide-react"
 
-// ─── DATA ──────────────────────────────────────────────────────────────────────
-
-const STATS = [
-  { value: "12rb+", label: "Seller Aktif Terdaftar" },
-  { value: "98%", label: "Seller Puas dengan Platform" },
-  { value: "Rp 2M+", label: "Total Transaksi Bulanan" },
-  { value: "34+", label: "Kota di Seluruh Indonesia" },
-];
-
-const BENEFITS = [
-  {
-    icon: <Package className="w-6 h-6" />,
-    title: "Kelola Produk Mudah",
-    desc: "Tambah, edit, dan atur stok produkmu dalam hitungan menit. Antarmuka simpel, cocok untuk pemula sekalipun.",
-  },
-  {
-    icon: <TrendingUp className="w-6 h-6" />,
-    title: "Harga Transparan",
-    desc: "Tidak ada potongan tersembunyi. Kamu tahu persis berapa yang kamu dapat dari setiap transaksi.",
-  },
-  {
-    icon: <BarChart3 className="w-6 h-6" />,
-    title: "Dashboard Statistik",
-    desc: "Pantau penjualan, pendapatan, dan tren produkmu secara real-time untuk keputusan bisnis yang tepat.",
-  },
-  {
-    icon: <Bell className="w-6 h-6" />,
-    title: "Notifikasi Pesanan",
-    desc: "Terima notifikasi langsung setiap ada pesanan masuk. Tidak ada pesanan yang terlewat satu pun.",
-  },
-  {
-    icon: <MessageCircle className="w-6 h-6" />,
-    title: "Chat Customer & Admin",
-    desc: "Komunikasi langsung dengan pembeli dan tim admin kami yang siap membantu 7 hari seminggu.",
-  },
-  {
-    icon: <ShieldCheck className="w-6 h-6" />,
-    title: "Terverifikasi & Terpercaya",
-    desc: "Tokomu mendapat badge terverifikasi yang meningkatkan kepercayaan pembeli dan potensi penjualanmu.",
-  },
-];
-
-const STEPS = [
-  {
-    num: "1",
-    title: "Daftar Gratis",
-    desc: "Isi formulir pendaftaran seller. Proses cepat, tidak butuh biaya apapun.",
-  },
-  {
-    num: "2",
-    title: "Verifikasi Toko",
-    desc: "Tim admin kami verifikasi data dan aktifkan toko Anda dalam 1×24 jam.",
-  },
-  {
-    num: "3",
-    title: "Upload Produk",
-    desc: "Tambahkan produk dengan foto, deskripsi kandungan, dan harga yang jelas.",
-  },
-  {
-    num: "4",
-    title: "Terima Pesanan",
-    desc: "Tokomu langsung aktif dan bisa ditemukan ribuan pembeli se-Indonesia!",
-  },
-];
-
-const FEATURES = [
-  {
-    icon: <Package className="w-5 h-5" />,
-    title: "Manajemen Produk & Stok Real-time",
-    desc: "Kelola ratusan produk dengan mudah. Update stok otomatis setiap ada transaksi.",
-  },
-  {
-    icon: <BarChart3 className="w-5 h-5" />,
-    title: "Laporan Penjualan Lengkap",
-    desc: "Analitik harian, mingguan, dan bulanan untuk memahami performa bisnismu.",
-  },
-  {
-    icon: <Truck className="w-5 h-5" />,
-    title: "Integrasi Pengiriman Otomatis",
-    desc: "Terhubung dengan berbagai jasa pengiriman. Cetak label langsung dari dashboard.",
-  },
-  {
-    icon: <Trophy className="w-5 h-5" />,
-    title: "Program Seller Unggulan",
-    desc: "Seller berprestasi mendapat promosi ekstra dan tampil lebih menonjol di halaman utama.",
-  },
-];
-
-const PRODUCTS = [
-  { emoji: "🌾", name: "Beras Merah Organik 5kg", price: "Rp 85.000 / karung", stock: 48 },
-  { emoji: "🥬", name: "Sayur Bayam Segar 500g", price: "Rp 12.000 / ikat", stock: 120 },
-  { emoji: "🌶️", name: "Cabai Merah Keriting 1kg", price: "Rp 45.000 / kg", stock: 35 },
-  { emoji: "🍅", name: "Tomat Cherry Organik", price: "Rp 22.000 / 250g", stock: 60 },
-];
-
-const ORDERS = [
-  { name: "Beras Merah Organik", price: "Rp 85.000", status: "Selesai", done: true },
-  { name: "Sayur Bayam 500g", price: "Rp 12.000", status: "Diproses", done: false },
-  { name: "Cabai Merah 1kg", price: "Rp 45.000", status: "Selesai", done: true },
-];
-
-const TESTIMONIALS = [
-  {
-    name: "Budi Santoso",
-    role: "Petani Beras Organik – Jawa Tengah",
-    initial: "B",
-    quote:
-      "Sejak gabung Greenly Mart, omzet saya naik 3x lipat! Pembeli dari luar kota bisa beli beras organik saya dengan mudah. Dashboard-nya sangat membantu pantau penjualan.",
-  },
-  {
-    name: "Siti Rahayu",
-    role: "UMKM Sayuran Hidroponik – Surabaya",
-    initial: "S",
-    quote:
-      "Daftar mudah, verifikasi cepat, langsung bisa upload produk. Yang paling suka adalah fitur chat dengan pembeli — jadi lebih personal dan kepercayaan meningkat.",
-  },
-  {
-    name: "Ahmad Fauzi",
-    role: "Produsen Rempah Lokal – Bandung",
-    initial: "A",
-    quote:
-      "Transparansi harga dan kandungan produk adalah nilai jual utama saya. Dalam 3 bulan sudah dapat 200+ pesanan tetap dari pelanggan setia!",
-  },
-];
-
-// ─── SUB-COMPONENTS ─────────────────────────────────────────────────────────────
-
-function Navbar() {
-  const [open, setOpen] = useState(false);
-  return (
-    <nav className="sticky top-0 z-50 bg-background border-b shadow-sm">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
-          {/* Logo */}
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center">
-              <Leaf className="w-4 h-4 text-primary-foreground" />
-            </div>
-            <span className="font-bold text-lg text-primary">Greenly Mart</span>
-          </div>
-
-          {/* Desktop links */}
-          <div className="hidden md:flex items-center gap-8 text-sm text-muted-foreground">
-            <a href="#" className="hover:text-foreground transition-colors">Beranda</a>
-            <a href="#cara-kerja" className="hover:text-foreground transition-colors">Cara Kerja</a>
-               <a href="#kontak" className="hover:text-foreground transition-colors">Kontak</a>
-            <a href="#keuntungan" className="hover:text-foreground transition-colors">Keuntungan</a>
-         
-          </div>
-
-          {/* CTA */}
-          <div className="bg-green-300">
-            <Button size="sm">Daftar Gratis <ArrowRight className="w-4 h-4 ml-1" /></Button>
-          </div>
-
-          {/* Hamburger */}
-          <button
-            className="md:hidden p-2 rounded-md text-muted-foreground hover:text-foreground"
-            onClick={() => setOpen(!open)}
-          >
-            <div className="space-y-1.5">
-              <span className={`block h-0.5 w-6 bg-current transition-transform ${open ? "rotate-45 translate-y-2" : ""}`} />
-              <span className={`block h-0.5 w-6 bg-current transition-opacity ${open ? "opacity-0" : ""}`} />
-              <span className={`block h-0.5 w-6 bg-current transition-transform ${open ? "-rotate-45 -translate-y-2" : ""}`} />
-            </div>
-          </button>
-        </div>
-
-        {/* Mobile menu */}
-        {open && (
-          <div className="md:hidden pb-4 space-y-3 text-sm border-t pt-4">
-            {["Beranda", "Cara Kerja", "Keuntungan", "Kontak"].map((item) => (
-              <a key={item} href="#" className="block text-muted-foreground hover:text-foreground py-1">
-                {item}
-              </a>
-            ))}
-            <Button size="sm" className="w-full mt-2">Daftar Gratis</Button>
-          </div>
-        )}
-      </div>
-    </nav>
-  );
+function Container({ children }: { children: React.ReactNode }) {
+  return <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">{children}</div>
 }
-
-function HeroDashboard() {
-  return (
-    <Card className="shadow-2xl relative">
-      {/* Notification bubble */}
-      <div className="absolute -top-4 -right-4 bg-background border shadow-lg rounded-2xl px-3 py-2 flex items-center gap-2 z-10">
-        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-base">🛒</div>
-        <div>
-          <p className="text-xs font-bold text-primary leading-none">Pesanan Baru!</p>
-          <p className="text-[10px] text-muted-foreground mt-0.5">Beras Organik 5kg – Rp85.000</p>
-        </div>
-      </div>
-
-      <CardContent className="p-5">
-        {/* Topbar dots */}
-        <div className="flex gap-1.5 mb-4">
-          <span className="w-2.5 h-2.5 rounded-full bg-red-400" />
-          <span className="w-2.5 h-2.5 rounded-full bg-yellow-400" />
-          <span className="w-2.5 h-2.5 rounded-full bg-green-400" />
-          <span className="text-xs text-muted-foreground ml-2 font-medium">Dashboard Seller — Greenly Mart</span>
-        </div>
-
-        {/* Stats */}
-        <div className="grid grid-cols-2 gap-2 mb-3">
-          <div className="bg-muted rounded-xl p-3">
-            <p className="text-[10px] text-muted-foreground font-medium mb-1">Total Pendapatan</p>
-            <p className="text-xl font-black text-primary">Rp 4,2 Jt</p>
-            <p className="text-[10px] text-green-600 font-semibold mt-0.5">↑ +28% bulan ini</p>
-          </div>
-          <div className="bg-muted rounded-xl p-3">
-            <p className="text-[10px] text-muted-foreground font-medium mb-1">Pesanan Masuk</p>
-            <p className="text-xl font-black text-primary">143</p>
-            <p className="text-[10px] text-green-600 font-semibold mt-0.5">↑ +15 hari ini</p>
-          </div>
-        </div>
-
-        {/* Chart */}
-        <div className="bg-muted rounded-xl p-3 mb-3">
-          <p className="text-xs font-bold mb-2">📊 Grafik Penjualan Mingguan</p>
-          <div className="flex items-end gap-1 h-12">
-            {[35, 55, 45, 70, 90, 65, 80].map((h, i) => (
-              <div
-                key={i}
-                className={`flex-1 rounded-t ${i === 4 ? "bg-primary" : "bg-primary/30"}`}
-                style={{ height: `${h}%` }}
-              />
-            ))}
-          </div>
-        </div>
-
-        {/* Orders */}
-        <p className="text-xs font-bold mb-2">📦 Pesanan Terbaru</p>
-        <div className="space-y-1.5">
-          {ORDERS.map((o, i) => (
-            <div key={i} className="flex items-center justify-between bg-muted/50 rounded-lg px-3 py-2">
-              <span className="text-xs font-semibold truncate mr-2">{o.name}</span>
-              <span className="text-[10px] text-muted-foreground mr-2 shrink-0">{o.price}</span>
-              <Badge variant={o.done ? "default" : "secondary"} className="text-[9px] shrink-0">
-                {o.status}
-              </Badge>
-            </div>
-          ))}
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
-function ProductPanel() {
-  return (
-    <Card className="shadow-lg">
-      <CardContent className="p-5">
-        {/* Tabs */}
-        <div className="flex gap-1 bg-muted p-1 rounded-lg mb-4">
-          {["Produk Saya", "Pesanan", "Laporan"].map((tab, i) => (
-            <button
-              key={tab}
-              className={`flex-1 text-xs font-semibold py-1.5 rounded-md transition-colors ${
-                i === 0 ? "bg-background text-foreground shadow-sm" : "text-muted-foreground"
-              }`}
-            >
-              {tab}
-            </button>
-          ))}
-        </div>
-
-        {/* Products */}
-        <div className="space-y-2 mb-3">
-          {PRODUCTS.map((p, i) => (
-            <div key={i} className="flex items-center gap-3 bg-muted/50 rounded-xl p-2.5">
-              <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center text-xl shrink-0">
-                {p.emoji}
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-xs font-bold truncate">{p.name}</p>
-                <p className="text-[10px] text-muted-foreground mt-0.5">{p.price}</p>
-              </div>
-              <span className="text-xs font-bold text-primary shrink-0">Stok: {p.stock}</span>
-            </div>
-          ))}
-        </div>
-
-        {/* Revenue summary */}
-        <div className="bg-muted rounded-xl p-3 text-center">
-          <p className="text-[10px] text-muted-foreground mb-1">Total Pendapatan Bulan Ini</p>
-          <p className="text-2xl font-black text-primary">Rp 4.280.000</p>
-          <p className="text-[10px] text-green-600 font-semibold mt-0.5">↑ Naik 28% dari bulan lalu</p>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
-// ─── MAIN COMPONENT ─────────────────────────────────────────────────────────────
 
 export default function LandingPage() {
-  return (
-    <div className="min-h-screen bg-background text-foreground">
-      <Navbar />
+  const [showPopup, setShowPopup] = useState(false)
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
-      {/* ── HERO ─────────────────────────────────────────────────────────────── */}
-      <section className="bg-primary text-primary-foreground overflow-hidden">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 lg:py-24">
-          <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
-            {/* Left */}
-            <div>
-              <Badge className="mb-5 bg-primary-foreground/20 text-primary-foreground border-primary-foreground/30 hover:bg-primary-foreground/20">
-                🌾 Platform Khusus UMKM & Petani Lokal
-              </Badge>
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black leading-tight mb-5">
-                Jual Produk Tanimu{" "}
-                <span className="block opacity-80">Lebih Luas &</span>
-                <span className="block opacity-80">Lebih Menguntungkan</span>
-              </h1>
-              <p className="text-primary-foreground/80 text-base sm:text-lg leading-relaxed mb-8 max-w-lg">
-                Bergabunglah dengan ribuan petani dan UMKM yang sudah sukses menjual produk
-                pertanian mereka secara transparan. Daftar gratis, langsung jualan!
-              </p>
-              <div className="flex flex-col sm:flex-row gap-3 mb-8">
-                <Button size="lg" variant="secondary" className="font-bold">
-                  🚀 Daftar Jadi Seller Sekarang
-                </Button>
-                <Button size="lg" variant="outline" className="border-primary-foreground/40 text-primary-foreground bg-transparent hover:bg-primary-foreground/10">
-                  Lihat Cara Kerjanya
-                </Button>
-              </div>
-              <div className="flex flex-col sm:flex-row gap-3 sm:gap-6">
-                {["Pendaftaran 100% Gratis", "UMKM Terverifikasi", "Dukungan Admin Penuh"].map((t) => (
-                  <div key={t} className="flex items-center gap-2 text-sm text-primary-foreground/80">
-                    <CheckCircle2 className="w-4 h-4 shrink-0 text-primary-foreground" />
-                    {t}
-                  </div>
-                ))}
-              </div>
+  const [nama, setNama] = useState("")
+  const [wa, setWa] = useState("")
+  const [email, setEmail] = useState("")
+  const [pesan, setPesan] = useState("")
+
+  const steps = [
+    {
+      title: "Daftar Gratis",
+      desc: "Buat akun seller dalam hitungan menit tanpa biaya.",
+    },
+    {
+      title: "Verifikasi Toko",
+      desc: "Tim kami akan memverifikasi usaha Anda.",
+    },
+    {
+      title: "Upload Produk",
+      desc: "Tambahkan foto dan deskripsi produk Anda.",
+    },
+    {
+      title: "Terima Pesanan",
+      desc: "Mulai menerima pesanan dari pembeli.",
+    },
+  ]
+
+  const benefits = [
+    {
+      icon: <Package className="h-6 w-6" />,
+      title: "Kelola Produk",
+      desc: "Kelola stok, kategori, dan deskripsi produk dengan mudah.",
+    },
+    {
+      icon: <TrendingUp className="h-6 w-6" />,
+      title: "Harga Transparan",
+      desc: "Sistem transparansi harga tanpa biaya tersembunyi.",
+    },
+    {
+      icon: <BarChart3 className="h-6 w-6" />,
+      title: "Dashboard Bisnis",
+      desc: "Analisis performa penjualan secara real-time.",
+    },
+    {
+      icon: <Bell className="h-6 w-6" />,
+      title: "Notifikasi Instan",
+      desc: "Dapatkan notifikasi setiap ada pesanan baru.",
+    },
+    {
+      icon: <MessageCircle className="h-6 w-6" />,
+      title: "Chat Customer",
+      desc: "Komunikasi langsung dengan pembeli.",
+    },
+    {
+      icon: <ShieldCheck className="h-6 w-6" />,
+      title: "Terverifikasi",
+      desc: "Badge seller terpercaya meningkatkan kepercayaan.",
+    },
+  ]
+
+  const navItems = [
+    { label: "Beranda", href: "#beranda" },
+    { label: "Cara Kerja", href: "#cara" },
+    { label: "Keuntungan", href: "#keuntungan" },
+    { label: "Kontak", href: "#kontak" },
+  ]
+
+  const [active, setActive] = useState("Beranda")
+
+  const handleNavClick = (label: string) => {
+    setActive(label)
+    setIsMobileMenuOpen(false)
+  }
+
+  return (
+    <div className="min-h-screen bg-white">
+      {/* NAVBAR */}
+      <nav className="sticky top-0 z-50 border-b bg-white/95 backdrop-blur">
+        <Container>
+          <div className="flex h-16 items-center justify-between lg:h-20">
+            {/* LOGO */}
+            <div className="flex min-w-0 items-center gap-2 sm:gap-3">
+              <img
+                src="/Sidebar/LogoGreenly.png"
+                alt="Greenly Mart"
+                className="h-9 w-auto object-contain sm:h-10 lg:h-12"
+              />
+              <span className="truncate text-sm font-bold sm:text-base lg:text-lg">
+                Greenly Mart
+              </span>
             </div>
 
-            {/* Right – Dashboard */}
-            <div className="relative pt-4 pr-4">
-              <HeroDashboard />
+            {/* DESKTOP NAV */}
+            <div className="hidden lg:flex items-center rounded-full border bg-gray-100 p-1 gap-1">
+              {navItems.map((item) => (
+                <a
+                  key={item.label}
+                  href={item.href}
+                  onClick={() => handleNavClick(item.label)}
+                  className={`rounded-full px-4 xl:px-5 py-2 text-sm font-medium transition ${
+                    active === item.label
+                      ? "bg-white text-green-700 shadow"
+                      : "text-gray-600 hover:text-gray-900"
+                  }`}
+                >
+                  {item.label}
+                </a>
+              ))}
+            </div>
+
+            {/* RIGHT SIDE */}
+            <div className="flex items-center gap-2">
+              <Button
+                asChild
+                className="hidden sm:inline-flex bg-green-600 hover:bg-green-700"
+              >
+                <Link to="/auth/login">Daftar Jadi Seller</Link>
+              </Button>
+
+              <button
+                type="button"
+                className="inline-flex items-center justify-center rounded-md p-2 text-slate-700 lg:hidden"
+                onClick={() => setIsMobileMenuOpen((prev) => !prev)}
+                aria-label="Toggle menu"
+              >
+                {isMobileMenuOpen ? (
+                  <X className="h-6 w-6" />
+                ) : (
+                  <Menu className="h-6 w-6" />
+                )}
+              </button>
             </div>
           </div>
-        </div>
+
+          {/* MOBILE/TABLET MENU */}
+          {isMobileMenuOpen && (
+            <div className="border-t pb-4 pt-3 lg:hidden">
+              <div className="flex flex-col gap-2">
+                {navItems.map((item) => (
+                  <a
+                    key={item.label}
+                    href={item.href}
+                    onClick={() => handleNavClick(item.label)}
+                    className={`rounded-xl px-4 py-3 text-sm font-medium transition ${
+                      active === item.label
+                        ? "bg-green-50 text-green-700"
+                        : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                    }`}
+                  >
+                    {item.label}
+                  </a>
+                ))}
+
+                <Button
+                  asChild
+                  className="mt-2 w-full bg-green-600 hover:bg-green-700 sm:hidden"
+                >
+                  <Link to="/auth/login">Daftar Jadi Seller</Link>
+                </Button>
+              </div>
+            </div>
+          )}
+        </Container>
+      </nav>
+
+      {/* HERO */}
+      <section id="beranda" className="py-12 sm:py-16 lg:py-20">
+        <Container>
+          <div className="grid grid-cols-1 items-center gap-10 lg:grid-cols-2 lg:gap-16">
+            <div className="order-2 lg:order-1">
+              <Badge className="mb-4 bg-green-100 text-green-700">
+                Platform khusus UMKM & petani lokal
+              </Badge>
+
+              <h1 className="mb-6 text-3xl font-black leading-tight sm:text-4xl lg:text-5xl xl:text-6xl">
+                Jual produk tanimu lebih
+                <span className="text-green-600"> luas & untung</span>
+              </h1>
+
+              <p className="mb-8 max-w-xl text-sm text-muted-foreground sm:text-base lg:text-lg">
+                Tingkatkan pendapatan dengan dashboard toko modern,
+                transparansi harga, dan dukungan penuh untuk UMKM dan petani
+                lokal.
+              </p>
+
+              <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:gap-4">
+                <Button
+                  size="lg"
+                  className="w-full bg-green-600 hover:bg-green-700 sm:w-auto"
+                  asChild
+                >
+                  <Link to="/auth/login">Daftar Jadi Seller</Link>
+                </Button>
+
+                <Button
+                  variant="outline"
+                  size="lg"
+                  className="w-full sm:w-auto"
+                  onClick={() =>
+                    document
+                      .getElementById("cara")
+                      ?.scrollIntoView({ behavior: "smooth" })
+                  }
+                >
+                  Lihat Cara Kerja
+                </Button>
+              </div>
+            </div>
+
+            {/* DASHBOARD MOCKUP */}
+            <Card className="order-1 rounded-3xl bg-slate-900 text-white shadow-2xl lg:order-2">
+              <CardContent className="p-4 sm:p-6">
+                <h3 className="mb-4 text-base font-bold sm:text-lg">
+                  Dashboard Seller
+                </h3>
+
+                <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <div className="rounded-xl bg-slate-800 p-4">
+                    <p className="text-xs text-gray-400">Total Pendapatan</p>
+                    <p className="text-lg font-bold sm:text-xl">
+                      Rp 12.450.000
+                    </p>
+                  </div>
+
+                  <div className="rounded-xl bg-slate-800 p-4">
+                    <p className="text-xs text-gray-400">Pesanan Masuk</p>
+                    <p className="text-lg font-bold text-green-400 sm:text-xl">
+                      42
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex h-20 items-end gap-2 sm:h-24">
+                  {[40, 60, 30, 80, 90, 70].map((h, i) => (
+                    <div
+                      key={i}
+                      style={{ height: `${h}%` }}
+                      className="flex-1 rounded-t bg-green-500"
+                    />
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </Container>
       </section>
 
-      {/* ── STATS BAND ───────────────────────────────────────────────────────── */}
-      <section className="border-b bg-background">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 text-center">
-            {STATS.map((s) => (
-              <div key={s.label}>
-                <p className="text-3xl sm:text-4xl font-black text-primary">{s.value}</p>
-                <p className="text-sm text-muted-foreground mt-1">{s.label}</p>
+      {/* CARA KERJA */}
+      <section id="cara" className="bg-muted/30 py-16 sm:py-20 lg:py-24">
+        <Container>
+          <div className="mb-12 text-center sm:mb-16">
+            <h2 className="text-2xl font-bold sm:text-3xl">
+              Bagaimana Cara Kerja Greenly Mart?
+            </h2>
+            <p className="mt-2 text-sm text-muted-foreground sm:text-base">
+              Mulai berjualan dengan 4 langkah mudah
+            </p>
+          </div>
+
+          <div className="relative grid grid-cols-1 gap-8 text-center sm:grid-cols-2 md:grid-cols-4 md:gap-10">
+            <div className="absolute left-[12.5%] right-[12.5%] top-8 z-0 hidden h-[2px] bg-green-200 md:block"></div>
+
+            {steps.map((step, index) => (
+              <div key={index} className="relative z-10">
+                <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-green-100 text-base font-bold text-green-600 sm:h-16 sm:w-16 sm:text-lg">
+                  {index + 1}
+                </div>
+
+                <h3 className="mb-2 text-base font-semibold">{step.title}</h3>
+
+                <p className="mx-auto max-w-xs text-sm text-muted-foreground">
+                  {step.desc}
+                </p>
               </div>
             ))}
           </div>
-        </div>
+        </Container>
       </section>
 
-      {/* ── WHY / BENEFITS ───────────────────────────────────────────────────── */}
-      <section id="keuntungan" className="py-20 lg:py-28">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <Badge variant="outline" className="mb-4">🌱 Kenapa Pilih Greenly Mart?</Badge>
-          <h2 className="text-3xl sm:text-4xl font-black leading-tight mb-3">
-            Keuntungan Nyata<br />untuk Seller UMKM
-          </h2>
-          <p className="text-muted-foreground max-w-lg mb-12 leading-relaxed">
-            Kami dirancang khusus untuk membantu petani dan UMKM lokal tumbuh dan
-            menjangkau lebih banyak pembeli.
-          </p>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {BENEFITS.map((b) => (
-              <Card key={b.title} className="group hover:shadow-md hover:border-primary/40 transition-all duration-300">
-                <CardContent className="p-6">
-                  <div className="w-12 h-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center mb-4 group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
+      {/* KEUNTUNGAN */}
+      <section id="keuntungan" className="py-16 sm:py-20 lg:py-24">
+        <Container>
+          <div className="mb-12 text-center sm:mb-16">
+            <h2 className="text-2xl font-bold sm:text-3xl">
+              Keuntungan Menjadi Mitra
+            </h2>
+            <p className="mt-2 text-sm text-muted-foreground sm:text-base">
+              Fitur lengkap untuk mendukung bisnis Anda
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
+            {benefits.map((b, index) => (
+              <Card
+                key={index}
+                className="group cursor-pointer transition-all duration-300 hover:-translate-y-2 hover:scale-[1.02] hover:shadow-xl"
+              >
+                <CardContent className="p-5 sm:p-6">
+                  <div className="mb-4 text-green-600 transition group-hover:text-green-700">
                     {b.icon}
                   </div>
-                  <h3 className="font-bold text-base mb-2">{b.title}</h3>
-                  <p className="text-sm text-muted-foreground leading-relaxed">{b.desc}</p>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
 
-      <Separator />
+                  <h3 className="mb-2 text-base font-semibold">{b.title}</h3>
 
-      {/* ── HOW IT WORKS ─────────────────────────────────────────────────────── */}
-      <section id="cara-kerja" className="py-20 lg:py-28 bg-muted/40">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <Badge variant="outline" className="mb-4">⚙️ Cara Kerja</Badge>
-          <h2 className="text-3xl sm:text-4xl font-black leading-tight mb-3">
-            Mulai Jualan dalam<br />4 Langkah Mudah
-          </h2>
-          <p className="text-muted-foreground max-w-lg mb-12 leading-relaxed">
-            Proses onboarding yang simpel dan cepat — siap jualan dalam hitungan jam.
-          </p>
-
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 relative">
-            {/* Connector line – desktop only */}
-            <div className="hidden lg:block absolute top-7 left-[12.5%] right-[12.5%] h-0.5 bg-primary/20 z-0" />
-
-            {STEPS.map((s, i) => (
-              <div key={s.num} className="relative z-10 text-center flex flex-col items-center">
-                <div className="w-14 h-14 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xl font-black mb-4 shadow-lg">
-                  {s.num}
-                </div>
-                <h3 className="font-bold text-base mb-2">{s.title}</h3>
-                <p className="text-sm text-muted-foreground leading-relaxed">{s.desc}</p>
-                {i < STEPS.length - 1 && (
-                  <ChevronRight className="lg:hidden w-6 h-6 text-primary/40 mt-4 rotate-90" />
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── FEATURES ─────────────────────────────────────────────────────────── */}
-      <section className="py-20 lg:py-28">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
-            {/* Left */}
-            <div>
-              <Badge variant="outline" className="mb-4">🛠️ Fitur Seller</Badge>
-              <h2 className="text-3xl sm:text-4xl font-black leading-tight mb-8">
-                Semua yang Kamu<br />Butuhkan Ada di Sini
-              </h2>
-              <div className="space-y-5">
-                {FEATURES.map((f) => (
-                  <div key={f.title} className="flex gap-4 items-start">
-                    <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0 mt-0.5">
-                      {f.icon}
-                    </div>
-                    <div>
-                      <h4 className="font-bold text-sm mb-1">{f.title}</h4>
-                      <p className="text-sm text-muted-foreground leading-relaxed">{f.desc}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Right – Product panel */}
-            <ProductPanel />
-          </div>
-        </div>
-      </section>
-
-      <Separator />
-
-      {/* ── TESTIMONIALS ─────────────────────────────────────────────────────── */}
-      <section className="py-20 lg:py-28 bg-primary text-primary-foreground">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <Badge className="mb-4 bg-primary-foreground/20 text-primary-foreground border-primary-foreground/30 hover:bg-primary-foreground/20">
-            💬 Cerita Seller Kami
-          </Badge>
-          <h2 className="text-3xl sm:text-4xl font-black leading-tight mb-3">
-            Sudah Ribuan UMKM<br />Sukses Bersama Kami
-          </h2>
-          <p className="text-primary-foreground/70 max-w-lg mb-12 leading-relaxed">
-            Kisah nyata dari petani dan pelaku UMKM yang telah merasakan manfaat bergabung di Greenly Mart.
-          </p>
-
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {TESTIMONIALS.map((t) => (
-              <Card key={t.name} className="bg-primary-foreground/10 border-primary-foreground/20 text-primary-foreground">
-                <CardContent className="p-6">
-                  <div className="flex gap-0.5 mb-4">
-                    {Array(5).fill(0).map((_, i) => (
-                      <Star key={i} className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                    ))}
-                  </div>
-                  <p className="text-sm text-primary-foreground/85 leading-relaxed italic mb-5">
-                    "{t.quote}"
+                  <p className="text-sm leading-relaxed text-muted-foreground">
+                    {b.desc}
                   </p>
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-primary-foreground/20 flex items-center justify-center font-black text-base">
-                      {t.initial}
-                    </div>
-                    <div>
-                      <p className="font-bold text-sm">{t.name}</p>
-                      <p className="text-[11px] text-primary-foreground/55">{t.role}</p>
-                    </div>
-                  </div>
                 </CardContent>
               </Card>
             ))}
           </div>
-        </div>
+        </Container>
       </section>
 
-      {/* ── CTA FINAL ────────────────────────────────────────────────────────── */}
-      <section className="py-20 lg:py-28">
-        <div className="max-w-2xl mx-auto px-4 sm:px-6 text-center">
-          <Badge variant="outline" className="mb-4">🚀 Mulai Sekarang</Badge>
-          <h2 className="text-3xl sm:text-4xl font-black leading-tight mb-4">
-            Siap Membawa Produkmu<br />ke Level Berikutnya?
-          </h2>
-          <p className="text-muted-foreground leading-relaxed mb-8">
-            Bergabunglah dengan 12.000+ seller yang sudah mempercayakan bisnis pertanian
-            mereka pada Greenly Mart. Daftar gratis hari ini, mulai panen cuan besok!
-          </p>
-          <div className="flex flex-col sm:flex-row gap-3 justify-center mb-6">
-            <Button size="lg" className="font-bold text-base px-8">
-              🌾 Daftar Jadi Seller Gratis
-            </Button>
-            <Button size="lg" variant="outline" className="text-base px-8">
-              Hubungi Tim Kami
-            </Button>
-          </div>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 text-sm text-muted-foreground">
-            {["Gratis selamanya", "Tanpa kartu kredit", "Mulai dalam 24 jam"].map((item, i) => (
-              <span key={item} className="flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 text-primary" />
-                {item}
-              </span>
-            ))}
-          </div>
-        </div>
-      </section>
+      {/* CONTACT */}
+      <section id="kontak" className="bg-green-50 py-16 sm:py-20 lg:py-24">
+        <Container>
+          <div className="grid grid-cols-1 gap-10 md:grid-cols-2 md:gap-16">
+            {/* LEFT */}
+            <div>
+              <h2 className="mb-4 text-2xl font-bold sm:text-3xl">
+                Hubungi Kami
+              </h2>
 
-      {/* ── FOOTER ───────────────────────────────────────────────────────────── */}
-      <footer className="border-t py-8 bg-muted/30">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-full bg-primary flex items-center justify-center">
-                <Leaf className="w-3.5 h-3.5 text-primary-foreground" />
+              <p className="mb-6 max-w-lg text-sm text-muted-foreground sm:text-base">
+                Ada pertanyaan? Tim kami siap membantu mengembangkan bisnis
+                pertanian Anda.
+              </p>
+
+              <div className="space-y-3 text-sm sm:text-base">
+                <p>Email: halo@greenlymart.id</p>
+                <p>WhatsApp: +62 812 3456 7890</p>
+                <p>Surabaya, Jawa Timur</p>
               </div>
-              <span className="font-bold text-primary">Greenly Mart</span>
             </div>
-            <p className="text-sm text-muted-foreground text-center">
-              © 2024 Greenly Mart — Marketplace Produk Pertanian Lokal yang Transparan & Terpercaya
-            </p>
-            <div className="flex gap-4 text-sm text-muted-foreground">
-              <a href="#" className="hover:text-foreground transition-colors">Privasi</a>
-              <a href="#" className="hover:text-foreground transition-colors">Syarat</a>
-              <a href="#" className="hover:text-foreground transition-colors">Kontak</a>
+
+            {/* FORM */}
+            <Card>
+              <CardContent className="space-y-4 p-5 sm:p-6">
+                <Input
+                  placeholder="Nama Lengkap"
+                  value={nama}
+                  onChange={(e) => setNama(e.target.value)}
+                />
+
+                <Input
+                  placeholder="Nomor WA"
+                  value={wa}
+                  onChange={(e) => setWa(e.target.value)}
+                />
+
+                <Input
+                  placeholder="Email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                />
+
+                <Textarea
+                  placeholder="Pesan Anda"
+                  value={pesan}
+                  onChange={(e) => setPesan(e.target.value)}
+                />
+
+                <Button
+                  className="w-full bg-green-600 hover:bg-green-700"
+                  onClick={() => {
+                    setShowPopup(true)
+                    setNama("")
+                    setWa("")
+                    setEmail("")
+                    setPesan("")
+                  }}
+                >
+                  Kirim Pesan Sekarang
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* POPUP */}
+          {showPopup && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+              <div className="w-full max-w-sm rounded-xl bg-white p-6 text-center shadow-lg sm:p-8">
+                <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full border-2 border-green-300">
+                  <span className="text-3xl text-green-500">✔</span>
+                </div>
+
+                <h2 className="mb-2 text-xl font-bold">Berhasil!</h2>
+
+                <p className="mb-6 text-sm text-gray-500">
+                  Pesan Anda berhasil dikirim
+                </p>
+
+                <Button
+                  className="bg-green-600 hover:bg-green-700"
+                  onClick={() => setShowPopup(false)}
+                >
+                  OK
+                </Button>
+              </div>
+            </div>
+          )}
+        </Container>
+      </section>
+
+      {/* FOOTER */}
+      <footer className="bg-slate-900 py-10 text-white">
+        <Container>
+          <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3 lg:gap-10">
+            <div>
+              <h3 className="mb-3 text-lg font-bold">Greenly Mart</h3>
+
+              <p className="text-sm leading-relaxed text-gray-400">
+                Marketplace untuk UMKM & petani lokal agar dapat menjual produk
+                secara transparan dan terpercaya.
+              </p>
+            </div>
+
+            <div>
+              <h4 className="mb-3 font-semibold">Navigasi</h4>
+
+              <ul className="space-y-2 text-sm text-gray-400">
+                <li>
+                  <a href="#beranda" className="transition hover:text-white">
+                    Beranda
+                  </a>
+                </li>
+                <li>
+                  <a href="#cara" className="transition hover:text-white">
+                    Cara Kerja
+                  </a>
+                </li>
+                <li>
+                  <a href="#keuntungan" className="transition hover:text-white">
+                    Keuntungan
+                  </a>
+                </li>
+                <li>
+                  <a href="#kontak" className="transition hover:text-white">
+                    Kontak
+                  </a>
+                </li>
+              </ul>
+            </div>
+
+            <div>
+              <h4 className="mb-3 font-semibold">Layanan</h4>
+
+              <ul className="space-y-2 text-sm text-gray-400">
+                <li>Pendaftaran Seller</li>
+                <li>Pusat Bantuan</li>
+                <li>Syarat & Ketentuan</li>
+              </ul>
             </div>
           </div>
-        </div>
+
+          <p className="mt-10 text-center text-sm text-gray-500">
+            © 2026 Greenly Mart. All rights reserved.
+          </p>
+        </Container>
       </footer>
     </div>
-  );
+  )
 }

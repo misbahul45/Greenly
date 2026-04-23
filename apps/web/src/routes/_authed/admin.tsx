@@ -13,7 +13,7 @@ function AdminLayout() {
   const [sidebarOpen, setSidebarOpen] = React.useState(false)
 
   return (
-    <div className="flex min-h-screen bg-[#F5F1E8]">
+    <div className="flex min-h-screen bg-background">
       <SidebarAdmin open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
       <div className="flex min-h-screen flex-1 flex-col">

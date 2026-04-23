@@ -4,13 +4,13 @@ tmp_dir = "tmp"
 
 [build]
   # Build command
-  cmd = "go build -o ./tmp/main ./cmd"
+  cmd = "go build -o ./tmp/api/main ./cmd/api"
 
   # Binary output
-  bin = "tmp/main"
+  bin = "tmp/api/main"
 
   # Run full binary path
-  full_bin = "./tmp/main"
+  full_bin = "./tmp/api/main"
 
   # File extensions to watch
   include_ext = ["go", "tpl", "tmpl", "html"]

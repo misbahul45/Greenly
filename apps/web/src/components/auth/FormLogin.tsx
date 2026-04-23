@@ -1,9 +1,7 @@
 "use client"
-
 import * as React from "react"
 import { useForm } from "@tanstack/react-form"
 import { toast } from "sonner"
-import * as z from "zod"
 import { Eye, EyeOff } from "lucide-react"
 import { Link, useNavigate } from "@tanstack/react-router"
 
@@ -52,7 +50,7 @@ export default function FormLogin() {
         });
 
         navigate({
-          to:result.data?.user.roles.includes('SUPER_ADMIN')?'/admin/dashboard':'/seller/dashboard'
+          to:result.user.roles.includes('SUPER_ADMIN')?'/admin/dashboard':'/seller/dashboard'
         })
       } catch (error: any) {
         console.log(error)
@@ -177,7 +175,7 @@ export default function FormLogin() {
           </Button>
         </Field>
 
-        <p className="text-sm text-muted-foreground text-center">
+        {/* <p className="text-sm text-muted-foreground text-center">
           Belum punya akun <span className="font-medium">Greenly Mart</span>?{" "}
           <Link
             to="/auth/regiister"
@@ -185,7 +183,7 @@ export default function FormLogin() {
           >
             Daftar
           </Link>
-        </p>
+        </p> */}
       </CardFooter>
     </Card>
   )

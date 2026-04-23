@@ -1,6 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { DatabaseService } from "../../../libs/database/database.service";
-import { type UpdateProfileDTO } from "./me.dto";
+import { UserFollowingShopDTO, type UpdateProfileDTO } from "./me.dto";
 
 @Injectable()
 export class MeRepositository{
@@ -8,7 +8,7 @@ export class MeRepositository{
         private readonly db:DatabaseService
     ){}   
 
-    async getUserById(id: number) {
+    async getUserById(id: string) {
         return this.db.user.findUnique({
             where: { id },
                 include: {
@@ -33,7 +33,7 @@ export class MeRepositository{
         })
     }
 
-    async getRepoByIdUser(userId:number){
+    async getRepoByIdUser(userId:string){
         return await this.db.userProfile.findUnique({
             where:{
                 userId
@@ -41,15 +41,86 @@ export class MeRepositository{
         })
     }
 
-    async updateUserProfile(userProfileId:number, data:UpdateProfileDTO){
+    async updateUserProfile(userProfileId:string, data:UpdateProfileDTO){
         return await this.db.userProfile.update({
             where:{
                 id:userProfileId
-            },
-            data:{
-                ...data
-            }
+          },
+          
+          data:{
+            fullName: data.name,
+            phone: data.phone,
+            avatarUrl: data.avatarUrl,
+            address: data.address,
+            photoUrl: data.photoUrl,
+          },
         })
+    }
+  
+    async findAllFollowedShop(userId: string, query: UserFollowingShopDTO) {
+      const { page, limit, shopId, search, createdFrom, createdTo, sortOrder } = query
+    
+      const skip = (page - 1) * limit
+    
+      return await this.db.shopFollower.findMany({
+        where: {
+          userId,
+          shopId: shopId ?? undefined,
+    
+          createdAt: {
+            gte: createdFrom,
+            lte: createdTo,
+          },
+    
+          shop: search
+            ? {
+                name: {
+                  contains: search,
+                },
+              }
+            : undefined,
+        },
+    
+        include: {
+          shop: {
+            select: {
+              id: true,
+              name: true,
+              status: true,
+              description: true,
+            },
+          },
+        },
+    
+        orderBy: {
+          createdAt: sortOrder,
+        },
+    
+        skip,
+        take: limit,
+      })
+    }
+  
+    async countFollowedShop(userId: string, query?: UserFollowingShopDTO) {
+      return await this.db.shopFollower.count({
+        where: {
+          userId,
+          shopId: query?.shopId,
+    
+          createdAt: {
+            gte: query?.createdFrom,
+            lte: query?.createdTo,
+          },
+    
+          shop: query?.search
+            ? {
+                name: {
+                  contains: query.search,
+                },
+              }
+            : undefined,
+        },
+      })
     }
     
 }
