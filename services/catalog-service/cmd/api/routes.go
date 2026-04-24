@@ -2,12 +2,14 @@ package main
 
 import (
 	"catalog-service/internal/coreclient"
+	activeprice "catalog-service/modules/active_price"
 	category "catalog-service/modules/categories"
-	product "catalog-service/modules/products"
+	ecoattribute "catalog-service/modules/eco_attribute"
 	inventory "catalog-service/modules/inventory"
 	price "catalog-service/modules/price"
-	activeprice "catalog-service/modules/active_price"
 	discount "catalog-service/modules/product_discount"
+	productimage "catalog-service/modules/product_image"
+	product "catalog-service/modules/products"
 
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -24,4 +26,6 @@ func Routes(
 	price.PriceRouter(r, db)
 	activeprice.ActivePriceRouter(r, db)
 	discount.ProductDiscountRouter(r, db)
+	productimage.ProductImageRouter(r, db)
+	ecoattribute.EcoAttributeRouter(r, db)
 }

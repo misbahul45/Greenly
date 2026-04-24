@@ -1,3 +1,4 @@
+import 'package:app/core/constants/ui_constants.dart';
 import 'package:app/core/theme/app_theme.dart';
 import 'package:app/features/auth/auth_service.dart';
 import 'package:app/features/auth/data/model/dto/register_dto.dart';
@@ -44,17 +45,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text("Register berhasil")));
-
       await Future.delayed(const Duration(seconds: 2));
-
       if (!mounted) return;
-
       Navigator.pushNamed(
-        context, 
+        context,
         "/verify-email",
-        arguments: {
-          "type": OtpType.verifyEmail,
-        },  
+        arguments: {"type": OtpType.verifyEmail},
       );
     } else {
       setState(() {
@@ -66,38 +62,69 @@ class _RegisterScreenState extends State<RegisterScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: AppTheme.backgroundGradient,
-        ),
-        child: SafeArea(
-          child: Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 600),
-              child: SingleChildScrollView(
-                child: Padding(
-                  padding: const EdgeInsets.all(6),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Image.asset(
-                        "assets/images/logo.png",
-                        height: 200,
-                      ),
-                      const SizedBox(height: 16),
-                      FormRegister(
-                        isLoading: isLoading,
-                        errorMessage: errorMessage,
-                        onSubmit: handleRegister,
-                      ),
-                    ],
+      backgroundColor: Colors.white,
+      body: Stack(
+        children: [
+          Positioned(
+            top: -60,
+            left: -60,
+            child: Container(
+              width: UIConstants.decorCircleMedium,
+              height: UIConstants.decorCircleMedium,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: AppTheme.tertiaryColor.withValues(alpha: 0.18),
+              ),
+            ),
+          ),
+          Positioned(
+            bottom: -80,
+            right: -40,
+            child: Container(
+              width: UIConstants.decorCircleLarge,
+              height: UIConstants.decorCircleLarge,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: AppTheme.tertiaryColor.withValues(alpha: 0.12),
+              ),
+            ),
+          ),
+          SafeArea(
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(
+                  maxWidth: UIConstants.maxContentWidth,
+                ),
+                child: SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: UIConstants.paddingL,
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        const SizedBox(height: UIConstants.spacingXXL),
+                        Image.asset(
+                          UIConstants.logoPath,
+                          height: UIConstants.logoHeight,
+                        ),
+                        const SizedBox(height: UIConstants.spacingXXL),
+                        FormRegister(
+                          isLoading: isLoading,
+                          errorMessage: errorMessage,
+                          onSubmit: handleRegister,
+                        ),
+                        const SizedBox(height: UIConstants.spacingXXL),
+                      ],
+                    ),
                   ),
                 ),
               ),
             ),
           ),
-        ),
+        ],
       ),
     );
   }

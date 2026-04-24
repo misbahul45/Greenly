@@ -5,11 +5,13 @@ import (
 	"log"
 
 	"catalog-service/internal/rabbitmq"
-	catalogProducts "catalog-service/modules/products"
+	catalogActivePrice "catalog-service/modules/active_price"
+	catalogEcoAttribute "catalog-service/modules/eco_attribute"
 	catalogInventory "catalog-service/modules/inventory"
 	catalogPrice "catalog-service/modules/price"
-	catalogActivePrice "catalog-service/modules/active_price"
 	catalogDiscount "catalog-service/modules/product_discount"
+	catalogProductImage "catalog-service/modules/product_image"
+	catalogProducts "catalog-service/modules/products"
 
 	"go.mongodb.org/mongo-driver/mongo"
 )
@@ -26,8 +28,8 @@ func (p *priceAccessor) FindByProductID(ctx context.Context, productID string) (
 	return catalogActivePrice.PriceInfo{
 		ID:        price.ID,
 		ProductID: price.ProductID,
-		Amount:   price.Amount,
-		Currency: price.Currency,
+		Amount:    price.Amount,
+		Currency:  price.Currency,
 	}, nil
 }
 
@@ -37,6 +39,8 @@ func initRabbitMQ(db *mongo.Database) {
 	priceRepo := catalogPrice.NewRepository(db)
 	activePriceRepo := catalogActivePrice.NewRepository(db)
 	discountRepo := catalogDiscount.NewRepository(db)
+	productImageRepo := catalogProductImage.NewRepository(db)
+	ecoAttributeRepo := catalogEcoAttribute.NewRepository(db)
 
 	priceAcc := &priceAccessor{repo: priceRepo}
 
@@ -45,6 +49,8 @@ func initRabbitMQ(db *mongo.Database) {
 	priceService := catalogPrice.NewService(priceRepo)
 	activePriceService := catalogActivePrice.NewService(activePriceRepo, priceAcc)
 	discountService := catalogDiscount.NewService(discountRepo)
+	ecoAttributeService := catalogEcoAttribute.NewService(ecoAttributeRepo)
+	_ = productImageRepo
 
 	rabbitMQ, err := rabbitmq.NewRabbitMQ(
 		productService,
@@ -52,6 +58,7 @@ func initRabbitMQ(db *mongo.Database) {
 		priceService,
 		discountService,
 		activePriceService,
+		ecoAttributeService,
 	)
 	if err != nil {
 		log.Printf("Warning: RabbitMQ not available: %v", err)

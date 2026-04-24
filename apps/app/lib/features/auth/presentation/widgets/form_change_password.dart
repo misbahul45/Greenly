@@ -10,7 +10,8 @@ class FormChangePassword extends StatefulWidget {
     String tokenId,
     String newPassword,
     String confirmNewPassword,
-  ) onSubmit;
+  )
+  onSubmit;
   final bool isLoading;
   final String? errorMessage;
 
@@ -73,79 +74,130 @@ class _FormChangePasswordState extends State<FormChangePassword> {
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-
-    return Padding(
-      padding: const EdgeInsets.all(20),
-      child: Form(
-        key: _formKey,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (widget.errorMessage != null)
-              Container(
-                padding: const EdgeInsets.all(12),
-                margin: const EdgeInsets.only(bottom: 16),
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  color: Colors.red.shade100,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  widget.errorMessage!,
-                  style: const TextStyle(color: Colors.red),
-                ),
-              ),
-            TextValidation(
-              hint: 'New Password',
-              controller: newPasswordController,
-              obscure: obscurePassword,
-              prefixIcon: Icons.lock,
-              validator: AuthValidation.password,
-              suffixIcon: IconButton(
-                onPressed: togglePassword,
-                icon: Icon(
-                  obscurePassword ? Icons.visibility : Icons.visibility_off,
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
-            TextValidation(
-              controller: confirmNewPasswordController,
-              obscure: obscureConfirmPassword,
-              hint: 'Confirm New Password',
-              prefixIcon: Icons.lock,
-              validator: AuthValidation.password,
-              suffixIcon: IconButton(
-                onPressed: togglePassword,
-                icon: Icon(
-                  obscurePassword ? Icons.visibility : Icons.visibility_off,
-                ),
-              ),
-            ),
-            const SizedBox(height: 24),
-            SizedBox(
+    return Form(
+      key: _formKey,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (widget.errorMessage != null) ...[
+            Container(
+              padding: const EdgeInsets.all(12),
+              margin: const EdgeInsets.only(bottom: 16),
               width: double.infinity,
-              height: 50,
-              child: ElevatedButton(
-                onPressed: widget.isLoading ? null : handleSubmit,
-                child: widget.isLoading
-                    ? const CircularProgressIndicator(color: Colors.white)
-                    : Text(
-                        "Ubah Password",
-                        style: textTheme.titleMedium?.copyWith(
-                          color: Colors.white,
-                        ),
-                      ),
+              decoration: BoxDecoration(
+                color: Colors.red.shade50,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: Colors.red.shade200),
               ),
-            ),
-            const SizedBox(height: 16),
-            TextButton(
-              onPressed: goToLogin,
-              child: const Text("Kembali ke Login"),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.error_outline_rounded,
+                    color: Colors.red[400],
+                    size: 16,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      widget.errorMessage!,
+                      style: TextStyle(color: Colors.red[700], fontSize: 13),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ],
-        ),
+          _FieldLabel('Password Baru'),
+          const SizedBox(height: 6),
+          TextValidation(
+            hint: 'Min. 8 karakter',
+            controller: newPasswordController,
+            obscure: obscurePassword,
+            prefixIcon: Icons.lock_outline_rounded,
+            validator: AuthValidation.password,
+            suffixIcon: IconButton(
+              onPressed: togglePassword,
+              icon: Icon(
+                obscurePassword
+                    ? Icons.visibility_off_outlined
+                    : Icons.visibility_outlined,
+                size: 20,
+                color: Colors.grey,
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          _FieldLabel('Konfirmasi Password Baru'),
+          const SizedBox(height: 6),
+          TextValidation(
+            controller: confirmNewPasswordController,
+            obscure: obscureConfirmPassword,
+            hint: 'Ulangi password baru',
+            prefixIcon: Icons.lock_outline_rounded,
+            validator: (value) => AuthValidation.confirmPassword(
+              value,
+              newPasswordController.text,
+            ),
+            suffixIcon: IconButton(
+              onPressed: toggleConfirmPassword,
+              icon: Icon(
+                obscureConfirmPassword
+                    ? Icons.visibility_off_outlined
+                    : Icons.visibility_outlined,
+                size: 20,
+                color: Colors.grey,
+              ),
+            ),
+          ),
+          const SizedBox(height: 24),
+          SizedBox(
+            width: double.infinity,
+            height: 50,
+            child: ElevatedButton(
+              onPressed: widget.isLoading ? null : handleSubmit,
+              child: widget.isLoading
+                  ? const CircularProgressIndicator(
+                      color: Colors.white,
+                      strokeWidth: 2,
+                    )
+                  : const Text(
+                      "Ubah Password",
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Center(
+            child: TextButton(
+              onPressed: goToLogin,
+              child: Text(
+                "Kembali ke Login",
+                style: TextStyle(color: Colors.grey[500], fontSize: 13),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _FieldLabel extends StatelessWidget {
+  final String text;
+  const _FieldLabel(this.text);
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      text,
+      style: const TextStyle(
+        fontSize: 13,
+        fontWeight: FontWeight.w600,
+        color: Colors.black87,
       ),
     );
   }

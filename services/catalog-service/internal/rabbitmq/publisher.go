@@ -18,6 +18,9 @@ type Publisher interface {
 	PublishInventoryUpdated(ctx context.Context, payload InventoryEventPayload) error
 	PublishPriceUpdated(ctx context.Context, payload PriceEventPayload) error
 	PublishDiscountApplied(ctx context.Context, payload DiscountEventPayload) error
+	PublishProductImageUploaded(ctx context.Context, payload ProductImageEventPayload) error
+	PublishProductImageDeleted(ctx context.Context, payload ProductImageEventPayload) error
+	PublishEcoAttributeUpdated(ctx context.Context, payload EcoAttributeEventPayload) error
 	PublishMLProductCreated(ctx context.Context, payload MLProductEventPayload) error
 	PublishMLProductUpdated(ctx context.Context, payload MLProductEventPayload) error
 	PublishMLInventoryUpdated(ctx context.Context, payload MLInventoryEventPayload) error
@@ -32,25 +35,25 @@ type publisher struct {
 }
 
 type ProductEventPayload struct {
-	ProductID   string                 `json:"productId"`
-	Name        string                 `json:"name"`
-	ShopID      string                 `json:"shopId"`
-	CategoryID  string                 `json:"categoryId"`
-	Description string                 `json:"description"`
-	SKU         string                 `json:"sku"`
-	IsActive    bool                   `json:"isActive"`
-	Timestamp   string                 `json:"timestamp"`
-	Source      string                 `json:"source"`
-	Version     string                 `json:"version"`
+	ProductID   string `json:"productId"`
+	Name        string `json:"name"`
+	ShopID      string `json:"shopId"`
+	CategoryID  string `json:"categoryId"`
+	Description string `json:"description"`
+	SKU         string `json:"sku"`
+	IsActive    bool   `json:"isActive"`
+	Timestamp   string `json:"timestamp"`
+	Source      string `json:"source"`
+	Version     string `json:"version"`
 }
 
 type InventoryEventPayload struct {
-	ProductID    string `json:"productId"`
-	Stock        int    `json:"stock"`
-	ReservedStock int   `json:"reservedStock"`
-	Timestamp    string `json:"timestamp"`
-	Source       string `json:"source"`
-	Version      string `json:"version"`
+	ProductID     string `json:"productId"`
+	Stock         int    `json:"stock"`
+	ReservedStock int    `json:"reservedStock"`
+	Timestamp     string `json:"timestamp"`
+	Source        string `json:"source"`
+	Version       string `json:"version"`
 }
 
 type PriceEventPayload struct {
@@ -63,53 +66,75 @@ type PriceEventPayload struct {
 }
 
 type DiscountEventPayload struct {
-	ProductID    string  `json:"productId"`
-	DiscountID   string  `json:"discountId"`
-	Percentage   float64 `json:"percentage,omitempty"`
-	FixedAmount  float64 `json:"fixedAmount,omitempty"`
-	ValidFrom    string  `json:"validFrom"`
-	ValidTo      string  `json:"validTo"`
-	IsActive     bool    `json:"isActive"`
-	Timestamp    string  `json:"timestamp"`
-	Source       string  `json:"source"`
-	Version      string  `json:"version"`
+	ProductID   string  `json:"productId"`
+	DiscountID  string  `json:"discountId"`
+	Percentage  float64 `json:"percentage,omitempty"`
+	FixedAmount float64 `json:"fixedAmount,omitempty"`
+	ValidFrom   string  `json:"validFrom"`
+	ValidTo     string  `json:"validTo"`
+	IsActive    bool    `json:"isActive"`
+	Timestamp   string  `json:"timestamp"`
+	Source      string  `json:"source"`
+	Version     string  `json:"version"`
 }
 
 type MLProductEventPayload struct {
-	ProductID    string                 `json:"productId"`
-	Name         string                 `json:"name"`
-	Description  string                 `json:"description"`
-	CategoryID   string                 `json:"categoryId"`
-	ShopID       string                 `json:"shopId"`
-	SKU          string                 `json:"sku"`
-	Features     map[string]interface{} `json:"features"`
-	Timestamp    string                 `json:"timestamp"`
-	Source       string                 `json:"source"`
-	Version      string                 `json:"version"`
+	ProductID   string                 `json:"productId"`
+	Name        string                 `json:"name"`
+	Description string                 `json:"description"`
+	CategoryID  string                 `json:"categoryId"`
+	ShopID      string                 `json:"shopId"`
+	SKU         string                 `json:"sku"`
+	Features    map[string]interface{} `json:"features"`
+	Timestamp   string                 `json:"timestamp"`
+	Source      string                 `json:"source"`
+	Version     string                 `json:"version"`
 }
 
 type MLInventoryEventPayload struct {
-	ProductID    string  `json:"productId"`
-	Stock        int     `json:"stock"`
-	Timestamp    string  `json:"timestamp"`
-	Source       string  `json:"source"`
-	Version      string  `json:"version"`
+	ProductID string `json:"productId"`
+	Stock     int    `json:"stock"`
+	Timestamp string `json:"timestamp"`
+	Source    string `json:"source"`
+	Version   string `json:"version"`
 }
 
 type MLPriceEventPayload struct {
-	ProductID    string  `json:"productId"`
-	Price        float64 `json:"price"`
-	Timestamp    string  `json:"timestamp"`
-	Source       string  `json:"source"`
-	Version      string  `json:"version"`
+	ProductID string  `json:"productId"`
+	Price     float64 `json:"price"`
+	Timestamp string  `json:"timestamp"`
+	Source    string  `json:"source"`
+	Version   string  `json:"version"`
 }
 
 type MLDiscountEventPayload struct {
-	ProductID    string  `json:"productId"`
-	Discount     float64 `json:"discount"`
-	Timestamp    string  `json:"timestamp"`
-	Source       string  `json:"source"`
-	Version      string  `json:"version"`
+	ProductID string  `json:"productId"`
+	Discount  float64 `json:"discount"`
+	Timestamp string  `json:"timestamp"`
+	Source    string  `json:"source"`
+	Version   string  `json:"version"`
+}
+
+type ProductImageEventPayload struct {
+	ImageID   string `json:"imageId"`
+	ProductID string `json:"productId"`
+	URL       string `json:"url"`
+	FileID    string `json:"fileId"`
+	IsPrimary bool   `json:"isPrimary"`
+	Timestamp string `json:"timestamp"`
+	Source    string `json:"source"`
+	Version   string `json:"version"`
+}
+
+type EcoAttributeEventPayload struct {
+	ProductID       string  `json:"productId"`
+	CarbonFootprint float64 `json:"carbonFootprint"`
+	Recyclable      bool    `json:"recyclable"`
+	MaterialType    string  `json:"materialType"`
+	EcoScore        float64 `json:"ecoScore"`
+	Timestamp       string  `json:"timestamp"`
+	Source          string  `json:"source"`
+	Version         string  `json:"version"`
 }
 
 func NewPublisher() (Publisher, error) {
@@ -252,6 +277,27 @@ func (p *publisher) PublishMLDiscountApplied(ctx context.Context, payload MLDisc
 	payload.Source = "catalog-service"
 	payload.Version = "1.0"
 	return p.publish(ctx, "ml.discount.applied", payload)
+}
+
+func (p *publisher) PublishProductImageUploaded(ctx context.Context, payload ProductImageEventPayload) error {
+	payload.Timestamp = time.Now().UTC().Format(time.RFC3339)
+	payload.Source = "catalog-service"
+	payload.Version = "1.0"
+	return p.publish(ctx, "product.image.uploaded", payload)
+}
+
+func (p *publisher) PublishProductImageDeleted(ctx context.Context, payload ProductImageEventPayload) error {
+	payload.Timestamp = time.Now().UTC().Format(time.RFC3339)
+	payload.Source = "catalog-service"
+	payload.Version = "1.0"
+	return p.publish(ctx, "product.image.deleted", payload)
+}
+
+func (p *publisher) PublishEcoAttributeUpdated(ctx context.Context, payload EcoAttributeEventPayload) error {
+	payload.Timestamp = time.Now().UTC().Format(time.RFC3339)
+	payload.Source = "catalog-service"
+	payload.Version = "1.0"
+	return p.publish(ctx, "product.eco_attribute.updated", payload)
 }
 
 func (p *publisher) Close() error {

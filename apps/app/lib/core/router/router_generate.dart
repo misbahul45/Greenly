@@ -1,21 +1,27 @@
 import 'package:app/features/auth/presentation/screens/change_password_screen.dart';
 import 'package:app/features/auth/presentation/screens/verify_password_screen.dart';
+import 'package:app/features/home/home_screen.dart';
+import 'package:app/features/onboarding/presentation/screens/onboarding_coordinator_screen.dart';
+import 'package:app/features/onboarding/presentation/screens/splash_screen.dart';
 import 'package:flutter/material.dart';
 
-/// AUTH SCREENS
 import 'package:app/features/auth/presentation/screens/login_screen.dart';
 import 'package:app/features/auth/presentation/screens/forgot_password_screen.dart';
 import 'package:app/features/auth/presentation/screens/register_screen.dart';
 import 'package:app/features/auth/presentation/screens/verify_email_screen.dart';
 
-// /// APP SCREENS
-import 'package:app/features/app/presentation/home_screen.dart';
 import 'auth_routes.dart';
 import 'app_routes.dart';
 
 class RouterGenerate {
   static Route<dynamic> generateRoute(RouteSettings settings) {
     switch (settings.name) {
+      case AuthRoutes.splash:
+        return _page(const SplashScreen());
+
+      case AuthRoutes.onboarding:
+        return _page(const OnboardingCoordinatorScreen());
+
       case AuthRoutes.login:
         return _page(const LoginScreen());
 
@@ -36,9 +42,6 @@ class RouterGenerate {
 
       case AppRoutes.home:
         return _page(const HomeScreen());
-
-      // case AppRoutes.profile:
-      //   return _page(const ProfileScreen());
 
       default:
         return _page(

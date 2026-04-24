@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:app/core/constants/ui_constants.dart';
+import 'package:app/core/theme/app_theme.dart';
 import 'package:app/features/auth/auth_validation.dart';
 import 'package:app/shared/ui/text_validation.dart';
 
@@ -59,29 +61,56 @@ class _FormLoginState extends State<FormLogin> {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.only(top: UIConstants.spacingXXL),
       child: Form(
         key: _formKey,
         child: Column(
           mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            const Text(
+              'Selamat Datang',
+              style: TextStyle(
+                fontSize: UIConstants.fontSizeXXL,
+                fontWeight: FontWeight.w800,
+                color: Colors.black87,
+                letterSpacing: -0.5,
+              ),
+            ),
+            const SizedBox(height: UIConstants.spacingXS),
+            Text(
+              'Masuk ke akunmu',
+              style: TextStyle(
+                fontSize: UIConstants.fontSizeM,
+                color: Colors.grey[500],
+              ),
+            ),
+            const SizedBox(height: UIConstants.spacingXXL),
+            _FieldLabel('Email'),
+            const SizedBox(height: UIConstants.spacingXS),
             TextValidation(
               hint: "Email",
               controller: emailController,
-              prefixIcon: Icons.email,
+              prefixIcon: Icons.email_outlined,
               validator: AuthValidation.email,
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: UIConstants.spacingL),
+            _FieldLabel('Password'),
+            const SizedBox(height: UIConstants.spacingXS),
             TextValidation(
               hint: "Password",
               controller: passwordController,
-              prefixIcon: Icons.lock,
+              prefixIcon: Icons.lock_outline_rounded,
               obscure: obscurePassword,
               validator: AuthValidation.password,
               suffixIcon: IconButton(
                 onPressed: togglePassword,
                 icon: Icon(
-                  obscurePassword ? Icons.visibility : Icons.visibility_off,
+                  obscurePassword
+                      ? Icons.visibility_off_outlined
+                      : Icons.visibility_outlined,
+                  size: UIConstants.iconSizeM,
+                  color: Colors.grey,
                 ),
               ),
             ),
@@ -89,35 +118,56 @@ class _FormLoginState extends State<FormLogin> {
               alignment: Alignment.centerRight,
               child: TextButton(
                 onPressed: toggleForgotPassword,
+                style: TextButton.styleFrom(
+                  padding: EdgeInsets.zero,
+                  minimumSize: Size.zero,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
                 child: const Text(
-                  "Forgot password?",
-                  style: TextStyle(fontSize: 15),
+                  "Lupa password?",
+                  style: TextStyle(
+                    fontSize: UIConstants.fontSizeM,
+                    color: AppTheme.primaryColor,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: UIConstants.spacingS),
             if (widget.errorMessage != null) ...[
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.all(12),
-                margin: const EdgeInsets.only(bottom: 12),
+                padding: const EdgeInsets.all(UIConstants.paddingM),
+                margin: const EdgeInsets.only(bottom: UIConstants.spacingM),
                 decoration: BoxDecoration(
                   color: Colors.red.shade50,
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(UIConstants.radiusM),
                   border: Border.all(color: Colors.red.shade200),
                 ),
-                child: Text(
-                  widget.errorMessage!,
-                  style: const TextStyle(
-                    color: Colors.red,
-                    fontSize: 15,
-                  ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.error_outline_rounded,
+                      color: Colors.red[400],
+                      size: UIConstants.iconSizeS,
+                    ),
+                    const SizedBox(width: UIConstants.spacingS),
+                    Expanded(
+                      child: Text(
+                        widget.errorMessage!,
+                        style: TextStyle(
+                          color: Colors.red[700],
+                          fontSize: UIConstants.fontSizeM,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
             SizedBox(
               width: double.infinity,
-              height: 50,
+              height: UIConstants.buttonHeight,
               child: ElevatedButton(
                 onPressed: widget.isLoading ? null : handleSubmit,
                 child: AnimatedSwitcher(
@@ -133,35 +183,85 @@ class _FormLoginState extends State<FormLogin> {
                           ),
                         )
                       : const Text(
-                          "My Account",
+                          "Masuk",
                           key: ValueKey("text"),
                           style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w600,
+                            fontSize: UIConstants.fontSizeL,
+                            fontWeight: FontWeight.w700,
                           ),
                         ),
                 ),
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: UIConstants.spacingXL),
+            Row(
+              children: [
+                Expanded(child: Divider(color: Colors.grey[200])),
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: UIConstants.spacingM,
+                  ),
+                  child: Text(
+                    'atau',
+                    style: TextStyle(
+                      fontSize: UIConstants.fontSizeS,
+                      color: Colors.grey[400],
+                    ),
+                  ),
+                ),
+                Expanded(child: Divider(color: Colors.grey[200])),
+              ],
+            ),
+            const SizedBox(height: UIConstants.spacingL),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Text(
-                  "Don't have an account?",
-                  style: TextStyle(fontSize: 15),
+                Text(
+                  "Belum punya akun?",
+                  style: TextStyle(
+                    fontSize: UIConstants.fontSizeM,
+                    color: Colors.grey[600],
+                  ),
                 ),
                 TextButton(
                   onPressed: toggleRegister,
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: UIConstants.spacingXS,
+                    ),
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
                   child: const Text(
-                    "Create account",
-                    style: TextStyle(fontSize: 15),
+                    "Daftar sekarang",
+                    style: TextStyle(
+                      fontSize: UIConstants.fontSizeM,
+                      color: AppTheme.primaryColor,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ),
               ],
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _FieldLabel extends StatelessWidget {
+  final String text;
+  const _FieldLabel(this.text);
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      text,
+      style: const TextStyle(
+        fontSize: 13,
+        fontWeight: FontWeight.w600,
+        color: Colors.black87,
       ),
     );
   }

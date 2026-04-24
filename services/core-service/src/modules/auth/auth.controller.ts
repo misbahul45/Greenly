@@ -118,7 +118,6 @@ export class AuthController {
     @Query('for') tokenType: AuthTokenType
   ){
 
-    console.log(dto)
     return ErrorHandler(()=>this.authService.resendToken(dto.email, tokenType))
   }
 

@@ -1,4 +1,4 @@
-
+import 'package:app/core/theme/app_theme.dart';
 import 'package:app/features/auth/auth_validation.dart';
 import 'package:app/shared/ui/text_validation.dart';
 import 'package:flutter/material.dart';
@@ -38,31 +38,23 @@ class _FormOtpEmailState extends State<FormOtpEmail> {
     super.dispose();
   }
 
-  /// VERIFY OTP
   void handleSubmitOtp() {
     if (otpController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("OTP harus diisi"),
-        ),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("OTP harus diisi")));
       return;
     }
 
-    widget.onSubmitOtp(
-      otpController.text.trim(),
-    );
+    widget.onSubmitOtp(otpController.text.trim());
   }
 
-  /// RESEND OTP
   void handleResend() {
     if (!_formKey.currentState!.validate()) {
       return;
     }
 
-    widget.onResendOtp(
-      emailController.text.trim(),
-    );
+    widget.onResendOtp(emailController.text.trim());
 
     setState(() {
       showOtp = true;
@@ -77,113 +69,169 @@ class _FormOtpEmailState extends State<FormOtpEmail> {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(20),
-      child: Form(
-        key: _formKey,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-
-            /// ERROR MESSAGE
-            if (widget.errorMessage != null)
-              Container(
-                padding: const EdgeInsets.all(12),
-                margin: const EdgeInsets.only(bottom: 16),
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  color: Colors.red.shade100,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  widget.errorMessage!,
-                  style: const TextStyle(color: Colors.red),
+    return Form(
+      key: _formKey,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (widget.errorMessage != null)
+            Container(
+              padding: const EdgeInsets.all(12),
+              margin: const EdgeInsets.only(bottom: 16),
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: Colors.red.shade50,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: Colors.red.shade200),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.error_outline_rounded,
+                    color: Colors.red[400],
+                    size: 16,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      widget.errorMessage!,
+                      style: TextStyle(color: Colors.red[700], fontSize: 13),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          if (showOtp) ...[
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: AppTheme.tertiaryColor.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(
+                  color: AppTheme.tertiaryColor.withValues(alpha: 0.3),
                 ),
               ),
-
-            /// OTP VIEW
-            if (showOtp) ...[
-              OtpField(
+              child: OtpField(
                 length: 6,
                 onCompleted: (value) {
                   otpController.text = value;
                 },
               ),
-
-              const SizedBox(height: 20),
-
-              SizedBox(
-                width: double.infinity,
-                height: 50,
-                child: ElevatedButton(
-                  onPressed: widget.isLoading ? null : handleSubmitOtp,
-                  child: widget.isLoading
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                          ),
-                        )
-                      : const Text("Verify OTP"),
-                ),
+            ),
+            const SizedBox(height: 24),
+            SizedBox(
+              width: double.infinity,
+              height: 50,
+              child: ElevatedButton(
+                onPressed: widget.isLoading ? null : handleSubmitOtp,
+                child: widget.isLoading
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : const Text(
+                        "Verifikasi OTP",
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
               ),
-
-              const SizedBox(height: 10),
-
-              Row(
-                children: [
-                  ElevatedButton(
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
                     onPressed: () {
                       Navigator.pop(context);
                     },
-                    child: const Text("Back"),
+                    child: const Text("Kembali"),
                   ),
-                  const SizedBox(width: 10),
-                  TextButton(
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: TextButton(
                     onPressed: toggleView,
-                    child: const Text("Resend Code"),
+                    child: const Text(
+                      "Kirim Ulang",
+                      style: TextStyle(
+                        color: AppTheme.primaryColor,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                   ),
-                ],
-              )
-            ]
-
-            /// EMAIL VIEW
-            else ...[
-              TextValidation(
-                hint: "Email",
-                controller: emailController,
-                validator: AuthValidation.email,
-                prefixIcon: Icons.email,
+                ),
+              ],
+            ),
+          ] else ...[
+            _FieldLabel('Email'),
+            const SizedBox(height: 6),
+            TextValidation(
+              hint: "contoh@email.com",
+              controller: emailController,
+              validator: AuthValidation.email,
+              prefixIcon: Icons.email_outlined,
+            ),
+            const SizedBox(height: 24),
+            SizedBox(
+              width: double.infinity,
+              height: 50,
+              child: ElevatedButton(
+                onPressed: widget.isLoading ? null : handleResend,
+                child: widget.isLoading
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : const Text(
+                        "Kirim OTP",
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
               ),
-
-              const SizedBox(height: 20),
-
-              SizedBox(
-                width: double.infinity,
-                height: 50,
-                child: ElevatedButton(
-                  onPressed: widget.isLoading ? null : handleResend,
-                  child: widget.isLoading
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                          ),
-                        )
-                      : const Text("Send OTP"),
+            ),
+            const SizedBox(height: 12),
+            Center(
+              child: TextButton(
+                onPressed: toggleView,
+                child: Text(
+                  "Kembali ke OTP",
+                  style: TextStyle(color: Colors.grey[500], fontSize: 13),
                 ),
               ),
-
-              const SizedBox(height: 10),
-
-              TextButton(
-                onPressed: toggleView,
-                child: const Text("Back to OTP"),
-              ),
-            ],
+            ),
           ],
+        ],
+      ),
+    );
+  }
+}
+
+class _FieldLabel extends StatelessWidget {
+  final String text;
+  const _FieldLabel(this.text);
+
+  @override
+  Widget build(BuildContext context) {
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Text(
+        text,
+        style: const TextStyle(
+          fontSize: 13,
+          fontWeight: FontWeight.w600,
+          color: Colors.black87,
         ),
       ),
     );

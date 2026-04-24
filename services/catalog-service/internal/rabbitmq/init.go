@@ -5,11 +5,12 @@ import (
 	"encoding/json"
 	"log"
 
-	catalogProducts "catalog-service/modules/products"
+	catalogActivePrice "catalog-service/modules/active_price"
+	catalogEcoAttribute "catalog-service/modules/eco_attribute"
 	catalogInventory "catalog-service/modules/inventory"
 	catalogPrice "catalog-service/modules/price"
 	catalogDiscount "catalog-service/modules/product_discount"
-	catalogActivePrice "catalog-service/modules/active_price"
+	catalogProducts "catalog-service/modules/products"
 )
 
 type RabbitMQ struct {
@@ -23,6 +24,7 @@ func NewRabbitMQ(
 	priceService catalogPrice.Service,
 	discountService catalogDiscount.Service,
 	activePriceService catalogActivePrice.Service,
+	ecoAttributeService catalogEcoAttribute.Service,
 ) (*RabbitMQ, error) {
 	publisher, err := NewPublisher()
 	if err != nil {
@@ -41,6 +43,7 @@ func NewRabbitMQ(
 		priceService,
 		discountService,
 		activePriceService,
+		ecoAttributeService,
 	)
 
 	consumer.RegisterHandler("order.created", handlers.HandleOrderCreated)
@@ -71,11 +74,12 @@ func (r *RabbitMQ) Stop() error {
 }
 
 type EventHandlers struct {
-	productService     catalogProducts.Service
-	inventoryService   catalogInventory.Service
-	priceService       catalogPrice.Service
-	discountService    catalogDiscount.Service
-	activePriceService catalogActivePrice.Service
+	productService      catalogProducts.Service
+	inventoryService    catalogInventory.Service
+	priceService        catalogPrice.Service
+	discountService     catalogDiscount.Service
+	activePriceService  catalogActivePrice.Service
+	ecoAttributeService catalogEcoAttribute.Service
 }
 
 func NewEventHandlers(
@@ -84,13 +88,15 @@ func NewEventHandlers(
 	priceService catalogPrice.Service,
 	discountService catalogDiscount.Service,
 	activePriceService catalogActivePrice.Service,
+	ecoAttributeService catalogEcoAttribute.Service,
 ) *EventHandlers {
 	return &EventHandlers{
-		productService:     productService,
-		inventoryService:   inventoryService,
-		priceService:       priceService,
-		discountService:    discountService,
-		activePriceService: activePriceService,
+		productService:      productService,
+		inventoryService:    inventoryService,
+		priceService:        priceService,
+		discountService:     discountService,
+		activePriceService:  activePriceService,
+		ecoAttributeService: ecoAttributeService,
 	}
 }
 

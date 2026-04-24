@@ -6,6 +6,7 @@ export default async function ErrorHandler<T>(
   try {
     return await fn();
   } catch (error) {
+    console.log(error);
     if (error instanceof AppError) {
       throw error;
     }
