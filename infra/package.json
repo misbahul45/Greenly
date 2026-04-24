@@ -1,0 +1,12 @@
+{
+  "name": "infra",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "dev": "docker compose -f docker-compose.dev.yml up --build --watch"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": ""
+}

@@ -20,105 +20,77 @@ class VerifyEmailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final width = MediaQuery.of(context).size.width;
+
     return Scaffold(
       backgroundColor: Colors.white,
-      body: Stack(
-        children: [
-          Positioned(
-            top: -50,
-            right: -50,
-            child: Container(
-              width: UIConstants.decorCircleMedium,
-              height: UIConstants.decorCircleMedium,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: AppTheme.tertiaryColor.withValues(alpha: 0.18),
+      body: SafeArea(
+        child: Center(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxWidth: width > 500 ? 420 : width,
+            ),
+            child: SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 20,
+                vertical: 24,
+              ),
+              child: BlocConsumer<AuthBloc, AuthState>(
+                listener: (context, state) {
+                  if (state is AuthAuthenticated) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text("Email berhasil diverifikasi"),
+                      ),
+                    );
+                    Navigator.pushReplacementNamed(context, "/home");
+                  } else if (state is AuthOtpResent) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text("OTP berhasil dikirim ulang"),
+                      ),
+                    );
+                  } else if (state is AuthError) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text(state.message)),
+                    );
+                  }
+                },
+                builder: (context, state) {
+                  final isLoading = state is AuthLoading;
+
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      const SizedBox(height: 24),
+                      _OtpIllustration(
+                        icon: Icons.mark_email_read_rounded,
+                        title: "Verify Email",
+                        subtitle:
+                            "Masukkan kode OTP yang dikirim ke email kamu",
+                      ),
+                      const SizedBox(height: 36),
+                      FormOtpEmail(
+                        isLoading: isLoading,
+                        errorMessage:
+                            state is AuthError ? state.message : null,
+                        onSubmitOtp: (otp) =>
+                            handleVerifyOtp(context, otp),
+                        onResendOtp: (email) => handleResendOtp(
+                          context,
+                          email,
+                          OtpType.verifyEmail,
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                    ],
+                  );
+                },
               ),
             ),
           ),
-          Positioned(
-            bottom: -60,
-            left: -30,
-            child: Container(
-              width: UIConstants.decorCircleMedium,
-              height: UIConstants.decorCircleMedium,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: AppTheme.tertiaryColor.withValues(alpha: 0.12),
-              ),
-            ),
-          ),
-          SafeArea(
-            child: Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(
-                  maxWidth: UIConstants.maxContentWidth,
-                ),
-                child: SingleChildScrollView(
-                  physics: const BouncingScrollPhysics(),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: UIConstants.paddingL,
-                    ),
-                    child: BlocConsumer<AuthBloc, AuthState>(
-                      listener: (context, state) {
-                        if (state is AuthAuthenticated) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text("Email berhasil diverifikasi"),
-                            ),
-                          );
-                          Navigator.pushReplacementNamed(context, "/home");
-                        }
-                        if (state is AuthOtpResent) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text("OTP berhasil dikirim ulang"),
-                            ),
-                          );
-                        }
-                        if (state is AuthError) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text(state.message)),
-                          );
-                        }
-                      },
-                      builder: (context, state) {
-                        final isLoading = state is AuthLoading;
-                        return Column(
-                          children: [
-                            const SizedBox(height: UIConstants.spacingXXL),
-                            _OtpIllustration(
-                              icon: Icons.mark_email_read_rounded,
-                              title: "Verify Email",
-                              subtitle:
-                                  "Masukkan kode OTP yang dikirim ke email kamu",
-                            ),
-                            const SizedBox(height: UIConstants.spacingXXXL),
-                            FormOtpEmail(
-                              isLoading: isLoading,
-                              errorMessage: state is AuthError
-                                  ? state.message
-                                  : null,
-                              onSubmitOtp: (otp) =>
-                                  handleVerifyOtp(context, otp),
-                              onResendOtp: (email) => handleResendOtp(
-                                context,
-                                email,
-                                OtpType.verifyEmail,
-                              ),
-                            ),
-                            const SizedBox(height: UIConstants.spacingXXL),
-                          ],
-                        );
-                      },
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -139,57 +111,37 @@ class _OtpIllustration extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Stack(
-          alignment: Alignment.center,
-          children: [
-            Container(
-              width: UIConstants.otpIconOuter,
-              height: UIConstants.otpIconOuter,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: AppTheme.tertiaryColor.withValues(alpha: 0.25),
-              ),
-            ),
-            Container(
-              width: UIConstants.otpIconInner,
-              height: UIConstants.otpIconInner,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: AppTheme.primaryColor,
-                boxShadow: [
-                  BoxShadow(
-                    color: AppTheme.primaryColor.withValues(alpha: 0.3),
-                    blurRadius: 16,
-                    offset: const Offset(0, 6),
-                  ),
-                ],
-              ),
-              child: Icon(
-                icon,
-                color: Colors.white,
-                size: UIConstants.otpIconSize,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: UIConstants.spacingXL),
-        Text(
-          title,
-          style: const TextStyle(
-            fontSize: 26,
-            fontWeight: FontWeight.w800,
-            color: Colors.black87,
-            letterSpacing: -0.5,
+        Container(
+          width: 90,
+          height: 88,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: AppTheme.primaryColor.withValues(alpha: 0.1),
+          ),
+          child: Icon(
+            icon,
+            size: 42,
+            color: AppTheme.primaryColor,
           ),
         ),
-        const SizedBox(height: UIConstants.spacingS),
+        const SizedBox(height: 20),
+        Text(
+          title,
+          textAlign: TextAlign.center,
+          style: const TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.w700,
+            color: Colors.black87,
+          ),
+        ),
+        const SizedBox(height: 8),
         Text(
           subtitle,
           textAlign: TextAlign.center,
           style: TextStyle(
-            fontSize: UIConstants.fontSizeL,
+            fontSize: 14,
             color: Colors.grey[600],
-            height: 1.5,
+            height: 1.4,
           ),
         ),
       ],
