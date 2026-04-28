@@ -50,7 +50,7 @@ class _SplashScreenState extends State<SplashScreen>
     final hasOnboarded = await OnboardingStorage.hasSeenOnboarding();
 
     if (token != null && token.isNotEmpty) {
-      Navigator.pushReplacementNamed(context, AppRoutes.home);
+      Navigator.pushReplacementNamed(context, AppRoutes.main);
     } else if (hasOnboarded) {
       Navigator.pushReplacementNamed(context, AuthRoutes.login);
     } else {

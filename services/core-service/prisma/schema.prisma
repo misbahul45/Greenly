@@ -76,6 +76,12 @@ enum UserStatus {
   PENDING_VERIFICATION
 }
 
+enum BannerType {
+  HOME
+  PROMO
+  EVENT
+}
+
 model User {
   id             String     @id @default(cuid())
   email          String     @unique
@@ -377,9 +383,11 @@ model Promotion {
   createdAt         DateTime           @default(now())
   updatedAt         DateTime           @updatedAt
   deletedAt         DateTime?
+  
   orders            Order[]
   promotionShops    PromotionShop[]
   promotionProducts PromotionProduct[]
+  banners Banner[]
 
   @@index([code, isActive])
   @@index([startDate, endDate])
@@ -387,16 +395,47 @@ model Promotion {
   @@map("promotions")
 }
 
+model Banner {
+  id           String     @id @default(cuid())
+  title        String
+  description  String?
+  imageUrl     String
+  link         String?
+
+  promotionId  String?
+  promotion    Promotion? @relation(fields: [promotionId], references: [id])
+
+  isActive     Boolean    @default(true)
+  position     Int?      
+
+  startDate    DateTime?
+  endDate      DateTime?
+
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  deletedAt    DateTime?
+  type BannerType @default(HOME)
+
+  @@index([isActive])
+  @@index([position])
+  @@index([promotionId])
+  @@index([deletedAt])
+  @@map("banners")
+}
+
+
+
 model PromotionShop {
   id          String   @id @default(cuid())
   promotionId String
   shopId      String
   createdAt   DateTime @default(now())
 
-  promotion Promotion @relation(fields: [promotionId], references: [id])
-  shop      Shop      @relation(fields: [shopId], references: [id])
+  promotion   Promotion @relation(fields: [promotionId], references: [id], onDelete: Cascade)
+  shop        Shop      @relation(fields: [shopId], references: [id], onDelete: Cascade)
 
   @@unique([promotionId, shopId])
+  @@index([shopId])
   @@map("promotion_shops")
 }
 
@@ -406,9 +445,10 @@ model PromotionProduct {
   productId   String
   createdAt   DateTime @default(now())
 
-  promotion Promotion @relation(fields: [promotionId], references: [id])
+  promotion   Promotion @relation(fields: [promotionId], references: [id], onDelete: Cascade)
 
   @@unique([promotionId, productId])
+  @@index([productId])
   @@map("promotion_products")
 }
 

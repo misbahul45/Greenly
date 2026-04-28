@@ -34,7 +34,6 @@ export class DashboardService {
   async getRecentOrders(shopId: string, limit: number): Promise<ApiResponse<unknown[]>> {
     const safeLimit = Math.min(Math.max(limit, 1), 50);
     const orders = await this.repo.getRecentOrders(shopId, safeLimit);
-
     return {
       data: orders,
       message: "Recent orders fetched successfully",

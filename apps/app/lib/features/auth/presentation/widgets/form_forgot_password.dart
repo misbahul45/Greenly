@@ -1,5 +1,5 @@
 import 'package:app/features/auth/auth_validation.dart';
-import 'package:app/shared/ui/text_validation.dart';
+import 'package:app/shared/widgets/text_validation.dart';
 import 'package:flutter/material.dart';
 
 class FormForgotPassword extends StatefulWidget {

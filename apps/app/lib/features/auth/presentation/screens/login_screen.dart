@@ -1,4 +1,5 @@
 import 'package:app/core/constants/ui_constants.dart';
+import 'package:app/core/router/app_routes.dart';
 import 'package:app/core/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -63,7 +64,7 @@ class LoginScreen extends StatelessWidget {
                   child: BlocConsumer<AuthBloc, AuthState>(
                     listener: (context, state) {
                       if (state is AuthAuthenticated) {
-                        Navigator.pushReplacementNamed(context, "/home");
+                        Navigator.pushReplacementNamed(context, AppRoutes.main);
                       }
                       if (state is AuthError) {
                         if (state.message.contains('Please verify') &&

@@ -1,6 +1,6 @@
+import 'package:app/features/Main/Main_screen.dart';
 import 'package:app/features/auth/presentation/screens/change_password_screen.dart';
 import 'package:app/features/auth/presentation/screens/verify_password_screen.dart';
-import 'package:app/features/home/home_screen.dart';
 import 'package:app/features/onboarding/presentation/screens/onboarding_coordinator_screen.dart';
 import 'package:app/features/onboarding/presentation/screens/splash_screen.dart';
 import 'package:flutter/material.dart';
@@ -40,8 +40,8 @@ class RouterGenerate {
       case AuthRoutes.changePassword:
         return _page(const ChangePasswordScreen());
 
-      case AppRoutes.home:
-        return _page(const HomeScreen());
+      case AppRoutes.main:
+        return _page(const MainScreen());
 
       default:
         return _page(

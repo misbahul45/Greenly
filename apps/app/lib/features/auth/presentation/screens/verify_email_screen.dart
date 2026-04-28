@@ -1,4 +1,4 @@
-import 'package:app/core/constants/ui_constants.dart';
+import 'package:app/core/router/app_routes.dart';
 import 'package:app/core/theme/app_theme.dart';
 import 'package:app/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:app/features/auth/presentation/bloc/auth_event.dart';
@@ -44,7 +44,7 @@ class VerifyEmailScreen extends StatelessWidget {
                         content: Text("Email berhasil diverifikasi"),
                       ),
                     );
-                    Navigator.pushReplacementNamed(context, "/home");
+                    Navigator.pushReplacementNamed(context, AppRoutes.main);
                   } else if (state is AuthOtpResent) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(

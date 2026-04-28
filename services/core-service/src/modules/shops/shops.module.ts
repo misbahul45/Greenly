@@ -7,6 +7,7 @@ import { FollowerModule } from './follower/follower.module';
 import { OrderModule } from './order/order.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { FinanceModule } from './finance/finance.module';
+import { ShopBannerModule } from './banner/banner.module';
 
 import { ShopsService } from './shops.service';
 import { ShopsController } from './shops.controller';
@@ -33,6 +34,7 @@ import { PayoutEventsConsumer } from './consumer/payout-events.consumer';
     OrderModule,
     DashboardModule,
     FinanceModule,
+    ShopBannerModule,
 
     RouterModule.register([
       {
@@ -44,6 +46,7 @@ import { PayoutEventsConsumer } from './consumer/payout-events.consumer';
           { path: 'orders', module: OrderModule },
           { path: 'dashboard', module: DashboardModule },
           { path: 'finance', module: FinanceModule },
+          { path: 'banners', module: ShopBannerModule },
         ],
       },
     ]),

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:app/core/constants/ui_constants.dart';
 import 'package:app/core/theme/app_theme.dart';
 import 'package:app/features/auth/auth_validation.dart';
-import 'package:app/shared/ui/text_validation.dart';
+import 'package:app/shared/widgets/text_validation.dart';
 
 class FormLogin extends StatefulWidget {
   final void Function(String email, String password) onSubmit;
