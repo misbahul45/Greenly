@@ -13,6 +13,15 @@ class OnboardingStorage {
     return prefs.getBool(_hasSeenOnboarding) ?? false;
   }
 
+  static Future<void> clearOnboarding() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_hasSeenOnboarding);
+    await prefs.remove(_selectedCategories);
+    await prefs.remove(_selectedEcoGoals);
+    await prefs.remove(_locationGranted);
+    await prefs.remove(_notifGranted);
+  }
+
   static Future<void> saveOnboardingData({
     required List<String> selectedCategories,
     required List<String> selectedEcoGoals,

@@ -3,6 +3,8 @@ import 'package:app/core/router/router_generate.dart';
 import 'package:app/core/theme/app_theme.dart';
 import 'package:app/features/auth/auth_service.dart';
 import 'package:app/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:app/features/Main/features/home/bloc/home_bloc.dart'; // tambah
+import 'package:app/features/Main/features/home/home_service.dart';   // tambah
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -25,10 +27,20 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return RepositoryProvider<AuthService>(
-      create: (_) => AuthService(),
-      child: BlocProvider<AuthBloc>(
-        create: (context) => AuthBloc(context.read<AuthService>()),
+    return MultiRepositoryProvider(
+      providers: [
+        RepositoryProvider<AuthService>(create: (_) => AuthService()),
+        RepositoryProvider<HomeService>(create: (_) => HomeService()), 
+      ],
+      child: MultiBlocProvider(
+        providers: [
+          BlocProvider<AuthBloc>(
+            create: (context) => AuthBloc(context.read<AuthService>()),
+          ),
+          BlocProvider<HomeBloc>(
+            create: (context) => HomeBloc(context.read<HomeService>()), 
+          ),
+        ],
         child: MaterialApp(
           title: 'Greenly Mart',
           debugShowCheckedModeBanner: false,

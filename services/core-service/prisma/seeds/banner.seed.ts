@@ -128,11 +128,11 @@ export async function seedBanners(prisma: PrismaClient, promoIds: string[]) {
   ]
 
   for (const b of platformBanners) {
-    await prisma.banner.upsert({
-      where: { id: `banner-platform-${b.position}` },
-      update: { isActive: b.isActive },
-      create: {
-        id: `banner-platform-${b.position}`,
+    const existing = await prisma.banner.findFirst({ where: { title: b.title, deletedAt: null } })
+    if (existing) continue
+
+    await prisma.banner.create({
+      data: {
         title: b.title,
         description: b.description,
         imageUrl: b.imageUrl,
@@ -260,13 +260,12 @@ export async function seedBanners(prisma: PrismaClient, promoIds: string[]) {
     },
   ]
 
-  for (let i = 0; i < shopBanners.length; i++) {
-    const b = shopBanners[i]
-    await prisma.banner.upsert({
-      where: { id: `banner-shop-${i + 1}` },
-      update: { isActive: b.isActive },
-      create: {
-        id: `banner-shop-${i + 1}`,
+  for (const b of shopBanners) {
+    const existing = await prisma.banner.findFirst({ where: { title: b.title, deletedAt: null } })
+    if (existing) continue
+
+    await prisma.banner.create({
+      data: {
         title: b.title,
         description: b.description,
         imageUrl: b.imageUrl,

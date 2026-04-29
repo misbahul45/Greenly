@@ -3,13 +3,16 @@ import 'package:app/features/auth/auth_service.dart';
 import 'package:app/features/auth/presentation/bloc/auth_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:app/core/utils/api_response.dart';
+import 'package:app/core/utils/metadata.dart';
 
 class ApiClient {
   static Future<Map<String, String>> _buildHeaders() async {
     final accessToken = await AuthStorage.getAccessToken();
     final refreshToken = await AuthStorage.getRefreshToken();
 
-    final headers = <String, String>{"Content-Type": "application/json"};
+    final headers = <String, String>{
+      "Content-Type": "application/json",
+    };
 
     if (accessToken != null) {
       headers["Authorization"] = "Bearer $accessToken";
@@ -42,24 +45,30 @@ class ApiClient {
       final streamed = await req.send();
       final res = await http.Response.fromStream(streamed);
 
-      final dynamic decodedBody = res.body.isNotEmpty
-          ? jsonDecode(res.body)
-          : {};
+      dynamic decodedBody;
 
-      final Map<String, dynamic> decoded = decodedBody is Map<String, dynamic>
-          ? decodedBody
-          : {};
+      try {
+        decodedBody = res.body.isNotEmpty ? jsonDecode(res.body) : {};
+      } catch (_) {
+        return ApiResponse<T>(
+          status: "error",
+          statusCode: res.statusCode,
+          path: url,
+          message: "Invalid JSON response",
+          timestamp: DateTime.now().toIso8601String(),
+        );
+      }
+
+      final Map<String, dynamic> decoded =
+          decodedBody is Map<String, dynamic> ? decodedBody : {};
 
       if (res.statusCode == 401 && retry) {
         final refresh = await AuthService.refreshToken();
 
         if (refresh.status == "success" && refresh.data != null) {
-          final access = refresh.data!.accessToken;
-          final refreshToken = refresh.data!.refreshToken;
-
           await AuthStorage.saveTokens(
-            accessToken: access,
-            refreshToken: refreshToken,
+            accessToken: refresh.data!.accessToken,
+            refreshToken: refresh.data!.refreshToken,
           );
 
           return request(
@@ -79,7 +88,6 @@ class ApiClient {
           path: url,
           message: "Session expired",
           timestamp: DateTime.now().toIso8601String(),
-          data: null,
         );
       }
 
@@ -100,25 +108,25 @@ class ApiClient {
 
       return ApiResponse<T>(
         status: decoded["status"] is String ? decoded["status"] : "error",
-        statusCode: decoded["statusCode"] is int
-            ? decoded["statusCode"]
-            : res.statusCode,
-        path: decoded["path"]?.toString() ?? "",
+        statusCode: decoded["statusCode"] ?? res.statusCode,
+        path: decoded["path"]?.toString() ?? url,
         message: decoded["message"]?.toString() ?? "Unknown error",
         timestamp:
             decoded["timestamp"]?.toString() ??
             DateTime.now().toIso8601String(),
         data: null,
-        metaData: decoded["metaData"],
+        metaData: decoded["metaData"] != null
+            ? MetaData.fromJson(decoded["metaData"])
+            : null,
       );
     } catch (e) {
+      print("API request error: $e");
       return ApiResponse<T>(
         status: "error",
         statusCode: 0,
-        path: "",
+        path: url,
         message: e.toString(),
         timestamp: DateTime.now().toIso8601String(),
-        data: null,
       );
     }
   }
