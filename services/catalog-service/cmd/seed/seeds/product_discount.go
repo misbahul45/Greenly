@@ -5,60 +5,78 @@ import (
 	"log"
 	"time"
 
-	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-func SeedProductDiscounts(ctx context.Context, db *mongo.Database) {
+func SeedProductDiscounts(ctx context.Context, db *mongo.Database, productIDs []string) {
 	col := db.Collection("product_discounts")
 	now := time.Now()
 	future := time.Date(2026, 12, 31, 23, 59, 59, 0, time.UTC)
 	past := time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC)
 
-	type discountData struct {
-		id          string
-		productID   string
+	type discountDef struct {
 		name        string
 		percentage  float64
 		fixedAmount float64
-		isActive    bool
 	}
 
-	discounts := []discountData{
-		{"disc-001", "prod-001", "Promo Gadget Fest 10%", 10, 0, true},
-		{"disc-002", "prod-002", "Diskon Audio Premium 15%", 15, 0, true},
-		{"disc-003", "prod-003", "Flash Sale Smartwatch", 0, 150000, true},
-		{"disc-004", "prod-004", "Promo Fashion Week 20%", 20, 0, true},
-		{"disc-005", "prod-005", "Diskon Kemeja Pria 10%", 10, 0, true},
-		{"disc-006", "prod-006", "Promo Kuliner Nusantara", 0, 15000, true},
-		{"disc-007", "prod-007", "Diskon Kopi Spesial 5%", 5, 0, true},
-		{"disc-008", "prod-008", "Sale Sepatu Olahraga 12%", 12, 0, true},
-		{"disc-009", "prod-009", "Promo Skincare 25%", 25, 0, true},
-		{"disc-010", "prod-010", "Diskon Sunscreen 15%", 15, 0, true},
+	defs := []discountDef{
+		{"Promo Gadget Fest 10%", 10, 0},
+		{"Flash Sale Harbolnas 15%", 15, 0},
+		{"Diskon Pelanggan Baru 20%", 20, 0},
+		{"Promo Akhir Tahun 12%", 12, 0},
+		{"Flash Sale Weekend 8%", 8, 0},
+		{"Diskon Audio Premium 15%", 15, 0},
+		{"Promo Bundle Hemat 10%", 10, 0},
+		{"Flash Sale Kamera 18%", 18, 0},
+		{"Promo Fashion Week 20%", 20, 0},
+		{"Diskon Tenun Nusantara 15%", 15, 0},
+		{"Promo Kebaya Spesial 10%", 10, 0},
+		{"Diskon Kemeja Pria 10%", 10, 0},
+		{"Promo Batik Nasional 12%", 12, 0},
+		{"Flash Sale Tas Branded 25%", 25, 0},
+		{"Diskon Sepatu Wanita 15%", 15, 0},
+		{"Promo Formal Wear 10%", 10, 0},
+		{"Promo Kuliner Nusantara", 0, 15000},
+		{"Diskon Kopi Spesial 5%", 5, 0},
+		{"Flash Sale Sambal 10%", 10, 0},
+		{"Promo Snack Lokal 8%", 8, 0},
+		{"Diskon Oleh-oleh 12%", 12, 0},
+		{"Sale Sepatu Olahraga 12%", 12, 0},
+		{"Promo Jersey Timnas 10%", 10, 0},
+		{"Flash Sale Fitness 20%", 20, 0},
+		{"Diskon Yoga Equipment 15%", 15, 0},
+		{"Promo Suplemen Gym 10%", 10, 0},
+		{"Promo Skincare 25%", 25, 0},
+		{"Flash Sale Moisturizer 20%", 20, 0},
+		{"Diskon Toner Spesial 15%", 15, 0},
+		{"Diskon Sunscreen 15%", 15, 0},
+		{"Promo Makeup Bundle 18%", 18, 0},
+		{"Flash Sale Lip Product 20%", 20, 0},
+		{"Diskon Haircare 12%", 12, 0},
+		{"Promo Perawatan Rambut 10%", 10, 0},
 	}
 
-	for _, d := range discounts {
-		doc := bson.M{
-			"_id":          d.id,
-			"product_id":   d.productID,
+	docs := make([]interface{}, 0, len(productIDs))
+	for i, productID := range productIDs {
+		d := defs[i%len(defs)]
+		docs = append(docs, map[string]interface{}{
+			"_id":          NewID(),
+			"product_id":   productID,
 			"name":         d.name,
 			"percentage":   d.percentage,
 			"fixed_amount": d.fixedAmount,
 			"valid_from":   past,
 			"valid_to":     future,
-			"is_active":    d.isActive,
+			"is_active":    true,
 			"created_at":   now,
 			"updated_at":   now,
 			"deleted_at":   nil,
-		}
-		filter := bson.M{"_id": doc["_id"]}
-		update := bson.M{"$setOnInsert": doc}
-		opts := options.Update().SetUpsert(true)
-		if _, err := col.UpdateOne(ctx, filter, update, opts); err != nil {
-			log.Printf("⚠️  Discount %s: %v", d.id, err)
-		}
+		})
 	}
 
-	log.Printf("✅ Product discounts seeded (%d)", len(discounts))
+	if _, err := col.InsertMany(ctx, docs); err != nil {
+		log.Printf("⚠️  Product discounts insert: %v", err)
+	}
+	log.Printf("✅ Product discounts seeded (%d)", len(docs))
 }

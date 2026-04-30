@@ -3,37 +3,39 @@ class AppBarConfig {
   final bool showSearch;
   final bool showCart;
   final bool showSetting;
+  final bool showNotification;
+  final bool showChat;
 
   const AppBarConfig({
     required this.title,
     this.showSearch = false,
     this.showCart = false,
     this.showSetting = false,
+    this.showNotification = false,
+    this.showChat = false,
   });
 }
 
-
 const List<AppBarConfig> mainAppBarConfigs = [
   AppBarConfig(
-    title: "Home",
+    title: 'Home',
     showSearch: true,
     showCart: true,
+    showNotification: true,
+    showChat: true,
   ),
-
   AppBarConfig(
-    title: "Notifikasi",
+    title: 'Notifikasi',
   ),
-
   AppBarConfig(
-    title: "Chat",
+    title: 'Chat',
   ),
-
   AppBarConfig(
-    title: "Favorite",
+    title: 'Favorit',
+    showCart: true,
   ),
-
   AppBarConfig(
-    title: "Account",
+    title: 'Akun',
     showCart: true,
     showSetting: true,
   ),

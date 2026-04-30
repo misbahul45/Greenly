@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"catalog-service/databases"
+	"catalog-service/internal/cache"
 	"catalog-service/internal/coreclient"
 	"catalog-service/middleware"
 	"catalog-service/utils"
@@ -42,6 +43,11 @@ func main() {
 	db := client.Database("catalog")
 	coreSvc := coreclient.NewClient(coreServiceURL)
 
+	redisCache, err := cache.NewCache()
+	if err != nil {
+		log.Fatalf("Failed to initialize cache: %v", err)
+	}
+
 	r := gin.Default()
 	r.Use(middleware.ErrorHandler())
 
@@ -50,7 +56,7 @@ func main() {
 	})
 
 	api := r.Group("/")
-	Routes(api, db, coreSvc)
+	Routes(api, db, coreSvc, redisCache)
 
 	go initRabbitMQ(db)
 

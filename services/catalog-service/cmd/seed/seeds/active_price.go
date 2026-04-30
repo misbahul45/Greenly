@@ -5,45 +5,63 @@ import (
 	"log"
 	"time"
 
-	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-func SeedActivePrices(ctx context.Context, db *mongo.Database) {
+func SeedActivePrices(ctx context.Context, db *mongo.Database, productIDs []string) {
 	col := db.Collection("active_prices")
 	now := time.Now()
 
-	activePrices := []struct {
-		productID  string
-		finalPrice float64
-	}{
-		{"prod-001", 4499100},
-		{"prod-002", 2975000},
-		{"prod-003", 1050000},
-		{"prod-004", 224000},
-		{"prod-005", 175500},
-		{"prod-006", 105000},
-		{"prod-007", 90250},
-		{"prod-008", 1276000},
-		{"prod-009", 165000},
-		{"prod-010", 153000},
+	finalPrices := []float64{
+		4499100,
+		16149150,
+		7224150,
+		5983120,
+		16559080,
+		2975000,
+		1104150,
+		20249180,
+		224000,
+		297500,
+		675000,
+		175500,
+		198000,
+		674250,
+		552500,
+		522000,
+		105000,
+		90250,
+		40500,
+		32200,
+		24640,
+		1276000,
+		315000,
+		2240000,
+		157250,
+		405000,
+		165000,
+		151200,
+		140250,
+		153000,
+		102500,
+		71200,
+		154000,
+		130500,
 	}
 
-	for _, ap := range activePrices {
-		doc := bson.M{
-			"_id":         "ap-" + ap.productID,
-			"product_id":  ap.productID,
-			"final_price": ap.finalPrice,
+	docs := make([]interface{}, 0, len(productIDs))
+	for i, productID := range productIDs {
+		finalPrice := finalPrices[i%len(finalPrices)]
+		docs = append(docs, map[string]interface{}{
+			"_id":         NewID(),
+			"product_id":  productID,
+			"final_price": finalPrice,
 			"updated_at":  now,
-		}
-		filter := bson.M{"_id": doc["_id"]}
-		update := bson.M{"$setOnInsert": doc}
-		opts := options.Update().SetUpsert(true)
-		if _, err := col.UpdateOne(ctx, filter, update, opts); err != nil {
-			log.Printf("⚠️  ActivePrice %s: %v", ap.productID, err)
-		}
+		})
 	}
 
-	log.Printf("✅ Active prices seeded (%d)", len(activePrices))
+	if _, err := col.InsertMany(ctx, docs); err != nil {
+		log.Printf("⚠️  Active prices insert: %v", err)
+	}
+	log.Printf("✅ Active prices seeded (%d)", len(docs))
 }

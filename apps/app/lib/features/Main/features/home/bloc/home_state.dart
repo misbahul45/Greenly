@@ -29,22 +29,34 @@ class ActiveBannersState {
 class CategoriesState {
   final List<CategoryData> data;
   final bool isLoading;
+  final bool isLoadingMore;
+  final int page;
+  final bool hasReachedMax;
   final String? message;
 
   const CategoriesState({
     this.data = const [],
     this.isLoading = false,
+    this.isLoadingMore = false,
+    this.page = 1,
+    this.hasReachedMax = false,
     this.message,
   });
 
   CategoriesState copyWith({
     List<CategoryData>? data,
     bool? isLoading,
+    bool? isLoadingMore,
+    int? page,
+    bool? hasReachedMax,
     String? message,
   }) {
     return CategoriesState(
       data: data ?? this.data,
       isLoading: isLoading ?? this.isLoading,
+      isLoadingMore: isLoadingMore ?? this.isLoadingMore,
+      page: page ?? this.page,
+      hasReachedMax: hasReachedMax ?? this.hasReachedMax,
       message: message,
     );
   }
@@ -90,7 +102,6 @@ class HomeState {
   final ActiveBannersState banner;
   final CategoriesState category;
   final ProductState product;
-
   final String? error;
 
   const HomeState({

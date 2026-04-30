@@ -14,7 +14,7 @@ class SplashScreen extends StatefulWidget {
 }
 
 class _SplashScreenState extends State<SplashScreen>
-  with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin {
   late AnimationController _ctrl;
   late Animation<double> _fadeAnim;
   late Animation<double> _scaleAnim;
@@ -45,6 +45,8 @@ class _SplashScreenState extends State<SplashScreen>
   Future<void> _checkAndNavigate() async {
     await Future.delayed(const Duration(milliseconds: 2200));
     if (!mounted) return;
+    //AuthStorage.clear();
+    // OnboardingStorage.clearOnboarding();
     final token = await AuthStorage.getAccessToken();
     final hasOnboarded = await OnboardingStorage.hasSeenOnboarding();
 

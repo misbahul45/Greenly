@@ -25,7 +25,6 @@ export const CreateBannerSchema = z.object({
   title: z.string().min(1).max(200).trim(),
   description: z.string().max(500).trim().optional(),
   imageUrl: z.string().url(),
-  link: z.string().url().optional().nullable(),
   promotionId: z.string().optional().nullable(),
   isActive: z.boolean().default(true),
   position: z.number().int().min(0).optional().nullable(),

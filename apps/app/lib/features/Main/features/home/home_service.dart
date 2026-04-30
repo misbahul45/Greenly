@@ -16,9 +16,12 @@ class HomeService {
     );
   }
 
-  Future<ApiResponse<GetCategoriesRespon>> getCategories() async {
+  Future<ApiResponse<GetCategoriesRespon>> getCategories({
+    int page = 1,
+    int limit = 20,
+  }) async {
     return await ApiClient.get(
-      "$_baseUrlCatalog/categories",
+      "$_baseUrlCatalog/categories?page=$page&limit=$limit",
       fromJsonT: (json) => GetCategoriesRespon.fromJson(json),
     );
   }

@@ -11,6 +11,8 @@ class GetActiveBannersRequested extends HomeEvent {}
 
 class GetCategoriesRequested extends HomeEvent {}
 
+class GetLoadMoreCategoriesRequested extends HomeEvent {}
+
 class GetFeaturedProductsRequested extends HomeEvent {}
 
 class LoadMoreProductsRequested extends HomeEvent {}

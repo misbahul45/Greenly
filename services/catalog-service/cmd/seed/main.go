@@ -29,16 +29,18 @@ func main() {
 	db := client.Database("catalog")
 	ctx := context.Background()
 
-	log.Println("🌱 Starting catalog seed...")
+	log.Println("🗑️  Resetting collections...")
+	seeds.ResetCollections(ctx, db)
 
+	log.Println("🌱 Starting catalog seed...")
 	categoryIDs := seeds.SeedCategories(ctx, db)
-	seeds.SeedProducts(ctx, db, categoryIDs)
-	seeds.SeedPrices(ctx, db)
-	seeds.SeedInventories(ctx, db)
-	seeds.SeedProductImages(ctx, db)
-	seeds.SeedProductDiscounts(ctx, db)
-	seeds.SeedEcoAttributes(ctx, db)
-	seeds.SeedActivePrices(ctx, db)
+	productIDs := seeds.SeedProducts(ctx, db, categoryIDs)
+	seeds.SeedPrices(ctx, db, productIDs)
+	seeds.SeedInventories(ctx, db, productIDs)
+	seeds.SeedProductImages(ctx, db, productIDs)
+	seeds.SeedProductDiscounts(ctx, db, productIDs)
+	seeds.SeedEcoAttributes(ctx, db, productIDs)
+	seeds.SeedActivePrices(ctx, db, productIDs)
 
 	log.Println("🎉 Catalog seed completed successfully!")
 }

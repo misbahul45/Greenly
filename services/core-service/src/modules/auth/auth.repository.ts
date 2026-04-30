@@ -195,34 +195,80 @@ export class AuthRepository{
             },
         });
     }
-    async getUserPermissions(userId: string): Promise<string[]> {
-        const user = await this.db.user.findUnique({
-            where: { id: userId },
-            include: {
-            roles: {
-                include: {
-                role: {
-                    include: {
-                    permissions: true,
-                    },
-                },
-                },
+  async getUserPermissions(userId: string): Promise<string[]> {
+    const user = await this.db.user.findUnique({
+      where: { id: userId },
+      include: {
+        roles: {
+          include: {
+            role: {
+              include: {
+                permissions: true,
+              },
             },
+          },
+        },
+      },
+    });
+
+    if (!user) return [];
+
+    const permissions = new Set<string>();
+    user.roles.forEach((ur) => {
+      ur.role.permissions.forEach((p) => permissions.add(p.name));
+    });
+
+    return [...permissions];
+  }
+
+  async getMeWithStats(userId: string) {
+    const user = await this.db.user.findUnique({
+      where: { id: userId, deletedAt: null },
+      include: {
+        profile: true,
+        roles: {
+          include: {
+            role: {
+              include: { permissions: true },
             },
-        })
+          },
+        },
+      },
+    });
 
-        if (!user) return []
+    if (!user) return null;
 
-        const permissions = new Set<string>()
+    const [
+      totalOrders,
+      completedOrders,
+      cancelledOrders,
+      totalSpent,
+      followingShops,
+      ownedShops,
+    ] = await Promise.all([
+      this.db.order.count({ where: { userId } }),
+      this.db.order.count({ where: { userId, status: 'COMPLETED' } }),
+      this.db.order.count({ where: { userId, status: 'CANCELLED' } }),
+      this.db.order.aggregate({
+        where: { userId, status: { in: ['PAID', 'COMPLETED'] } },
+        _sum: { totalAmount: true },
+      }),
+      this.db.shopFollower.count({ where: { userId } }),
+      this.db.shop.count({ where: { ownerId: userId, deletedAt: null } }),
+    ]);
 
-        user.roles.forEach((ur) => {
-            ur.role.permissions.forEach((p) =>
-            permissions.add(p.name),
-            )
-        })
-
-        return [...permissions]
-    }
+    return {
+      user,
+      stats: {
+        totalOrders,
+        completedOrders,
+        cancelledOrders,
+        totalSpent: totalSpent._sum.totalAmount ?? 0,
+        followingShops,
+        ownedShops,
+      },
+    };
+  }
 
     async changePassword(userId:string, passwordHash:string){
         return await this.db.user.update({

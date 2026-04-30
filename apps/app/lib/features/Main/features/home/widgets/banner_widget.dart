@@ -117,14 +117,14 @@ class _BannerWidgetState extends State<BannerWidget> {
                       color: AppTheme.primaryColor,
                       boxShadow: [
                         BoxShadow(
-                          color: AppTheme.primaryColor.withOpacity(0.3),
-                          blurRadius: 12,
+                          color: AppTheme.primaryColor.withOpacity(0.1),
+                          blurRadius: 10,
                           offset: const Offset(0, 6),
                         ),
                       ],
                     ),
                     child: ClipRRect(
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(14),
                       child: Stack(
                         fit: StackFit.expand,
                         children: [

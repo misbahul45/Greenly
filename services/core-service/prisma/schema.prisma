@@ -400,7 +400,6 @@ model Banner {
   title        String
   description  String?
   imageUrl     String
-  link         String?
 
   promotionId  String?
   promotion    Promotion? @relation(fields: [promotionId], references: [id])

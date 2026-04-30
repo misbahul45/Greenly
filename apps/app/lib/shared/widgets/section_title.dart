@@ -2,9 +2,12 @@ import 'package:flutter/material.dart';
 
 class SectionTitle extends StatelessWidget {
   final String title;
+  final VoidCallback? onSeeAll;
 
   const SectionTitle({
+    super.key,
     required this.title,
+    this.onSeeAll,
   });
 
   @override
@@ -20,10 +23,11 @@ class SectionTitle extends StatelessWidget {
             ),
           ),
         ),
-        TextButton(
-          onPressed: () {},
-          child: const Text("See all"),
-        ),
+        if (onSeeAll != null)
+          TextButton(
+            onPressed: onSeeAll,
+            child: const Text("See all"),
+          ),
       ],
     );
   }

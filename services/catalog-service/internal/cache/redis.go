@@ -32,6 +32,9 @@ type Cache interface {
 	DeleteActivePrice(ctx context.Context, productID string) error
 
 	DeletePattern(ctx context.Context, pattern string) error
+	GetUser(ctx context.Context, token string) (string, error)
+	SetUser(ctx context.Context, token string, data interface{}, ttl time.Duration) error
+	DeleteUser(ctx context.Context, token string) error
 	Close() error
 }
 
@@ -177,6 +180,25 @@ func (c *redisCache) DeletePattern(ctx context.Context, pattern string) error {
 		return c.client.Del(ctx, keys...).Err()
 	}
 	return nil
+}
+
+func (c *redisCache) GetUser(ctx context.Context, token string) (string, error) {
+	key := fmt.Sprintf("user:%s", token)
+	return c.client.Get(ctx, key).Result()
+}
+
+func (c *redisCache) SetUser(ctx context.Context, token string, data any, ttl time.Duration) error {
+	key := fmt.Sprintf("user:%s", token)
+	jsonData, err := json.Marshal(data)
+	if err != nil {
+		return err
+	}
+	return c.client.Set(ctx, key, jsonData, ttl).Err()
+}
+
+func (c *redisCache) DeleteUser(ctx context.Context, token string) error {
+	key := fmt.Sprintf("user:%s", token)
+	return c.client.Del(ctx, key).Err()
 }
 
 func (c *redisCache) Close() error {

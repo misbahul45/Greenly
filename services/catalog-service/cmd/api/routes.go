@@ -1,6 +1,7 @@
 package main
 
 import (
+	"catalog-service/internal/cache"
 	"catalog-service/internal/coreclient"
 	activeprice "catalog-service/modules/active_price"
 	category "catalog-service/modules/categories"
@@ -19,8 +20,9 @@ func Routes(
 	r *gin.RouterGroup,
 	db *mongo.Database,
 	coreSvc coreclient.Client,
+	redisCache cache.Cache,
 ) {
-	category.CategoryRouter(r, db)
+	category.CategoryRouter(r, db, coreSvc, redisCache)
 	product.ProductRouter(r, db, coreSvc)
 	inventory.InventoryRouter(r, db)
 	price.PriceRouter(r, db)

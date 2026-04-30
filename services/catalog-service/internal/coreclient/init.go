@@ -1,4 +1,5 @@
 package coreclient
+
 import (
 	"context"
 	"encoding/json"
@@ -10,12 +11,13 @@ import (
 type Client interface {
 	GetShop(ctx context.Context, shopID string) (*Shop, error)
 	ValidateShopMembership(ctx context.Context, shopID, userID string) (*ShopMembership, error)
+	GetMe(ctx context.Context, token string) (*User, error)
 }
 
 type Shop struct {
-	ID     string `json:"id"`
-	Name   string `json:"name"`
-	Status string `json:"status"`
+	ID      string `json:"id"`
+	Name    string `json:"name"`
+	Status  string `json:"status"`
 	OwnerID string `json:"ownerId"`
 }
 
@@ -23,6 +25,12 @@ type ShopMembership struct {
 	ShopID string   `json:"shopId"`
 	UserID string   `json:"userId"`
 	Roles  []string `json:"roles"`
+}
+
+type User struct {
+	ID    string   `json:"id"`
+	Email string   `json:"email"`
+	Roles []string `json:"roles"`
 }
 
 type client struct {
@@ -91,4 +99,34 @@ func (c *client) ValidateShopMembership(ctx context.Context, shopID, userID stri
 	}
 
 	return &membership, nil
+}
+
+func (c *client) GetMe(ctx context.Context, token string) (*User, error) {
+	url := fmt.Sprintf("%s/auth/me", c.baseURL)
+	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Authorization", "Bearer "+token)
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode == http.StatusUnauthorized {
+		return nil, fmt.Errorf("user not authenticated")
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("failed to verify user: status %d", resp.StatusCode)
+	}
+
+	var user User
+	if err := json.NewDecoder(resp.Body).Decode(&user); err != nil {
+		return nil, err
+	}
+
+	return &user, nil
 }

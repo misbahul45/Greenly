@@ -2,66 +2,78 @@ package seeds
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"time"
 
-	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-func SeedProductImages(ctx context.Context, db *mongo.Database) {
+func SeedProductImages(ctx context.Context, db *mongo.Database, productIDs []string) {
 	col := db.Collection("product_images")
 	now := time.Now()
 
-	type imgData struct {
-		id        string
-		productID string
-		url       string
-		isPrimary bool
-		order     int
+	queries := []string{
+		"smartphone",
+		"iphone",
+		"android phone",
+		"tablet",
+		"laptop",
+		"headphones",
+		"earbuds",
+		"camera",
+		"batik dress",
+		"traditional clothing",
+		"kebaya",
+		"flannel shirt",
+		"batik shirt",
+		"leather bag",
+		"heels shoes",
+		"formal shoes",
+		"rendang",
+		"coffee beans",
+		"sambal",
+		"snack chips",
+		"indonesian sweets",
+		"running shoes",
+		"football jersey",
+		"dumbbell",
+		"yoga mat",
+		"protein powder",
+		"skincare serum",
+		"moisturizer",
+		"face toner",
+		"sunscreen",
+		"foundation makeup",
+		"lip tint",
+		"hair serum",
+		"shampoo",
 	}
 
-	images := []imgData{
-		{"img-001-1", "prod-001", "https://imagekit.io/greenly/products/samsung-a55-1.jpg", true, 0},
-		{"img-001-2", "prod-001", "https://imagekit.io/greenly/products/samsung-a55-2.jpg", false, 1},
-		{"img-002-1", "prod-002", "https://imagekit.io/greenly/products/sony-wh1000xm5-1.jpg", true, 0},
-		{"img-002-2", "prod-002", "https://imagekit.io/greenly/products/sony-wh1000xm5-2.jpg", false, 1},
-		{"img-003-1", "prod-003", "https://imagekit.io/greenly/products/smartwatch-s8-1.jpg", true, 0},
-		{"img-004-1", "prod-004", "https://imagekit.io/greenly/products/dress-batik-1.jpg", true, 0},
-		{"img-004-2", "prod-004", "https://imagekit.io/greenly/products/dress-batik-2.jpg", false, 1},
-		{"img-005-1", "prod-005", "https://imagekit.io/greenly/products/kemeja-flanel-1.jpg", true, 0},
-		{"img-006-1", "prod-006", "https://imagekit.io/greenly/products/rendang-1.jpg", true, 0},
-		{"img-006-2", "prod-006", "https://imagekit.io/greenly/products/rendang-2.jpg", false, 1},
-		{"img-007-1", "prod-007", "https://imagekit.io/greenly/products/kopi-gayo-1.jpg", true, 0},
-		{"img-008-1", "prod-008", "https://imagekit.io/greenly/products/nike-pegasus-1.jpg", true, 0},
-		{"img-008-2", "prod-008", "https://imagekit.io/greenly/products/nike-pegasus-2.jpg", false, 1},
-		{"img-009-1", "prod-009", "https://imagekit.io/greenly/products/serum-vitc-1.jpg", true, 0},
-		{"img-009-2", "prod-009", "https://imagekit.io/greenly/products/serum-vitc-2.jpg", false, 1},
-		{"img-010-1", "prod-010", "https://imagekit.io/greenly/products/sunscreen-1.jpg", true, 0},
-		{"img-010-2", "prod-010", "https://imagekit.io/greenly/products/sunscreen-2.jpg", false, 1},
-	}
+	docs := make([]interface{}, 0)
 
-	for _, img := range images {
-		doc := bson.M{
-			"_id":         img.id,
-			"product_id":  img.productID,
-			"product_key": img.productID,
-			"url":         img.url,
-			"file_id":     img.id,
-			"is_primary":  img.isPrimary,
-			"order":       img.order,
-			"created_at":  now,
-			"updated_at":  now,
-			"deleted_at":  nil,
+	for i, productID := range productIDs {
+		query := queries[i%len(queries)]
+
+		for j := 0; j < 3; j++ {
+			docs = append(docs, map[string]interface{}{
+				"_id":         NewID(),
+				"product_id":  productID,
+				"product_key": productID,
+				"url":         fmt.Sprintf("https://source.unsplash.com/800x800/?%s&sig=%d", query, j),
+				"file_id":     NewID(),
+				"is_primary":  j == 0,
+				"order":       j,
+				"created_at":  now,
+				"updated_at":  now,
+				"deleted_at":  nil,
+			})
 		}
-		filter := bson.M{"_id": doc["_id"]}
-		update := bson.M{"$setOnInsert": doc}
-		opts := options.Update().SetUpsert(true)
-		if _, err := col.UpdateOne(ctx, filter, update, opts); err != nil {
-			log.Printf("⚠️  Image %s: %v", img.id, err)
-		}
 	}
 
-	log.Printf("✅ Product images seeded (%d)", len(images))
+	if _, err := col.InsertMany(ctx, docs); err != nil {
+		log.Printf("⚠️  Product images insert: %v", err)
+	}
+
+	log.Printf("✅ Product images seeded (%d)", len(docs))
 }

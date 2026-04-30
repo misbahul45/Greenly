@@ -12,7 +12,6 @@ class MainAppBar extends StatelessWidget implements PreferredSizeWidget {
   });
 
   @override
-  
   Size get preferredSize => const Size.fromHeight(64);
 
   @override
@@ -48,17 +47,11 @@ class MainAppBar extends StatelessWidget implements PreferredSizeWidget {
               decoration: BoxDecoration(
                 color: theme.inputDecorationTheme.fillColor,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: AppTheme.tertiaryColor,
-                ),
+                border: Border.all(color: AppTheme.tertiaryColor),
               ),
               child: Row(
                 children: [
-                  Icon(
-                    Icons.search,
-                    size: 20,
-                    color: theme.hintColor,
-                  ),
+                  Icon(Icons.search, size: 20, color: theme.hintColor),
                   const SizedBox(width: 10),
                   Text(
                     "Search product...",
@@ -72,15 +65,7 @@ class MainAppBar extends StatelessWidget implements PreferredSizeWidget {
             ),
           ),
         ),
-
-        if (config.showCart)
-          IconButton(
-            onPressed: () {
-              Navigator.pushNamed(context, AppRoutes.cart);
-            },
-            icon: const Icon(Icons.shopping_cart_outlined),
-            color: AppTheme.primaryColor,
-          ),
+        ..._buildActions(context, config),
       ],
     );
   }
@@ -101,25 +86,45 @@ class MainAppBar extends StatelessWidget implements PreferredSizeWidget {
             ),
           ),
         ),
-
-        if (config.showCart)
-          IconButton(
-            onPressed: () {
-              Navigator.pushNamed(context,  AppRoutes.cart);
-            },
-            icon: const Icon(Icons.shopping_cart_outlined),
-            color: AppTheme.primaryColor,
-          ),
-
-        if (config.showSetting)
-          IconButton(
-            onPressed: () {
-              Navigator.pushNamed(context, AppRoutes.settings);
-            },
-            icon: const Icon(Icons.settings_outlined),
-            color: AppTheme.primaryColor,
-          ),
+        ..._buildActions(context, config),
       ],
     );
+  }
+
+  List<Widget> _buildActions(BuildContext context, AppBarConfig config) {
+    return [
+      if (config.showChat)
+        IconButton(
+          onPressed: () {
+            Navigator.pushNamed(context, AppRoutes.chat);
+          },
+          icon: const Icon(Icons.chat_bubble_outline_rounded),
+          color: AppTheme.primaryColor,
+        ),
+      if (config.showNotification)
+        IconButton(
+          onPressed: () {
+            Navigator.pushNamed(context, AppRoutes.notifications);
+          },
+          icon: const Icon(Icons.notifications_outlined),
+          color: AppTheme.primaryColor,
+        ),
+      if (config.showCart)
+        IconButton(
+          onPressed: () {
+            Navigator.pushNamed(context, AppRoutes.cart);
+          },
+          icon: const Icon(Icons.shopping_cart_outlined),
+          color: AppTheme.primaryColor,
+        ),
+      if (config.showSetting)
+        IconButton(
+          onPressed: () {
+            Navigator.pushNamed(context, AppRoutes.settings);
+          },
+          icon: const Icon(Icons.settings_outlined),
+          color: AppTheme.primaryColor,
+        ),
+    ];
   }
 }

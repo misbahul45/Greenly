@@ -138,4 +138,11 @@ export class AuthController {
   ) {
     return ErrorHandler(() => this.authService.logout(user.sub));
   }
+
+  @Get('me')
+  getMe(
+    @CurrentUser() user: UserLogin
+  ) {
+    return ErrorHandler(() => this.authService.getMe(user.sub));
+  }
 }
