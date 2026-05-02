@@ -1,3 +1,4 @@
+import 'package:app/core/constants/ui_constants.dart';
 import 'package:app/features/Main/features/home/bloc/home_bloc.dart';
 import 'package:app/features/Main/features/home/bloc/home_event.dart';
 import 'package:app/features/Main/features/home/widgets/banner_widget.dart';
@@ -47,15 +48,14 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return SafeArea(
       child: SingleChildScrollView(
-        // ✅ ScrollController dipasang di sini (parent scroll)
         controller: _scrollController,
-        padding: const EdgeInsets.all(10),
+        padding: const EdgeInsets.all(UIConstants.paddingS),
         child: Column(
           children: const [
             BannerWidget(),
-            SizedBox(height: 20),
+            SizedBox(height: UIConstants.spacingS),
             CategoriesWidget(),
-            SizedBox(height: 20),
+            SizedBox(height: UIConstants.spacingS),
             ProductsWidget(),
           ],
         ),

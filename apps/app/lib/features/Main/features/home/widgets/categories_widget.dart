@@ -7,6 +7,7 @@ import 'package:app/features/Main/features/home/widgets/skeleton/categories_skel
 import 'package:app/shared/widgets/section_title.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:app/core/constants/ui_constants.dart';
 
 class CategoriesWidget extends StatefulWidget {
   const CategoriesWidget({super.key});
@@ -66,7 +67,7 @@ class _CategoriesWidgetState extends State<CategoriesWidget> {
 
         if (items.isEmpty) {
           return const Padding(
-            padding: EdgeInsets.all(16),
+            padding: EdgeInsets.all(UIConstants.paddingL),
             child: Text('Tidak ada kategori tersedia'),
           );
         }
@@ -74,14 +75,14 @@ class _CategoriesWidgetState extends State<CategoriesWidget> {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const SizedBox(height: 10),
+            const SizedBox(height: UIConstants.spacingS),
             SectionTitle(
               title: "Categories",
               onSeeAll: () {
                 Navigator.pushNamed(context, AppRoutes.categoryProducts);
               },
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: UIConstants.spacingS),
             SizedBox(
               height: 30,
               child: ListView.separated(
@@ -90,8 +91,8 @@ class _CategoriesWidgetState extends State<CategoriesWidget> {
                 itemCount: categoryState.isLoadingMore
                     ? items.length + 1
                     : items.length,
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                separatorBuilder: (_, __) => const SizedBox(width: 8),
+                padding: const EdgeInsets.symmetric(horizontal: UIConstants.paddingS),
+                separatorBuilder: (_, __) => const SizedBox(width: UIConstants.spacingS),
                 itemBuilder: (context, index) {
                   if (index >= items.length) {
                     return Center(

@@ -13,8 +13,7 @@ class MainBottomBar extends StatelessWidget {
   static const List<_NavItem> _items = [
     _NavItem(icon: Icons.home_outlined, activeIcon: Icons.home, label: 'Home'),
     _NavItem(icon: Icons.notifications_none, activeIcon: Icons.notifications, label: 'Notif'),
-    _NavItem(icon: Icons.chat_bubble_outline, activeIcon: Icons.chat_bubble, label: 'Chat'),
-    _NavItem(icon: Icons.favorite_border, activeIcon: Icons.favorite, label: 'Favorit'),
+    _NavItem(icon: Icons.chat_bubble_outline_rounded, activeIcon: Icons.message, label: 'Chat'),
     _NavItem(icon: Icons.person_outline, activeIcon: Icons.person, label: 'Akun'),
   ];
 

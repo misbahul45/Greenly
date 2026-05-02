@@ -1,5 +1,4 @@
-import 'package:app/features/Main/features/chat/chat_screen.dart';
-import 'package:app/features/Main/features/favorite/favorite_screen.dart';
+import 'package:app/features/favorite/favorite_screen.dart';
 import 'package:app/features/Main/features/home/home_screen.dart';
 import 'package:app/features/Main/features/notification/notification_screen.dart';
 import 'package:app/features/Main/features/profile/profile_screen.dart';
@@ -20,7 +19,6 @@ class _MainScreenState extends State<MainScreen> {
   final List<Widget> screens = const [
     HomeScreen(),
     NotificationScreen(),
-    ChatScreen(),
     FavoriteScreen(),
     ProfileScreen(),
   ];

@@ -202,11 +202,12 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     
   }
 
-  /// LOGOUT
   Future<void> _onLogout(
     AuthLogoutRequested event,
     Emitter<AuthState> emit,
   ) async {
+    emit(AuthLoading());
+    await authService.logout();
     await AuthStorage.clear();
     emit(AuthUnauthenticated());
   }

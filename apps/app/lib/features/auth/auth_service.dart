@@ -80,4 +80,11 @@ class AuthService {
       {},
     );
   }
+
+  Future<ApiResponse<dynamic>> logout() async {
+    return await ApiClient.post<dynamic>(
+      "$_baseUrl/auth/logout",
+      {},
+    );
+  }
 }

@@ -1,4 +1,4 @@
-// product_card.dart
+import 'package:app/core/constants/ui_constants.dart';
 import 'package:app/core/router/app_routes.dart';
 import 'package:app/core/utils/currency_helper.dart';
 import 'package:app/features/Main/features/home/model/data/product_data.dart';
@@ -34,18 +34,19 @@ class ProductWidget extends StatelessWidget {
       },
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
+          color: AppTheme.backgroundColor,
+          borderRadius: BorderRadius.circular(UIConstants.radiusM),
           boxShadow: [
             BoxShadow(
-              blurRadius: 12,
-              color: Colors.black.withOpacity(0.07),
-              offset: const Offset(0, 4),
+              blurRadius: UIConstants.spacingM,
+              color: AppTheme.primaryColor.withOpacity(0.08),
+              offset: const Offset(0, UIConstants.paddingXS),
             ),
           ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
           children: [
             ProductImageSection(
               image: product.imageUrls.isNotEmpty
@@ -56,63 +57,68 @@ class ProductWidget extends StatelessWidget {
               categoryName: product.categoryName,
               isOutOfStock: isOutOfStock,
             ),
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(10, 7, 10, 8),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                UIConstants.paddingS,
+                UIConstants.paddingXS,
+                UIConstants.paddingS,
+                UIConstants.paddingS,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    product.name,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: UIConstants.fontSizeS,
+                      height: 1.3,
+                      color: Color(0xFF1A1A2E),
+                    ),
+                  ),
+                  const SizedBox(height: UIConstants.spacingXS),
+                  if (product.description.isNotEmpty)
                     Text(
-                      product.name,
-                      maxLines: 2,
+                      product.description,
+                      maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w700,
-                        fontSize: 12,
-                        height: 1.3,
-                        color: Color(0xFF1A1A2E),
-                      ),
-                    ),
-                    const SizedBox(height: 3),
-                    if (product.description.isNotEmpty)
-                      Text(
-                        product.description,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 10,
-                          color: Colors.grey.shade500,
-                          height: 1.3,
-                        ),
-                      ),
-                    const SizedBox(height: 4),
-                    ProductStatsRow(
-                      ratingAverage: product.ratingAverage,
-                      reviewCount: product.reviewCount,
-                      favoriteCount: product.favoriteCount,
-                    ),
-                    const Spacer(),
-                    if (isOutOfStock)
-                      const ProductStockBadge(
-                        label: 'Habis',
-                        color: Color(0xFF9E9E9E),
-                      )
-                    else if (isLowStock)
-                      ProductStockBadge(
-                        label: 'Sisa ${product.stock}',
-                        color: const Color(0xFFFF7043),
-                      ),
-                    if (isOutOfStock || isLowStock) const SizedBox(height: 4),
-                    Text(
-                      CurrencyHelper.formatRupiah(product.price),
                       style: TextStyle(
-                        color: AppTheme.primaryColor,
-                        fontWeight: FontWeight.w800,
-                        fontSize: 13,
+                        fontSize: UIConstants.fontSizeXS,
+                        color: Colors.grey.shade500,
+                        height: 1.3,
                       ),
                     ),
-                  ],
-                ),
+                  const SizedBox(height: UIConstants.paddingXS),
+                  ProductStatsRow(
+                    ratingAverage: product.ratingAverage,
+                    reviewCount: product.reviewCount,
+                    favoriteCount: product.favoriteCount,
+                  ),
+                  const SizedBox(height: UIConstants.spacingS),
+                  if (isOutOfStock)
+                    const ProductStockBadge(
+                      label: 'Habis',
+                      color: Color(0xFF9E9E9E),
+                    )
+                  else if (isLowStock)
+                    ProductStockBadge(
+                      label: 'Sisa ${product.stock}',
+                      color: Color(0xFFFF7043),
+                    ),
+                  if (isOutOfStock || isLowStock)
+                    const SizedBox(height: UIConstants.paddingXS),
+                  Text(
+                    CurrencyHelper.formatRupiah(product.price),
+                    style: const TextStyle(
+                      color: AppTheme.primaryColor,
+                      fontWeight: FontWeight.w800,
+                      fontSize: UIConstants.fontSizeM,
+                    ),
+                  ),
+                ],
               ),
             ),
           ],

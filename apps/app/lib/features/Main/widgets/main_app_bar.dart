@@ -93,22 +93,15 @@ class MainAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   List<Widget> _buildActions(BuildContext context, AppBarConfig config) {
     return [
-      if (config.showChat)
+      if (config.showFavorite)
         IconButton(
           onPressed: () {
-            Navigator.pushNamed(context, AppRoutes.chat);
+            Navigator.pushNamed(context, AppRoutes.favorites);
           },
-          icon: const Icon(Icons.chat_bubble_outline_rounded),
+          icon: const Icon(Icons.favorite_border_outlined),
           color: AppTheme.primaryColor,
         ),
-      if (config.showNotification)
-        IconButton(
-          onPressed: () {
-            Navigator.pushNamed(context, AppRoutes.notifications);
-          },
-          icon: const Icon(Icons.notifications_outlined),
-          color: AppTheme.primaryColor,
-        ),
+
       if (config.showCart)
         IconButton(
           onPressed: () {
