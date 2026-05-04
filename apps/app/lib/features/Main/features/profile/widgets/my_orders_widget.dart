@@ -1,6 +1,6 @@
 import 'package:app/core/router/app_routes.dart';
 import 'package:app/core/theme/app_theme.dart';
-import 'package:app/shared/widgets/section_title.dart';
+import 'package:app/shared/widgets/section_title_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:app/core/constants/ui_constants.dart';
 
@@ -80,7 +80,7 @@ class MyOrdersWidget extends StatelessWidget {
 
     return Column(
       children: [
-        SectionTitle(
+        SectionTitleWidget(
           title: "Pesanan Saya",
           onSeeAll: () {
             Navigator.pushNamed(context, AppRoutes.orders);

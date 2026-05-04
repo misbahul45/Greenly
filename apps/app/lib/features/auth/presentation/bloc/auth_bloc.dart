@@ -1,13 +1,13 @@
 import 'package:app/features/auth/auth_service.dart';
-import 'package:app/features/auth/data/model/dto/change_password_dto.dart';
-import 'package:app/features/auth/data/model/dto/forgot_password_dto.dart';
-import 'package:app/features/auth/data/model/dto/login_dto.dart';
-import 'package:app/features/auth/data/model/dto/verify_email_dto.dart';
-import 'package:app/features/auth/data/model/dto/verify_password_dto.dart';
+import 'package:app/features/auth/domains/dto/change_password_dto.dart';
+import 'package:app/features/auth/domains/dto/forgot_password_dto.dart';
+import 'package:app/features/auth/domains/dto/login_dto.dart';
+import 'package:app/features/auth/domains/dto/verify_email_dto.dart';
+import 'package:app/features/auth/domains/dto/verify_password_dto.dart';
 import 'package:app/features/auth/presentation/bloc/auth_event.dart';
 import 'package:app/features/auth/presentation/bloc/auth_state.dart';
 import 'package:app/features/auth/presentation/bloc/auth_storage.dart';
-import 'package:app/shared/model/data/token_model.dart';
+import 'package:app/shared/domains/data/token_model.dart';
 import 'package:app/shared/services/me_service.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 

@@ -1,7 +1,7 @@
 import 'package:app/core/constants/ui_constants.dart';
 import 'package:app/core/theme/app_theme.dart';
 import 'package:app/features/auth/auth_service.dart';
-import 'package:app/features/auth/data/model/dto/register_dto.dart';
+import 'package:app/features/auth/domains/dto/register_dto.dart';
 import 'package:app/features/auth/presentation/bloc/auth_event.dart';
 import 'package:app/features/auth/presentation/widgets/form_register.dart';
 import 'package:flutter/material.dart';

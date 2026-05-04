@@ -1,17 +1,17 @@
 import 'package:app/core/config/env.dart';
 import 'package:app/core/utils/api_client.dart';
 import 'package:app/core/utils/api_response.dart';
-import 'package:app/features/auth/data/model/dto/change_password_dto.dart';
-import 'package:app/features/auth/data/model/dto/forgot_password_dto.dart';
-import 'package:app/features/auth/data/model/dto/login_dto.dart';
-import 'package:app/features/auth/data/model/dto/register_dto.dart';
-import 'package:app/features/auth/data/model/dto/verify_email_dto.dart';
-import 'package:app/features/auth/data/model/dto/verify_password_dto.dart';
-import 'package:app/features/auth/data/model/response/login_response.dart';
-import 'package:app/features/auth/data/model/response/register_response.dart';
-import 'package:app/features/auth/data/model/response/veify_password_response.dart';
-import 'package:app/features/auth/data/model/response/verify_email_response.dart';
-import 'package:app/shared/model/data/token_model.dart';
+import 'package:app/features/auth/domains/dto/change_password_dto.dart';
+import 'package:app/features/auth/domains/dto/forgot_password_dto.dart';
+import 'package:app/features/auth/domains/dto/login_dto.dart';
+import 'package:app/features/auth/domains/dto/register_dto.dart';
+import 'package:app/features/auth/domains/dto/verify_email_dto.dart';
+import 'package:app/features/auth/domains/dto/verify_password_dto.dart';
+import 'package:app/features/auth/domains/response/login_response.dart';
+import 'package:app/features/auth/domains/response/register_response.dart';
+import 'package:app/features/auth/domains/response/veify_password_response.dart';
+import 'package:app/features/auth/domains/response/verify_email_response.dart';
+import 'package:app/shared/domains/data/token_model.dart';
 
 class AuthService {
   static String get _baseUrl => "${ENV.API}/core";

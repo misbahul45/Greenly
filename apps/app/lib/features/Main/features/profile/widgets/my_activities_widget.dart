@@ -1,7 +1,7 @@
 import 'package:app/core/constants/ui_constants.dart';
 import 'package:app/core/router/app_routes.dart';
 import 'package:app/core/theme/app_theme.dart';
-import 'package:app/shared/widgets/section_title.dart';
+import 'package:app/shared/widgets/section_title_widget.dart';
 import 'package:flutter/material.dart';
 
 class MyActivitiesWidget extends StatelessWidget {
@@ -30,7 +30,7 @@ class MyActivitiesWidget extends StatelessWidget {
 
     return Column(
       children: [
-        const SectionTitle(title: 'Aktivitas Saya'),
+        const SectionTitleWidget(title: 'Aktivitas Saya'),
         const SizedBox(height: UIConstants.spacingS),
         Container(
           decoration: BoxDecoration(

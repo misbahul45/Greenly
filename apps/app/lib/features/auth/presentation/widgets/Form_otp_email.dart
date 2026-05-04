@@ -1,8 +1,8 @@
 import 'package:app/core/theme/app_theme.dart';
 import 'package:app/features/auth/auth_validation.dart';
-import 'package:app/shared/widgets/text_validation.dart';
+import 'package:app/shared/widgets/text_validation_widget.dart';
 import 'package:flutter/material.dart';
-import 'package:app/shared/widgets/otp_field.dart';
+import 'package:app/shared/widgets/otp_field_widget.dart';
 
 class FormOtpEmail extends StatefulWidget {
   final void Function(String otp) onSubmitOtp;
@@ -119,7 +119,7 @@ class _FormOtpEmailState extends State<FormOtpEmail> {
                           AppTheme.tertiaryColor.withValues(alpha: 0.3),
                     ),
                   ),
-                  child: OtpField(
+                  child: OtpFieldWidget(
                     length: 6,
                     onCompleted: (value) {
                       otpController.text = value;
@@ -179,7 +179,7 @@ class _FormOtpEmailState extends State<FormOtpEmail> {
               ] else ...[
                 _FieldLabel('Email'),
                 const SizedBox(height: 6),
-                TextValidation(
+                TextValidationWidget(
                   hint: "contoh@email.com",
                   controller: emailController,
                   validator: AuthValidation.email,

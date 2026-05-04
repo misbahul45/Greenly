@@ -1,6 +1,6 @@
-import 'package:app/features/Main/features/home/model/data/banner_data.dart';
-import 'package:app/features/Main/features/home/model/data/category_data.dart';
-import 'package:app/features/Main/features/home/model/data/product_data.dart';
+import 'package:app/features/Main/features/home/domains/data/banner_data.dart';
+import 'package:app/features/Main/features/home/domains/data/category_data.dart';
+import 'package:app/features/Main/features/home/domains/data/product_data.dart';
 
 class ActiveBannersState {
   final List<BannerData> data;

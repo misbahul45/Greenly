@@ -1,5 +1,5 @@
 import 'package:app/features/auth/auth_validation.dart';
-import 'package:app/shared/widgets/text_validation.dart';
+import 'package:app/shared/widgets/text_validation_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:app/features/auth/presentation/bloc/auth_bloc.dart';
@@ -110,7 +110,7 @@ class _FormChangePasswordState extends State<FormChangePassword> {
           ],
           _FieldLabel('Password Baru'),
           const SizedBox(height: 6),
-          TextValidation(
+          TextValidationWidget(
             hint: 'Min. 8 karakter',
             controller: newPasswordController,
             obscure: obscurePassword,
@@ -130,7 +130,7 @@ class _FormChangePasswordState extends State<FormChangePassword> {
           const SizedBox(height: 16),
           _FieldLabel('Konfirmasi Password Baru'),
           const SizedBox(height: 6),
-          TextValidation(
+          TextValidationWidget(
             controller: confirmNewPasswordController,
             obscure: obscureConfirmPassword,
             hint: 'Ulangi password baru',

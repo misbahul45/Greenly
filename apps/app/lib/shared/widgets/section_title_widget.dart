@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 
-class SectionTitle extends StatelessWidget {
+class SectionTitleWidget extends StatelessWidget {
   final String title;
   final VoidCallback? onSeeAll;
 
-  const SectionTitle({
+  const SectionTitleWidget({
     super.key,
     required this.title,
     this.onSeeAll,

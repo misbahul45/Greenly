@@ -1,4 +1,4 @@
-import 'package:app/shared/model/data/role_model.dart';
+import 'package:app/shared/domains/data/role_model.dart';
 
 class UserData {
   final String id;

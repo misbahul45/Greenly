@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:app/core/constants/ui_constants.dart';
 import 'package:app/core/theme/app_theme.dart';
 import 'package:app/features/auth/auth_validation.dart';
-import 'package:app/shared/widgets/text_validation.dart';
+import 'package:app/shared/widgets/text_validation_widget.dart';
 
 class FormLogin extends StatefulWidget {
   final void Function(String email, String password) onSubmit;
@@ -88,7 +88,7 @@ class _FormLoginState extends State<FormLogin> {
             const SizedBox(height: UIConstants.spacingXXL),
             _FieldLabel('Email'),
             const SizedBox(height: UIConstants.spacingXS),
-            TextValidation(
+            TextValidationWidget(
               hint: "Email",
               controller: emailController,
               prefixIcon: Icons.email_outlined,
@@ -97,7 +97,7 @@ class _FormLoginState extends State<FormLogin> {
             const SizedBox(height: UIConstants.spacingL),
             _FieldLabel('Password'),
             const SizedBox(height: UIConstants.spacingXS),
-            TextValidation(
+            TextValidationWidget(
               hint: "Password",
               controller: passwordController,
               prefixIcon: Icons.lock_outline_rounded,

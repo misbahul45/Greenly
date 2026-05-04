@@ -4,7 +4,7 @@ import 'package:app/features/Main/features/home/bloc/home_event.dart';
 import 'package:app/features/Main/features/home/bloc/home_state.dart';
 import 'package:app/features/Main/features/home/widgets/category_widget.dart';
 import 'package:app/features/Main/features/home/widgets/skeleton/categories_skeleton.dart';
-import 'package:app/shared/widgets/section_title.dart';
+import 'package:app/shared/widgets/section_title_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:app/core/constants/ui_constants.dart';
@@ -76,7 +76,7 @@ class _CategoriesWidgetState extends State<CategoriesWidget> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const SizedBox(height: UIConstants.spacingS),
-            SectionTitle(
+            SectionTitleWidget(
               title: "Categories",
               onSeeAll: () {
                 Navigator.pushNamed(context, AppRoutes.categoryProducts);
@@ -92,7 +92,7 @@ class _CategoriesWidgetState extends State<CategoriesWidget> {
                     ? items.length + 1
                     : items.length,
                 padding: const EdgeInsets.symmetric(horizontal: UIConstants.paddingS),
-                separatorBuilder: (_, __) => const SizedBox(width: UIConstants.spacingS),
+                separatorBuilder: (_, _) => const SizedBox(width: UIConstants.spacingS),
                 itemBuilder: (context, index) {
                   if (index >= items.length) {
                     return Center(

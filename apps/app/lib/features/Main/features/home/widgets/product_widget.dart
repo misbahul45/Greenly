@@ -1,11 +1,12 @@
 import 'package:app/core/constants/ui_constants.dart';
 import 'package:app/core/router/app_routes.dart';
 import 'package:app/core/utils/currency_helper.dart';
-import 'package:app/features/Main/features/home/model/data/product_data.dart';
-import 'package:app/features/Main/features/home/model/data/promotion_data.dart';
+import 'package:app/features/Main/features/home/domains/data/product_data.dart';
+import 'package:app/features/Main/features/home/domains/data/promotion_data.dart';
 import 'package:app/features/Main/features/home/widgets/product_image_section.dart';
 import 'package:app/features/Main/features/home/widgets/product_stats_row.dart';
 import 'package:app/features/Main/features/home/widgets/product_stock_badge.dart';
+import 'package:app/shared/widgets/favorite_button_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:app/core/theme/app_theme.dart';
 
@@ -56,6 +57,7 @@ class ProductWidget extends StatelessWidget {
               promotion: promotion,
               categoryName: product.categoryName,
               isOutOfStock: isOutOfStock,
+              favoriteButton: FavoriteButtonWidget(),
             ),
             Padding(
               padding: const EdgeInsets.fromLTRB(

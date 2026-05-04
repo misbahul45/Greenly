@@ -1,5 +1,5 @@
-import 'package:app/features/auth/data/model/data/user_login_data.dart';
-import 'package:app/shared/model/data/token_model.dart';
+import 'package:app/features/auth/domains/data/user_login_data.dart';
+import 'package:app/shared/domains/data/token_model.dart';
 
 class LoginData {
   final TokenModel tokens;

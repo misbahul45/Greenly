@@ -1,6 +1,7 @@
 import 'package:app/core/config/app_bar_config.dart';
 import 'package:app/core/router/app_routes.dart';
 import 'package:app/core/theme/app_theme.dart';
+import 'package:app/shared/widgets/cart_button_widget.dart';
 import 'package:flutter/material.dart';
 
 class MainAppBar extends StatelessWidget implements PreferredSizeWidget {
@@ -103,13 +104,7 @@ class MainAppBar extends StatelessWidget implements PreferredSizeWidget {
         ),
 
       if (config.showCart)
-        IconButton(
-          onPressed: () {
-            Navigator.pushNamed(context, AppRoutes.cart);
-          },
-          icon: const Icon(Icons.shopping_cart_outlined),
-          color: AppTheme.primaryColor,
-        ),
+        CartButtonWidget(),
       if (config.showSetting)
         IconButton(
           onPressed: () {

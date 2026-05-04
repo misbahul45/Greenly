@@ -1,7 +1,7 @@
 import 'package:app/core/constants/ui_constants.dart';
 import 'package:app/core/theme/app_theme.dart';
 import 'package:app/features/auth/auth_validation.dart';
-import 'package:app/shared/widgets/text_validation.dart';
+import 'package:app/shared/widgets/text_validation_widget.dart';
 import 'package:flutter/material.dart';
 
 class FormRegister extends StatefulWidget {
@@ -132,7 +132,7 @@ class _FormRegisterState extends State<FormRegister> {
             ],
             _FieldLabel('Nama Lengkap'),
             const SizedBox(height: UIConstants.spacingXS),
-            TextValidation(
+            TextValidationWidget(
               hint: "Masukkan nama lengkap",
               controller: nameController,
               prefixIcon: Icons.person_outline_rounded,
@@ -141,7 +141,7 @@ class _FormRegisterState extends State<FormRegister> {
             const SizedBox(height: UIConstants.spacingL),
             _FieldLabel('Email'),
             const SizedBox(height: UIConstants.spacingXS),
-            TextValidation(
+            TextValidationWidget(
               hint: "contoh@email.com",
               controller: emailController,
               prefixIcon: Icons.email_outlined,
@@ -150,7 +150,7 @@ class _FormRegisterState extends State<FormRegister> {
             const SizedBox(height: UIConstants.spacingL),
             _FieldLabel('Password'),
             const SizedBox(height: UIConstants.spacingXS),
-            TextValidation(
+            TextValidationWidget(
               hint: "Min. 8 karakter",
               controller: passwordController,
               prefixIcon: Icons.lock_outline_rounded,
@@ -170,7 +170,7 @@ class _FormRegisterState extends State<FormRegister> {
             const SizedBox(height: UIConstants.spacingL),
             _FieldLabel('Konfirmasi Password'),
             const SizedBox(height: UIConstants.spacingXS),
-            TextValidation(
+            TextValidationWidget(
               hint: "Ulangi password",
               controller: confirmPasswordController,
               prefixIcon: Icons.lock_outline_rounded,

@@ -1,5 +1,5 @@
 import 'package:app/features/auth/auth_validation.dart';
-import 'package:app/shared/widgets/text_validation.dart';
+import 'package:app/shared/widgets/text_validation_widget.dart';
 import 'package:flutter/material.dart';
 
 class FormForgotPassword extends StatefulWidget {
@@ -91,7 +91,7 @@ class _FormForgotPasswordState extends State<FormForgotPassword> {
           ],
           _FieldLabel('Email'),
           const SizedBox(height: 6),
-          TextValidation(
+          TextValidationWidget(
             hint: 'contoh@email.com',
             controller: emailController,
             prefixIcon: Icons.email_outlined,

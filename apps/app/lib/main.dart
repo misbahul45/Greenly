@@ -5,6 +5,7 @@ import 'package:app/features/auth/auth_service.dart';
 import 'package:app/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:app/features/Main/features/home/bloc/home_bloc.dart'; // tambah
 import 'package:app/features/Main/features/home/home_service.dart';   // tambah
+import 'package:app/features/product-detail/product_detail_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -31,6 +32,7 @@ class MyApp extends StatelessWidget {
       providers: [
         RepositoryProvider<AuthService>(create: (_) => AuthService()),
         RepositoryProvider<HomeService>(create: (_) => HomeService()), 
+        RepositoryProvider<ProductDetailService>(create: (_) => ProductDetailService()),
       ],
       child: MultiBlocProvider(
         providers: [

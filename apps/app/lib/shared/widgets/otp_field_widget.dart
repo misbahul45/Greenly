@@ -1,21 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-class OtpField extends StatefulWidget {
+class OtpFieldWidget extends StatefulWidget {
   final int length;
   final Function(String)? onCompleted;
 
-  const OtpField({
+  const OtpFieldWidget({
     super.key,
     this.length = 6,
     this.onCompleted,
   });
 
   @override
-  State<OtpField> createState() => _OtpFieldState();
+  State<OtpFieldWidget> createState() => _OtpFieldState();
 }
 
-class _OtpFieldState extends State<OtpField> {
+class _OtpFieldState extends State<OtpFieldWidget> {
   late List<TextEditingController> controllers;
   late List<FocusNode> focusNodes;
 

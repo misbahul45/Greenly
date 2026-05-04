@@ -131,7 +131,7 @@ class _BannerWidgetState extends State<BannerWidget> {
                           Image.network(
                             item.imageUrl,
                             fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) => Container(
+                            errorBuilder: (_, _, _) => Container(
                               color: AppTheme.tertiaryColor,
                               child: const Icon(
                                 Icons.image_not_supported,

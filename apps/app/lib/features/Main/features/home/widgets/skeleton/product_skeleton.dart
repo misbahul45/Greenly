@@ -14,7 +14,7 @@ class ProductSkeleton extends StatelessWidget {
         crossAxisSpacing: 14,
         mainAxisSpacing: 14,
       ),
-      itemBuilder: (_, __) {
+      itemBuilder: (_, _) {
         return Container(
           decoration: BoxDecoration(
             color: Colors.grey.shade300,

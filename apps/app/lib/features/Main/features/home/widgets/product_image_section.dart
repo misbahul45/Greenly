@@ -1,5 +1,6 @@
 // product_image_section.dart
-import 'package:app/features/Main/features/home/model/data/promotion_data.dart';
+import 'package:app/core/theme/app_theme.dart';
+import 'package:app/features/Main/features/home/domains/data/promotion_data.dart';
 import 'package:app/features/Main/features/home/widgets/product_image_placeholder.dart';
 import 'package:app/features/Main/features/home/widgets/product_promo_badge.dart';
 import 'package:flutter/material.dart';
@@ -10,6 +11,7 @@ class ProductImageSection extends StatelessWidget {
   final PromotionData? promotion;
   final String categoryName;
   final bool isOutOfStock;
+  final Widget? favoriteButton;
 
   const ProductImageSection({
     super.key,
@@ -18,6 +20,7 @@ class ProductImageSection extends StatelessWidget {
     required this.promotion,
     required this.categoryName,
     required this.isOutOfStock,
+    this.favoriteButton,
   });
 
   @override
@@ -45,7 +48,7 @@ class ProductImageSection extends StatelessWidget {
                   ? Image.network(
                       image,
                       fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) =>
+                      errorBuilder: (_, _, _) =>
                           const ProductImagePlaceholder(),
                     )
                   : const ProductImagePlaceholder(),
@@ -82,7 +85,7 @@ class ProductImageSection extends StatelessWidget {
               padding:
                   const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
               decoration: BoxDecoration(
-                color: Colors.black.withOpacity(0.45),
+                color: AppTheme.primaryColor,
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Text(
@@ -102,6 +105,12 @@ class ProductImageSection extends StatelessWidget {
             right: 0,
             child: ProductPromoBadge(label: promotion!.code),
           ),
+          if (favoriteButton != null)
+            Positioned(
+              top: 8,
+              right: 8,
+              child: favoriteButton!,
+            ),
         if (isOutOfStock)
           Positioned.fill(
             child: ClipRRect(

@@ -2,7 +2,7 @@ import 'package:app/core/constants/ui_constants.dart';
 import 'package:app/core/router/app_routes.dart';
 import 'package:app/core/router/auth_routes.dart';
 import 'package:app/core/theme/app_theme.dart';
-import 'package:app/shared/widgets/section_title.dart';
+import 'package:app/shared/widgets/section_title_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:app/features/auth/presentation/bloc/auth_bloc.dart';
@@ -67,7 +67,7 @@ class MyActionWidget extends StatelessWidget {
       },
       child: Column(
         children: [
-          const SectionTitle(title: 'Pengaturan'),
+          const SectionTitleWidget(title: 'Pengaturan'),
           const SizedBox(height: UIConstants.spacingS),
           Container(
             decoration: BoxDecoration(
