@@ -14,7 +14,6 @@ type Handler interface {
 	Delete(c *gin.Context)
 	GetByProduct(c *gin.Context)
 	GetByUser(c *gin.Context)
-	GetByShop(c *gin.Context)
 	GetByID(c *gin.Context)
 	MarkHelpful(c *gin.Context)
 }
@@ -28,24 +27,19 @@ func NewHandler(service Service) Handler {
 }
 
 func (h *handler) Create(c *gin.Context) {
-	userID, exists := c.Get("userID")
+	userID, exists := c.Get("user_id")
 	if !exists {
 		c.Error(middleware.NewAppError(401, "Unauthorized", nil))
 		return
 	}
 
-	var req CreateReviewRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
+	var dto CreateReviewRequest
+	if err := c.ShouldBindJSON(&dto); err != nil {
 		c.Error(middleware.NewAppError(400, "Invalid request body", nil))
 		return
 	}
 
-	if req.Rating < 1 || req.Rating > 5 {
-		c.Error(middleware.NewAppError(400, "Rating must be between 1 and 5", nil))
-		return
-	}
-
-	res, err := h.service.Create(c.Request.Context(), userID.(string), req)
+	res, err := h.service.Create(c.Request.Context(), userID.(string), dto)
 	if err != nil {
 		if errors.Is(err, ErrReviewAlreadyExists) {
 			c.Error(middleware.NewAppError(409, err.Error(), nil))
@@ -62,7 +56,7 @@ func (h *handler) Create(c *gin.Context) {
 }
 
 func (h *handler) Update(c *gin.Context) {
-	userID, exists := c.Get("userID")
+	userID, exists := c.Get("user_id")
 	if !exists {
 		c.Error(middleware.NewAppError(401, "Unauthorized", nil))
 		return
@@ -70,22 +64,17 @@ func (h *handler) Update(c *gin.Context) {
 
 	reviewID := c.Param("id")
 	if reviewID == "" {
-		c.Error(middleware.NewAppError(400, "review id is required", nil))
+		c.Error(middleware.NewAppError(400, "id is required", nil))
 		return
 	}
 
-	var req UpdateReviewRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
+	var dto UpdateReviewRequest
+	if err := c.ShouldBindJSON(&dto); err != nil {
 		c.Error(middleware.NewAppError(400, "Invalid request body", nil))
 		return
 	}
 
-	if req.Rating != nil && (*req.Rating < 1 || *req.Rating > 5) {
-		c.Error(middleware.NewAppError(400, "Rating must be between 1 and 5", nil))
-		return
-	}
-
-	res, err := h.service.Update(c.Request.Context(), userID.(string), reviewID, req)
+	res, err := h.service.Update(c.Request.Context(), userID.(string), reviewID, dto)
 	if err != nil {
 		if errors.Is(err, ErrReviewNotFound) {
 			c.Error(middleware.NewAppError(404, err.Error(), nil))
@@ -102,7 +91,7 @@ func (h *handler) Update(c *gin.Context) {
 }
 
 func (h *handler) Delete(c *gin.Context) {
-	userID, exists := c.Get("userID")
+	userID, exists := c.Get("user_id")
 	if !exists {
 		c.Error(middleware.NewAppError(401, "Unauthorized", nil))
 		return
@@ -110,7 +99,7 @@ func (h *handler) Delete(c *gin.Context) {
 
 	reviewID := c.Param("id")
 	if reviewID == "" {
-		c.Error(middleware.NewAppError(400, "review id is required", nil))
+		c.Error(middleware.NewAppError(400, "id is required", nil))
 		return
 	}
 
@@ -143,6 +132,13 @@ func (h *handler) GetByProduct(c *gin.Context) {
 		return
 	}
 
+	if query.Page <= 0 {
+		query.Page = 1
+	}
+	if query.Limit <= 0 || query.Limit > 100 {
+		query.Limit = 20
+	}
+
 	res, total, err := h.service.GetByProduct(c.Request.Context(), productID, query)
 	if err != nil {
 		c.Error(middleware.NewAppError(500, "Failed to fetch reviews", err))
@@ -154,7 +150,7 @@ func (h *handler) GetByProduct(c *gin.Context) {
 }
 
 func (h *handler) GetByUser(c *gin.Context) {
-	userID, exists := c.Get("userID")
+	userID, exists := c.Get("user_id")
 	if !exists {
 		c.Error(middleware.NewAppError(401, "Unauthorized", nil))
 		return
@@ -164,6 +160,13 @@ func (h *handler) GetByUser(c *gin.Context) {
 	if err := c.ShouldBindQuery(&query); err != nil {
 		c.Error(middleware.NewAppError(400, "Invalid query params", nil))
 		return
+	}
+
+	if query.Page <= 0 {
+		query.Page = 1
+	}
+	if query.Limit <= 0 || query.Limit > 100 {
+		query.Limit = 20
 	}
 
 	res, total, err := h.service.GetByUser(c.Request.Context(), userID.(string), query)
@@ -176,33 +179,10 @@ func (h *handler) GetByUser(c *gin.Context) {
 	utils.OKWithMeta(c, res, meta)
 }
 
-func (h *handler) GetByShop(c *gin.Context) {
-	shopID, exists := c.Get("shopID")
-	if !exists {
-		c.Error(middleware.NewAppError(401, "Unauthorized", nil))
-		return
-	}
-
-	var query ReviewQuery
-	if err := c.ShouldBindQuery(&query); err != nil {
-		c.Error(middleware.NewAppError(400, "Invalid query params", nil))
-		return
-	}
-
-	res, total, err := h.service.GetByShop(c.Request.Context(), shopID.(string), query)
-	if err != nil {
-		c.Error(middleware.NewAppError(500, "Failed to fetch reviews", err))
-		return
-	}
-
-	meta := utils.NewPaginationMeta(total, int64(query.Page), int64(query.Limit))
-	utils.OKWithMeta(c, res, meta)
-}
-
 func (h *handler) GetByID(c *gin.Context) {
 	reviewID := c.Param("id")
 	if reviewID == "" {
-		c.Error(middleware.NewAppError(400, "review id is required", nil))
+		c.Error(middleware.NewAppError(400, "id is required", nil))
 		return
 	}
 
@@ -221,7 +201,7 @@ func (h *handler) GetByID(c *gin.Context) {
 func (h *handler) MarkHelpful(c *gin.Context) {
 	reviewID := c.Param("id")
 	if reviewID == "" {
-		c.Error(middleware.NewAppError(400, "review id is required", nil))
+		c.Error(middleware.NewAppError(400, "id is required", nil))
 		return
 	}
 

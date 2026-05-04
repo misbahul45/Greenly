@@ -29,18 +29,35 @@ func main() {
 	db := client.Database("catalog")
 	ctx := context.Background()
 
+	userIDs := []string{
+		seeds.NewID(), seeds.NewID(), seeds.NewID(), seeds.NewID(), seeds.NewID(),
+		seeds.NewID(), seeds.NewID(), seeds.NewID(), seeds.NewID(), seeds.NewID(),
+	}
+
+	shopIDs := []string{
+		seeds.NewID(), seeds.NewID(), seeds.NewID(), seeds.NewID(), seeds.NewID(),
+	}
+
 	log.Println("🗑️  Resetting collections...")
 	seeds.ResetCollections(ctx, db)
 
 	log.Println("🌱 Starting catalog seed...")
+
 	categoryIDs := seeds.SeedCategories(ctx, db)
 	productIDs := seeds.SeedProducts(ctx, db, categoryIDs)
+	seeds.SeedProductVariants(ctx, db, productIDs)
 	seeds.SeedPrices(ctx, db, productIDs)
 	seeds.SeedInventories(ctx, db, productIDs)
 	seeds.SeedProductImages(ctx, db, productIDs)
 	seeds.SeedProductDiscounts(ctx, db, productIDs)
 	seeds.SeedEcoAttributes(ctx, db, productIDs)
 	seeds.SeedActivePrices(ctx, db, productIDs)
+	seeds.SeedFavoriteProducts(ctx, db, productIDs, shopIDs, userIDs)
+	reviewIDs := seeds.SeedProductReviews(ctx, db, productIDs, shopIDs, userIDs)
+	seeds.SeedReviewReplies(ctx, db, reviewIDs, shopIDs)
+	seeds.SeedProductRatings(ctx, db, productIDs)
+	seeds.SeedProductViews(ctx, db, productIDs, userIDs)
+	seeds.SeedProductAnalytics(ctx, db, productIDs)
 
 	log.Println("🎉 Catalog seed completed successfully!")
 }

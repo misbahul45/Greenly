@@ -59,7 +59,7 @@ func (r *repository) FindByUser(ctx context.Context, userID string, skip, limit 
 
 	count, err := r.collection.CountDocuments(ctx, filter)
 	if err != nil {
-		return 0, 0, err
+		return nil, 0, err
 	}
 
 	return favorites, count, nil

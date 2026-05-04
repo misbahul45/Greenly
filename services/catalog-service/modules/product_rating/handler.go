@@ -4,7 +4,7 @@ import (
 	"catalog-service/middleware"
 	"catalog-service/utils"
 	"errors"
-	"fmt"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
@@ -39,15 +39,15 @@ func (h *handler) GetByProductID(c *gin.Context) {
 }
 
 func (h *handler) GetProductsRatings(c *gin.Context) {
-	var req struct {
+	var dto struct {
 		ProductIDs []string `json:"productIds" binding:"required"`
 	}
-	if err := c.ShouldBindJSON(&req); err != nil {
+	if err := c.ShouldBindJSON(&dto); err != nil {
 		c.Error(middleware.NewAppError(400, "productIds is required", nil))
 		return
 	}
 
-	res, err := h.service.GetProductsRatings(c.Request.Context(), req.ProductIDs)
+	res, err := h.service.GetProductsRatings(c.Request.Context(), dto.ProductIDs)
 	if err != nil {
 		c.Error(middleware.NewAppError(500, "Failed to fetch ratings", err))
 		return
@@ -58,10 +58,12 @@ func (h *handler) GetProductsRatings(c *gin.Context) {
 func (h *handler) GetTopRatedProducts(c *gin.Context) {
 	limit := 10
 	if l := c.Query("limit"); l != "" {
-		if _, err := fmt.Sscanf(l, "%d", &limit); err != nil {
+		parsed, err := strconv.Atoi(l)
+		if err != nil || parsed <= 0 {
 			c.Error(middleware.NewAppError(400, "Invalid limit param", nil))
 			return
 		}
+		limit = parsed
 	}
 
 	res, err := h.service.GetTopRatedProducts(c.Request.Context(), limit)

@@ -13,6 +13,7 @@ type Repository interface {
 	FindByProductID(ctx context.Context, productID string) (ProductRating, error)
 	FindMany(ctx context.Context, filter bson.M, opts *options.FindOptions) ([]ProductRating, int64, error)
 	Upsert(ctx context.Context, productID string, rating ProductRating) (ProductRating, error)
+	UpsertProductRating(ctx context.Context, productID string, average float64, count int, distribution map[int]int) error
 	Delete(ctx context.Context, productID string) error
 }
 
@@ -50,7 +51,7 @@ func (r *repository) FindMany(ctx context.Context, filter bson.M, opts *options.
 
 	count, err := r.collection.CountDocuments(ctx, filter)
 	if err != nil {
-		return 0, 0, err
+		return nil, 0, err
 	}
 
 	return ratings, count, nil
@@ -94,5 +95,23 @@ func (r *repository) Upsert(ctx context.Context, productID string, rating Produc
 
 func (r *repository) Delete(ctx context.Context, productID string) error {
 	_, err := r.collection.DeleteOne(ctx, bson.M{"product_id": productID})
+	return err
+}
+
+func (r *repository) UpsertProductRating(ctx context.Context, productID string, average float64, count int, distribution map[int]int) error {
+	filter := bson.M{"product_id": productID}
+	update := bson.M{"$set": bson.M{
+		"product_id": productID,
+		"average":    average,
+		"count":      count,
+		"one_star":   distribution[1],
+		"two_star":   distribution[2],
+		"three_star": distribution[3],
+		"four_star":  distribution[4],
+		"five_star":  distribution[5],
+		"updated_at": time.Now(),
+	}}
+	opts := options.Update().SetUpsert(true)
+	_, err := r.collection.UpdateOne(ctx, filter, update, opts)
 	return err
 }

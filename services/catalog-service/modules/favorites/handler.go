@@ -24,19 +24,19 @@ func NewHandler(service Service) Handler {
 }
 
 func (h *handler) Toggle(c *gin.Context) {
-	userID, exists := c.Get("userID")
+	userID, exists := c.Get("user_id")
 	if !exists {
 		c.Error(middleware.NewAppError(401, "Unauthorized", nil))
 		return
 	}
 
-	var req ToggleFavoriteRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
+	var dto ToggleFavoriteRequest
+	if err := c.ShouldBindJSON(&dto); err != nil {
 		c.Error(middleware.NewAppError(400, "Invalid request body", nil))
 		return
 	}
 
-	res, err := h.service.Toggle(c.Request.Context(), userID.(string), req.ProductID)
+	res, err := h.service.Toggle(c.Request.Context(), userID.(string), dto.ProductID)
 	if err != nil {
 		if errors.Is(err, ErrProductNotFound) {
 			c.Error(middleware.NewAppError(404, err.Error(), nil))
@@ -49,7 +49,7 @@ func (h *handler) Toggle(c *gin.Context) {
 }
 
 func (h *handler) GetUserFavorites(c *gin.Context) {
-	userID, exists := c.Get("userID")
+	userID, exists := c.Get("user_id")
 	if !exists {
 		c.Error(middleware.NewAppError(401, "Unauthorized", nil))
 		return
@@ -59,6 +59,13 @@ func (h *handler) GetUserFavorites(c *gin.Context) {
 	if err := c.ShouldBindQuery(&query); err != nil {
 		c.Error(middleware.NewAppError(400, "Invalid query params", nil))
 		return
+	}
+
+	if query.Page <= 0 {
+		query.Page = 1
+	}
+	if query.Limit <= 0 || query.Limit > 100 {
+		query.Limit = 20
 	}
 
 	res, total, err := h.service.GetUserFavorites(c.Request.Context(), userID.(string), query)
@@ -87,7 +94,7 @@ func (h *handler) GetProductFavorites(c *gin.Context) {
 }
 
 func (h *handler) CheckFavorite(c *gin.Context) {
-	userID, exists := c.Get("userID")
+	userID, exists := c.Get("user_id")
 	if !exists {
 		c.Error(middleware.NewAppError(401, "Unauthorized", nil))
 		return
@@ -99,10 +106,10 @@ func (h *handler) CheckFavorite(c *gin.Context) {
 		return
 	}
 
-	res, err := h.service.IsFavorite(c.Request.Context(), userID.(string), productID)
+	isFav, err := h.service.IsFavorite(c.Request.Context(), userID.(string), productID)
 	if err != nil {
 		c.Error(middleware.NewAppError(500, "Failed to check favorite", err))
 		return
 	}
-	utils.OK(c, gin.H{"isFavorite": res, "productId": productID})
+	utils.OK(c, gin.H{"isFavorite": isFav, "productId": productID})
 }

@@ -8,21 +8,18 @@ import (
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type RatingRepository interface {
 	UpsertProductRating(ctx context.Context, productID string, average float64, count int, distribution map[int]int) error
-	GetProductRating(ctx context.Context, productID string) (databases.ProductRating, error)
 }
 
 type Service interface {
-	Create(ctx context.Context, userID string, req CreateReviewRequest) (ReviewResponse, error)
-	Update(ctx context.Context, userID string, reviewID string, req UpdateReviewRequest) (ReviewResponse, error)
+	Create(ctx context.Context, userID string, dto CreateReviewRequest) (ReviewResponse, error)
+	Update(ctx context.Context, userID string, reviewID string, dto UpdateReviewRequest) (ReviewResponse, error)
 	Delete(ctx context.Context, userID string, reviewID string) error
 	GetByProduct(ctx context.Context, productID string, query ReviewQuery) ([]ReviewResponse, int64, error)
 	GetByUser(ctx context.Context, userID string, query ReviewQuery) ([]ReviewResponse, int64, error)
-	GetByShop(ctx context.Context, shopID string, query ReviewQuery) ([]ReviewResponse, int64, error)
 	GetByID(ctx context.Context, reviewID string) (ReviewResponse, error)
 	MarkHelpful(ctx context.Context, reviewID string) error
 }
@@ -41,30 +38,28 @@ func NewService(repository Repository, ratingRepo RatingRepository, productColle
 	}
 }
 
-func (s *service) Create(ctx context.Context, userID string, req CreateReviewRequest) (ReviewResponse, error) {
-	reviews, _, err := s.repository.FindByUser(ctx, userID, 0, 100)
-	if err == nil {
-		for _, r := range reviews {
-			if r.ProductID == req.ProductID && r.DeletedAt == nil {
-				return ReviewResponse{}, ErrReviewAlreadyExists
-			}
-		}
-	}
-
-	product, err := s.getProductByID(ctx, req.ProductID)
+func (s *service) Create(ctx context.Context, userID string, dto CreateReviewRequest) (ReviewResponse, error) {
+	_, err := s.getProductByID(ctx, dto.ProductID)
 	if err != nil {
 		return ReviewResponse{}, ErrProductNotFound
 	}
 
+	reviews, _, _ := s.repository.FindByUser(ctx, userID, 0, 200)
+	for _, r := range reviews {
+		if r.ProductID == dto.ProductID && r.DeletedAt == nil {
+			return ReviewResponse{}, ErrReviewAlreadyExists
+		}
+	}
+
 	review := ProductReview{
-		ProductID:    req.ProductID,
+		ProductID:    dto.ProductID,
 		UserID:       userID,
-		OrderID:      req.OrderID,
-		Rating:       req.Rating,
-		Title:        req.Title,
-		Comment:      req.Comment,
-		ImageURLs:    req.ImageURLs,
-		IsVerified:   req.OrderID != "",
+		OrderID:      dto.OrderID,
+		Rating:       dto.Rating,
+		Title:        dto.Title,
+		Comment:      dto.Comment,
+		ImageURLs:    dto.ImageURLs,
+		IsVerified:   dto.OrderID != "",
 		HelpfulCount: 0,
 	}
 	review.BeforeCreate()
@@ -74,12 +69,12 @@ func (s *service) Create(ctx context.Context, userID string, req CreateReviewReq
 		return ReviewResponse{}, err
 	}
 
-	s.updateProductRating(ctx, req.ProductID)
+	s.recalculateRating(ctx, dto.ProductID)
 
 	return toResponse(&created), nil
 }
 
-func (s *service) Update(ctx context.Context, userID string, reviewID string, req UpdateReviewRequest) (ReviewResponse, error) {
+func (s *service) Update(ctx context.Context, userID string, reviewID string, dto UpdateReviewRequest) (ReviewResponse, error) {
 	review, err := s.repository.FindByID(ctx, reviewID)
 	if err != nil {
 		return ReviewResponse{}, ErrReviewNotFound
@@ -89,17 +84,17 @@ func (s *service) Update(ctx context.Context, userID string, reviewID string, re
 		return ReviewResponse{}, ErrUnauthorized
 	}
 
-	if req.Rating != nil {
-		review.Rating = *req.Rating
+	if dto.Rating != nil {
+		review.Rating = *dto.Rating
 	}
-	if req.Title != nil {
-		review.Title = *req.Title
+	if dto.Title != nil {
+		review.Title = *dto.Title
 	}
-	if req.Comment != nil {
-		review.Comment = *req.Comment
+	if dto.Comment != nil {
+		review.Comment = *dto.Comment
 	}
-	if req.ImageURLs != nil {
-		review.ImageURLs = req.ImageURLs
+	if dto.ImageURLs != nil {
+		review.ImageURLs = dto.ImageURLs
 	}
 
 	updated, err := s.repository.Update(ctx, reviewID, review)
@@ -107,7 +102,7 @@ func (s *service) Update(ctx context.Context, userID string, reviewID string, re
 		return ReviewResponse{}, err
 	}
 
-	s.updateProductRating(ctx, review.ProductID)
+	s.recalculateRating(ctx, review.ProductID)
 
 	return toResponse(&updated), nil
 }
@@ -122,28 +117,18 @@ func (s *service) Delete(ctx context.Context, userID string, reviewID string) er
 		return ErrUnauthorized
 	}
 
-	err = s.repository.Delete(ctx, reviewID)
-	if err != nil {
+	if err := s.repository.Delete(ctx, reviewID); err != nil {
 		return err
 	}
 
-	s.updateProductRating(ctx, review.ProductID)
+	s.recalculateRating(ctx, review.ProductID)
 
 	return nil
 }
 
 func (s *service) GetByProduct(ctx context.Context, productID string, query ReviewQuery) ([]ReviewResponse, int64, error) {
-	if query.Page <= 0 {
-		query.Page = 1
-	}
-	if query.Limit <= 0 || query.Limit > 100 {
-		query.Limit = 20
-	}
-
 	skip := int64(query.Page-1) * int64(query.Limit)
-	limit := int64(query.Limit)
-
-	reviews, total, err := s.repository.FindByProduct(ctx, productID, skip, limit)
+	reviews, total, err := s.repository.FindByProduct(ctx, productID, skip, int64(query.Limit))
 	if err != nil {
 		return nil, 0, err
 	}
@@ -152,22 +137,12 @@ func (s *service) GetByProduct(ctx context.Context, productID string, query Revi
 	for i, r := range reviews {
 		responses[i] = toResponse(&r)
 	}
-
 	return responses, total, nil
 }
 
 func (s *service) GetByUser(ctx context.Context, userID string, query ReviewQuery) ([]ReviewResponse, int64, error) {
-	if query.Page <= 0 {
-		query.Page = 1
-	}
-	if query.Limit <= 0 || query.Limit > 100 {
-		query.Limit = 20
-	}
-
 	skip := int64(query.Page-1) * int64(query.Limit)
-	limit := int64(query.Limit)
-
-	reviews, total, err := s.repository.FindByUser(ctx, userID, skip, limit)
+	reviews, total, err := s.repository.FindByUser(ctx, userID, skip, int64(query.Limit))
 	if err != nil {
 		return nil, 0, err
 	}
@@ -176,31 +151,6 @@ func (s *service) GetByUser(ctx context.Context, userID string, query ReviewQuer
 	for i, r := range reviews {
 		responses[i] = toResponse(&r)
 	}
-
-	return responses, total, nil
-}
-
-func (s *service) GetByShop(ctx context.Context, shopID string, query ReviewQuery) ([]ReviewResponse, int64, error) {
-	if query.Page <= 0 {
-		query.Page = 1
-	}
-	if query.Limit <= 0 || query.Limit > 100 {
-		query.Limit = 20
-	}
-
-	skip := int64(query.Page-1) * int64(query.Limit)
-	limit := int64(query.Limit)
-
-	reviews, total, err := s.repository.FindByShop(ctx, shopID, skip, limit)
-	if err != nil {
-		return nil, 0, err
-	}
-
-	responses := make([]ReviewResponse, len(reviews))
-	for i, r := range reviews {
-		responses[i] = toResponse(&r)
-	}
-
 	return responses, total, nil
 }
 
@@ -218,8 +168,8 @@ func (s *service) MarkHelpful(ctx context.Context, reviewID string) error {
 		return ErrReviewNotFound
 	}
 
-	reviewCollection := s.productCollection.Database().Collection("reviews")
-	_, err = reviewCollection.UpdateOne(ctx,
+	reviewCol := s.productCollection.Database().Collection("product_reviews")
+	_, err = reviewCol.UpdateOne(ctx,
 		bson.M{"_id": reviewID},
 		bson.M{"$inc": bson.M{"helpful_count": 1}},
 	)
@@ -235,7 +185,7 @@ func (s *service) getProductByID(ctx context.Context, productID string) (databas
 	return product, err
 }
 
-func (s *service) updateProductRating(ctx context.Context, productID string) {
+func (s *service) recalculateRating(ctx context.Context, productID string) {
 	count, err := s.repository.GetReviewCount(ctx, productID)
 	if err != nil {
 		return
@@ -249,7 +199,7 @@ func (s *service) updateProductRating(ctx context.Context, productID string) {
 	distribution := s.getRatingDistribution(ctx, productID)
 
 	if s.ratingRepo != nil {
-		_ = s.ratingRepo.UpsertProductRating(ctx, productID, average, int(count), distribution)
+		s.ratingRepo.UpsertProductRating(ctx, productID, average, int(count), distribution)
 	}
 
 	s.productCollection.UpdateOne(ctx,
@@ -263,23 +213,18 @@ func (s *service) updateProductRating(ctx context.Context, productID string) {
 }
 
 func (s *service) getRatingDistribution(ctx context.Context, productID string) map[int]int {
-	distribution := map[int]int{
-		1: 0, 2: 0, 3: 0, 4: 0, 5: 0,
-	}
+	distribution := map[int]int{1: 0, 2: 0, 3: 0, 4: 0, 5: 0}
 
-	reviewCollection := s.productCollection.Database().Collection("reviews")
 	pipeline := mongo.Pipeline{
-		{{Key: "$match", Value: bson.M{
-			"product_id": productID,
-			"deleted_at": nil,
-		}}},
+		{{Key: "$match", Value: bson.M{"product_id": productID, "deleted_at": nil}}},
 		{{Key: "$group", Value: bson.D{
 			{Key: "_id", Value: "$rating"},
 			{Key: "count", Value: bson.D{{Key: "$sum", Value: 1}}},
 		}}},
 	}
 
-	cursor, err := reviewCollection.Aggregate(ctx, pipeline)
+	reviewCol := s.productCollection.Database().Collection("product_reviews")
+	cursor, err := reviewCol.Aggregate(ctx, pipeline)
 	if err != nil {
 		return distribution
 	}
@@ -298,24 +243,23 @@ func (s *service) getRatingDistribution(ctx context.Context, productID string) m
 			distribution[r.Rating] = r.Count
 		}
 	}
-
 	return distribution
 }
 
-func toResponse(review *ProductReview) ReviewResponse {
+func toResponse(r *ProductReview) ReviewResponse {
 	return ReviewResponse{
-		ID:           review.ID,
-		ProductID:    review.ProductID,
-		UserID:       review.UserID,
-		OrderID:      review.OrderID,
-		Rating:       review.Rating,
-		Title:        review.Title,
-		Comment:      review.Comment,
-		ImageURLs:    review.ImageURLs,
-		IsVerified:   review.IsVerified,
-		HelpfulCount: review.HelpfulCount,
-		CreatedAt:    review.CreatedAt,
-		UpdatedAt:    review.UpdatedAt,
+		ID:           r.ID,
+		ProductID:    r.ProductID,
+		UserID:       r.UserID,
+		OrderID:      r.OrderID,
+		Rating:       r.Rating,
+		Title:        r.Title,
+		Comment:      r.Comment,
+		ImageURLs:    r.ImageURLs,
+		IsVerified:   r.IsVerified,
+		HelpfulCount: r.HelpfulCount,
+		CreatedAt:    r.CreatedAt,
+		UpdatedAt:    r.UpdatedAt,
 	}
 }
 
