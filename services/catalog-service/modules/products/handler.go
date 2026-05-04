@@ -4,6 +4,7 @@ import (
 	"catalog-service/middleware"
 	"catalog-service/utils"
 	"errors"
+	"log"
 
 	"github.com/gin-gonic/gin"
 )
@@ -47,6 +48,7 @@ func (h *handler) FindMany(c *gin.Context) {
 
 func (h *handler) FindOne(c *gin.Context) {
 	id := c.Param("id")
+	log.Printf("FindOne called with id: '%s'", id)
 	res, err := h.service.FindOne(c.Request.Context(), id)
 	if err != nil {
 		if errors.Is(err, ErrProductNotFound) {

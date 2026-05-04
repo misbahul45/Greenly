@@ -4,7 +4,6 @@ import (
 	"catalog-service/databases"
 	"context"
 	"time"
-
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -75,10 +74,17 @@ func (r *repository) FindMany(ctx context.Context, filter bson.M, opts *options.
 	return products, count, nil
 }
 
+
 func (r *repository) FindById(ctx context.Context, id string) (databases.Product, error) {
-	var product databases.Product
-	err := r.productCollection.FindOne(ctx, bson.M{"_id": id, "deleted_at": bson.M{"$eq": nil}}).Decode(&product)
-	return product, err
+    var product databases.Product
+
+    filter := bson.M{
+        "_id":        id,
+        "deleted_at": bson.M{"$eq": nil},
+    }
+
+    err := r.productCollection.FindOne(ctx, filter).Decode(&product)
+    return product, err
 }
 
 func (r *repository) FindBySlug(ctx context.Context, slug string) (databases.Product, error) {

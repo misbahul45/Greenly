@@ -1,4 +1,4 @@
-class ProductData {
+class  ProductData {
   final String id;
   final String shopId;
   final String categoryId;

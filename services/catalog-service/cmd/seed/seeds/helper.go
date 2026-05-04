@@ -3,19 +3,16 @@ package seeds
 import (
 	"context"
 	"log"
-
-	"github.com/lucsky/cuid"
+	"github.com/google/uuid"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
 func Ptr[T any](v T) *T {
 	return &v
 }
-
 func NewID() string {
-	return cuid.New()
+    return uuid.New().String()
 }
-
 func ResetCollections(ctx context.Context, db *mongo.Database) {
 	collections := []string{
 		"categories",

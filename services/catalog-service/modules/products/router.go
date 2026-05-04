@@ -21,8 +21,8 @@ func ProductRouter(
 	{
 		products.GET("", handler.FindMany)
 		products.GET("/search", handler.Search)
-		products.GET("/:id", handler.FindOne)
 		products.GET("/slug/:slug", handler.FindOneBySlug)
+		products.GET("/:id", handler.FindOne)
 
 		products.POST("",
 			middleware.JWTAuthMiddleware(),
