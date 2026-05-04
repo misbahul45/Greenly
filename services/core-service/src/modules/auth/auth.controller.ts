@@ -143,6 +143,7 @@ export class AuthController {
   getMe(
     @CurrentUser() user: UserLogin
   ) {
+    console.log('user:', user);
     return ErrorHandler(() => this.authService.getMe(user.sub));
   }
 }

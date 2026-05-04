@@ -79,7 +79,7 @@ class _CategoriesWidgetState extends State<CategoriesWidget> {
             SectionTitleWidget(
               title: "Categories",
               onSeeAll: () {
-                Navigator.pushNamed(context, AppRoutes.categoryProducts);
+                Navigator.pushNamed(context, AppRoutes.allCategories);
               },
             ),
             const SizedBox(height: UIConstants.spacingS),
@@ -91,8 +91,11 @@ class _CategoriesWidgetState extends State<CategoriesWidget> {
                 itemCount: categoryState.isLoadingMore
                     ? items.length + 1
                     : items.length,
-                padding: const EdgeInsets.symmetric(horizontal: UIConstants.paddingS),
-                separatorBuilder: (_, _) => const SizedBox(width: UIConstants.spacingS),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: UIConstants.paddingS,
+                ),
+                separatorBuilder: (_, _) =>
+                    const SizedBox(width: UIConstants.spacingS),
                 itemBuilder: (context, index) {
                   if (index >= items.length) {
                     return Center(
@@ -108,10 +111,7 @@ class _CategoriesWidgetState extends State<CategoriesWidget> {
                   }
 
                   final item = items[index];
-                  return CategoryWidget(
-                    title: item.name,
-                    slug: item.slug,
-                  );
+                  return CategoryWidget(title: item.name, slug: item.slug);
                 },
               ),
             ),

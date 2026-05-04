@@ -1,15 +1,14 @@
 package middleware
 
 import (
+	"catalog-service/internal/cache"
+	"catalog-service/internal/coreclient"
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
 	"os"
 	"strings"
 	"time"
-
-	"catalog-service/internal/cache"
-	"catalog-service/internal/coreclient"
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
@@ -22,7 +21,7 @@ func tokenCacheKey(token string) string {
 	return fmt.Sprintf("%x", h)
 }
 
-func AuthMiddleware(coreSvc coreclient.Client, redisCache cache.Cache) gin.HandlerFunc {
+func JWTAuthMiddleware(coreSvc coreclient.Client, redisCache cache.Cache) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authHeader := c.GetHeader("Authorization")
 		if authHeader == "" {
@@ -51,10 +50,15 @@ func AuthMiddleware(coreSvc coreclient.Client, redisCache cache.Cache) gin.Handl
 			tokenString,
 			&UserLogin{},
 			func(t *jwt.Token) (interface{}, error) {
+				if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
+					return nil, fmt.Errorf("unexpected signing method: %v", t.Header["alg"])
+				}
 				return []byte(secret), nil
 			},
 		)
 		if err != nil || !token.Valid {
+			fmt.Printf(">>> JWT ERROR: %v\n", err)          // tambah ini
+    		fmt.Printf(">>> TOKEN STRING: %s\n", tokenString)
 			c.Error(NewAppError(401, "Invalid token", nil))
 			c.Abort()
 			return
@@ -68,12 +72,10 @@ func AuthMiddleware(coreSvc coreclient.Client, redisCache cache.Cache) gin.Handl
 		}
 
 		cacheKey := tokenCacheKey(tokenString)
-		cached, err := redisCache.GetUser(c.Request.Context(), cacheKey)
-		if err == nil && cached != "" {
+		if cached, err := redisCache.GetUser(c.Request.Context(), cacheKey); err == nil && cached != "" {
 			var user coreclient.User
 			if json.Unmarshal([]byte(cached), &user) == nil {
-				c.Set("user", claims)
-				c.Set("verified_user", &user)
+				setUserContext(c, claims, &user)
 				c.Next()
 				return
 			}
@@ -87,9 +89,16 @@ func AuthMiddleware(coreSvc coreclient.Client, redisCache cache.Cache) gin.Handl
 		}
 
 		redisCache.SetUser(c.Request.Context(), cacheKey, user, userCacheTTL)
-
-		c.Set("user", claims)
-		c.Set("verified_user", user)
+		setUserContext(c, claims, user)
 		c.Next()
 	}
+}
+
+func setUserContext(c *gin.Context, claims *UserLogin, user *coreclient.User) {
+	c.Set("user", claims)
+	c.Set("user_id", claims.Subject)          // ✅ pakai RegisteredClaims.Subject
+	c.Set("user_email", claims.Email)
+	c.Set("user_roles", claims.Roles)
+	c.Set("shop_memberships", claims.ShopMemberships)
+	c.Set("verified_user", user)
 }

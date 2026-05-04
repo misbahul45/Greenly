@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"catalog-service/internal/coreclient"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
@@ -25,45 +26,36 @@ func ShopMemberRequired(coreSvc coreclient.Client) gin.HandlerFunc {
 			return
 		}
 
-		membership, err := coreSvc.ValidateShopMembership(
-			c.Request.Context(),
-			shopID,
-			user.ID,
-		)
+		membership, err := coreSvc.ValidateShopMembership(c.Request.Context(), shopID, user.Subject) // ✅ Sub → Subject
 		if err != nil {
-			c.Error(NewAppError(403, "Forbidden: Not a member of this shop", nil))
+			if strings.Contains(err.Error(), "not a member") {
+				c.Error(NewAppError(403, "Forbidden: Not a member of this shop", nil))
+				c.Abort()
+				return
+			}
+			c.Error(NewAppError(500, "Failed to validate shop membership", err))
 			c.Abort()
 			return
 		}
 
 		c.Set("shopID", shopID)
 		c.Set("shopRoles", membership.Roles)
-
 		c.Next()
 	}
 }
 
 func extractShopID(c *gin.Context) string {
-	shopID := c.Param("shop_id")
-	if shopID != "" {
-		return shopID
+	if id := c.Param("shop_id"); id != "" {
+		return id
 	}
 
-	shopID = c.Param("id")
-	if shopID != "" && c.Request.Method != "GET" {
-		return shopID
+	if id := c.Query("shop_id"); id != "" {
+		return id
 	}
 
-	shopID = c.Query("shop_id")
-	if shopID != "" {
-		return shopID
-	}
-
-	type BodyStruct struct {
+	var body struct {
 		ShopID string `json:"shopId"`
 	}
-
-	var body BodyStruct
 	if c.ShouldBindBodyWith(&body, binding.JSON) == nil && body.ShopID != "" {
 		return body.ShopID
 	}

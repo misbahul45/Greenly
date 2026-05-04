@@ -6,19 +6,16 @@ import 'package:app/features/Main/features/home/domains/data/promotion_data.dart
 import 'package:app/features/Main/features/home/widgets/product_image_section.dart';
 import 'package:app/features/Main/features/home/widgets/product_stats_row.dart';
 import 'package:app/features/Main/features/home/widgets/product_stock_badge.dart';
-import 'package:app/shared/widgets/favorite_button_widget.dart';
+import 'package:app/features/cart/presentation/bloc/cart_bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:app/core/theme/app_theme.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 class ProductWidget extends StatelessWidget {
   final ProductData product;
   final PromotionData? promotion;
 
-  const ProductWidget({
-    super.key,
-    required this.product,
-    this.promotion,
-  });
+  const ProductWidget({super.key, required this.product, this.promotion});
 
   @override
   Widget build(BuildContext context) {
@@ -57,7 +54,6 @@ class ProductWidget extends StatelessWidget {
               promotion: promotion,
               categoryName: product.categoryName,
               isOutOfStock: isOutOfStock,
-              favoriteButton: FavoriteButtonWidget(),
             ),
             Padding(
               padding: const EdgeInsets.fromLTRB(
@@ -120,12 +116,70 @@ class ProductWidget extends StatelessWidget {
                       fontSize: UIConstants.fontSizeM,
                     ),
                   ),
+                  const SizedBox(height: UIConstants.spacingXS),
+                  _AddToCartButton(productId: product.id),
                 ],
               ),
             ),
           ],
         ),
       ),
+    );
+  }
+}
+
+class _AddToCartButton extends StatelessWidget {
+  final String productId;
+
+  const _AddToCartButton({required this.productId});
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocBuilder<CartBloc, CartState>(
+      buildWhen: (p, c) => p.isAdding(productId) != c.isAdding(productId),
+      builder: (context, state) {
+        final loading = state.isAdding(productId);
+        return SizedBox(
+          width: double.infinity,
+          height: 32,
+          child: ElevatedButton.icon(
+            onPressed: loading
+                ? null
+                : () {
+                    context.read<CartBloc>().add(
+                      CartAddItemRequested(productId: productId),
+                    );
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Ditambahkan ke keranjang'),
+                        duration: Duration(seconds: 1),
+                        behavior: SnackBarBehavior.floating,
+                      ),
+                    );
+                  },
+            icon: loading
+                ? const SizedBox(
+                    width: 12,
+                    height: 12,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
+                  )
+                : const Icon(Icons.add_shopping_cart_rounded, size: 14),
+            label: const Text(
+              'Keranjang',
+              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
+            ),
+            style: ElevatedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(UIConstants.radiusS),
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }

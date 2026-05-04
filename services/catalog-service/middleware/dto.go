@@ -8,9 +8,8 @@ type ShopMembership struct {
 }
 
 type UserLogin struct {
-	Sub            string           `json:"sub"`
-	Email          string           `json:"email"`
-	Roles          []string         `json:"roles"`
+	Email           string           `json:"email"`
+	Roles           []string         `json:"roles"`
 	ShopMemberships []ShopMembership `json:"shopMemberships"`
 	jwt.RegisteredClaims
 }

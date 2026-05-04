@@ -9,7 +9,7 @@ export class JwtRefreshGuard extends AuthGuard('jwt-refresh') {
   }
   canActivate(context: ExecutionContext) {
     const req = context.switchToHttp().getRequest()
-
+    console.log('JwtRefreshGuard: canActivate called with request:', req.headers)
     return super.canActivate(context)
   }
 }

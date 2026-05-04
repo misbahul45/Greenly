@@ -11,8 +11,8 @@ import (
 	price "catalog-service/modules/price"
 	discount "catalog-service/modules/product_discount"
 	productimage "catalog-service/modules/product_image"
-	product "catalog-service/modules/products"
 	productrating "catalog-service/modules/product_rating"
+	product "catalog-service/modules/products"
 	review "catalog-service/modules/reviews"
 
 	"github.com/gin-gonic/gin"
@@ -26,14 +26,14 @@ func Routes(
 	redisCache cache.Cache,
 ) {
 	category.CategoryRouter(r, db, coreSvc, redisCache)
-	product.ProductRouter(r, db, coreSvc)
-	inventory.InventoryRouter(r, db)
-	price.PriceRouter(r, db)
+	product.ProductRouter(r, db, coreSvc, redisCache)
+	inventory.InventoryRouter(r, db, coreSvc, redisCache)
+	price.PriceRouter(r, db, coreSvc, redisCache)
 	activeprice.ActivePriceRouter(r, db)
-	discount.ProductDiscountRouter(r, db)
-	productimage.ProductImageRouter(r, db)
-	ecoattribute.EcoAttributeRouter(r, db)
-	favorite.FavoriteRouter(r, db)
-	review.ReviewRouter(r, db)
+	discount.ProductDiscountRouter(r, db, coreSvc, redisCache)
+	productimage.ProductImageRouter(r, db, coreSvc, redisCache)
+	ecoattribute.EcoAttributeRouter(r, db, coreSvc, redisCache)
+	favorite.FavoriteRouter(r, db, coreSvc, redisCache)
+	review.ReviewRouter(r, db, coreSvc, redisCache)
 	productrating.ProductRatingRouter(r, db)
 }

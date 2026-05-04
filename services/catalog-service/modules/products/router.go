@@ -1,6 +1,7 @@
 package product
 
 import (
+	"catalog-service/internal/cache"
 	"catalog-service/internal/coreclient"
 	"catalog-service/middleware"
 
@@ -8,14 +9,12 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-func ProductRouter(
-	rg *gin.RouterGroup,
-	db *mongo.Database,
-	coreSvc coreclient.Client,
-) {
+func ProductRouter(rg *gin.RouterGroup, db *mongo.Database, coreSvc coreclient.Client, redisCache cache.Cache) {
 	repo := NewRepository(db)
 	service := NewService(repo)
 	handler := NewHandler(service)
+
+	auth := middleware.JWTAuthMiddleware(coreSvc, redisCache)
 
 	products := rg.Group("/products")
 	{
@@ -24,29 +23,10 @@ func ProductRouter(
 		products.GET("/slug/:slug", handler.FindOneBySlug)
 		products.GET("/:id", handler.FindOne)
 
-		products.POST("",
-			middleware.JWTAuthMiddleware(),
-			middleware.SellerOnly(),
-			handler.Create)
-
-		products.PUT("/:id",
-			middleware.JWTAuthMiddleware(),
-			middleware.SellerOnly(),
-			handler.Update)
-
-		products.PATCH("/:id/toggle",
-			middleware.JWTAuthMiddleware(),
-			middleware.SellerOnly(),
-			handler.ToggleProduct)
-
-		products.PATCH("/bulk",
-			middleware.JWTAuthMiddleware(),
-			middleware.SellerOnly(),
-			handler.BulkUpdate)
-
-		products.DELETE("/:id",
-			middleware.JWTAuthMiddleware(),
-			middleware.SellerOnly(),
-			handler.Delete)
+		products.POST("", auth, middleware.SellerOnly(), handler.Create)
+		products.PUT("/:id", auth, middleware.SellerOnly(), handler.Update)
+		products.PATCH("/:id/toggle", auth, middleware.SellerOnly(), handler.ToggleProduct)
+		products.PATCH("/bulk", auth, middleware.SellerOnly(), handler.BulkUpdate)
+		products.DELETE("/:id", auth, middleware.SellerOnly(), handler.Delete)
 	}
 }

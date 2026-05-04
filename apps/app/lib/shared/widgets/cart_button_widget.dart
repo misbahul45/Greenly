@@ -1,25 +1,22 @@
 import 'package:app/core/router/app_routes.dart';
+import 'package:app/features/cart/presentation/bloc/cart_bloc.dart';
 import 'package:flutter/material.dart';
-
-class CartStore {
-  static final ValueNotifier<int> count = ValueNotifier<int>(10);
-}
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 class CartButtonWidget extends StatelessWidget {
   const CartButtonWidget({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return ValueListenableBuilder<int>(
-      valueListenable: CartStore.count,
-      builder: (context, count, _) {
+    return BlocBuilder<CartBloc, CartState>(
+      buildWhen: (p, c) => p.totalItems != c.totalItems,
+      builder: (context, state) {
+        final count = state.totalItems;
         return Stack(
           clipBehavior: Clip.none,
           children: [
             IconButton(
-              onPressed: () {
-                Navigator.pushNamed(context, AppRoutes.cart);
-              },
+              onPressed: () => Navigator.pushNamed(context, AppRoutes.cart),
               icon: const Icon(Icons.shopping_cart_outlined),
             ),
             if (count > 0)
@@ -27,7 +24,10 @@ class CartButtonWidget extends StatelessWidget {
                 right: 4,
                 top: 4,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 2,
+                  ),
                   decoration: const BoxDecoration(
                     color: Colors.red,
                     borderRadius: BorderRadius.all(Radius.circular(10)),

@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
+	"log"
 	"net/http"
 	"time"
 )
@@ -55,6 +57,10 @@ func (c *client) GetShop(ctx context.Context, shopID string) (*Shop, error) {
 	}
 
 	resp, err := c.httpClient.Do(req)
+	bodyBytes, err := io.ReadAll(resp.Body)
+	log.Printf(">>> STATUS: %d\n", resp.StatusCode)
+	log.Printf(">>> HEADERS: %+v\n", resp.Header)
+	log.Printf(">>> BODY: %s\n", string(bodyBytes))
 	if err != nil {
 		return nil, err
 	}
@@ -103,10 +109,14 @@ func (c *client) ValidateShopMembership(ctx context.Context, shopID, userID stri
 
 func (c *client) GetMe(ctx context.Context, token string) (*User, error) {
 	url := fmt.Sprintf("%s/auth/me", c.baseURL)
+
+	log.Printf(">>> Verifying user | token: %s | url: %s\n", token, url)
+
 	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
 	if err != nil {
 		return nil, err
 	}
+
 	req.Header.Set("Authorization", "Bearer "+token)
 
 	resp, err := c.httpClient.Do(req)
@@ -115,16 +125,21 @@ func (c *client) GetMe(ctx context.Context, token string) (*User, error) {
 	}
 	defer resp.Body.Close()
 
+	body, _ := io.ReadAll(resp.Body)
+
+	log.Printf(">>> STATUS: %d\n", resp.StatusCode)
+	log.Printf(">>> BODY: %s\n", string(body))
+
 	if resp.StatusCode == http.StatusUnauthorized {
-		return nil, fmt.Errorf("user not authenticated")
+		return nil, fmt.Errorf("unauthorized: %s", string(body))
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("failed to verify user: status %d", resp.StatusCode)
+		return nil, fmt.Errorf("failed: %d | %s", resp.StatusCode, string(body))
 	}
 
 	var user User
-	if err := json.NewDecoder(resp.Body).Decode(&user); err != nil {
+	if err := json.Unmarshal(body, &user); err != nil {
 		return nil, err
 	}
 

@@ -1,12 +1,12 @@
 import 'dart:async';
 import 'package:app/core/theme/app_theme.dart';
-import 'package:app/features/product-detail/domains/data/detail_product_data.dart';
 import 'package:flutter/material.dart';
 
 class ProductImageGallery extends StatefulWidget {
   final List<String> imageUrls;
   final String name;
   final bool isFavorite;
+  final bool isTogglingFavorite;
   final VoidCallback? onFavoritePressed;
 
   const ProductImageGallery({
@@ -14,6 +14,7 @@ class ProductImageGallery extends StatefulWidget {
     required this.imageUrls,
     required this.name,
     this.isFavorite = false,
+    this.isTogglingFavorite = false,
     this.onFavoritePressed,
   });
 
@@ -37,7 +38,8 @@ class _ProductImageGalleryState extends State<ProductImageGallery> {
     if (widget.imageUrls.length > 1) {
       _timer = Timer.periodic(const Duration(seconds: 3), (_) {
         if (_controller.hasClients) {
-          final next = (_controller.page!.round() + 1) % widget.imageUrls.length;
+          final next =
+              (_controller.page!.round() + 1) % widget.imageUrls.length;
           _controller.animateToPage(
             next,
             duration: const Duration(milliseconds: 400),
@@ -150,15 +152,26 @@ class _ProductImageGalleryState extends State<ProductImageGallery> {
                 ),
               ],
             ),
-            child: IconButton(
-              onPressed: widget.onFavoritePressed,
-              icon: Icon(
-                widget.isFavorite ? Icons.favorite : Icons.favorite_border,
-                color: widget.isFavorite ? Colors.red : Colors.grey,
-              ),
-              padding: const EdgeInsets.all(8),
-              constraints: const BoxConstraints(),
-            ),
+            child: widget.isTogglingFavorite
+                ? const Padding(
+                    padding: EdgeInsets.all(12),
+                    child: SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                  )
+                : IconButton(
+                    onPressed: widget.onFavoritePressed,
+                    icon: Icon(
+                      widget.isFavorite
+                          ? Icons.favorite
+                          : Icons.favorite_border,
+                      color: widget.isFavorite ? Colors.red : Colors.grey,
+                    ),
+                    padding: const EdgeInsets.all(8),
+                    constraints: const BoxConstraints(),
+                  ),
           ),
         ),
       ],

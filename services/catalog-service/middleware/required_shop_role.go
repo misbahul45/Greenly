@@ -16,7 +16,6 @@ func RequireShopRole(roles ...string) gin.HandlerFunc {
 		}
 
 		shopRoles := rolesRaw.([]string)
-
 		for _, r := range shopRoles {
 			if slices.Contains(roles, r) {
 				c.Next()

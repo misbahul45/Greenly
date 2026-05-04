@@ -3,17 +3,21 @@ import 'package:app/core/router/router_generate.dart';
 import 'package:app/core/theme/app_theme.dart';
 import 'package:app/features/auth/auth_service.dart';
 import 'package:app/features/auth/presentation/bloc/auth_bloc.dart';
-import 'package:app/features/Main/features/home/bloc/home_bloc.dart'; // tambah
-import 'package:app/features/Main/features/home/home_service.dart';   // tambah
+import 'package:app/features/Main/features/home/bloc/home_bloc.dart';
+import 'package:app/features/Main/features/home/home_service.dart';
 import 'package:app/features/product-detail/product_detail_service.dart';
+import 'package:app/features/cart/presentation/bloc/cart_bloc.dart';
+import 'package:app/features/cart/service/cart_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:intl/date_symbol_data_local.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load(fileName: '.env');
+  await initializeDateFormatting('id_ID', null);
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
@@ -31,8 +35,11 @@ class MyApp extends StatelessWidget {
     return MultiRepositoryProvider(
       providers: [
         RepositoryProvider<AuthService>(create: (_) => AuthService()),
-        RepositoryProvider<HomeService>(create: (_) => HomeService()), 
-        RepositoryProvider<ProductDetailService>(create: (_) => ProductDetailService()),
+        RepositoryProvider<HomeService>(create: (_) => HomeService()),
+        RepositoryProvider<ProductDetailService>(
+          create: (_) => ProductDetailService(),
+        ),
+        RepositoryProvider<CartService>(create: (_) => CartService()),
       ],
       child: MultiBlocProvider(
         providers: [
@@ -40,7 +47,11 @@ class MyApp extends StatelessWidget {
             create: (context) => AuthBloc(context.read<AuthService>()),
           ),
           BlocProvider<HomeBloc>(
-            create: (context) => HomeBloc(context.read<HomeService>()), 
+            create: (context) => HomeBloc(context.read<HomeService>()),
+          ),
+          BlocProvider<CartBloc>(
+            create: (context) =>
+                CartBloc(context.read<CartService>())..add(CartLoadRequested()),
           ),
         ],
         child: MaterialApp(

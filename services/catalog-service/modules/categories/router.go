@@ -13,32 +13,17 @@ func CategoryRouter(rg *gin.RouterGroup, db *mongo.Database, coreSvc coreclient.
 	repo := NewRepository(db)
 	service := NewService(repo)
 	handler := NewHandler(service)
-	
+
+	auth := middleware.JWTAuthMiddleware(coreSvc, redisCache)
+
 	categories := rg.Group("/categories")
 	{
-			categories.GET("", handler.FindMany)
-			categories.GET("/:id", handler.FindOne)
-	
-			categories.POST(
-				"",
-				middleware.AuthMiddleware(coreSvc, redisCache),
-				middleware.RequireRole("ADMIN", "SUPERADMIN"),
-				handler.Create,
-			)
-			categories.GET("/tree", handler.FindCategoryTree)
-	
-categories.PUT(
-				"/:id",
-				middleware.AuthMiddleware(coreSvc, redisCache),
-				middleware.RequireRole("ADMIN", "SUPERADMIN"),
-				handler.Update,
-			)
+		categories.GET("", handler.FindMany)
+		categories.GET("/tree", handler.FindCategoryTree)
+		categories.GET("/:id", handler.FindOne)
 
-			categories.DELETE(
-				"/:id",
-				middleware.AuthMiddleware(coreSvc, redisCache),
-				middleware.RequireRole("ADMIN", "SUPERADMIN"),
-				handler.Delete,
-			)
+		categories.POST("", auth, middleware.RequireRole("admin"), handler.Create)
+		categories.PUT("/:id", auth, middleware.RequireRole("admin"), handler.Update)
+		categories.DELETE("/:id", auth, middleware.RequireRole("admin"), handler.Delete)
 	}
 }
