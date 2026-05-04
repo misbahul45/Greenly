@@ -1,33 +1,30 @@
 import * as React from "react";
 import { toast } from "sonner";
 import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from "#/components/ui/table";
 import { Input } from "#/components/ui/input";
 import { Button } from "#/components/ui/button";
-import { Badge } from "#/components/ui/badge";
 import { dummyOrders, type Order } from "#/constants/dummy.table";
-
-// ─── helpers ────────────────────────────────────────────────────────────────
 
 type SortOrder = "asc" | "desc";
 
-function sortData<T>(data: T[], key: keyof T, order: SortOrder): T[] {
-  return [...data].sort((a, b) => {
-    const av = (a[key] ?? "") as any;
-    const bv = (b[key] ?? "") as any;
-    if (typeof av === "string") return order === "asc" ? av.localeCompare(bv) : bv.localeCompare(av);
-    if (typeof av === "number") return order === "asc" ? av - bv : bv - av;
-    if (av instanceof Date) return order === "asc" ? av.getTime() - bv.getTime() : bv.getTime() - av.getTime();
-    return 0;
-  });
-}
+const STATUS_OPTIONS: Order["status"][] = [
+  "PENDING",
+  "PAID",
+  "PROCESSING",
+  "SHIPPED",
+  "COMPLETED",
+  "CANCELLED",
+];
 
-function getStatusVariant(status: Order["status"]): "default" | "secondary" | "destructive" | "outline" {
-  if (status === "COMPLETED") return "outline";
-  if (status === "CANCELLED") return "destructive";
-  if (status === "PENDING") return "default";
-  return "secondary";
+function generateOrderNumber(index: number) {
+  return `ORD-${String(index + 1).padStart(4, "0")}`;
 }
 
 function getStatusLabel(status: Order["status"]): string {
@@ -42,55 +39,84 @@ function getStatusLabel(status: Order["status"]): string {
   return labels[status];
 }
 
-// ─── component ───────────────────────────────────────────────────────────────
+function sortData<T>(data: T[], key: keyof T, order: SortOrder): T[] {
+  return [...data].sort((a, b) => {
+    const av = (a[key] ?? "") as any;
+    const bv = (b[key] ?? "") as any;
+
+    if (typeof av === "string") {
+      return order === "asc" ? av.localeCompare(bv) : bv.localeCompare(av);
+    }
+
+    if (typeof av === "number") {
+      return order === "asc" ? av - bv : bv - av;
+    }
+
+    if (av instanceof Date) {
+      return order === "asc"
+        ? av.getTime() - bv.getTime()
+        : bv.getTime() - av.getTime();
+    }
+
+    return 0;
+  });
+}
 
 export function OrderTableDummy() {
-  const [data, setData] = React.useState<Order[]>(dummyOrders);
+  const [data, setData] = React.useState<Order[]>(
+    dummyOrders.map((order, index) => ({
+      ...order,
+      orderNumber: generateOrderNumber(index),
+    })),
+  );
+
   const [search, setSearch] = React.useState("");
   const [sortKey, setSortKey] = React.useState<keyof Order>("createdAt");
   const [sortOrder, setSortOrder] = React.useState<SortOrder>("desc");
 
-  const [openCancelModal, setOpenCancelModal] = React.useState(false);
   const [selectedItem, setSelectedItem] = React.useState<Order | null>(null);
-
-  // ── derived ──────────────────────────────────────────────────────────────
+  const [openDetailModal, setOpenDetailModal] = React.useState(false);
+  const [openCancelModal, setOpenCancelModal] = React.useState(false);
 
   const filtered = sortData(
-    data.filter((o) =>
-      o.orderNumber.toLowerCase().includes(search.toLowerCase()) ||
-      o.customerName.toLowerCase().includes(search.toLowerCase()) ||
-      o.shopName.toLowerCase().includes(search.toLowerCase())
+    data.filter(
+      (o) =>
+        o.orderNumber.toLowerCase().includes(search.toLowerCase()) ||
+        o.customerName.toLowerCase().includes(search.toLowerCase()) ||
+        o.shopName.toLowerCase().includes(search.toLowerCase()),
     ),
     sortKey,
     sortOrder,
   );
 
-  // ── sort ─────────────────────────────────────────────────────────────────
-
   const handleSort = (key: keyof Order) => {
-    if (sortKey === key) setSortOrder((o) => (o === "asc" ? "desc" : "asc"));
-    else { setSortKey(key); setSortOrder("asc"); }
+    if (sortKey === key) {
+      setSortOrder((o) => (o === "asc" ? "desc" : "asc"));
+    } else {
+      setSortKey(key);
+      setSortOrder("asc");
+    }
   };
 
   const sortIcon = (key: keyof Order) =>
     sortKey === key ? (sortOrder === "asc" ? " ↑" : " ↓") : "";
 
-  // ── action handlers ──────────────────────────────────────────────────────
-
   const updateStatus = (id: string, status: Order["status"]) => {
     const item = data.find((o) => o.id === id);
-    setData((prev) => prev.map((o) => o.id === id ? { ...o, status } : o));
-    if (status === "PROCESSING") {
-      toast.success("Pesanan diproses", {
-        description: `${item?.orderNumber} sedang diproses.`,
-        position: "bottom-right",
-      });
-    } else if (status === "SHIPPED") {
-      toast.success("Pesanan dikirim", {
-        description: `${item?.orderNumber} telah dikirim ke customer.`,
-        position: "bottom-right",
-      });
-    }
+
+    setData((prev) =>
+      prev.map((o) => (o.id === id ? { ...o, status } : o)),
+    );
+
+    toast.success("Status diperbarui", {
+      description: `${item?.orderNumber} → ${getStatusLabel(status)}`,
+      position: "bottom-right",
+    });
+  };
+
+  const openDetail = (item: Order) => {
+    setSelectedItem(item);
+    setOpenDetailModal(true);
   };
 
   const openCancel = (item: Order) => {
@@ -100,45 +126,54 @@ export function OrderTableDummy() {
 
   const handleCancel = () => {
     if (!selectedItem) return;
+
     updateStatus(selectedItem.id, "CANCELLED");
+
     toast.error("Pesanan dibatalkan", {
-      description: `${selectedItem.orderNumber} telah dibatalkan.`,
+      description: `${selectedItem.orderNumber} dibatalkan`,
       position: "bottom-right",
     });
+
     setOpenCancelModal(false);
     setSelectedItem(null);
   };
 
-  // ── render ───────────────────────────────────────────────────────────────
-
   return (
     <div className="space-y-4">
-      {/* toolbar */}
+      {/* SEARCH */}
       <div className="flex items-center gap-2">
         <Input
-          placeholder="Cari nomor order, customer, atau toko..."
+          placeholder="Cari order / customer / toko..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="max-w-sm"
         />
-        {search && (
-          <Button variant="outline" size="sm" onClick={() => setSearch("")}>Clear</Button>
-        )}
       </div>
 
-      {/* table */}
+      {/* TABLE */}
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead className="cursor-pointer select-none" onClick={() => handleSort("orderNumber")}>No. Order{sortIcon("orderNumber")}</TableHead>
-            <TableHead className="cursor-pointer select-none" onClick={() => handleSort("customerName")}>Customer{sortIcon("customerName")}</TableHead>
-            <TableHead className="cursor-pointer select-none" onClick={() => handleSort("shopName")}>Toko{sortIcon("shopName")}</TableHead>
-            <TableHead className="cursor-pointer select-none" onClick={() => handleSort("totalAmount")}>Total{sortIcon("totalAmount")}</TableHead>
-            <TableHead className="cursor-pointer select-none" onClick={() => handleSort("status")}>Status{sortIcon("status")}</TableHead>
-            <TableHead className="cursor-pointer select-none" onClick={() => handleSort("createdAt")}>Tanggal{sortIcon("createdAt")}</TableHead>
+            <TableHead onClick={() => handleSort("orderNumber")} className="cursor-pointer">
+              No. Order{sortIcon("orderNumber")}
+            </TableHead>
+            <TableHead onClick={() => handleSort("customerName")} className="cursor-pointer">
+              Customer{sortIcon("customerName")}
+            </TableHead>
+            <TableHead onClick={() => handleSort("shopName")} className="cursor-pointer">
+              Toko{sortIcon("shopName")}
+            </TableHead>
+            <TableHead onClick={() => handleSort("totalAmount")} className="cursor-pointer">
+              Total{sortIcon("totalAmount")}
+            </TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead onClick={() => handleSort("createdAt")} className="cursor-pointer">
+              Tanggal{sortIcon("createdAt")}
+            </TableHead>
             <TableHead>Aksi</TableHead>
           </TableRow>
         </TableHeader>
+
         <TableBody>
           {filtered.map((o) => (
             <TableRow key={o.id}>
@@ -146,49 +181,103 @@ export function OrderTableDummy() {
               <TableCell>{o.customerName}</TableCell>
               <TableCell>{o.shopName}</TableCell>
               <TableCell>Rp {o.totalAmount.toLocaleString("id-ID")}</TableCell>
+
+              {/* ✅ STATUS DROPDOWN ONLY */}
               <TableCell>
-                <Badge variant={getStatusVariant(o.status)}>
-                  {getStatusLabel(o.status)}
-                </Badge>
+                <select
+                  value={o.status}
+                  onChange={(e) =>
+                    updateStatus(o.id, e.target.value as Order["status"])
+                  }
+                  className={[
+                    "h-9 px-3 rounded-full text-sm font-medium border",
+                    o.status === "PENDING" && "bg-green-100 text-green-700 border-green-200",
+                    o.status === "PAID" && "bg-gray-100 text-gray-700 border-gray-200",
+                    o.status === "PROCESSING" && "bg-gray-200 text-gray-800 border-gray-300",
+                    o.status === "SHIPPED" && "bg-gray-200 text-gray-800 border-gray-300",
+                    o.status === "COMPLETED" && "bg-gray-100 text-gray-700 border-gray-200",
+                    o.status === "CANCELLED" && "bg-red-100 text-red-600 border-red-200",
+                  ].join(" ")}
+                >
+                  {STATUS_OPTIONS.map((status) => (
+                    <option key={status} value={status}>
+                      {getStatusLabel(status)}
+                    </option>
+                  ))}
+                </select>
               </TableCell>
+
               <TableCell>{o.createdAt.toLocaleDateString("id-ID")}</TableCell>
-              <TableCell className="space-x-2">
-                <Button size="sm" variant="outline">Lihat</Button>
-                {o.status === "PENDING" && (
-                  <Button size="sm" variant="destructive" onClick={() => openCancel(o)}>Batalkan</Button>
-                )}
-                {o.status === "PAID" && (
-                  <Button size="sm" onClick={() => updateStatus(o.id, "PROCESSING")}>Proses</Button>
-                )}
-                {o.status === "PROCESSING" && (
-                  <Button size="sm" onClick={() => updateStatus(o.id, "SHIPPED")}>Kirim</Button>
-                )}
+
+              {/* AKSI */}
+              <TableCell className="flex gap-2">
+                <Button size="sm" variant="outline" onClick={() => openDetail(o)}>
+                  Lihat
+                </Button>
+
+                <Button
+                  size="sm"
+                  className="bg-red-600 text-white hover:bg-red-700"
+                  onClick={() => openCancel(o)}
+                  disabled={o.status === "CANCELLED"}
+                >
+                  Batalkan
+                </Button>
               </TableCell>
             </TableRow>
           ))}
+
           {filtered.length === 0 && (
             <TableRow>
-              <TableCell colSpan={7} className="text-center text-muted-foreground py-10">
-                Tidak ada pesanan ditemukan
+              <TableCell colSpan={7} className="text-center py-10 text-muted-foreground">
+                Tidak ada data
               </TableCell>
             </TableRow>
           )}
         </TableBody>
       </Table>
 
-      {/* modal konfirmasi batalkan */}
+      {/* MODAL DETAIL */}
+      {openDetailModal && selectedItem && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-white rounded-xl p-6 w-full max-w-md space-y-4">
+            <h2 className="font-semibold text-lg">Detail Pesanan</h2>
+
+            <div className="text-sm space-y-2">
+              <p><b>No:</b> {selectedItem.orderNumber}</p>
+              <p><b>Customer:</b> {selectedItem.customerName}</p>
+              <p><b>Toko:</b> {selectedItem.shopName}</p>
+              <p><b>Total:</b> Rp {selectedItem.totalAmount.toLocaleString("id-ID")}</p>
+            </div>
+
+            <div className="flex justify-end">
+              <Button onClick={() => setOpenDetailModal(false)}>
+                Tutup
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL CANCEL */}
       {openCancelModal && selectedItem && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="bg-background rounded-lg shadow-lg p-6 w-full max-w-sm space-y-4">
-            <h2 className="text-lg font-semibold">Batalkan Pesanan</h2>
-            <p className="text-sm text-muted-foreground">
-              Yakin ingin membatalkan pesanan{" "}
-              <span className="font-medium text-foreground">{selectedItem.orderNumber}</span>?{" "}
-              Tindakan ini tidak bisa dibatalkan.
+          <div className="bg-white rounded-xl p-6 w-full max-w-sm space-y-4">
+            <h2 className="font-semibold">Batalkan Pesanan</h2>
+            <p className="text-sm">
+              Yakin batalkan <b>{selectedItem.orderNumber}</b>?
             </p>
+
             <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setOpenCancelModal(false)}>Batal</Button>
-              <Button variant="destructive" onClick={handleCancel}>Batalkan Pesanan</Button>
+              <Button variant="outline" onClick={() => setOpenCancelModal(false)}>
+                Batal
+              </Button>
+              <Button
+                className="bg-red-600 text-white"
+                onClick={handleCancel}
+              >
+                Ya, Batalkan
+              </Button>
             </div>
           </div>
         </div>

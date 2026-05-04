@@ -9,6 +9,7 @@ import {
   Package,
   MessageCircle,
   Users,
+  WalletCards,
   X,
 } from "lucide-react"
 
@@ -43,6 +44,11 @@ const NAV_ITEMS_SELLER: NavItem[] = [
     label: "Customer",
     to: "/seller/customer",
     icon: <Users className="h-5 w-5" strokeWidth={2.2} />,
+  },
+  {
+    label: "Laporan Keuangan",
+    to: "/seller/laporan-keuangan",
+    icon: <WalletCards className="h-5 w-5" strokeWidth={2.2} />,
   },
 ]
 
@@ -138,20 +144,17 @@ function SidebarContent({
           </nav>
         </div>
 
-     <div className="mt-4 rounded-2xl bg-white/20 backdrop-blur-md p-3 flex items-center gap-3">
+        {/* USER INFO */}
+        <div className="mt-4 rounded-2xl bg-white/20 backdrop-blur-md p-3 flex items-center gap-3">
+          <div className="h-10 w-10 rounded-full bg-white/20 flex items-center justify-center">
+            <User className="h-5 w-5 text-white" />
+          </div>
 
-  {/* AVATAR */}
-  <div className="h-10 w-10 rounded-full bg-white/20 flex items-center justify-center">
-    <User className="h-5 w-5 text-white" />
-  </div>
-
-  {/* TEXT */}
-  <div className="text-xs leading-tight">
-    <div className="font-medium">Penjual</div>
-    <div className="text-white/80">penjual@greenly.com</div>
-  </div>
-
-</div>
+          <div className="text-xs leading-tight">
+            <div className="font-medium">Penjual</div>
+            <div className="text-white/80">penjual@greenly.com</div>
+          </div>
+        </div>
 
       </div>
     </div>
