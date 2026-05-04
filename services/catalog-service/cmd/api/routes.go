@@ -6,11 +6,14 @@ import (
 	activeprice "catalog-service/modules/active_price"
 	category "catalog-service/modules/categories"
 	ecoattribute "catalog-service/modules/eco_attribute"
+	favorite "catalog-service/modules/favorites"
 	inventory "catalog-service/modules/inventory"
 	price "catalog-service/modules/price"
 	discount "catalog-service/modules/product_discount"
 	productimage "catalog-service/modules/product_image"
 	product "catalog-service/modules/products"
+	productrating "catalog-service/modules/product_rating"
+	review "catalog-service/modules/reviews"
 
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -30,4 +33,7 @@ func Routes(
 	discount.ProductDiscountRouter(r, db)
 	productimage.ProductImageRouter(r, db)
 	ecoattribute.EcoAttributeRouter(r, db)
+	favorite.FavoriteRouter(r, db)
+	review.ReviewRouter(r, db)
+	productrating.ProductRatingRouter(r, db)
 }

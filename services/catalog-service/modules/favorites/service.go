@@ -6,6 +6,7 @@ import (
 	"errors"
 
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 type Service interface {
@@ -16,17 +17,13 @@ type Service interface {
 }
 
 type service struct {
-	repository     Repository
-	productCollection *mongoCollectionAccessor
-}
-
-type mongoCollectionAccessor interface {
-	FindOne(ctx context.Context, filter interface{}) interface{ Decode(v interface{}) error }
+	repository        Repository
+	productCollection *mongo.Collection
 }
 
 func NewService(repository Repository, productCollection *mongo.Collection) Service {
 	return &service{
-		repository:     repository,
+		repository:        repository,
 		productCollection: productCollection,
 	}
 }
