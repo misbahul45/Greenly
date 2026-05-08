@@ -1,3 +1,4 @@
+import { useState } from "react"
 import { createFileRoute } from "@tanstack/react-router"
 
 export const Route = createFileRoute("/_authed/admin/dashboard")({
@@ -5,85 +6,221 @@ export const Route = createFileRoute("/_authed/admin/dashboard")({
 })
 
 function AdminDashboard() {
+  const weeklySalesData = {
+    "6-12 Mei 2024": [
+      { day: "Senin", sales: 1200000 },
+      { day: "Selasa", sales: 1800000 },
+      { day: "Rabu", sales: 1400000 },
+      { day: "Kamis", sales: 2200000 },
+      { day: "Jumat", sales: 2000000 },
+      { day: "Sabtu", sales: 2800000 },
+      { day: "Minggu", sales: 3200000 },
+    ],
+    "13-19 Mei 2024": [
+      { day: "Senin", sales: 1500000 },
+      { day: "Selasa", sales: 1700000 },
+      { day: "Rabu", sales: 2100000 },
+      { day: "Kamis", sales: 2600000 },
+      { day: "Jumat", sales: 2300000 },
+      { day: "Sabtu", sales: 3000000 },
+      { day: "Minggu", sales: 3500000 },
+    ],
+    "20-26 Mei 2024": [
+      { day: "Senin", sales: 1100000 },
+      { day: "Selasa", sales: 1600000 },
+      { day: "Rabu", sales: 1900000 },
+      { day: "Kamis", sales: 2400000 },
+      { day: "Jumat", sales: 2200000 },
+      { day: "Sabtu", sales: 2700000 },
+      { day: "Minggu", sales: 3100000 },
+    ],
+  }
+
+  const [selectedWeek, setSelectedWeek] = useState("6-12 Mei 2024")
+
+  const weeklySales =
+    weeklySalesData[selectedWeek as keyof typeof weeklySalesData]
+
+  const maxSales = Math.max(...weeklySales.map((item) => item.sales))
+
+  function exportWeeklySalesCSV() {
+    const headers = ["Periode", "Hari", "Penjualan"]
+    const rows = weeklySales.map((item) => [
+      selectedWeek,
+      item.day,
+      item.sales,
+    ])
+
+    const csvContent = [
+      headers.join(","),
+      ...rows.map((row) => row.join(",")),
+    ].join("\n")
+
+    const blob = new Blob([csvContent], {
+      type: "text/csv;charset=utf-8;",
+    })
+
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement("a")
+
+    link.href = url
+    link.download = `sales-${selectedWeek
+      .replaceAll(" ", "-")
+      .toLowerCase()}.csv`
+
+    link.click()
+    URL.revokeObjectURL(url)
+  }
+
   return (
     <div className="space-y-6">
-
       {/* ===== STATS ===== */}
       <div className="grid md:grid-cols-4 gap-4">
-
         <Card title="Total Penjualan" value="Rp 128.5M" growth="+12.5%" />
         <Card title="Toko Aktif" value="1,240" growth="+3.2%" />
         <Card title="Total Customer" value="8,542" growth="+5.7%" />
-        <Card title="Menunggu Approval" value="42" growth="Segera proses" danger />
-
+        <Card
+          title="Menunggu Approval"
+          value="42"
+          growth="Segera proses"
+          danger
+        />
       </div>
 
       {/* ===== GRAPH + SIDE ===== */}
       <div className="grid md:grid-cols-3 gap-6">
-
-        {/* GRAPH */}
+        {/* LINE CHART */}
         <div className="md:col-span-2 bg-white p-6 rounded-xl shadow-sm ring-1 ring-black/5">
-
-          <div className="flex justify-between mb-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
             <div>
               <h3 className="font-semibold">Sales Growth</h3>
               <p className="text-sm text-muted-foreground">
-                Pertumbuhan penjualan 7 bulan terakhir
+                Pertumbuhan penjualan periode {selectedWeek}
               </p>
             </div>
-            <span className="text-sm bg-gray-100 px-3 py-1 rounded-lg">
-              Tahun 2024
-            </span>
+
+            <div className="flex flex-col sm:flex-row gap-2">
+              <select
+                value={selectedWeek}
+                onChange={(e) => setSelectedWeek(e.target.value)}
+                className="border px-3 py-2 rounded-lg text-sm bg-white"
+              >
+                {Object.keys(weeklySalesData).map((week) => (
+                  <option key={week} value={week}>
+                    {week}
+                  </option>
+                ))}
+              </select>
+
+              <button
+                onClick={exportWeeklySalesCSV}
+                className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-green-700 transition"
+              >
+                Export CSV
+              </button>
+            </div>
           </div>
 
-          {/* CHART FAKE */}
-          <div className="flex items-end gap-3 h-40">
-            {[40,60,30,80,60,90,110].map((h,i)=>(
-              <div
-                key={i}
-                style={{height:`${h}%`}}
-                className="flex-1 bg-green-400 rounded-t"
+          <div className="w-full overflow-x-auto">
+            <svg viewBox="0 0 700 260" className="min-w-[650px] w-full h-72">
+              {/* GRID LINE */}
+              {[50, 100, 150, 200].map((y) => (
+                <line
+                  key={y}
+                  x1="40"
+                  y1={y}
+                  x2="660"
+                  y2={y}
+                  stroke="#e5e7eb"
+                  strokeWidth="1"
+                />
+              ))}
+
+              {/* LINE */}
+              <polyline
+                fill="none"
+                stroke="#16a34a"
+                strokeWidth="4"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                points={weeklySales
+                  .map((item, index) => {
+                    const x = 60 + index * 95
+                    const y = 220 - (item.sales / maxSales) * 170
+                    return `${x},${y}`
+                  })
+                  .join(" ")}
               />
-            ))}
-          </div>
 
+              {/* DOT + LABEL */}
+              {weeklySales.map((item, index) => {
+                const x = 60 + index * 95
+                const y = 220 - (item.sales / maxSales) * 170
+
+                return (
+                  <g key={item.day}>
+                    <circle cx={x} cy={y} r="6" fill="#16a34a" />
+
+                    <text
+                      x={x}
+                      y={245}
+                      textAnchor="middle"
+                      className="fill-slate-500 text-xs"
+                    >
+                      {item.day.slice(0, 3)}
+                    </text>
+
+                    <text
+                      x={x}
+                      y={y - 12}
+                      textAnchor="middle"
+                      className="fill-slate-700 text-xs font-semibold"
+                    >
+                      {(item.sales / 1000000).toFixed(1)}jt
+                    </text>
+                  </g>
+                )
+              })}
+            </svg>
+          </div>
         </div>
 
         {/* TOKO BARU */}
         <div className="bg-white p-6 rounded-xl shadow-sm ring-1 ring-black/5">
-
           <div className="flex justify-between mb-4">
             <h3 className="font-semibold">Pendaftaran Toko Baru</h3>
             <button className="text-green-600 text-sm">Lihat Semua</button>
           </div>
 
           <div className="space-y-4">
+            {["Tani Jaya Store", "Berkah Tani", "Sawah Makmur", "Agro Mandiri"].map(
+              (t, i) => (
+                <div key={i} className="flex justify-between items-center">
+                  <div>
+                    <p className="text-sm font-medium">{t}</p>
+                    <p className="text-xs text-muted-foreground">2 jam lalu</p>
+                  </div>
 
-            {["Tani Jaya Store","Berkah Tani","Sawah Makmur","Agro Mandiri"].map((t,i)=>(
-              <div key={i} className="flex justify-between items-center">
-                <div>
-                  <p className="text-sm font-medium">{t}</p>
-                  <p className="text-xs text-muted-foreground">2 jam lalu</p>
+                  <button className="bg-green-600 text-white px-3 py-1 rounded-lg text-xs">
+                    Cek
+                  </button>
                 </div>
-                <button className="bg-green-600 text-white px-3 py-1 rounded-lg text-xs">
-                  Cek
-                </button>
-              </div>
-            ))}
-
+              )
+            )}
           </div>
-
         </div>
-
       </div>
 
       {/* ===== TABLE ===== */}
       <div className="bg-white p-6 rounded-xl shadow-sm ring-1 ring-black/5">
-
         <div className="flex justify-between mb-4">
           <h3 className="font-semibold">Latest Orders</h3>
+
           <div className="flex gap-2">
-            <button className="border px-3 py-1 rounded-lg text-sm">Export CSV</button>
+            <button className="border px-3 py-1 rounded-lg text-sm">
+              Export CSV
+            </button>
+
             <button className="bg-green-600 text-white px-3 py-1 rounded-lg text-sm">
               View All
             </button>
@@ -103,8 +240,7 @@ function AdminDashboard() {
           </thead>
 
           <tbody className="divide-y">
-
-            {orders.map((o,i)=>(
+            {orders.map((o, i) => (
               <tr key={i}>
                 <td className="py-3">{o.id}</td>
                 <td>{o.customer}</td>
@@ -118,18 +254,14 @@ function AdminDashboard() {
                 <td>👁️</td>
               </tr>
             ))}
-
           </tbody>
-
         </table>
-
       </div>
-
     </div>
   )
 }
 
-function Card({title,value,growth,danger=false}:any){
+function Card({ title, value, growth, danger = false }: any) {
   return (
     <div className="bg-white p-4 rounded-xl shadow-sm ring-1 ring-black/5">
       <p className="text-sm text-muted-foreground">{title}</p>
@@ -143,35 +275,35 @@ function Card({title,value,growth,danger=false}:any){
 
 const orders = [
   {
-    id:"#ORD-90231",
-    customer:"Budi Santoso",
-    store:"Tani Jaya Store",
-    price:"Rp 1.450.000",
-    status:"SELESAI",
-    color:"bg-green-100 text-green-700"
+    id: "#ORD-90231",
+    customer: "Budi Santoso",
+    store: "Tani Jaya Store",
+    price: "Rp 1.450.000",
+    status: "SELESAI",
+    color: "bg-green-100 text-green-700",
   },
   {
-    id:"#ORD-90232",
-    customer:"Ani Wijaya",
-    store:"Berkah Tani",
-    price:"Rp 2.890.000",
-    status:"DIPROSES",
-    color:"bg-yellow-100 text-yellow-700"
+    id: "#ORD-90232",
+    customer: "Ani Wijaya",
+    store: "Berkah Tani",
+    price: "Rp 2.890.000",
+    status: "DIPROSES",
+    color: "bg-yellow-100 text-yellow-700",
   },
   {
-    id:"#ORD-90233",
-    customer:"Siti Aminah",
-    store:"Agro Mandiri",
-    price:"Rp 850.000",
-    status:"DIKIRIM",
-    color:"bg-blue-100 text-blue-700"
+    id: "#ORD-90233",
+    customer: "Siti Aminah",
+    store: "Agro Mandiri",
+    price: "Rp 850.000",
+    status: "DIKIRIM",
+    color: "bg-blue-100 text-blue-700",
   },
   {
-    id:"#ORD-90234",
-    customer:"Rudi Hartono",
-    store:"Tani Jaya Store",
-    price:"Rp 3.120.000",
-    status:"SELESAI",
-    color:"bg-green-100 text-green-700"
-  }
+    id: "#ORD-90234",
+    customer: "Rudi Hartono",
+    store: "Tani Jaya Store",
+    price: "Rp 3.120.000",
+    status: "SELESAI",
+    color: "bg-green-100 text-green-700",
+  },
 ]

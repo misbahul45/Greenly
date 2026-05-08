@@ -482,6 +482,8 @@ export default function LandingPage() {
           </p>
         </Container>
       </footer>
+
+
     </div>
   )
 }

@@ -29,7 +29,12 @@ import { Route as AuthedAdminTokotokoRouteImport } from './routes/_authed/admin/
 import { Route as AuthedAdminTokoRouteImport } from './routes/_authed/admin/toko'
 import { Route as AuthedAdminPesaniniRouteImport } from './routes/_authed/admin/pesanini'
 import { Route as AuthedAdminPesananRouteImport } from './routes/_authed/admin/pesanan'
+import { Route as AuthedAdminPesanRouteImport } from './routes/_authed/admin/pesan'
+import { Route as AuthedAdminKategoriprodukRouteImport } from './routes/_authed/admin/kategoriproduk'
+import { Route as AuthedAdminKategoriduaRouteImport } from './routes/_authed/admin/kategoridua'
+import { Route as AuthedAdminKategori2RouteImport } from './routes/_authed/admin/kategori2'
 import { Route as AuthedAdminKategoriRouteImport } from './routes/_authed/admin/kategori'
+import { Route as AuthedAdminDashboard2RouteImport } from './routes/_authed/admin/dashboard2'
 import { Route as AuthedAdminDashboardRouteImport } from './routes/_authed/admin/dashboard'
 import { Route as AuthedAdminDaftarkategoriRouteImport } from './routes/_authed/admin/daftarkategori'
 import { Route as AuthedAdminCustomerRouteImport } from './routes/_authed/admin/customer'
@@ -135,9 +140,35 @@ const AuthedAdminPesananRoute = AuthedAdminPesananRouteImport.update({
   path: '/pesanan',
   getParentRoute: () => AuthedAdminRoute,
 } as any)
+const AuthedAdminPesanRoute = AuthedAdminPesanRouteImport.update({
+  id: '/pesan',
+  path: '/pesan',
+  getParentRoute: () => AuthedAdminRoute,
+} as any)
+const AuthedAdminKategoriprodukRoute =
+  AuthedAdminKategoriprodukRouteImport.update({
+    id: '/kategoriproduk',
+    path: '/kategoriproduk',
+    getParentRoute: () => AuthedAdminRoute,
+  } as any)
+const AuthedAdminKategoriduaRoute = AuthedAdminKategoriduaRouteImport.update({
+  id: '/kategoridua',
+  path: '/kategoridua',
+  getParentRoute: () => AuthedAdminRoute,
+} as any)
+const AuthedAdminKategori2Route = AuthedAdminKategori2RouteImport.update({
+  id: '/kategori2',
+  path: '/kategori2',
+  getParentRoute: () => AuthedAdminRoute,
+} as any)
 const AuthedAdminKategoriRoute = AuthedAdminKategoriRouteImport.update({
   id: '/kategori',
   path: '/kategori',
+  getParentRoute: () => AuthedAdminRoute,
+} as any)
+const AuthedAdminDashboard2Route = AuthedAdminDashboard2RouteImport.update({
+  id: '/dashboard2',
+  path: '/dashboard2',
   getParentRoute: () => AuthedAdminRoute,
 } as any)
 const AuthedAdminDashboardRoute = AuthedAdminDashboardRouteImport.update({
@@ -180,7 +211,12 @@ export interface FileRoutesByFullPath {
   '/admin/customer': typeof AuthedAdminCustomerRoute
   '/admin/daftarkategori': typeof AuthedAdminDaftarkategoriRoute
   '/admin/dashboard': typeof AuthedAdminDashboardRoute
+  '/admin/dashboard2': typeof AuthedAdminDashboard2Route
   '/admin/kategori': typeof AuthedAdminKategoriRoute
+  '/admin/kategori2': typeof AuthedAdminKategori2Route
+  '/admin/kategoridua': typeof AuthedAdminKategoriduaRoute
+  '/admin/kategoriproduk': typeof AuthedAdminKategoriprodukRoute
+  '/admin/pesan': typeof AuthedAdminPesanRoute
   '/admin/pesanan': typeof AuthedAdminPesananRoute
   '/admin/pesanini': typeof AuthedAdminPesaniniRoute
   '/admin/toko': typeof AuthedAdminTokoRoute
@@ -207,7 +243,12 @@ export interface FileRoutesByTo {
   '/admin/customer': typeof AuthedAdminCustomerRoute
   '/admin/daftarkategori': typeof AuthedAdminDaftarkategoriRoute
   '/admin/dashboard': typeof AuthedAdminDashboardRoute
+  '/admin/dashboard2': typeof AuthedAdminDashboard2Route
   '/admin/kategori': typeof AuthedAdminKategoriRoute
+  '/admin/kategori2': typeof AuthedAdminKategori2Route
+  '/admin/kategoridua': typeof AuthedAdminKategoriduaRoute
+  '/admin/kategoriproduk': typeof AuthedAdminKategoriprodukRoute
+  '/admin/pesan': typeof AuthedAdminPesanRoute
   '/admin/pesanan': typeof AuthedAdminPesananRoute
   '/admin/pesanini': typeof AuthedAdminPesaniniRoute
   '/admin/toko': typeof AuthedAdminTokoRoute
@@ -236,7 +277,12 @@ export interface FileRoutesById {
   '/_authed/admin/customer': typeof AuthedAdminCustomerRoute
   '/_authed/admin/daftarkategori': typeof AuthedAdminDaftarkategoriRoute
   '/_authed/admin/dashboard': typeof AuthedAdminDashboardRoute
+  '/_authed/admin/dashboard2': typeof AuthedAdminDashboard2Route
   '/_authed/admin/kategori': typeof AuthedAdminKategoriRoute
+  '/_authed/admin/kategori2': typeof AuthedAdminKategori2Route
+  '/_authed/admin/kategoridua': typeof AuthedAdminKategoriduaRoute
+  '/_authed/admin/kategoriproduk': typeof AuthedAdminKategoriprodukRoute
+  '/_authed/admin/pesan': typeof AuthedAdminPesanRoute
   '/_authed/admin/pesanan': typeof AuthedAdminPesananRoute
   '/_authed/admin/pesanini': typeof AuthedAdminPesaniniRoute
   '/_authed/admin/toko': typeof AuthedAdminTokoRoute
@@ -265,7 +311,12 @@ export interface FileRouteTypes {
     | '/admin/customer'
     | '/admin/daftarkategori'
     | '/admin/dashboard'
+    | '/admin/dashboard2'
     | '/admin/kategori'
+    | '/admin/kategori2'
+    | '/admin/kategoridua'
+    | '/admin/kategoriproduk'
+    | '/admin/pesan'
     | '/admin/pesanan'
     | '/admin/pesanini'
     | '/admin/toko'
@@ -292,7 +343,12 @@ export interface FileRouteTypes {
     | '/admin/customer'
     | '/admin/daftarkategori'
     | '/admin/dashboard'
+    | '/admin/dashboard2'
     | '/admin/kategori'
+    | '/admin/kategori2'
+    | '/admin/kategoridua'
+    | '/admin/kategoriproduk'
+    | '/admin/pesan'
     | '/admin/pesanan'
     | '/admin/pesanini'
     | '/admin/toko'
@@ -320,7 +376,12 @@ export interface FileRouteTypes {
     | '/_authed/admin/customer'
     | '/_authed/admin/daftarkategori'
     | '/_authed/admin/dashboard'
+    | '/_authed/admin/dashboard2'
     | '/_authed/admin/kategori'
+    | '/_authed/admin/kategori2'
+    | '/_authed/admin/kategoridua'
+    | '/_authed/admin/kategoriproduk'
+    | '/_authed/admin/pesan'
     | '/_authed/admin/pesanan'
     | '/_authed/admin/pesanini'
     | '/_authed/admin/toko'
@@ -486,11 +547,46 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedAdminPesananRouteImport
       parentRoute: typeof AuthedAdminRoute
     }
+    '/_authed/admin/pesan': {
+      id: '/_authed/admin/pesan'
+      path: '/pesan'
+      fullPath: '/admin/pesan'
+      preLoaderRoute: typeof AuthedAdminPesanRouteImport
+      parentRoute: typeof AuthedAdminRoute
+    }
+    '/_authed/admin/kategoriproduk': {
+      id: '/_authed/admin/kategoriproduk'
+      path: '/kategoriproduk'
+      fullPath: '/admin/kategoriproduk'
+      preLoaderRoute: typeof AuthedAdminKategoriprodukRouteImport
+      parentRoute: typeof AuthedAdminRoute
+    }
+    '/_authed/admin/kategoridua': {
+      id: '/_authed/admin/kategoridua'
+      path: '/kategoridua'
+      fullPath: '/admin/kategoridua'
+      preLoaderRoute: typeof AuthedAdminKategoriduaRouteImport
+      parentRoute: typeof AuthedAdminRoute
+    }
+    '/_authed/admin/kategori2': {
+      id: '/_authed/admin/kategori2'
+      path: '/kategori2'
+      fullPath: '/admin/kategori2'
+      preLoaderRoute: typeof AuthedAdminKategori2RouteImport
+      parentRoute: typeof AuthedAdminRoute
+    }
     '/_authed/admin/kategori': {
       id: '/_authed/admin/kategori'
       path: '/kategori'
       fullPath: '/admin/kategori'
       preLoaderRoute: typeof AuthedAdminKategoriRouteImport
+      parentRoute: typeof AuthedAdminRoute
+    }
+    '/_authed/admin/dashboard2': {
+      id: '/_authed/admin/dashboard2'
+      path: '/dashboard2'
+      fullPath: '/admin/dashboard2'
+      preLoaderRoute: typeof AuthedAdminDashboard2RouteImport
       parentRoute: typeof AuthedAdminRoute
     }
     '/_authed/admin/dashboard': {
@@ -537,7 +633,12 @@ interface AuthedAdminRouteChildren {
   AuthedAdminCustomerRoute: typeof AuthedAdminCustomerRoute
   AuthedAdminDaftarkategoriRoute: typeof AuthedAdminDaftarkategoriRoute
   AuthedAdminDashboardRoute: typeof AuthedAdminDashboardRoute
+  AuthedAdminDashboard2Route: typeof AuthedAdminDashboard2Route
   AuthedAdminKategoriRoute: typeof AuthedAdminKategoriRoute
+  AuthedAdminKategori2Route: typeof AuthedAdminKategori2Route
+  AuthedAdminKategoriduaRoute: typeof AuthedAdminKategoriduaRoute
+  AuthedAdminKategoriprodukRoute: typeof AuthedAdminKategoriprodukRoute
+  AuthedAdminPesanRoute: typeof AuthedAdminPesanRoute
   AuthedAdminPesananRoute: typeof AuthedAdminPesananRoute
   AuthedAdminPesaniniRoute: typeof AuthedAdminPesaniniRoute
   AuthedAdminTokoRoute: typeof AuthedAdminTokoRoute
@@ -550,7 +651,12 @@ const AuthedAdminRouteChildren: AuthedAdminRouteChildren = {
   AuthedAdminCustomerRoute: AuthedAdminCustomerRoute,
   AuthedAdminDaftarkategoriRoute: AuthedAdminDaftarkategoriRoute,
   AuthedAdminDashboardRoute: AuthedAdminDashboardRoute,
+  AuthedAdminDashboard2Route: AuthedAdminDashboard2Route,
   AuthedAdminKategoriRoute: AuthedAdminKategoriRoute,
+  AuthedAdminKategori2Route: AuthedAdminKategori2Route,
+  AuthedAdminKategoriduaRoute: AuthedAdminKategoriduaRoute,
+  AuthedAdminKategoriprodukRoute: AuthedAdminKategoriprodukRoute,
+  AuthedAdminPesanRoute: AuthedAdminPesanRoute,
   AuthedAdminPesananRoute: AuthedAdminPesananRoute,
   AuthedAdminPesaniniRoute: AuthedAdminPesaniniRoute,
   AuthedAdminTokoRoute: AuthedAdminTokoRoute,
