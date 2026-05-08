@@ -49,7 +49,6 @@ export async function seedPromotions(prisma: PrismaClient, shopIds: Record<strin
     },
     {
       code: 'GRATIS25K',
-      name: 'Gratis Ongkir 25K',
       description: 'Subsidi ongkir Rp 25.000',
       discountVal: 25000,
       type: 'FIXED' as const,
