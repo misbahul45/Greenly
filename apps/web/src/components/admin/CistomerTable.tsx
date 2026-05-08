@@ -86,12 +86,12 @@ export function CustomerTableDummy() {
                   <Badge
                     variant={
                       customer.status === "ACTIVE"
-                        ? "success"
+                        ? "default"
                         : customer.status === "SUSPENDED"
                         ? "secondary"
                         : customer.status === "BANNED"
                         ? "destructive"
-                        : "default"
+                        : "ghost"
                     }
                   >
                     {customer.status}
@@ -101,7 +101,7 @@ export function CustomerTableDummy() {
                 <TableCell className="space-x-2">
                   <Button size="sm" variant="outline">View</Button>
                   {customer.status === "PENDING_VERIFICATION" && (
-                    <Button size="sm" variant="success">Verify</Button>
+                    <Button size="sm" variant="default">Verify</Button>
                   )}
                   {customer.status !== "BANNED" && (
                     <Button size="sm" variant="destructive">Ban</Button>
