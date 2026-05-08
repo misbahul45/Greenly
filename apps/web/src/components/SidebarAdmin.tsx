@@ -26,22 +26,22 @@ const NAV_ITEMS: NavItem[] = [
   },
   {
     label: "Approval Toko",
-    to: "/admin/approval2",
+    to: "/admin/approval",
     icon: <Store className="h-4 w-4" />,
   },
   {
     label: "Daftar Toko",
-    to: "/admin/tokotoko",
+    to: "/admin/toko",
     icon: <Building2 className="h-4 w-4" />,
   },
   {
     label: "Daftar Pesanan",
-    to: "/admin/pesanini",
+    to: "/admin/pesanan",
     icon: <ShoppingCart className="h-4 w-4" />,
   },
   {
     label: "Daftar Kategori",
-    to: "/admin/daftarkategori",
+    to: "/admin/kategori",
     icon: <Shapes className="h-4 w-4" />,
   },
   {

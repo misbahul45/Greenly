@@ -1,116 +1,217 @@
-// src/components/order-table-dummy.tsx
 import * as React from "react";
+import { toast } from "sonner";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "#/components/ui/table";
 import { Input } from "#/components/ui/input";
 import { Button } from "#/components/ui/button";
 import { Badge } from "#/components/ui/badge";
+import { dummyOrders, type Order } from "#/constants/dummy.table";
 
-// Dummy data pesanan
-const dummyOrders: any[] = Array.from({ length: 10 }).map((_, i) => ({
-  id: i + 1,
-  orderNumber: `ORD-00${i + 1}`,
-  customerName: `Customer ${i + 1}`,
-  shopName: `Toko ${i % 5 + 1}`,
-  totalAmount: (100 + i * 25).toFixed(2),
-  status: ["PENDING", "PAID", "PROCESSING", "SHIPPED", "COMPLETED"][i % 5],
-  createdAt: new Date(2026, 1, i + 1),
-}));
+// ─── helpers ────────────────────────────────────────────────────────────────
+
+type SortOrder = "asc" | "desc";
+
+function sortData<T>(data: T[], key: keyof T, order: SortOrder): T[] {
+  return [...data].sort((a, b) => {
+    const av = (a[key] ?? "") as any;
+    const bv = (b[key] ?? "") as any;
+    if (typeof av === "string") return order === "asc" ? av.localeCompare(bv) : bv.localeCompare(av);
+    if (typeof av === "number") return order === "asc" ? av - bv : bv - av;
+    if (av instanceof Date) return order === "asc" ? av.getTime() - bv.getTime() : bv.getTime() - av.getTime();
+    return 0;
+  });
+}
+
+function getStatusVariant(status: Order["status"]): "default" | "secondary" | "destructive" | "outline" {
+  if (status === "COMPLETED") return "outline";
+  if (status === "CANCELLED") return "destructive";
+  if (status === "PENDING") return "default";
+  return "secondary";
+}
+
+const STATUS_LABEL: Record<Order["status"], string> = {
+  PENDING: "Menunggu",
+  PAID: "Dibayar",
+  PROCESSING: "Diproses",
+  SHIPPED: "Dikirim",
+  COMPLETED: "Selesai",
+  CANCELLED: "Dibatalkan",
+};
+
+const ALL_STATUSES: Array<Order["status"] | "ALL"> = [
+  "ALL", "PENDING", "PAID", "PROCESSING", "SHIPPED", "COMPLETED", "CANCELLED",
+];
+
+// ─── component ───────────────────────────────────────────────────────────────
 
 export function OrderTableDummy() {
-  const [orders, setOrders] = React.useState(dummyOrders);
+  const [data, setData] = React.useState<Order[]>(dummyOrders);
   const [search, setSearch] = React.useState("");
-  const [sortKey, setSortKey] = React.useState<keyof any>("orderNumber");
-  const [sortAsc, setSortAsc] = React.useState(true);
+  const [sortKey, setSortKey] = React.useState<keyof Order>("createdAt");
+  const [sortOrder, setSortOrder] = React.useState<SortOrder>("desc");
+  const [filterStatus, setFilterStatus] = React.useState<Order["status"] | "ALL">("ALL");
 
-  const filtered = orders
-    .filter((o) =>
-      o.orderNumber.toLowerCase().includes(search.toLowerCase()) ||
-      o.customerName.toLowerCase().includes(search.toLowerCase()) ||
-      o.shopName.toLowerCase().includes(search.toLowerCase())
-    )
-    .sort((a, b) => {
-      const aValue = a[sortKey];
-      const bValue = b[sortKey];
-      if (typeof aValue === "string") return sortAsc ? aValue.localeCompare(bValue) : bValue.localeCompare(aValue);
-      if (typeof aValue === "number") return sortAsc ? aValue - bValue : bValue - aValue;
-      if (aValue instanceof Date) return sortAsc ? aValue.getTime() - bValue.getTime() : bValue.getTime() - aValue.getTime();
-      return 0;
-    });
+  const [openConfirmModal, setOpenConfirmModal] = React.useState(false);
+  const [selectedItem, setSelectedItem] = React.useState<Order | null>(null);
+  const [pendingStatus, setPendingStatus] = React.useState<Order["status"] | null>(null);
 
-  const toggleSort = (key: keyof any) => {
-    if (sortKey === key) setSortAsc(!sortAsc);
-    else {
-      setSortKey(key);
-      setSortAsc(true);
-    }
+  // ── derived ──────────────────────────────────────────────────────────────
+
+  const filtered = sortData(
+    data.filter((o) => {
+      const matchSearch =
+        o.orderNumber.toLowerCase().includes(search.toLowerCase()) ||
+        o.customerName.toLowerCase().includes(search.toLowerCase()) ||
+        o.shopName.toLowerCase().includes(search.toLowerCase());
+      const matchStatus = filterStatus === "ALL" || o.status === filterStatus;
+      return matchSearch && matchStatus;
+    }),
+    sortKey,
+    sortOrder,
+  );
+
+  // ── sort ─────────────────────────────────────────────────────────────────
+
+  const handleSort = (key: keyof Order) => {
+    if (sortKey === key) setSortOrder((o) => (o === "asc" ? "desc" : "asc"));
+    else { setSortKey(key); setSortOrder("asc"); }
   };
+
+  const sortIcon = (key: keyof Order) =>
+    sortKey === key ? (sortOrder === "asc" ? " ↑" : " ↓") : "";
+
+  // ── action handlers ──────────────────────────────────────────────────────
+
+  const updateStatus = (id: string, status: Order["status"]) => {
+    setData((prev) => prev.map((o) => o.id === id ? { ...o, status } : o));
+  };
+
+  // actions that need confirmation
+  const openConfirm = (item: Order, status: Order["status"]) => {
+    setSelectedItem(item);
+    setPendingStatus(status);
+    setOpenConfirmModal(true);
+  };
+
+  const handleConfirm = () => {
+    if (!selectedItem || !pendingStatus) return;
+    updateStatus(selectedItem.id, pendingStatus);
+    if (pendingStatus === "PAID") {
+      toast.success("Pembayaran dikonfirmasi", {
+        description: `${selectedItem.orderNumber} telah dikonfirmasi.`,
+        position: "bottom-right",
+      });
+    } else if (pendingStatus === "COMPLETED") {
+      toast.success("Pesanan diselesaikan", {
+        description: `${selectedItem.orderNumber} ditandai selesai.`,
+        position: "bottom-right",
+      });
+    }
+    setOpenConfirmModal(false);
+    setSelectedItem(null);
+    setPendingStatus(null);
+  };
+
+  // ── render ───────────────────────────────────────────────────────────────
 
   return (
     <div className="space-y-4">
-      {/* Search */}
-      <div className="flex items-center gap-2">
+      {/* toolbar */}
+      <div className="flex flex-wrap items-center gap-2">
         <Input
-          placeholder="Search by Order, Customer, or Shop"
+          placeholder="Cari nomor order, customer, atau toko..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
+          className="max-w-sm"
         />
-        <Button onClick={() => setSearch("")}>Clear</Button>
+        {search && (
+          <Button variant="outline" size="sm" onClick={() => setSearch("")}>Clear</Button>
+        )}
+        {/* status filter */}
+        <div className="flex gap-1 ml-auto flex-wrap">
+          {ALL_STATUSES.map((s) => (
+            <Button
+              key={s}
+              size="sm"
+              variant={filterStatus === s ? "default" : "outline"}
+              onClick={() => setFilterStatus(s)}
+            >
+              {s === "ALL" ? "Semua" : STATUS_LABEL[s]}
+            </Button>
+          ))}
+        </div>
       </div>
 
-      {/* Table */}
-      <div className="overflow-x-auto">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead onClick={() => toggleSort("orderNumber")}>Order #</TableHead>
-              <TableHead onClick={() => toggleSort("customerName")}>Customer</TableHead>
-              <TableHead onClick={() => toggleSort("shopName")}>Shop</TableHead>
-              <TableHead onClick={() => toggleSort("totalAmount")}>Total</TableHead>
-              <TableHead onClick={() => toggleSort("status")}>Status</TableHead>
-              <TableHead onClick={() => toggleSort("createdAt")}>Created At</TableHead>
-              <TableHead>Actions</TableHead>
+      {/* table */}
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead className="cursor-pointer select-none" onClick={() => handleSort("orderNumber")}>No. Order{sortIcon("orderNumber")}</TableHead>
+            <TableHead className="cursor-pointer select-none" onClick={() => handleSort("customerName")}>Customer{sortIcon("customerName")}</TableHead>
+            <TableHead className="cursor-pointer select-none" onClick={() => handleSort("shopName")}>Toko{sortIcon("shopName")}</TableHead>
+            <TableHead className="cursor-pointer select-none" onClick={() => handleSort("totalAmount")}>Total{sortIcon("totalAmount")}</TableHead>
+            <TableHead className="cursor-pointer select-none" onClick={() => handleSort("status")}>Status{sortIcon("status")}</TableHead>
+            <TableHead className="cursor-pointer select-none" onClick={() => handleSort("createdAt")}>Tanggal{sortIcon("createdAt")}</TableHead>
+            <TableHead>Aksi</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {filtered.map((o) => (
+            <TableRow key={o.id}>
+              <TableCell className="font-medium">{o.orderNumber}</TableCell>
+              <TableCell>{o.customerName}</TableCell>
+              <TableCell>{o.shopName}</TableCell>
+              <TableCell>Rp {o.totalAmount.toLocaleString("id-ID")}</TableCell>
+              <TableCell>
+                <Badge variant={getStatusVariant(o.status)}>
+                  {STATUS_LABEL[o.status]}
+                </Badge>
+              </TableCell>
+              <TableCell>{o.createdAt.toLocaleDateString("id-ID")}</TableCell>
+              <TableCell className="space-x-2">
+                <Button size="sm" variant="outline">Lihat</Button>
+                {o.status === "PENDING" && (
+                  <Button size="sm" onClick={() => openConfirm(o, "PAID")}>Konfirmasi Bayar</Button>
+                )}
+                {o.status === "SHIPPED" && (
+                  <Button size="sm" onClick={() => openConfirm(o, "COMPLETED")}>Selesaikan</Button>
+                )}
+              </TableCell>
             </TableRow>
-          </TableHeader>
+          ))}
+          {filtered.length === 0 && (
+            <TableRow>
+              <TableCell colSpan={7} className="text-center text-muted-foreground py-10">
+                Tidak ada pesanan ditemukan
+              </TableCell>
+            </TableRow>
+          )}
+        </TableBody>
+      </Table>
 
-          <TableBody>
-            {filtered.map((order) => (
-              <TableRow key={order.id}>
-                <TableCell>{order.orderNumber}</TableCell>
-                <TableCell>{order.customerName}</TableCell>
-                <TableCell>{order.shopName}</TableCell>
-                <TableCell>${order.totalAmount}</TableCell>
-                <TableCell>
-                  <Badge
-                    variant={
-                      order.status === "PAID" || order.status === "COMPLETED"
-                        ? "success"
-                        : order.status === "PENDING"
-                        ? "default"
-                        : "secondary"
-                    }
-                  >
-                    {order.status}
-                  </Badge>
-                </TableCell>
-                <TableCell>{order.createdAt.toLocaleDateString()}</TableCell>
-                <TableCell className="space-x-2">
-                  <Button size="sm" variant="outline">View</Button>
-                  {order.status === "PENDING" && (
-                    <Button size="sm" variant="success">Mark Paid</Button>
-                  )}
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
+      {/* modal konfirmasi aksi */}
+      {openConfirmModal && selectedItem && pendingStatus && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-background rounded-lg shadow-lg p-6 w-full max-w-sm space-y-4">
+            <h2 className="text-lg font-semibold">
+              {pendingStatus === "PAID" ? "Konfirmasi Pembayaran" : "Selesaikan Pesanan"}
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              {pendingStatus === "PAID"
+                ? <>Konfirmasi pembayaran untuk pesanan <span className="font-medium text-foreground">{selectedItem.orderNumber}</span>?</>
+                : <>Tandai pesanan <span className="font-medium text-foreground">{selectedItem.orderNumber}</span> sebagai selesai?</>
+              }
+            </p>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setOpenConfirmModal(false)}>Batal</Button>
+              <Button onClick={handleConfirm}>
+                {pendingStatus === "PAID" ? "Konfirmasi" : "Selesaikan"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

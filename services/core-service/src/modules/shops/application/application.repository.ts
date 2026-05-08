@@ -16,38 +16,13 @@ export class ApplicationRepository {
     shopId: string,
     data: Prisma.ShopApplicationUncheckedUpdateInput
   ) {
-    const shopApplication = await this.db.shopApplication.update({
+    return this.db.shopApplication.update({
       where: { shopId },
       data,
       include: {
         shop: true,
       },
     });
-
-    if (data.status === "APPROVED") {
-      await this.db.$transaction(async (tx) => {
-        const existingMember = await tx.shopMember.findUnique({
-          where: {
-            shopId_userId: {
-              shopId: shopId,
-              userId: shopApplication.shop.ownerId,
-            },
-          },
-        });
-
-        if (!existingMember) {
-          await tx.shopMember.create({
-            data: {
-              shopId: shopId,
-              userId: shopApplication.shop.ownerId,
-              role: "OWNER",
-            },
-          });
-        }
-      });
-    }
-
-    return shopApplication;
   }
 
   async findShopApplicationByShopId(shopId: string) {

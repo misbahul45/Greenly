@@ -9,7 +9,6 @@ import { JwtService } from '@nestjs/jwt';
 import { StringValue } from 'ms';
 import { AuthTokenType } from '../../../generated/prisma/enums';
 import { UserRegisteredPublisher } from './publisher/user_registered.publisher';
-import { UserVerifiedPublisher } from './publisher/user_verified.publisher';
 import { UserForgotPasswordPublisher } from './publisher/user_forgot_password.publisher';
 import { UserLoginPublisher } from './publisher/user_login.publisher';
 import { UserResendTokenPublisher } from './publisher/user_resend_token.publisher';
@@ -23,7 +22,6 @@ export class AuthService {
     private readonly jwt:JwtService,
     private readonly config:ConfigService,
     private readonly registerPublisher:UserRegisteredPublisher,
-    private readonly verifiedPublisher:UserVerifiedPublisher,
     private readonly forgotPasswordPublisher:UserForgotPasswordPublisher,
     private readonly loginPublisher:UserLoginPublisher,
     private readonly resendTokenPublisher:UserResendTokenPublisher
@@ -448,6 +446,40 @@ export class AuthService {
     return {
       data:null,
       message: 'Logged out successfully',
+    };
+  }
+
+  async getMe(userId: string) {
+    const result = await this.repo.getMeWithStats(userId);
+
+    if (!result) throw new AppError('User not found', 404);
+
+    const { user, stats } = result;
+
+    return {
+      message: 'OK',
+      data: {
+        id: user.id,
+        email: user.email,
+        status: user.status,
+        emailVerified: user.emailVerified,
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt,
+        profile: user.profile
+          ? {
+              fullName: user.profile.fullName,
+              phone: user.profile.phone ?? null,
+              avatarUrl: user.profile.avatarUrl ?? null,
+              photoUrl: user.profile.photoUrl ?? null,
+              address: user.profile.address ?? null,
+            }
+          : null,
+        roles: user.roles.map((ur) => ur.role.name),
+        permissions: [
+          ...new Set(user.roles.flatMap((ur) => ur.role.permissions.map((p) => p.name))),
+        ],
+        stats,
+      },
     };
   }
 }

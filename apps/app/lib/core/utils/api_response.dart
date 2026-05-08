@@ -1,10 +1,13 @@
+
+
+import 'package:app/core/utils/metadata.dart';
 class ApiResponse<T> {
   final String status;
   final int statusCode;
   final String path;
   final String message;
   final T? data;
-  final dynamic metaData;
+  final MetaData? metaData;
   final String timestamp;
 
   ApiResponse({
@@ -33,12 +36,14 @@ class ApiResponse<T> {
 
     return ApiResponse<T>(
       status: statusValue,
-      statusCode: json['statusCode'] is int ? json['statusCode'] : 0,
-      path: json['path']?.toString() ?? '',
-      message: json['message']?.toString() ?? '',
-      timestamp: json['timestamp']?.toString() ?? '',
-      metaData: json['metaData'],
+      statusCode: json['statusCode'] ?? 0,
+      path: json['path'] ?? '',
+      message: json['message'] ?? '',
+      timestamp: json['timestamp'] ?? '',
       data: json['data'] != null ? fromJsonT(json['data']) : null,
+      metaData: json['metaData'] != null
+          ? MetaData.fromJson(json['metaData'])
+          : null,
     );
   }
 

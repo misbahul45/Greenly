@@ -1,91 +1,102 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, BadRequestException } from "@nestjs/common";
 
 import {
   AddMemberDTO,
   UpdateMemberRoleDTO,
   ShopMemberQueryDTO,
-} from './member.dto';
-import { MemberRepository } from './member.repository';
-import { AppError } from 'src/libs/errors/app.error';
-import { ShopStatus } from 'generated/prisma/enums';
+} from "./member.dto";
+import { MemberRepository } from "./member.repository";
+import { ShopNotFoundError, InvalidStateTransitionError, ShopAccessDeniedError } from "../../../libs/errors/domain.error";
+import { ShopMemberPublisher } from "../publisher/shop.member.publisher";
 
 @Injectable()
 export class MemberService {
   constructor(
     private readonly repo: MemberRepository,
+    private readonly publisher: ShopMemberPublisher,
   ) {}
-  
-  async addMember(shopId: string, body: AddMemberDTO) {
-    const existedMember = await this.repo.findMemberByShopIdAndUserId(shopId, body.userId)
-    
+
+  async addMember(shopId: string, currentUserId: string, body: AddMemberDTO) {
+    const existedMember = await this.repo.findMemberByShopIdAndUserId(shopId, body.userId);
+
     if (existedMember) {
-      throw new AppError('Member already existed', 400)
+      throw new BadRequestException("Member already belongs to this shop");
     }
-    
-    const exitedShop = await this.repo.findShopById(shopId)
-    
-    if (!exitedShop) {
-      throw new AppError('Shop not found', 404)
+
+    const existedShop = await this.repo.findShopById(shopId);
+
+    if (!existedShop) {
+      throw new ShopNotFoundError(shopId);
     }
-    
-    if (exitedShop.status !== ShopStatus.APPROVED) {
-      throw new AppError('Shop not verified', 400)
+
+    if (existedShop.status !== 'APPROVED') {
+      throw new BadRequestException("Shop is not approved");
     }
-    
-    const newMember=await this.repo.addMember(shopId, body)
-    
+
+    if (body.role === "OWNER") {
+      throw new BadRequestException("Cannot add member with OWNER role");
+    }
+
+    const newMember = await this.repo.addMember(shopId, body);
+
+    await this.publisher.publishShopMemberAdded({
+      shopId,
+      userId: body.userId,
+      role: body.role,
+      addedBy: currentUserId,
+      timestamp: new Date().toISOString(),
+    });
+
     return {
-      message: 'member added',
+      message: "Member added successfully",
       data: newMember,
     };
   }
 
   async findMany(shopId: string, query: ShopMemberQueryDTO) {
-    const { page, limit, role, sortBy, sortOrder } = query
-    
+    const { page, limit, role, sortBy, sortOrder } = query;
+
     const [members, total] = await Promise.all([
-        this.repo.findMany(shopId,
-          {
-            page,
-            limit,
-            role,
-            sortBy,
-            sortOrder
-          }
-        ),
-        this.repo.count(shopId, {
-          page,
-          limit,
-          role,
-          sortBy,
-          sortOrder
-        })
-      ])
-      
+      this.repo.findMany(shopId, {
+        page,
+        limit,
+        role,
+        sortBy,
+        sortOrder,
+      }),
+      this.repo.count(shopId, {
+        page,
+        limit,
+        role,
+        sortBy,
+        sortOrder,
+      }),
+    ]);
+
     return {
-      message: 'member list',
+      message: "Members fetched successfully",
       data: members,
       meta: {
         page: query.page,
         total,
-        limit: limit,
+        limit,
         lastPage: Math.ceil(total / limit),
       },
     };
   }
 
   async findMember(shopId: string, memberId: string) {
-    const exitedShop = await this.repo.findShopById(shopId)
-    if (!exitedShop) {
-      throw new AppError('Shop not found', 404)
+    const existedShop = await this.repo.findShopById(shopId);
+    if (!existedShop) {
+      throw new ShopNotFoundError(shopId);
     }
-    const exitedMember = await this.repo.findMemberByShopIdAndUserId(shopId, memberId)
-    if (!exitedMember) {
-      throw new AppError('Member not found', 404)
+    const existedMember = await this.repo.findMemberByShopIdAndUserId(shopId, memberId);
+    if (!existedMember) {
+      throw new BadRequestException("Member not found");
     }
     return {
-      message: 'member detail',
-      data: exitedMember,
+      message: "Member fetched successfully",
+      data: existedMember,
     };
   }
 
@@ -94,35 +105,52 @@ export class MemberService {
     memberId: string,
     body: UpdateMemberRoleDTO,
   ) {
-    const exitedShop = await this.repo.findShopById(shopId)
-    if (!exitedShop) {
-      throw new AppError('Shop not found', 404)
+    const existedShop = await this.repo.findShopById(shopId);
+    if (!existedShop) {
+       throw new ShopNotFoundError(shopId);
     }
-    const exitedMember = await this.repo.findMemberByShopIdAndUserId(shopId, memberId)
-    if (!exitedMember) {
-      throw new AppError('Member not found', 404)
+    const existedMember = await this.repo.findMemberByShopIdAndUserId(shopId, memberId);
+    if (!existedMember) {
+      throw new BadRequestException("Member not found");
     }
-    await this.repo.updateMemberRole(shopId, memberId, body)
-    
+
+    if (existedMember.role === "OWNER") {
+      throw new BadRequestException("Cannot change owner role");
+    }
+
+    const updated = await this.repo.updateMemberRole(shopId, memberId, body);
+
     return {
-      message: 'member updated',
-      data: null,
+      message: "Member role updated successfully",
+      data: updated,
     };
   }
 
-  async deleteMember(shopId: string, memberId: string) {
-    const exitedShop = await this.repo.findShopById(shopId)
-    if (!exitedShop) {
-      throw new AppError('Shop not found', 404)
+  async deleteMember(shopId: string, memberId: string, currentUserId: string) {
+    const existedShop = await this.repo.findShopById(shopId);
+    if (!existedShop) {
+      throw new ShopNotFoundError(shopId);
     }
-    const exitedMember = await this.repo.findMemberByShopIdAndUserId(shopId, memberId)
-    if (!exitedMember) {
-      throw new AppError('Member not found', 404)
+    const existedMember = await this.repo.findMemberByShopIdAndUserId(shopId, memberId);
+    if (!existedMember) {
+      throw new BadRequestException("Member not found");
     }
-    await this.repo.deleteMember(shopId, memberId)
-    
+
+    if (existedMember.role === "OWNER") {
+      throw new BadRequestException("Cannot remove shop owner");
+    }
+
+    await this.repo.deleteMember(shopId, memberId);
+
+    await this.publisher.publishShopMemberRemoved({
+      shopId,
+      userId: memberId,
+      removedBy: currentUserId,
+      timestamp: new Date().toISOString(),
+    });
+
     return {
-      message: 'member deleted',
+      message: "Member removed successfully",
       data: null,
     };
   }

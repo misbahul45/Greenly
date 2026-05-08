@@ -9,8 +9,10 @@ import { NotificationModule } from './notification/notification.module';
 import { AnalyticsModule } from './analytics/analytics.module';
 import { AdminModule } from './admin/admin.module';
 import { EventsModule } from './events/events.module';
+import { BannerModule } from './banner/banner.module';
+import { CartModule } from './cart/cart.module';
 
 @Module({
-  imports: [AuthModule, IdentityModule, ShopsModule, CommerceModule, FinanceModule, PromotionModule, NotificationModule, AnalyticsModule, AdminModule, EventsModule],
+  imports: [AuthModule, IdentityModule, ShopsModule, CommerceModule, FinanceModule, PromotionModule, NotificationModule, AnalyticsModule, AdminModule, EventsModule, BannerModule, CartModule],
 })
 export class ModulesModule {}

@@ -22,34 +22,32 @@ import {
 import ErrorHandler from '../../libs/errors/handler.error';
 import { ShopsService } from './shops.service';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
-import { Roles } from '../auth/decorators/roles.decorator';
 
 @Controller('shops')
 export class ShopsController {
   constructor(
-    private readonly service:ShopsService
-  ){}
+    private readonly service: ShopsService
+  ) {}
 
   @Get()
   findAll(
     @Query(new ZodValidationPipe(ShopQuerySchema))
     query: ShopQueryDTO,
   ) {
-    return ErrorHandler(()=>
-        this.service.findAll(query)
+    return ErrorHandler(() =>
+      this.service.findAll(query)
     )
   }
 
-  @Roles('SUPER_ADMIN')
   @Post()
   create(
     @Body(new ZodValidationPipe(CreateShopSchema))
     body: CreateShopDTO,
-    @CurrentUser() 
-    user:UserLogin,
+    @CurrentUser()
+    user: UserLogin,
   ) {
-    return ErrorHandler(()=>
-        this.service.create(user.sub, body)
+    return ErrorHandler(() =>
+      this.service.create(user.sub, body)
     )
   }
 
@@ -59,8 +57,8 @@ export class ShopsController {
     @Query(new ZodValidationPipe(ShopQuerySchema))
     query: ShopQueryDTO,
   ) {
-    return ErrorHandler(()=>
-        this.service.findMyShop(user.sub, query)
+    return ErrorHandler(() =>
+      this.service.findMyShop(user.sub, query)
     )
   }
 
@@ -69,10 +67,9 @@ export class ShopsController {
     @Param(new ZodValidationPipe(ShopIdParamSchema))
     params: ShopIdParamDTO,
   ) {
-    return ErrorHandler(()=>
-        this.service.findOne(params.shopId)
+    return ErrorHandler(() =>
+      this.service.findOne(params.shopId)
     )
-
   }
 
   @Patch(':id')
@@ -81,10 +78,10 @@ export class ShopsController {
     params: ShopIdParamDTO,
     @Body(new ZodValidationPipe(UpdateShopSchema))
     body: UpdateShopDTO,
-    @CurrentUser() user:UserLogin,
+    @CurrentUser() user: UserLogin,
   ) {
-    return ErrorHandler(()=>
-        this.service.update(params.shopId, body)
+    return ErrorHandler(() =>
+      this.service.update(params.shopId, user.sub, body)
     )
   }
 
@@ -92,10 +89,10 @@ export class ShopsController {
   delete(
     @Param(new ZodValidationPipe(ShopIdParamSchema))
     params: ShopIdParamDTO,
+    @CurrentUser() user: UserLogin,
   ) {
-    const { shopId } = params;
-    return ErrorHandler(()=>
-        this.service.delete(shopId)
+    return ErrorHandler(() =>
+      this.service.delete(params.shopId, user.sub)
     )
   }
 }

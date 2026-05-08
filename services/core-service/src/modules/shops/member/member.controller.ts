@@ -7,13 +7,14 @@ import {
   Patch,
   Post,
   Query,
-} from '@nestjs/common';
+  UseGuards,
+} from "@nestjs/common";
 
-import { ZodValidationPipe } from 'src/libs/pipes/zod-validation.pipe';
-import { Roles } from 'src/modules/auth/decorators/roles.decorator';
-import ErrorHandler from 'src/libs/errors/handler.error';
-
-import { MemberService } from './member.service';
+import { ZodValidationPipe } from "../../../libs/pipes/zod-validation.pipe";
+import ErrorHandler from "../../../libs/errors/handler.error";
+import { MemberService } from "./member.service";
+import { ShopMemberGuard, MinRole } from "../guards/shop-member.guard";
+import { CurrentUser } from "../../auth/decorators/current-user.decorator";
 
 import {
   type AddMemberDTO,
@@ -26,32 +27,33 @@ import {
   ShopMemberIdParamSchema,
   type ShopMemberQueryDTO,
   ShopMemberQuerySchema,
-} from './member.dto';
+} from "./member.dto";
 
-@Controller('')
+@Controller()
 export class MemberController {
   constructor(private readonly service: MemberService) {}
 
-  @Roles('ADMIN', 'SUPER_ADMIN')
+  @UseGuards(ShopMemberGuard)
+  @MinRole("OWNER")
   @Post()
   addMember(
     @Param(new ZodValidationPipe(ShopMemberShopIdParamSchema))
     params: ShopMemberShopIdParamDTO,
-
     @Body(new ZodValidationPipe(AddMemberSchema))
     body: AddMemberDTO,
+    @CurrentUser() user: { sub: string }
   ) {
     return ErrorHandler(() =>
-      this.service.addMember(params.shopId, body),
+      this.service.addMember(params.shopId, user.sub, body),
     );
   }
 
-  @Roles('ADMIN', 'SUPER_ADMIN')
+  @UseGuards(ShopMemberGuard)
+  @MinRole("ADMIN")
   @Get()
   findMany(
     @Param(new ZodValidationPipe(ShopMemberShopIdParamSchema))
     params: ShopMemberShopIdParamDTO,
-
     @Query(new ZodValidationPipe(ShopMemberQuerySchema))
     query: ShopMemberQueryDTO,
   ) {
@@ -60,7 +62,9 @@ export class MemberController {
     );
   }
 
-  @Get('/:memberId')
+  @UseGuards(ShopMemberGuard)
+  @MinRole("ADMIN")
+  @Get("/:memberId")
   findMember(
     @Param(new ZodValidationPipe(ShopMemberIdParamSchema))
     params: ShopMemberIdParamDTO,
@@ -70,12 +74,12 @@ export class MemberController {
     );
   }
 
-  @Roles('ADMIN', 'SUPER_ADMIN')
-  @Patch('/:memberId')
+  @UseGuards(ShopMemberGuard)
+  @MinRole("OWNER")
+  @Patch("/:memberId")
   updateMember(
     @Param(new ZodValidationPipe(ShopMemberIdParamSchema))
     params: ShopMemberIdParamDTO,
-
     @Body(new ZodValidationPipe(UpdateMemberRoleSchema))
     body: UpdateMemberRoleDTO,
   ) {
@@ -84,14 +88,16 @@ export class MemberController {
     );
   }
 
-  @Roles('ADMIN', 'SUPER_ADMIN')
-  @Delete('/:memberId')
+  @UseGuards(ShopMemberGuard)
+  @MinRole("OWNER")
+  @Delete("/:memberId")
   deleteMember(
     @Param(new ZodValidationPipe(ShopMemberIdParamSchema))
     params: ShopMemberIdParamDTO,
+    @CurrentUser() user: { sub: string }
   ) {
     return ErrorHandler(() =>
-      this.service.deleteMember(params.shopId, params.memberId),
+      this.service.deleteMember(params.shopId, params.memberId, user.sub),
     );
   }
 }

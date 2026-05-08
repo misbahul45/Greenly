@@ -1,5 +1,6 @@
 import { Controller, OnModuleInit } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
+import { EventPattern, Payload } from "@nestjs/microservices";
 import CircuitBreaker from "opossum";
 import { sendEmail } from "../../../common/utils/email";
 
@@ -38,5 +39,10 @@ export class EmailConsume implements OnModuleInit {
     this.breaker.fallback((data) => {
       console.log("Email saved for retry later:", data.email);
     });
+  }
+
+  @EventPattern("email.send")
+  async handleSendEmail(@Payload() data: unknown) {
+    return this.breaker.fire(data);
   }
 }

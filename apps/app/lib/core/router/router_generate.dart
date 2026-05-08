@@ -1,21 +1,33 @@
+import 'package:app/features/Main/Main_screen.dart';
+import 'package:app/features/categories/all_categories_screen.dart';
 import 'package:app/features/auth/presentation/screens/change_password_screen.dart';
 import 'package:app/features/auth/presentation/screens/verify_password_screen.dart';
+import 'package:app/features/cart/presentation/screens/cart_screen.dart';
+import 'package:app/features/favorite/favorite_screen.dart';
+import 'package:app/features/onboarding/presentation/screens/onboarding_coordinator_screen.dart';
+import 'package:app/features/onboarding/presentation/screens/splash_screen.dart';
+import 'package:app/features/product-detail/product_detail_screen.dart';
+import 'package:app/features/product-detail/reviews_screen.dart';
+import 'package:app/features/search-product/search_product_scereen.dart';
 import 'package:flutter/material.dart';
 
-/// AUTH SCREENS
 import 'package:app/features/auth/presentation/screens/login_screen.dart';
 import 'package:app/features/auth/presentation/screens/forgot_password_screen.dart';
 import 'package:app/features/auth/presentation/screens/register_screen.dart';
 import 'package:app/features/auth/presentation/screens/verify_email_screen.dart';
 
-// /// APP SCREENS
-import 'package:app/features/app/presentation/home_screen.dart';
 import 'auth_routes.dart';
 import 'app_routes.dart';
 
 class RouterGenerate {
   static Route<dynamic> generateRoute(RouteSettings settings) {
     switch (settings.name) {
+      case AuthRoutes.splash:
+        return _page(const SplashScreen());
+
+      case AuthRoutes.onboarding:
+        return _page(const OnboardingCoordinatorScreen());
+
       case AuthRoutes.login:
         return _page(const LoginScreen());
 
@@ -34,11 +46,33 @@ class RouterGenerate {
       case AuthRoutes.changePassword:
         return _page(const ChangePasswordScreen());
 
-      case AppRoutes.home:
-        return _page(const HomeScreen());
+      case AppRoutes.cart:
+        return _page(const CartScreen());
 
-      // case AppRoutes.profile:
-      //   return _page(const ProfileScreen());
+      case AppRoutes.allCategories:
+        return _page(const AllCategoriesScreen());
+
+      case AppRoutes.favorites:
+        return _page(const FavoriteScreen());
+
+      case AppRoutes.main:
+        return _page(const MainScreen());
+
+      case AppRoutes.productDetail:
+        final slug = settings.arguments as String;
+        return _page(ProductDetailScreen(slug: slug));
+
+      case AppRoutes.searchProduct:
+        return _page(const SearchProductScreen());
+
+      case AppRoutes.reviews:
+        final args = settings.arguments as Map<String, dynamic>;
+        return _page(
+          ReviewsScreen(
+            productId: args['productId'] as String,
+            productName: args['productName'] as String,
+          ),
+        );
 
       default:
         return _page(

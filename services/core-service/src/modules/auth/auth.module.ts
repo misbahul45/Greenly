@@ -8,7 +8,6 @@ import { AuthRepository } from './auth.repository';
 import { EmailConsume } from './consumer/email.consume';
 import { UserRegisteredPublisher } from './publisher/user_registered.publisher';
 import { UserLoginPublisher } from './publisher/user_login.publisher';
-import { UserVerifiedPublisher } from './publisher/user_verified.publisher';
 import { UserForgotPasswordPublisher } from './publisher/user_forgot_password.publisher';
 import { JwtRefreshStrategy } from './strategies/jwt.refresh.strategy';
 import { JwtAccessStrategy } from './strategies/jwt.access.strategy';
@@ -38,7 +37,6 @@ import { PassportModule } from '@nestjs/passport';
     AuthService,
     UserRegisteredPublisher,
     UserLoginPublisher,
-    UserVerifiedPublisher,
     UserForgotPasswordPublisher,
     UserResendTokenPublisher,
     JwtAccessStrategy,

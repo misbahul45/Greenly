@@ -21,17 +21,26 @@ type Response struct {
 	Path       string          `json:"path"`
 	Message    string          `json:"message"`
 	Data       interface{}     `json:"data,omitempty"`
-	MetaData       *PaginationMeta `json:"metaData,omitempty"`
+	MetaData   *PaginationMeta `json:"metaData,omitempty"`
 	Timestamp  string          `json:"timestamp"`
+}
+
+type PartialSuccessResponse struct {
+	Status       string          `json:"status"`
+	StatusCode   int             `json:"statusCode"`
+	Path         string          `json:"path"`
+	Message      string          `json:"message"`
+	Data         interface{}     `json:"data"`
+	MetaData     *PaginationMeta `json:"metaData,omitempty"`
+	FailedCount  int             `json:"failedCount"`
+	Timestamp    string          `json:"timestamp"`
 }
 
 func NewPaginationMeta(total, page, limit int64) *PaginationMeta {
 	var lastPage int64 = 1
-
 	if limit > 0 {
 		lastPage = int64(math.Ceil(float64(total) / float64(limit)))
 	}
-
 	return &PaginationMeta{
 		Total:    total,
 		Page:     page,
@@ -41,11 +50,9 @@ func NewPaginationMeta(total, page, limit int64) *PaginationMeta {
 }
 
 func Success(c *gin.Context, statusCode int, message string, data interface{}, metaData *PaginationMeta) {
-
 	if message == "" {
 		message = "success"
 	}
-
 	res := Response{
 		Status:     "success",
 		StatusCode: statusCode,
@@ -55,16 +62,13 @@ func Success(c *gin.Context, statusCode int, message string, data interface{}, m
 		MetaData:   metaData,
 		Timestamp:  time.Now().UTC().Format(time.RFC3339),
 	}
-
 	c.JSON(statusCode, res)
 }
 
 func Error(c *gin.Context, statusCode int, message string, data interface{}) {
-
 	if message == "" {
 		message = "error"
 	}
-
 	res := Response{
 		Status:     "error",
 		StatusCode: statusCode,
@@ -73,7 +77,6 @@ func Error(c *gin.Context, statusCode int, message string, data interface{}) {
 		Data:       data,
 		Timestamp:  time.Now().UTC().Format(time.RFC3339),
 	}
-
 	c.AbortWithStatusJSON(statusCode, res)
 }
 
@@ -87,6 +90,19 @@ func OKWithMeta(c *gin.Context, data interface{}, meta *PaginationMeta) {
 
 func Created(c *gin.Context, data interface{}) {
 	Success(c, http.StatusCreated, "created", data, nil)
+}
+
+func PartialSuccess(c *gin.Context, data interface{}, failedCount int) {
+	res := PartialSuccessResponse{
+		Status:      "partial_success",
+		StatusCode:  http.StatusMultiStatus,
+		Path:        c.Request.URL.Path,
+		Message:     "Bulk operation completed with some failures",
+		Data:        data,
+		FailedCount: failedCount,
+		Timestamp:   time.Now().UTC().Format(time.RFC3339),
+	}
+	c.JSON(http.StatusMultiStatus, res)
 }
 
 func BadRequest(c *gin.Context, message string) {

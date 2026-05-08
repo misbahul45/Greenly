@@ -1,35 +1,38 @@
-import {
-  Injectable,
-  NotFoundException,
-  BadRequestException,
-} from '@nestjs/common';
-import {
-  CreateShopApplicationDTO,
-  ReviewShopApplicationDTO,
-  ShopApplicationQueryDTO,
-} from './application.dto';
+import { Injectable, BadRequestException } from '@nestjs/common';
+import { CreateShopApplicationDTO, ReviewShopApplicationDTO, ShopApplicationQueryDTO } from './application.dto';
 import { ApplicationRepository } from './application.repository';
-import { ApplicationStatus } from '../../../../generated/prisma/enums';
-import { CreateShopApplicationResponse, FindShopApplicationResponse, ReviewShopApplicationResponse, UpdateShopApplicationResponse } from './types';
-import { AppError } from '../../../libs/errors/app.error';
+import { ShopApplicationPublisher } from '../publisher/shop.application.publisher';
+import { DatabaseService } from '../../../libs/database/database.service';
+import { ApplicationNotFoundError, InvalidStateTransitionError } from '../../../libs/errors/domain.error';
+import * as crypto from 'crypto';
 
 @Injectable()
 export class ApplicationService {
-  constructor(private readonly repo: ApplicationRepository) {}
+  constructor(
+    private readonly repo: ApplicationRepository,
+    private readonly publisher: ShopApplicationPublisher,
+    private readonly db: DatabaseService,
+  ) {}
 
-  async create(shopId: string, body: CreateShopApplicationDTO) : Promise<ApiResponse<CreateShopApplicationResponse>> {
+  async create(shopId: string, body: CreateShopApplicationDTO) {
     const existing = await this.repo.findShopApplicationByShopId(shopId);
 
-    if (existing && existing.status !== ApplicationStatus.REJECTED) {
+    if (existing && existing.status !== 'REJECTED') {
       throw new BadRequestException('Application already exists');
     }
 
-    if (existing && existing.status === ApplicationStatus.REJECTED) {
+    if (existing && existing.status === 'REJECTED') {
       const updated = await this.repo.updateByShopId(shopId, {
         ...body,
-        status: ApplicationStatus.PENDING,
+        status: 'PENDING',
         notes: null,
         reviewedAt: null,
+      });
+
+      await this.publisher.publishApplicationSubmitted({
+        shopId,
+        timestamp: new Date().toISOString(),
+        correlationId: crypto.randomUUID(),
       });
 
       return {
@@ -43,26 +46,32 @@ export class ApplicationService {
       ...body,
     });
 
+    await this.publisher.publishApplicationSubmitted({
+      shopId,
+      timestamp: new Date().toISOString(),
+      correlationId: crypto.randomUUID(),
+    });
+
     return {
       data: created,
       message: 'Successfully created shop application',
     };
   }
 
-  async update(shopId: string, body: CreateShopApplicationDTO) : Promise<ApiResponse<UpdateShopApplicationResponse>> {
+  async update(shopId: string, body: CreateShopApplicationDTO) {
     const existing = await this.repo.findShopApplicationByShopId(shopId);
 
     if (!existing) {
-      throw new NotFoundException('Application not found');
+      throw new ApplicationNotFoundError(shopId);
     }
 
-    if (existing.status !== ApplicationStatus.REJECTED) {
-      throw new BadRequestException('Only rejected application can be updated');
+    if (existing.status !== 'REJECTED') {
+      throw new BadRequestException('Only rejected applications can be updated');
     }
 
     const updated = await this.repo.updateByShopId(shopId, {
       ...body,
-      status: ApplicationStatus.PENDING,
+      status: 'PENDING',
       notes: null,
       reviewedAt: null,
     });
@@ -73,58 +82,99 @@ export class ApplicationService {
     };
   }
 
-  async review(shopId: string, body: ReviewShopApplicationDTO) : Promise<ApiResponse<ReviewShopApplicationResponse>> {
-    const existing = await this.repo.findShopApplicationByShopId(shopId);
+  async review(shopId: string, body: ReviewShopApplicationDTO) {
+    return this.db.$transaction(async (tx) => {
+      const application = await tx.shopApplication.findUnique({
+        where: { shopId },
+        include: { shop: true },
+      });
 
-    if (!existing) {
-      throw new NotFoundException('Application not found');
-    }
+      if (!application) {
+        throw new ApplicationNotFoundError(shopId);
+      }
 
-    if (
-      existing.status !== ApplicationStatus.PENDING &&
-      existing.status !== ApplicationStatus.REVIEW
-    ) {
-      throw new BadRequestException('Application cannot be reviewed');
-    }
+      if (application.status !== 'PENDING' && application.status !== 'REVIEW') {
+        throw new InvalidStateTransitionError(application.status, body.status);
+      }
 
-    const reviewed = await this.repo.updateByShopId(shopId, {
-      status: body.status,
-      notes: body.notes ?? null,
-      reviewedAt: new Date(),
+      if (body.status === 'APPROVED') {
+        const [updatedApp, updatedShop] = await Promise.all([
+          tx.shopApplication.update({
+            where: { shopId },
+            data: {
+              status: body.status,
+              notes: body.notes ?? null,
+              reviewedAt: new Date(),
+            },
+          }),
+          tx.shop.update({
+             where: { id: shopId },
+             data: { status: 'APPROVED' },
+          }),
+        ]);
+
+        const existingMember = await tx.shopMember.findUnique({
+          where: {
+            shopId_userId: {
+              shopId,
+              userId: application.shop.ownerId,
+            },
+          },
+        });
+
+        if (!existingMember) {
+           await tx.shopMember.create({
+             data: {
+               shopId,
+               userId: application.shop.ownerId,
+               role: 'OWNER',
+             },
+           });
+        }
+
+        await this.publisher.publishShopApproved({
+          shopId,
+          ownerId: application.shop.ownerId,
+          applicationId: application.id,
+          timestamp: new Date().toISOString(),
+          correlationId: crypto.randomUUID(),
+        });
+
+        return {
+          data: updatedApp,
+          message: 'Application reviewed and approved successfully',
+        };
+      }
+
+      const rejectedApp = await tx.shopApplication.update({
+        where: { shopId },
+        data: {
+          status: body.status,
+          notes: body.notes ?? null,
+          reviewedAt: new Date(),
+        },
+      });
+
+      return {
+        data: rejectedApp,
+        message: 'Application reviewed and rejected successfully',
+      };
     });
-
-    return {
-      data: reviewed,
-      message: 'Application reviewed successfully',
-    };
   }
 
-  async findOne(shopId: string) : Promise<ApiResponse<FindShopApplicationResponse>> {
+  async findOne(shopId: string) {
     const data = await this.repo.findShopApplicationByShopId(shopId);
-
     if (!data) {
-      throw new NotFoundException('Application not found');
+      throw new ApplicationNotFoundError(shopId);
     }
-
     return {
       data,
       message: 'Application retrieved successfully',
     };
   }
 
-  async findAll(query: ShopApplicationQueryDTO) : Promise<ApiResponse<FindShopApplicationResponse[]>> {
-    const {
-      page,
-      limit,
-      status,
-      shopId,
-      createdFrom,
-      createdTo,
-      sortBy,
-      sortOrder,
-      search,
-    } = query;
-
+  async findAll(query: ShopApplicationQueryDTO) {
+    const { page, limit, status, shopId, createdFrom, createdTo, sortBy, sortOrder, search } = query;
     const skip = (page - 1) * limit;
 
     const { data, meta } = await this.repo.findAll({
@@ -146,9 +196,8 @@ export class ApplicationService {
     };
   }
 
-  async findMyApplications(userId: string, query: ShopApplicationQueryDTO) : Promise<ApiResponse<FindShopApplicationResponse[]>> {
+  async findMyApplications(userId: string, query: ShopApplicationQueryDTO) {
     const { page, limit, sortBy, sortOrder, search } = query;
-
     const skip = (page - 1) * limit;
 
     const { data, meta } = await this.repo.findMyApplications(userId, {
@@ -166,17 +215,15 @@ export class ApplicationService {
     };
   }
 
-  async delete(applicationId:string) : Promise<ApiResponse<null>> {
-    const findApplication = await this.repo.findShopApplicationByShopId(applicationId)
+  async delete(shopId: string) {
+    const findApplication = await this.repo.findShopApplicationByShopId(shopId);
+    if(!findApplication) throw new ApplicationNotFoundError(shopId);
 
-    if(!findApplication) throw new AppError('Application not found', 404);
+    await this.repo.deleteApplicationById(findApplication.id);
 
-    await this.repo.deleteApplicationById(applicationId)
-
-    return{
-      data:null,
-      message:'Successfully deleted application'
-    }
-
+    return {
+      data: null,
+      message: 'Successfully deleted application',
+    };
   }
 }

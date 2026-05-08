@@ -26,12 +26,12 @@ const NAV_ITEMS_SELLER: NavItem[] = [
   },
   {
     label: "Pesanan Masuk",
-    to: "/seller/pesanandua",
+    to: "/seller/pesanan",
     icon: <ShoppingBag className="h-5 w-5" strokeWidth={2.2} />,
   },
   {
     label: "Produk",
-    to: "/seller/produkdua",
+    to: "/seller/produk",
     icon: <Package className="h-5 w-5" strokeWidth={2.2} />,
   },
   {

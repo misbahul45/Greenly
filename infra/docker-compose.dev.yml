@@ -110,6 +110,9 @@ services:
       REDIS_PORT: 6379
       RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672/
 
+    env_file:                                          
+      - ../services/core-service/.env 
+
     develop:
       watch:
         # 🔥 Sync source → hot reload
@@ -199,7 +202,8 @@ services:
     depends_on:
       - rabbitmq
       - mongodb
-
+    env_file:                                          # ✅ tambah ini
+      - ../services/catalog-service/.env 
     environment:
       RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672/
       MONGODB_URI: mongodb://root:root@mongodb:27017/?authSource=admin

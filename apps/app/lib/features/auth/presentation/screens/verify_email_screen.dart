@@ -1,3 +1,4 @@
+import 'package:app/core/router/app_routes.dart';
 import 'package:app/core/theme/app_theme.dart';
 import 'package:app/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:app/features/auth/presentation/bloc/auth_event.dart';
@@ -9,113 +10,141 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 class VerifyEmailScreen extends StatelessWidget {
   const VerifyEmailScreen({super.key});
 
-  /// VERIFY OTP
   void handleVerifyOtp(BuildContext context, String otp) {
-    context.read<AuthBloc>().add(
-          AuthVerifyEmailRequested(otp),
-        );
+    context.read<AuthBloc>().add(AuthVerifyEmailRequested(otp));
   }
 
-  /// RESEND OTP
   void handleResendOtp(BuildContext context, String email, OtpType type) {
-    context.read<AuthBloc>().add(
-          AuthResendOtpRequested(email, type),
-        );
+    context.read<AuthBloc>().add(AuthResendOtpRequested(email, type));
   }
 
   @override
   Widget build(BuildContext context) {
+    final width = MediaQuery.of(context).size.width;
 
     return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: AppTheme.backgroundGradient,
-        ),
-        child: SafeArea(
-          child: Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 600),
-              child: SingleChildScrollView(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: BlocConsumer<AuthBloc, AuthState>(
-                    listener: (context, state) {
-                      /// SUCCESS VERIFY
-                      if (state is AuthAuthenticated) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text("Email berhasil diverifikasi"),
-                          ),
-                        );
+      backgroundColor: Colors.white,
+      body: SafeArea(
+        child: Center(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxWidth: width > 500 ? 420 : width,
+            ),
+            child: SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 20,
+                vertical: 24,
+              ),
+              child: BlocConsumer<AuthBloc, AuthState>(
+                listener: (context, state) {
+                  if (state is AuthAuthenticated) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text("Email berhasil diverifikasi"),
+                      ),
+                    );
+                    Navigator.pushReplacementNamed(context, AppRoutes.main);
+                  } else if (state is AuthOtpResent) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text("OTP berhasil dikirim ulang"),
+                      ),
+                    );
+                  } else if (state is AuthError) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text(state.message)),
+                    );
+                  }
+                },
+                builder: (context, state) {
+                  final isLoading = state is AuthLoading;
 
-                        Navigator.pushReplacementNamed(context, "/home");
-                      }
-
-                      /// OTP RESENT
-                      if (state is AuthOtpResent) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text("OTP berhasil dikirim ulang"),
-                          ),
-                        );
-                      }
-
-                      /// ERROR
-                      if (state is AuthError) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(state.message),
-                          ),
-                        );
-                      }
-                    },
-                    builder: (context, state) {
-                      final isLoading = state is AuthLoading;
-
-                      return Column(
-                        children: [
-                          /// TITLE
-                          const Text(
-                            "Verify Email",
-                            style: TextStyle(
-                              fontSize: 28,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-
-                          const SizedBox(height: 8),
-
-                          /// SUBTITLE
-                          const Text(
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      const SizedBox(height: 24),
+                      _OtpIllustration(
+                        icon: Icons.mark_email_read_rounded,
+                        title: "Verify Email",
+                        subtitle:
                             "Masukkan kode OTP yang dikirim ke email kamu",
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: Colors.grey,
-                            ),
-                          ),
-
-                          const SizedBox(height: 32),
-
-                          /// FORM OTP
-                          FormOtpEmail(
-                            isLoading: isLoading,
-                            errorMessage:
-                                state is AuthError ? state.message : null,
-                            onSubmitOtp: (otp) =>
-                                handleVerifyOtp(context, otp),
-                            onResendOtp: (email) =>
-                                handleResendOtp(context, email, OtpType.verifyEmail),
-                          ),
-                        ],
-                      );
-                    },
-                  ),
-                ),
+                      ),
+                      const SizedBox(height: 36),
+                      FormOtpEmail(
+                        isLoading: isLoading,
+                        errorMessage:
+                            state is AuthError ? state.message : null,
+                        onSubmitOtp: (otp) =>
+                            handleVerifyOtp(context, otp),
+                        onResendOtp: (email) => handleResendOtp(
+                          context,
+                          email,
+                          OtpType.verifyEmail,
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                    ],
+                  );
+                },
               ),
             ),
           ),
         ),
       ),
+    );
+  }
+}
+
+class _OtpIllustration extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+
+  const _OtpIllustration({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Container(
+          width: 90,
+          height: 88,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: AppTheme.primaryColor.withValues(alpha: 0.1),
+          ),
+          child: Icon(
+            icon,
+            size: 42,
+            color: AppTheme.primaryColor,
+          ),
+        ),
+        const SizedBox(height: 20),
+        Text(
+          title,
+          textAlign: TextAlign.center,
+          style: const TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.w700,
+            color: Colors.black87,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          subtitle,
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: 14,
+            color: Colors.grey[600],
+            height: 1.4,
+          ),
+        ),
+      ],
     );
   }
 }

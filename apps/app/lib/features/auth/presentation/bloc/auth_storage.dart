@@ -1,5 +1,5 @@
 import 'dart:convert';
-import 'package:app/shared/model/data/user_model.dart';
+import 'package:app/shared/domains/data/user_model.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class AuthStorage {

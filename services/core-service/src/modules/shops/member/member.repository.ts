@@ -1,42 +1,47 @@
 import { Injectable } from "@nestjs/common";
-import { DatabaseService } from "src/libs/database/database.service";
+import { DatabaseService } from "../../../libs/database/database.service";
 import { AddMemberDTO, UpdateMemberRoleDTO, type ShopMemberQueryDTO } from "./member.dto";
-import { Prisma } from "generated/prisma/browser";
+import { Prisma } from "../../../../generated/prisma/browser";
 
 @Injectable()
 export class MemberRepository {
   constructor(private readonly db: DatabaseService) {}
 
   async findMemberByShopIdAndUserId(shopId: string, userId: string) {
-    return await this.db.shopMember.findFirst({
+    return this.db.shopMember.findFirst({
       where: {
         userId,
         shopId,
+        deletedAt: null,
       },
       include: {
         user: {
           select: {
             id: true,
-            email: true,            
+            email: true,
+            profile: {
+              select: {
+                fullName: true,
+                avatarUrl: true,
+              },
+            },
           },
-          include: {
-            profile:true
-          }
         },
-      }
+      },
     });
   }
 
   async findShopById(shopId: string) {
-    return await this.db.shop.findUnique({
+    return this.db.shop.findFirst({
       where: {
         id: shopId,
+        deletedAt: null,
       },
     });
   }
 
   async addMember(shopId: string, body: AddMemberDTO) {
-    return await this.db.shopMember.create({
+    return this.db.shopMember.create({
       data: {
         shopId,
         userId: body.userId,
@@ -47,14 +52,15 @@ export class MemberRepository {
 
   async findMany(
     shopId: string,
-    { page = 1, limit = 10, role, sortBy = "createdAt", sortOrder = "desc" }: ShopMemberQueryDTO
+    { page = 1, limit = 10, role, sortBy = "createdAt", sortOrder = "desc" }: ShopMemberQueryDTO,
   ) {
     const where: Prisma.ShopMemberWhereInput = {
       shopId,
+      deletedAt: null,
       ...(role && { role }),
     };
 
-    return await this.db.shopMember.findMany({
+    return this.db.shopMember.findMany({
       where,
       skip: (page - 1) * limit,
       take: limit,
@@ -62,7 +68,18 @@ export class MemberRepository {
         [sortBy]: sortOrder,
       },
       include: {
-        user: true,
+        user: {
+          select: {
+            id: true,
+            email: true,
+            profile: {
+              select: {
+                fullName: true,
+                avatarUrl: true,
+              },
+            },
+          },
+        },
       },
     });
   }
@@ -70,19 +87,18 @@ export class MemberRepository {
   async count(shopId: string, { role }: ShopMemberQueryDTO) {
     const where: Prisma.ShopMemberWhereInput = {
       shopId,
+      deletedAt: null,
       ...(role && { role }),
     };
 
-    return await this.db.shopMember.count({
-      where,
-    });
+    return this.db.shopMember.count({ where });
   }
-  
+
   async updateMemberRole(shopId: string, memberId: string, body: UpdateMemberRoleDTO) {
-    return await this.db.shopMember.update({
+    return this.db.shopMember.update({
       where: {
         shopId_userId: {
-          shopId: shopId,
+          shopId,
           userId: memberId,
         },
       },
@@ -91,12 +107,12 @@ export class MemberRepository {
       },
     });
   }
-  
+
   async deleteMember(shopId: string, memberId: string) {
-    return await this.db.shopMember.update({
+    return this.db.shopMember.update({
       where: {
         shopId_userId: {
-          shopId: shopId,
+          shopId,
           userId: memberId,
         },
       },

@@ -118,7 +118,6 @@ export class AuthController {
     @Query('for') tokenType: AuthTokenType
   ){
 
-    console.log(dto)
     return ErrorHandler(()=>this.authService.resendToken(dto.email, tokenType))
   }
 
@@ -138,5 +137,13 @@ export class AuthController {
     @CurrentUser() user:UserLogin
   ) {
     return ErrorHandler(() => this.authService.logout(user.sub));
+  }
+
+  @Get('me')
+  getMe(
+    @CurrentUser() user: UserLogin
+  ) {
+    console.log('user:', user);
+    return ErrorHandler(() => this.authService.getMe(user.sub));
   }
 }

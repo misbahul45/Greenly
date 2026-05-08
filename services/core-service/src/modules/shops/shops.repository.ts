@@ -157,4 +157,25 @@ export class ShopsRepository {
       }
     })
   }
+
+  async findOneWithMembers(id: string) {
+    const data = await this.db.shop.findFirst({
+      where: {
+        id,
+        deletedAt: null
+      },
+      include: {
+        members: {
+          where: { deletedAt: null },
+          select: {
+            id: true,
+            userId: true,
+            role: true
+          }
+        }
+      }
+    })
+
+    return data
+  }
 }

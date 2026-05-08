@@ -1,4 +1,4 @@
-import { OrderTableDummy } from '#/components/seller/OrderTable'
+import { OrderTableDummy } from '#/components/admin/PesananTable'
 import { createFileRoute } from '@tanstack/react-router'
 
 export const Route = createFileRoute('/_authed/admin/pesanan')({

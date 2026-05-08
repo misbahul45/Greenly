@@ -1,5 +1,5 @@
-import 'package:app/shared/model/data/token_model.dart';
-import 'package:app/shared/model/data/user_model.dart';
+import 'package:app/shared/domains/data/token_model.dart';
+import 'package:app/shared/domains/data/user_model.dart';
 import 'package:equatable/equatable.dart';
 
 class AuthState extends Equatable {

@@ -75,6 +75,3 @@ class AuthChangePasswordRequested extends AuthEvent {
   @override
   List<Object?> get props => [tokenId, newPassword, confirmPassword];
 }
-
-
-

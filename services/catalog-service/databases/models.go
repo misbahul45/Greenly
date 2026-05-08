@@ -4,18 +4,18 @@ import (
 	"context"
 	"time"
 
-	"github.com/lucsky/cuid"
+	"github.com/google/uuid"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 func NewID() string {
-	return cuid.New()
+	return uuid.New().String()
 }
 
 type Base struct {
-	ID        string     `bson:"_id,omitempty" json:"id"`
+	ID        string     `bson:"_id" json:"id"`
 	CreatedAt time.Time  `bson:"created_at" json:"createdAt"`
 	UpdatedAt time.Time  `bson:"updated_at" json:"updatedAt"`
 	DeletedAt *time.Time `bson:"deleted_at,omitempty" json:"deletedAt,omitempty"`
@@ -23,11 +23,9 @@ type Base struct {
 
 func (b *Base) BeforeCreate() {
 	now := time.Now()
-
 	if b.ID == "" {
 		b.ID = NewID()
 	}
-
 	b.CreatedAt = now
 	b.UpdatedAt = now
 }
@@ -37,7 +35,7 @@ func (b *Base) BeforeUpdate() {
 }
 
 type Category struct {
-	Base
+	Base `bson:",inline"`
 
 	Name     string  `bson:"name" json:"name"`
 	Slug     string  `bson:"slug" json:"slug"`
@@ -45,7 +43,7 @@ type Category struct {
 }
 
 type Product struct {
-	Base
+	Base `bson:",inline"`
 
 	ShopID     string `bson:"shop_id" json:"shopId"`
 	CategoryID string `bson:"category_id" json:"categoryId"`
@@ -69,7 +67,7 @@ type Product struct {
 }
 
 type ProductVariant struct {
-	Base
+	Base `bson:",inline"`
 
 	ProductID string `bson:"product_id" json:"productId"`
 
@@ -85,7 +83,7 @@ type ProductVariant struct {
 }
 
 type ProductImage struct {
-	Base
+	Base `bson:",inline"`
 
 	ProductID  string `bson:"product_id" json:"productId"`
 	ProductKey string `bson:"product_key" json:"productKey"`
@@ -97,7 +95,7 @@ type ProductImage struct {
 }
 
 type Inventory struct {
-	Base
+	Base `bson:",inline"`
 
 	ProductID string `bson:"product_id" json:"productId"`
 
@@ -108,7 +106,7 @@ type Inventory struct {
 }
 
 type Price struct {
-	Base
+	Base `bson:",inline"`
 
 	ProductID string `bson:"product_id" json:"productId"`
 
@@ -117,7 +115,7 @@ type Price struct {
 }
 
 type ProductDiscount struct {
-	Base
+	Base `bson:",inline"`
 
 	ProductID string `bson:"product_id" json:"productId"`
 
@@ -140,7 +138,7 @@ type ActivePrice struct {
 }
 
 type EcoAttribute struct {
-	Base
+	Base `bson:",inline"`
 
 	ProductID string `bson:"product_id" json:"productId"`
 
@@ -152,7 +150,7 @@ type EcoAttribute struct {
 }
 
 type FavoriteProduct struct {
-	Base
+	Base `bson:",inline"`
 
 	UserID    string `bson:"user_id" json:"userId"`
 	ProductID string `bson:"product_id" json:"productId"`
@@ -160,7 +158,7 @@ type FavoriteProduct struct {
 }
 
 type ProductReview struct {
-	Base
+	Base `bson:",inline"`
 
 	ProductID string `bson:"product_id" json:"productId"`
 	UserID    string `bson:"user_id" json:"userId"`
@@ -180,7 +178,7 @@ type ProductReview struct {
 }
 
 type ReviewReply struct {
-	Base
+	Base `bson:",inline"`
 
 	ReviewID string `bson:"review_id" json:"reviewId"`
 	ShopID   string `bson:"shop_id" json:"shopId"`
@@ -204,26 +202,24 @@ type ProductRating struct {
 }
 
 type ProductView struct {
-	Base
+	Base `bson:",inline"`
 
-	ProductID string  `bson:"product_id"`
-	UserID    *string `bson:"user_id,omitempty"`
+	ProductID string  `bson:"product_id" json:"productId"`
+	UserID    *string `bson:"user_id,omitempty" json:"userId,omitempty"`
 
-	Source string `bson:"source"`
+	Source string `bson:"source" json:"source"`
 }
 
 type ProductAnalytics struct {
-	ProductID string `bson:"product_id"`
+	ProductID string `bson:"product_id" json:"productId"`
 
-	ViewCount int `bson:"view_count"`
+	ViewCount int `bson:"view_count" json:"viewCount"`
 
-	LastViewedAt time.Time `bson:"last_viewed_at"`
+	LastViewedAt time.Time `bson:"last_viewed_at" json:"lastViewedAt"`
 }
 
 func CreateFavoriteIndexes(collection *mongo.Collection) error {
-
 	indexes := []mongo.IndexModel{
-
 		{
 			Keys: bson.D{
 				{Key: "user_id", Value: 1},
@@ -231,13 +227,11 @@ func CreateFavoriteIndexes(collection *mongo.Collection) error {
 			},
 			Options: options.Index().SetUnique(true),
 		},
-
 		{
 			Keys: bson.D{
 				{Key: "user_id", Value: 1},
 			},
 		},
-
 		{
 			Keys: bson.D{
 				{Key: "product_id", Value: 1},
@@ -246,6 +240,5 @@ func CreateFavoriteIndexes(collection *mongo.Collection) error {
 	}
 
 	_, err := collection.Indexes().CreateMany(context.Background(), indexes)
-
 	return err
 }
