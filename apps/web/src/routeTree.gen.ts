@@ -22,6 +22,7 @@ import { Route as AuthedSellerProdukduaRouteImport } from './routes/_authed/sell
 import { Route as AuthedSellerProdukRouteImport } from './routes/_authed/seller/produk'
 import { Route as AuthedSellerPesananduaRouteImport } from './routes/_authed/seller/pesanandua'
 import { Route as AuthedSellerPesananRouteImport } from './routes/_authed/seller/pesanan'
+import { Route as AuthedSellerLaporanKeuanganRouteImport } from './routes/_authed/seller/laporan-keuangan'
 import { Route as AuthedSellerDashboardRouteImport } from './routes/_authed/seller/dashboard'
 import { Route as AuthedSellerCustomerRouteImport } from './routes/_authed/seller/customer'
 import { Route as AuthedSellerChatRouteImport } from './routes/_authed/seller/chat'
@@ -105,6 +106,12 @@ const AuthedSellerPesananRoute = AuthedSellerPesananRouteImport.update({
   path: '/pesanan',
   getParentRoute: () => AuthedSellerRoute,
 } as any)
+const AuthedSellerLaporanKeuanganRoute =
+  AuthedSellerLaporanKeuanganRouteImport.update({
+    id: '/laporan-keuangan',
+    path: '/laporan-keuangan',
+    getParentRoute: () => AuthedSellerRoute,
+  } as any)
 const AuthedSellerDashboardRoute = AuthedSellerDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -224,6 +231,7 @@ export interface FileRoutesByFullPath {
   '/seller/chat': typeof AuthedSellerChatRoute
   '/seller/customer': typeof AuthedSellerCustomerRoute
   '/seller/dashboard': typeof AuthedSellerDashboardRoute
+  '/seller/laporan-keuangan': typeof AuthedSellerLaporanKeuanganRoute
   '/seller/pesanan': typeof AuthedSellerPesananRoute
   '/seller/pesanandua': typeof AuthedSellerPesananduaRoute
   '/seller/produk': typeof AuthedSellerProdukRoute
@@ -256,6 +264,7 @@ export interface FileRoutesByTo {
   '/seller/chat': typeof AuthedSellerChatRoute
   '/seller/customer': typeof AuthedSellerCustomerRoute
   '/seller/dashboard': typeof AuthedSellerDashboardRoute
+  '/seller/laporan-keuangan': typeof AuthedSellerLaporanKeuanganRoute
   '/seller/pesanan': typeof AuthedSellerPesananRoute
   '/seller/pesanandua': typeof AuthedSellerPesananduaRoute
   '/seller/produk': typeof AuthedSellerProdukRoute
@@ -290,6 +299,7 @@ export interface FileRoutesById {
   '/_authed/seller/chat': typeof AuthedSellerChatRoute
   '/_authed/seller/customer': typeof AuthedSellerCustomerRoute
   '/_authed/seller/dashboard': typeof AuthedSellerDashboardRoute
+  '/_authed/seller/laporan-keuangan': typeof AuthedSellerLaporanKeuanganRoute
   '/_authed/seller/pesanan': typeof AuthedSellerPesananRoute
   '/_authed/seller/pesanandua': typeof AuthedSellerPesananduaRoute
   '/_authed/seller/produk': typeof AuthedSellerProdukRoute
@@ -324,6 +334,7 @@ export interface FileRouteTypes {
     | '/seller/chat'
     | '/seller/customer'
     | '/seller/dashboard'
+    | '/seller/laporan-keuangan'
     | '/seller/pesanan'
     | '/seller/pesanandua'
     | '/seller/produk'
@@ -356,6 +367,7 @@ export interface FileRouteTypes {
     | '/seller/chat'
     | '/seller/customer'
     | '/seller/dashboard'
+    | '/seller/laporan-keuangan'
     | '/seller/pesanan'
     | '/seller/pesanandua'
     | '/seller/produk'
@@ -389,6 +401,7 @@ export interface FileRouteTypes {
     | '/_authed/seller/chat'
     | '/_authed/seller/customer'
     | '/_authed/seller/dashboard'
+    | '/_authed/seller/laporan-keuangan'
     | '/_authed/seller/pesanan'
     | '/_authed/seller/pesanandua'
     | '/_authed/seller/produk'
@@ -496,6 +509,13 @@ declare module '@tanstack/react-router' {
       path: '/pesanan'
       fullPath: '/seller/pesanan'
       preLoaderRoute: typeof AuthedSellerPesananRouteImport
+      parentRoute: typeof AuthedSellerRoute
+    }
+    '/_authed/seller/laporan-keuangan': {
+      id: '/_authed/seller/laporan-keuangan'
+      path: '/laporan-keuangan'
+      fullPath: '/seller/laporan-keuangan'
+      preLoaderRoute: typeof AuthedSellerLaporanKeuanganRouteImport
       parentRoute: typeof AuthedSellerRoute
     }
     '/_authed/seller/dashboard': {
@@ -671,6 +691,7 @@ interface AuthedSellerRouteChildren {
   AuthedSellerChatRoute: typeof AuthedSellerChatRoute
   AuthedSellerCustomerRoute: typeof AuthedSellerCustomerRoute
   AuthedSellerDashboardRoute: typeof AuthedSellerDashboardRoute
+  AuthedSellerLaporanKeuanganRoute: typeof AuthedSellerLaporanKeuanganRoute
   AuthedSellerPesananRoute: typeof AuthedSellerPesananRoute
   AuthedSellerPesananduaRoute: typeof AuthedSellerPesananduaRoute
   AuthedSellerProdukRoute: typeof AuthedSellerProdukRoute
@@ -681,6 +702,7 @@ const AuthedSellerRouteChildren: AuthedSellerRouteChildren = {
   AuthedSellerChatRoute: AuthedSellerChatRoute,
   AuthedSellerCustomerRoute: AuthedSellerCustomerRoute,
   AuthedSellerDashboardRoute: AuthedSellerDashboardRoute,
+  AuthedSellerLaporanKeuanganRoute: AuthedSellerLaporanKeuanganRoute,
   AuthedSellerPesananRoute: AuthedSellerPesananRoute,
   AuthedSellerPesananduaRoute: AuthedSellerPesananduaRoute,
   AuthedSellerProdukRoute: AuthedSellerProdukRoute,
