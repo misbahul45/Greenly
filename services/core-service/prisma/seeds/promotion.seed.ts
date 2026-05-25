@@ -1,7 +1,9 @@
 import { PrismaClient } from '../../generated/prisma/client'
 
-export async function seedPromotions(prisma: PrismaClient, shopIds: Record<string, string>) {
-  const now = new Date()
+export async function seedPromotions(
+  prisma: PrismaClient,
+  shopIds: Record<string, string>,
+) {
   const future = new Date('2026-12-31T23:59:59Z')
   const past = new Date('2025-01-01T00:00:00Z')
 
@@ -27,6 +29,7 @@ export async function seedPromotions(prisma: PrismaClient, shopIds: Record<strin
       discountVal: 50000,
       type: 'FIXED' as const,
       minPurchaseAmount: 200000,
+      maxDiscountAmount: null,
       usageLimit: 500,
       userLimit: 1,
       startDate: past,
@@ -47,18 +50,23 @@ export async function seedPromotions(prisma: PrismaClient, shopIds: Record<strin
       endDate: future,
       isActive: true,
     },
+
+    // ✅ FIX DI SINI
     {
       code: 'GRATIS25K',
+      name: 'Gratis Ongkir 25K',
       description: 'Subsidi ongkir Rp 25.000',
       discountVal: 25000,
       type: 'FIXED' as const,
       minPurchaseAmount: 75000,
+      maxDiscountAmount: null,
       usageLimit: 300,
       userLimit: 2,
       startDate: past,
       endDate: future,
       isActive: true,
     },
+
     {
       code: 'LEBARAN15',
       name: 'Promo Lebaran 15%',
@@ -94,6 +102,7 @@ export async function seedPromotions(prisma: PrismaClient, shopIds: Record<strin
       discountVal: 100000,
       type: 'FIXED' as const,
       minPurchaseAmount: 500000,
+      maxDiscountAmount: null,
       usageLimit: 100,
       userLimit: 1,
       startDate: past,
@@ -120,6 +129,8 @@ export async function seedPromotions(prisma: PrismaClient, shopIds: Record<strin
       description: 'Promo yang sudah tidak aktif',
       discountVal: 10,
       type: 'PERCENTAGE' as const,
+      minPurchaseAmount: null,
+      maxDiscountAmount: null,
       usageLimit: 100,
       userLimit: 1,
       startDate: new Date('2024-01-01'),
@@ -147,11 +158,27 @@ export async function seedPromotions(prisma: PrismaClient, shopIds: Record<strin
 
   for (const p of promotions) {
     const promo = await prisma.promotion.upsert({
-      where: { code: p.code },
-      update: { isActive: p.isActive },
+      where: {
+        code: p.code,
+      },
+
+      update: {
+        name: p.name,
+        description: p.description,
+        discountVal: p.discountVal,
+        type: p.type,
+        minPurchaseAmount: p.minPurchaseAmount ?? null,
+        maxDiscountAmount: p.maxDiscountAmount ?? null,
+        usageLimit: p.usageLimit ?? null,
+        userLimit: p.userLimit ?? 1,
+        startDate: p.startDate,
+        endDate: p.endDate,
+        isActive: p.isActive,
+      },
+
       create: {
         code: p.code,
-        name: p.name as string,
+        name: p.name,
         description: p.description,
         discountVal: p.discountVal,
         type: p.type,
@@ -171,14 +198,25 @@ export async function seedPromotions(prisma: PrismaClient, shopIds: Record<strin
     if (p.isActive && shopIdList.length > 0) {
       for (const shopId of shopIdList.slice(0, 2)) {
         await prisma.promotionShop.upsert({
-          where: { promotionId_shopId: { promotionId: promo.id, shopId } },
+          where: {
+            promotionId_shopId: {
+              promotionId: promo.id,
+              shopId,
+            },
+          },
+
           update: {},
-          create: { promotionId: promo.id, shopId },
+
+          create: {
+            promotionId: promo.id,
+            shopId,
+          },
         })
       }
     }
   }
 
   console.log('✅ Promotions Seeded Successfully')
+
   return createdPromoIds
 }
