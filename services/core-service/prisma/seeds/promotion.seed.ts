@@ -151,7 +151,7 @@ export async function seedPromotions(prisma: PrismaClient, shopIds: Record<strin
       update: { isActive: p.isActive },
       create: {
         code: p.code,
-        name: p.name,
+        name: p.name as string,
         description: p.description,
         discountVal: p.discountVal,
         type: p.type,
