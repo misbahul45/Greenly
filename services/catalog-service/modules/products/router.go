@@ -3,7 +3,9 @@ package product
 import (
 	"catalog-service/internal/cache"
 	"catalog-service/internal/coreclient"
+	"catalog-service/internal/rabbitmq"
 	"catalog-service/middleware"
+	"log"
 
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -11,7 +13,11 @@ import (
 
 func ProductRouter(rg *gin.RouterGroup, db *mongo.Database, coreSvc coreclient.Client, redisCache cache.Cache) {
 	repo := NewRepository(db)
-	service := NewService(repo)
+	publisher, err := rabbitmq.NewPublisher()
+	if err != nil {
+		log.Printf("RabbitMQ publisher unavailable: %v", err)
+	}
+	service := NewService(repo, publisher)
 	handler := NewHandler(service)
 
 	auth := middleware.JWTAuthMiddleware(coreSvc, redisCache)

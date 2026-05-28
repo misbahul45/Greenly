@@ -36,7 +36,7 @@ export class PaymentRepository {
 
   async updateStatus(
     id: string,
-    status: 'PENDING' | 'SUCCESS' | 'FAILED' | 'EXPIRED',
+    status: 'PENDING' | 'SUCCESS' | 'FAILED' | 'EXPIRED' | 'REFUNDED',
     transactionId?: string,
     paidAt?: Date,
   ) {

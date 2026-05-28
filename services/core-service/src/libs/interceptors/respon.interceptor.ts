@@ -30,6 +30,10 @@ export class ResponseInterceptor<T>
     const response = ctx.getResponse<Response>();
     const request = ctx.getRequest<Request>();
 
+    if (request.headers.accept?.includes('text/event-stream')) {
+      return next.handle() as Observable<SuccessResponse<T>>;
+    }
+
     return next.handle().pipe(
       map((data: any) => {
         const message =

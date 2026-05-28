@@ -1,5 +1,3 @@
-version: "3.9"
-
 networks:
   greenly_network:
     name: greenly_network
@@ -14,10 +12,6 @@ volumes:
   go_mod_cache:
 
 services:
-
-  # ==============================
-  # TRAEFIK API GATEWAY
-  # ==============================
   traefik:
     image: traefik:v2.11
     command:
@@ -34,9 +28,6 @@ services:
     networks:
       - greenly_network
 
-  # ==============================
-  # DATABASES
-  # ==============================
   mysql:
     image: mysql:8.0
     restart: always
@@ -85,12 +76,9 @@ services:
     networks:
       - greenly_network
 
-  # ==============================
-  # CORE SERVICE (NODE)
-  # ==============================
   core-service:
     build:
-      context: ../services/core-service
+      context: ./services/core-service
       dockerfile: Dockerfile.dev
     volumes:
     - core_node_modules:/app/node_modules
@@ -109,23 +97,24 @@ services:
       REDIS_HOST: redis
       REDIS_PORT: 6379
       RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672/
-
-    env_file:                                          
-      - ../services/core-service/.env 
+      ML_ENGINE_URL: http://ml-engine:8000
+      JWT_ACCESS_SECRET_KEY: greenly-dev-access-secret
+      JWT_REFRESH_SECRET_KEY: greenly-dev-refresh-secret
+      JWT_ACCESS_EXPIRES: 30d
+      JWT_REFRESH_EXPIRES: 30d
+      API_URL: http://localhost/api/core
 
     develop:
       watch:
-        # 🔥 Sync source → hot reload
         - action: sync
-          path: ../services/core-service
+          path: ./services/core-service
           target: /app
           ignore:
             - node_modules/
             - dist/
 
-        # 🔥 Rebuild kalau dependency berubah
         - action: rebuild
-          path: ../services/core-service/package.json
+          path: ./services/core-service/package.json
 
     labels:
       - "traefik.enable=true"
@@ -137,31 +126,39 @@ services:
 
     networks:
       - greenly_network
-  # ==============================
-  # ML ENGINE (FASTAPI)
-  # ==============================
+
   ml-engine:
     build:
-      context: ../services/ml-engine
+      context: ./services/ml-engine
       dockerfile: Dockerfile.dev
 
+    volumes:
+      - ./services/ml-engine:/app
+      - ml_venv:/app/.venv
+
     depends_on:
+      - catalog-service
       - redis
       - rabbitmq
 
     environment:
-      REDIS_HOST: redis
-      REDIS_PORT: 6379
+      ML_PORT: 8000
+      MODEL_NAME: sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2
+      CATALOG_SERVICE_URL: http://catalog-service:8081
+      CORE_SERVICE_URL: http://core-service:3000
       RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672/
+      REDIS_URL: redis://redis:6379/0
+      FAISS_INDEX_PATH: /app/app/storage/indexes/products.faiss
+      PRODUCT_META_PATH: /app/app/storage/indexes/products_meta.json
 
     develop:
       watch:
         - action: sync
-          path: ../services/ml-engine
+          path: ./services/ml-engine
           target: /app
 
         - action: rebuild
-          path: ../services/ml-engine/pyproject.toml
+          path: ./services/ml-engine/pyproject.toml
 
     labels:
       - "traefik.enable=true"
@@ -176,46 +173,52 @@ services:
 
   ml-worker:
     build:
-      context: ../services/ml-engine
+      context: ./services/ml-engine
       dockerfile: Dockerfile.dev
-    command: uv run celery -A app.celery worker --loglevel=info
+    command: uv run celery -A app.workers.celery_app.celery_app worker --loglevel=info
     volumes:
-      - ../services/ml-engine:/app
+      - ./services/ml-engine:/app
       - ml_venv:/app/.venv
     depends_on:
       - redis
       - rabbitmq
     environment:
-      REDIS_HOST: redis
-      REDIS_PORT: 6379
+      MODEL_NAME: sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2
+      CATALOG_SERVICE_URL: http://catalog-service:8081
+      CORE_SERVICE_URL: http://core-service:3000
       RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672/
+      REDIS_URL: redis://redis:6379/0
+      FAISS_INDEX_PATH: /app/app/storage/indexes/products.faiss
+      PRODUCT_META_PATH: /app/app/storage/indexes/products_meta.json
     networks:
       - greenly_network
-  # ==============================
-  # CATALOG SERVICE (GO)
-  # ==============================
+
   catalog-service:
     build:
-      context: ../services/catalog-service
+      context: ./services/catalog-service
       dockerfile: Dockerfile.dev
 
     depends_on:
       - rabbitmq
       - mongodb
-    env_file:                                          # ✅ tambah ini
-      - ../services/catalog-service/.env 
+      - redis
     environment:
       RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672/
       MONGODB_URI: mongodb://root:root@mongodb:27017/?authSource=admin
+      MONGODB_URL: mongodb://root:root@mongodb:27017/?authSource=admin
+      CORE_SERVICE_URL: http://core-service:3000
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      JWT_ACCESS_SECRET_KEY: greenly-dev-access-secret
 
     develop:
       watch:
         - action: sync
-          path: ../services/catalog-service
+          path: ./services/catalog-service
           target: /app
 
         - action: rebuild
-          path: ../services/catalog-service/go.mod
+          path: ./services/catalog-service/go.mod
 
     labels:
       - "traefik.enable=true"

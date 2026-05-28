@@ -2,9 +2,11 @@ package product
 
 import (
 	"catalog-service/databases"
+	"catalog-service/internal/rabbitmq"
 	"catalog-service/utils"
 	"context"
 	"errors"
+	"log"
 	"strings"
 	"time"
 
@@ -28,6 +30,7 @@ type Service interface {
 
 type service struct {
 	repository Repository
+	publisher  rabbitmq.Publisher
 }
 
 var (
@@ -37,9 +40,15 @@ var (
 	ErrCategoryInvalid = errors.New("category not found")
 )
 
-func NewService(repository Repository) Service {
+func NewService(repository Repository, publishers ...rabbitmq.Publisher) Service {
+	var publisher rabbitmq.Publisher
+	if len(publishers) > 0 {
+		publisher = publishers[0]
+	}
+
 	return &service{
 		repository: repository,
+		publisher:  publisher,
 	}
 }
 
@@ -247,6 +256,7 @@ func (s *service) Create(ctx context.Context, dto CreateProductDTO) (databases.P
 		}
 	}
 
+	s.publishProductEvent(context.Background(), "created", created)
 	return created, nil
 }
 
@@ -309,15 +319,22 @@ func (s *service) Update(ctx context.Context, id string, dto UpdateProductDTO) (
 		s.repository.UpdateImages(ctx, updated.ID, dto.ImageURLs)
 	}
 
+	s.publishProductEvent(context.Background(), "updated", updated)
 	return updated, nil
 }
 
 func (s *service) Delete(ctx context.Context, id string) error {
-	_, err := s.repository.FindById(ctx, id)
+	product, err := s.repository.FindById(ctx, id)
 	if err != nil {
 		return ErrProductNotFound
 	}
-	return s.repository.Delete(ctx, id)
+
+	if err := s.repository.Delete(ctx, id); err != nil {
+		return err
+	}
+
+	s.publishProductEvent(context.Background(), "deleted", product)
+	return nil
 }
 
 func (s *service) ToggleActive(ctx context.Context, id string, shopID string) (databases.Product, error) {
@@ -392,6 +409,37 @@ func (s *service) ValidateShopAndCategory(ctx context.Context, shopID, categoryI
 		return err
 	}
 	return nil
+}
+
+func (s *service) publishProductEvent(ctx context.Context, action string, product databases.Product) {
+	if s.publisher == nil {
+		return
+	}
+
+	payload := rabbitmq.ProductEventPayload{
+		ProductID:   product.ID,
+		Name:        product.Name,
+		ShopID:      product.ShopID,
+		CategoryID:  product.CategoryID,
+		Description: product.Description,
+		SKU:         product.SKU,
+		IsActive:    product.IsActive,
+	}
+
+	go func() {
+		var err error
+		switch action {
+		case "created":
+			err = s.publisher.PublishProductCreated(ctx, payload)
+		case "updated":
+			err = s.publisher.PublishProductUpdated(ctx, payload)
+		case "deleted":
+			err = s.publisher.PublishProductDeleted(ctx, payload)
+		}
+		if err != nil {
+			log.Printf("Failed to publish product.%s: %v", action, err)
+		}
+	}()
 }
 
 func (s *service) EnableProductsByShop(ctx context.Context, shopID string) error {

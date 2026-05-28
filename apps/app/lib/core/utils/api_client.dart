@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:app/features/auth/auth_service.dart';
 import 'package:app/features/auth/presentation/bloc/auth_storage.dart';
@@ -186,5 +187,37 @@ class ApiClient {
       url: url,
       fromJsonT: fromJsonT,
     );
+  }
+
+  static Stream<T> stream<T>(
+    String url, {
+    T Function(dynamic json)? fromJsonT,
+  }) async* {
+    final headers = await _buildHeaders();
+    headers["Accept"] = "text/event-stream";
+    headers["Cache-Control"] = "no-cache";
+
+    final req = http.Request("GET", Uri.parse(url));
+    req.headers.addAll(headers);
+
+    final streamed = await req.send();
+
+    if (streamed.statusCode < 200 || streamed.statusCode >= 300) {
+      return;
+    }
+
+    await for (final line in streamed.stream
+        .transform(utf8.decoder)
+        .transform(const LineSplitter())) {
+      if (!line.startsWith("data:")) continue;
+
+      final raw = line.substring(5).trim();
+      if (raw.isEmpty) continue;
+
+      try {
+        final decoded = jsonDecode(raw);
+        yield fromJsonT == null ? decoded as T : fromJsonT(decoded);
+      } catch (_) {}
+    }
   }
 }
