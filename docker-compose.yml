@@ -171,28 +171,6 @@ services:
     networks:
       - greenly_network
 
-  ml-worker:
-    build:
-      context: ./services/ml-engine
-      dockerfile: Dockerfile.dev
-    command: uv run celery -A app.workers.celery_app.celery_app worker --loglevel=info
-    volumes:
-      - ./services/ml-engine:/app
-      - ml_venv:/app/.venv
-    depends_on:
-      - redis
-      - rabbitmq
-    environment:
-      MODEL_NAME: sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2
-      CATALOG_SERVICE_URL: http://catalog-service:8081
-      CORE_SERVICE_URL: http://core-service:3000
-      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672/
-      REDIS_URL: redis://redis:6379/0
-      FAISS_INDEX_PATH: /app/app/storage/indexes/products.faiss
-      PRODUCT_META_PATH: /app/app/storage/indexes/products_meta.json
-    networks:
-      - greenly_network
-
   catalog-service:
     build:
       context: ./services/catalog-service

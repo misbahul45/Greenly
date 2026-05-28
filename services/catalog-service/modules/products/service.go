@@ -2,7 +2,6 @@ package product
 
 import (
 	"catalog-service/databases"
-	"catalog-service/internal/rabbitmq"
 	"catalog-service/utils"
 	"context"
 	"errors"
@@ -30,7 +29,23 @@ type Service interface {
 
 type service struct {
 	repository Repository
-	publisher  rabbitmq.Publisher
+	publisher  ProductEventPublisher
+}
+
+type ProductEventPublisher interface {
+	PublishProductCreated(ctx context.Context, payload ProductEventPayload) error
+	PublishProductUpdated(ctx context.Context, payload ProductEventPayload) error
+	PublishProductDeleted(ctx context.Context, payload ProductEventPayload) error
+}
+
+type ProductEventPayload struct {
+	ProductID   string
+	Name        string
+	ShopID      string
+	CategoryID  string
+	Description string
+	SKU         string
+	IsActive    bool
 }
 
 var (
@@ -40,8 +55,8 @@ var (
 	ErrCategoryInvalid = errors.New("category not found")
 )
 
-func NewService(repository Repository, publishers ...rabbitmq.Publisher) Service {
-	var publisher rabbitmq.Publisher
+func NewService(repository Repository, publishers ...ProductEventPublisher) Service {
+	var publisher ProductEventPublisher
 	if len(publishers) > 0 {
 		publisher = publishers[0]
 	}
@@ -416,7 +431,7 @@ func (s *service) publishProductEvent(ctx context.Context, action string, produc
 		return
 	}
 
-	payload := rabbitmq.ProductEventPayload{
+	payload := ProductEventPayload{
 		ProductID:   product.ID,
 		Name:        product.Name,
 		ShopID:      product.ShopID,
