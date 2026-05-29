@@ -50,6 +50,7 @@ export function transformUser(user: any): UserResponse {
     status: user.status,
     isActive: user.isActive,
     createdAt: user.createdAt,
+    roles: user.roles?.map((r: any) => r.role?.name || r.roleName) ?? [],
 
     profile: user.profile
       ? {

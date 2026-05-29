@@ -5,6 +5,7 @@ export interface UserResponse {
   status: string
   isActive: boolean
   createdAt: Date
+  roles: string[]
   profile: {
     fullName: string | null
     phoneNumber: string | null

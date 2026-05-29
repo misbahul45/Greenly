@@ -51,6 +51,11 @@ export class UsersRepositository {
       },
       include: {
         profile: true,
+        roles: {
+          include: {
+            role: true,
+          },
+        },
       },
     })
   }
@@ -94,6 +99,11 @@ export class UsersRepositository {
       where: { id },
       include:{
         profile:true,
+        roles: {
+          include: {
+            role: true,
+          },
+        },
       }
     })
   }

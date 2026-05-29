@@ -11,331 +11,226 @@ import {
 import { Input } from "#/components/ui/input";
 import { Button } from "#/components/ui/button";
 import { Badge } from "#/components/ui/badge";
-import { dummyShops, type Shop } from "#/constants/dummy.table";
+import { useServerFn } from "@tanstack/react-start";
+import { getShopsFn, updateShopStatusFn, type AdminShop } from "#/features/admin/api";
 
-type SortOrder = "asc" | "desc";
+type StatusFilter = AdminShop["status"] | "ALL";
 
-type ConfirmAction = {
-  type: "reject" | "suspend";
-  item: Shop;
-};
-
-function sortData<T>(data: T[], key: keyof T, order: SortOrder): T[] {
-  return [...data].sort((a, b) => {
-    const av = (a[key] ?? "") as any;
-    const bv = (b[key] ?? "") as any;
-
-    if (typeof av === "string") {
-      return order === "asc" ? av.localeCompare(bv) : bv.localeCompare(av);
-    }
-
-    if (typeof av === "number") {
-      return order === "asc" ? av - bv : bv - av;
-    }
-
-    if (av instanceof Date) {
-      return order === "asc"
-        ? av.getTime() - bv.getTime()
-        : bv.getTime() - av.getTime();
-    }
-
-    return 0;
-  });
-}
-
-function getStatusClass(status: Shop["status"]) {
+function getStatusClass(status: AdminShop["status"]) {
   if (status === "APPROVED") return "bg-green-100 text-green-700";
   if (status === "REJECTED") return "bg-red-100 text-red-700";
   if (status === "SUSPENDED") return "bg-orange-100 text-orange-700";
   return "bg-yellow-100 text-yellow-700";
 }
 
-function getStatusLabel(status: Shop["status"]) {
+function getStatusLabel(status: AdminShop["status"]) {
   if (status === "APPROVED") return "Aktif";
   if (status === "REJECTED") return "Ditolak";
   if (status === "SUSPENDED") return "Ditangguhkan";
   return "Menunggu";
 }
 
-export function ShopTableDummy() {
-  const [data, setData] = React.useState<Shop[]>(dummyShops);
+export function ShopTable() {
+  const getShops = useServerFn(getShopsFn);
+  const updateShopStatus = useServerFn(updateShopStatusFn);
+
+  const [data, setData] = React.useState<AdminShop[]>([]);
+  const [loading, setLoading] = React.useState(true);
+  const [total, setTotal] = React.useState(0);
   const [search, setSearch] = React.useState("");
-  const [sortKey, setSortKey] = React.useState<keyof Shop>("createdAt");
-  const [sortOrder, setSortOrder] = React.useState<SortOrder>("desc");
+  const [debouncedSearch, setDebouncedSearch] = React.useState("");
+  const [filterStatus, setFilterStatus] = React.useState<StatusFilter>("ALL");
+  const [page, setPage] = React.useState(1);
+  const limit = 10;
 
-  const [selectedShop, setSelectedShop] = React.useState<Shop | null>(null);
+  const [selectedShop, setSelectedShop] = React.useState<AdminShop | null>(null);
 
-  const [confirmAction, setConfirmAction] =
-    React.useState<ConfirmAction | null>(null);
-  const [rejectReason, setRejectReason] = React.useState("");
-  const [rejectReasonError, setRejectReasonError] = React.useState("");
+  React.useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(search), 500);
+    return () => clearTimeout(timer);
+  }, [search]);
 
-  const filtered = sortData(
-    data.filter((s) => {
-      const keyword = search.toLowerCase();
-
-      return (
-        s.name.toLowerCase().includes(keyword) ||
-        s.owner.toLowerCase().includes(keyword) ||
-        s.email.toLowerCase().includes(keyword)
-      );
-    }),
-    sortKey,
-    sortOrder
-  );
-
-  const handleSort = (key: keyof Shop) => {
-    if (sortKey === key) {
-      setSortOrder((o) => (o === "asc" ? "desc" : "asc"));
-    } else {
-      setSortKey(key);
-      setSortOrder("asc");
-    }
-  };
-
-  const sortIcon = (key: keyof Shop) =>
-    sortKey === key ? (sortOrder === "asc" ? " ↑" : " ↓") : "";
-
-  const updateStatus = (id: string, status: Shop["status"]) => {
-    setData((prev) => prev.map((s) => (s.id === id ? { ...s, status } : s)));
-  };
-
-  const handleApprove = (id: string) => {
-    const item = data.find((s) => s.id === id);
-
-    updateStatus(id, "APPROVED");
-
-    toast.success("Toko disetujui", {
-      description: `${item?.name} telah diaktifkan.`,
-      position: "bottom-right",
-    });
-  };
-
-  const openReject = (item: Shop) => {
-    setConfirmAction({ type: "reject", item });
-    setRejectReason("");
-    setRejectReasonError("");
-  };
-
-  const openSuspend = (item: Shop) => {
-    setConfirmAction({ type: "suspend", item });
-  };
-
-  const handleConfirm = () => {
-    if (!confirmAction) return;
-
-    if (confirmAction.type === "reject") {
-      if (!rejectReason.trim()) {
-        setRejectReasonError("Alasan penolakan wajib diisi");
-        return;
-      }
-
-      updateStatus(confirmAction.item.id, "REJECTED");
-
-      toast.error("Toko ditolak", {
-        description: `${confirmAction.item.name} telah ditolak.`,
-        position: "bottom-right",
+  const fetchData = React.useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await getShops({
+        data: {
+          page,
+          limit,
+          search: debouncedSearch,
+          status: filterStatus === "ALL" ? undefined : filterStatus,
+        }
       });
+      setData(res.data);
+      setTotal(res.meta?.total ?? 0);
+    } catch (err) {
+      toast.error("Gagal memuat data toko");
+    } finally {
+      setLoading(false);
     }
+  }, [getShops, page, debouncedSearch, filterStatus]);
 
-    if (confirmAction.type === "suspend") {
-      updateStatus(confirmAction.item.id, "SUSPENDED");
+  React.useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
-      toast.warning("Toko ditangguhkan", {
-        description: `${confirmAction.item.name} tidak bisa menerima pesanan baru.`,
-        position: "bottom-right",
-      });
+  const handleUpdateStatus = async (id: string, status: AdminShop["status"]) => {
+    try {
+      await updateShopStatus({ data: { id, status } });
+      toast.success("Status toko diperbarui");
+      fetchData();
+    } catch (err) {
+      toast.error("Gagal memperbarui status toko");
     }
-
-    setConfirmAction(null);
-    setRejectReason("");
-  };
-
-  const handleActivate = (id: string) => {
-    const item = data.find((s) => s.id === id);
-
-    updateStatus(id, "APPROVED");
-
-    toast.success("Toko diaktifkan", {
-      description: `${item?.name} kembali aktif.`,
-      position: "bottom-right",
-    });
   };
 
   return (
     <div className="w-full space-y-4 overflow-hidden">
       <div className="flex items-center gap-2">
         <Input
-          placeholder="Cari nama toko, pemilik, atau email..."
+          placeholder="Cari nama toko atau pemilik..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="max-w-md"
         />
 
-        {search && (
-          <Button variant="outline" size="sm" onClick={() => setSearch("")}>
-            Clear
-          </Button>
-        )}
+        <div className="ml-auto">
+          <select
+            value={filterStatus}
+            onChange={(e) => {
+              setFilterStatus(e.target.value as StatusFilter);
+              setPage(1);
+            }}
+            className="h-10 rounded-md border bg-background px-3 text-sm font-medium"
+          >
+            <option value="ALL">Semua Status</option>
+            <option value="PENDING">Menunggu</option>
+            <option value="APPROVED">Aktif</option>
+            <option value="SUSPENDED">Ditangguhkan</option>
+            <option value="REJECTED">Ditolak</option>
+          </select>
+        </div>
       </div>
 
-      <Table className="w-full table-fixed text-sm">
-        <TableHeader>
-          <TableRow>
-            <TableHead
-              className="w-[15%] cursor-pointer select-none"
-              onClick={() => handleSort("name")}
-            >
-              Nama Toko{sortIcon("name")}
-            </TableHead>
-
-            <TableHead
-              className="w-[13%] cursor-pointer select-none"
-              onClick={() => handleSort("owner")}
-            >
-              Pemilik{sortIcon("owner")}
-            </TableHead>
-
-            <TableHead className="w-[17%]">Email</TableHead>
-
-            <TableHead
-              className="w-[12%] cursor-pointer select-none"
-              onClick={() => handleSort("status")}
-            >
-              Status{sortIcon("status")}
-            </TableHead>
-
-            <TableHead
-              className="w-[12%] cursor-pointer select-none"
-              onClick={() => handleSort("balance")}
-            >
-              Saldo{sortIcon("balance")}
-            </TableHead>
-
-            <TableHead
-              className="w-[8%] cursor-pointer select-none"
-              onClick={() => handleSort("totalProducts")}
-            >
-              Produk{sortIcon("totalProducts")}
-            </TableHead>
-
-            <TableHead className="w-[12%]">
-              <select
-                value={sortOrder}
-                onChange={(e) => {
-                  setSortKey("createdAt");
-                  setSortOrder(e.target.value as SortOrder);
-                }}
-                className="w-full rounded-md border bg-background px-2 py-1 text-xs font-medium"
-              >
-                <option value="desc">Terbaru</option>
-                <option value="asc">Terlama</option>
-              </select>
-            </TableHead>
-
-            <TableHead className="w-[16%]">Aksi</TableHead>
-          </TableRow>
-        </TableHeader>
-
-        <TableBody>
-          {filtered.map((s) => (
-            <TableRow key={s.id}>
-              <TableCell className="truncate font-medium">{s.name}</TableCell>
-              <TableCell className="truncate">{s.owner}</TableCell>
-              <TableCell className="truncate">{s.email}</TableCell>
-
-              <TableCell>
-                <Badge className={`text-xs ${getStatusClass(s.status)}`}>
-                  {getStatusLabel(s.status)}
-                </Badge>
-              </TableCell>
-
-              <TableCell className="truncate">
-                Rp {s.balance.toLocaleString("id-ID")}
-              </TableCell>
-
-              <TableCell>{s.totalProducts}</TableCell>
-
-              <TableCell className="truncate">
-                {s.createdAt.toLocaleDateString("id-ID")}
-              </TableCell>
-
-              <TableCell>
-                <div className="flex flex-wrap gap-1">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="h-8 px-2 text-xs"
-                    onClick={() => setSelectedShop(s)}
-                  >
-                    Lihat
-                  </Button>
-
-                  {s.status === "PENDING" && (
-                    <>
-                      <Button
-                        size="sm"
-                        className="h-8 px-2 text-xs bg-green-600 hover:bg-green-700 text-white"
-                        onClick={() => handleApprove(s.id)}
-                      >
-                        Setujui
-                      </Button>
-
-                      <Button
-                        size="sm"
-                        className="h-8 px-2 text-xs bg-red-600 hover:bg-red-700 text-white"
-                        onClick={() => openReject(s)}
-                      >
-                        Tolak
-                      </Button>
-                    </>
-                  )}
-
-                  {s.status === "APPROVED" && (
-                    <Button
-                      size="sm"
-                      className="h-8 px-2 text-xs bg-orange-500 hover:bg-orange-600 text-white"
-                      onClick={() => openSuspend(s)}
-                    >
-                      Tangguhkan
-                    </Button>
-                  )}
-
-                  {s.status === "SUSPENDED" && (
-                    <Button
-                      size="sm"
-                      className="h-8 px-2 text-xs bg-green-600 hover:bg-green-700 text-white"
-                      onClick={() => handleActivate(s.id)}
-                    >
-                      Aktifkan
-                    </Button>
-                  )}
-                </div>
-              </TableCell>
-            </TableRow>
-          ))}
-
-          {filtered.length === 0 && (
+      <div className="rounded-md border">
+        <Table className="w-full text-sm">
+          <TableHeader>
             <TableRow>
-              <TableCell
-                colSpan={8}
-                className="py-10 text-center text-muted-foreground"
-              >
-                Tidak ada toko ditemukan
-              </TableCell>
+              <TableHead>Nama Toko</TableHead>
+              <TableHead>Pemilik</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Saldo</TableHead>
+              <TableHead>Bergabung</TableHead>
+              <TableHead className="text-right">Aksi</TableHead>
             </TableRow>
-          )}
-        </TableBody>
-      </Table>
+          </TableHeader>
+
+          <TableBody>
+            {loading ? (
+              <TableRow>
+                <TableCell colSpan={6} className="py-10 text-center text-muted-foreground">
+                  Memuat data...
+                </TableCell>
+              </TableRow>
+            ) : data.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={6} className="py-10 text-center text-muted-foreground">
+                  Tidak ada toko ditemukan
+                </TableCell>
+              </TableRow>
+            ) : (
+              data.map((s) => (
+                <TableRow key={s.id}>
+                  <TableCell className="font-medium">{s.name}</TableCell>
+                  <TableCell>{s.owner?.profile?.fullName ?? s.owner?.email ?? "-"}</TableCell>
+                  <TableCell>
+                    <Badge className={`text-xs ${getStatusClass(s.status)}`}>
+                      {getStatusLabel(s.status)}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>Rp {Number(s.balance).toLocaleString("id-ID")}</TableCell>
+                  <TableCell>{new Date(s.createdAt).toLocaleDateString("id-ID")}</TableCell>
+                  <TableCell>
+                    <div className="flex items-center justify-end gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-8 px-2 text-xs"
+                        onClick={() => setSelectedShop(s)}
+                      >
+                        Lihat
+                      </Button>
+
+                      {s.status === "PENDING" && (
+                        <Button
+                          size="sm"
+                          className="h-8 px-2 text-xs bg-green-600 hover:bg-green-700 text-white"
+                          onClick={() => handleUpdateStatus(s.id, "APPROVED")}
+                        >
+                          Setujui
+                        </Button>
+                      )}
+
+                      {s.status === "APPROVED" && (
+                        <Button
+                          size="sm"
+                          className="h-8 px-2 text-xs bg-orange-500 hover:bg-orange-600 text-white"
+                          onClick={() => handleUpdateStatus(s.id, "SUSPENDED")}
+                        >
+                          Suspend
+                        </Button>
+                      )}
+
+                      {s.status === "SUSPENDED" && (
+                        <Button
+                          size="sm"
+                          className="h-8 px-2 text-xs bg-green-600 hover:bg-green-700 text-white"
+                          onClick={() => handleUpdateStatus(s.id, "APPROVED")}
+                        >
+                          Aktifkan
+                        </Button>
+                      )}
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </div>
+
+      {total > limit && (
+        <div className="flex items-center justify-between py-2">
+          <p className="text-sm text-muted-foreground">
+            Menampilkan {(page - 1) * limit + 1} sampai {Math.min(page * limit, total)} dari {total} toko
+          </p>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={page === 1}
+              onClick={() => setPage(p => p - 1)}
+            >
+              Sebelumnya
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={page * limit >= total}
+              onClick={() => setPage(p => p + 1)}
+            >
+              Berikutnya
+            </Button>
+          </div>
+        </div>
+      )}
 
       {selectedShop && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <div className="w-full max-w-md space-y-4 rounded-lg bg-background p-6 shadow-lg">
             <div>
               <h2 className="text-lg font-semibold">Detail Toko</h2>
-              <p className="text-sm text-muted-foreground">
-                Informasi lengkap toko yang dipilih.
-              </p>
+              <p className="text-sm text-muted-foreground">Informasi lengkap toko.</p>
             </div>
 
             <div className="space-y-3 rounded-md border p-4 text-sm">
@@ -343,133 +238,29 @@ export function ShopTableDummy() {
                 <span className="text-muted-foreground">Nama Toko</span>
                 <span className="text-right font-medium">{selectedShop.name}</span>
               </div>
-
               <div className="flex justify-between gap-4">
-                <span className="text-muted-foreground">Pemilik</span>
-                <span className="text-right font-medium">
-                  {selectedShop.owner}
-                </span>
+                <span className="text-muted-foreground">Deskripsi</span>
+                <span className="text-right font-medium">{selectedShop.description ?? "-"}</span>
               </div>
-
-              <div className="flex justify-between gap-4">
-                <span className="text-muted-foreground">Email</span>
-                <span className="text-right font-medium">
-                  {selectedShop.email}
-                </span>
-              </div>
-
               <div className="flex justify-between gap-4">
                 <span className="text-muted-foreground">Status</span>
                 <Badge className={getStatusClass(selectedShop.status)}>
                   {getStatusLabel(selectedShop.status)}
                 </Badge>
               </div>
-
               <div className="flex justify-between gap-4">
                 <span className="text-muted-foreground">Saldo</span>
-                <span className="text-right font-medium">
-                  Rp {selectedShop.balance.toLocaleString("id-ID")}
-                </span>
+                <span className="text-right font-medium">Rp {Number(selectedShop.balance).toLocaleString("id-ID")}</span>
               </div>
-
               <div className="flex justify-between gap-4">
-                <span className="text-muted-foreground">Total Produk</span>
-                <span className="text-right font-medium">
-                  {selectedShop.totalProducts}
-                </span>
-              </div>
-
-              <div className="flex justify-between gap-4">
-                <span className="text-muted-foreground">Bergabung</span>
-                <span className="text-right font-medium">
-                  {selectedShop.createdAt.toLocaleDateString("id-ID")}
-                </span>
+                <span className="text-muted-foreground">Pemilik</span>
+                <span className="text-right font-medium">{selectedShop.owner?.email}</span>
               </div>
             </div>
 
             <div className="flex justify-end">
               <Button variant="outline" onClick={() => setSelectedShop(null)}>
                 Tutup
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {confirmAction?.type === "reject" && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="w-full max-w-sm space-y-4 rounded-lg bg-background p-6 shadow-lg">
-            <h2 className="text-lg font-semibold">Tolak Toko</h2>
-
-            <p className="text-sm text-muted-foreground">
-              Tolak toko{" "}
-              <span className="font-medium text-foreground">
-                {confirmAction.item.name}
-              </span>
-              ?
-            </p>
-
-            <div>
-              <label className="text-sm font-medium">
-                Alasan Penolakan <span className="text-destructive">*</span>
-              </label>
-
-              <Input
-                value={rejectReason}
-                onChange={(e) => {
-                  setRejectReason(e.target.value);
-                  if (e.target.value.trim()) setRejectReasonError("");
-                }}
-                placeholder="Masukkan alasan..."
-                className={`mt-1 ${rejectReasonError ? "border-red-500" : ""}`}
-              />
-
-              {rejectReasonError && (
-                <p className="mt-1 text-xs text-red-500">
-                  {rejectReasonError}
-                </p>
-              )}
-            </div>
-
-            <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setConfirmAction(null)}>
-                Batal
-              </Button>
-
-              <Button
-                className="bg-red-600 hover:bg-red-700 text-white"
-                onClick={handleConfirm}
-              >
-                Tolak
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {confirmAction?.type === "suspend" && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="w-full max-w-sm space-y-4 rounded-lg bg-background p-6 shadow-lg">
-            <h2 className="text-lg font-semibold">Tangguhkan Toko</h2>
-
-            <p className="text-sm text-muted-foreground">
-              Yakin ingin menangguhkan toko{" "}
-              <span className="font-medium text-foreground">
-                {confirmAction.item.name}
-              </span>
-              ? Toko tidak akan bisa menerima pesanan baru.
-            </p>
-
-            <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setConfirmAction(null)}>
-                Batal
-              </Button>
-
-              <Button
-                className="bg-orange-500 hover:bg-orange-600 text-white"
-                onClick={handleConfirm}
-              >
-                Tangguhkan
               </Button>
             </div>
           </div>
