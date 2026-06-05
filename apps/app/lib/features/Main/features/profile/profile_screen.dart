@@ -1,4 +1,6 @@
 import 'package:app/core/constants/ui_constants.dart';
+import 'package:app/features/Main/features/profile/bloc/profile_bloc.dart';
+import 'package:app/features/Main/features/profile/profile_service.dart';
 import 'package:app/features/Main/features/profile/widgets/become_seller_widget.dart';
 import 'package:app/features/Main/features/profile/widgets/my_action_widget.dart';
 import 'package:app/features/Main/features/profile/widgets/my_activities_widget.dart';
@@ -6,49 +8,59 @@ import 'package:app/features/Main/features/profile/widgets/my_orders_widget.dart
 import 'package:app/features/Main/features/profile/widgets/profile_widget.dart';
 import 'package:app/features/Main/features/profile/widgets/statistic_widget.dart';
 import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
-class ProfileScreen extends StatefulWidget {
+class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
 
   @override
-  State<ProfileScreen> createState() => _ProfileScreenState();
+  Widget build(BuildContext context) {
+    return BlocProvider(
+      create: (_) => ProfileBloc(ProfileService())..add(ProfileStatsRequested()),
+      child: const _ProfileView(),
+    );
+  }
 }
 
-class _ProfileScreenState extends State<ProfileScreen> {
-  Future<void> _becomeSeller() async {
-    final url = Uri.parse("https://your-seller-page.com");
-
-    if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
-      throw Exception("Could not launch $url");
-    }
-  }
+class _ProfileView extends StatelessWidget {
+  const _ProfileView();
 
   @override
   Widget build(BuildContext context) {
     return SafeArea(
-      child: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          const ProfileWidget(),
-          const SizedBox(height: UIConstants.spacingXL),
-          BecomeSellerWidget(
-            onTap: _becomeSeller,
-          ),
-          const SizedBox(height: UIConstants.spacingXL),
-          const StatisticWidget(
-            ordersCount: 12,
-            followingCounts: 34,
-            reviewsCount: 56,
-            favoritesCount: 78,
-          ),
-          const SizedBox(height: UIConstants.spacingXL),
-          const MyOrdersWidget(),
-          const SizedBox(height: UIConstants.spacingXL),
-          const MyActivitiesWidget(),
-          const SizedBox(height: UIConstants.spacingXL),
-          const MyActionWidget()
-        ],
+      child: RefreshIndicator(
+        onRefresh: () async =>
+            context.read<ProfileBloc>().add(ProfileStatsRequested()),
+        child: ListView(
+          padding: const EdgeInsets.all(16),
+          children: [
+            const ProfileWidget(),
+            const SizedBox(height: UIConstants.spacingXL),
+            BecomeSellerWidget(
+              onTap: () => ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Fitur buka toko segera hadir')),
+              ),
+            ),
+            const SizedBox(height: UIConstants.spacingXL),
+            BlocBuilder<ProfileBloc, ProfileState>(
+              builder: (context, state) {
+                final s = state.stats;
+                return StatisticWidget(
+                  ordersCount: s.orders,
+                  followingCounts: s.following,
+                  reviewsCount: s.reviews,
+                  favoritesCount: s.favorites,
+                );
+              },
+            ),
+            const SizedBox(height: UIConstants.spacingXL),
+            const MyOrdersWidget(),
+            const SizedBox(height: UIConstants.spacingXL),
+            const MyActivitiesWidget(),
+            const SizedBox(height: UIConstants.spacingXL),
+            const MyActionWidget(),
+          ],
+        ),
       ),
     );
   }

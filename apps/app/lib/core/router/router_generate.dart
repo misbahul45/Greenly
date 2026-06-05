@@ -6,6 +6,12 @@ import 'package:app/features/cart/presentation/screens/cart_screen.dart';
 import 'package:app/features/favorite/favorite_screen.dart';
 import 'package:app/features/onboarding/presentation/screens/onboarding_coordinator_screen.dart';
 import 'package:app/features/onboarding/presentation/screens/splash_screen.dart';
+import 'package:app/features/order/presentation/screens/order_list_screen.dart';
+import 'package:app/features/order/presentation/screens/order_detail_screen.dart';
+import 'package:app/features/products/presentation/screens/product_list_screen.dart';
+import 'package:app/features/Main/features/profile/screens/edit_profile_screen.dart';
+import 'package:app/features/shop/presentation/screens/following_shops_screen.dart';
+import 'package:app/features/shop/presentation/screens/shop_detail_screen.dart';
 import 'package:app/features/product-detail/product_detail_screen.dart';
 import 'package:app/features/product-detail/reviews_screen.dart';
 import 'package:app/features/search-product/search_product_scereen.dart';
@@ -64,6 +70,40 @@ class RouterGenerate {
 
       case AppRoutes.searchProduct:
         return _page(const SearchProductScreen());
+
+      case AppRoutes.orders:
+        return _page(const OrderListScreen());
+
+      case AppRoutes.orderDetail:
+        final orderId = settings.arguments as String;
+        return _page(OrderDetailScreen(orderId: orderId));
+
+      case AppRoutes.editProfile:
+        return _page(const EditProfileScreen());
+
+      case AppRoutes.shopFollowers:
+        return _page(const FollowingShopsScreen());
+
+      case AppRoutes.shopDetail:
+        final args = (settings.arguments as Map?) ?? const {};
+        return _page(
+          ShopDetailScreen(
+            shopId: args['shopId'] as String? ?? '',
+            initiallyFollowing: args['following'] as bool? ?? false,
+          ),
+        );
+
+      case AppRoutes.products:
+        return _page(const ProductListScreen(title: 'Semua Produk'));
+
+      case AppRoutes.categoryProducts:
+        final args = (settings.arguments as Map?) ?? const {};
+        return _page(
+          ProductListScreen(
+            categoryId: args['categoryId'] as String?,
+            title: args['categoryName'] as String? ?? 'Produk',
+          ),
+        );
 
       case AppRoutes.reviews:
         final args = settings.arguments as Map<String, dynamic>;

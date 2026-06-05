@@ -111,7 +111,7 @@ class _CategoriesWidgetState extends State<CategoriesWidget> {
                   }
 
                   final item = items[index];
-                  return CategoryWidget(title: item.name, slug: item.slug);
+                  return CategoryWidget(id: item.id, title: item.name);
                 },
               ),
             ),

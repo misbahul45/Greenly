@@ -10,7 +10,9 @@ class AppRoutes {
   static const String favorites = '/favorites';
   static const String notifications = '/notifications';
   static const String orders = '/orders';
+  static const String orderDetail = '/order-detail';
   static const String shopFollowers = '/shop-followers';
+  static const String shopDetail = '/shop-detail';
   static const String reviews = '/reviews';
   static const String editProfile = '/edit-profile';
 }

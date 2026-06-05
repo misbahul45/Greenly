@@ -74,10 +74,13 @@ class AuthService {
     );
   }
   
-  static Future<ApiResponse<TokenModel>> refreshToken() async{
-    return await ApiClient.post<TokenModel>(
-      "$_baseUrl/auth/refresh",
-      {},
+  static Future<ApiResponse<TokenModel>> refreshToken() async {
+    return await ApiClient.request<TokenModel>(
+      method: "POST",
+      url: "$_baseUrl/auth/refresh-token",
+      body: {},
+      retry: false,
+      fromJsonT: (json) => TokenModel.fromJson(json),
     );
   }
 

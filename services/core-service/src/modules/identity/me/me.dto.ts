@@ -38,7 +38,7 @@ export const UserFollowingShopSchema = z.object({
 
   limit: z.coerce.number().int().min(1).max(100).default(10),
 
-  shopId: z.string(),
+  shopId: z.string().optional(),
 
   search: z.string().optional(),
 

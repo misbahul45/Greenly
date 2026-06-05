@@ -158,7 +158,7 @@ class _CategoryCard extends StatelessWidget {
       onTap: () => Navigator.pushNamed(
         context,
         AppRoutes.categoryProducts,
-        arguments: {'category': category.slug},
+        arguments: {'categoryId': category.id, 'categoryName': category.name},
       ),
       child: Container(
         decoration: BoxDecoration(

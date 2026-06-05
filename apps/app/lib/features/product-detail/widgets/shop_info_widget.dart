@@ -1,3 +1,4 @@
+import 'package:app/core/router/app_routes.dart';
 import 'package:app/core/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 
@@ -50,9 +51,13 @@ class ShopInfoWidget extends StatelessWidget {
             ),
           ),
           TextButton(
-            onPressed: () {
-              // Navigate to shop
-            },
+            onPressed: shopId.isEmpty
+                ? null
+                : () => Navigator.pushNamed(
+                    context,
+                    AppRoutes.shopDetail,
+                    arguments: {'shopId': shopId},
+                  ),
             child: const Text('Kunjungi'),
           ),
         ],
