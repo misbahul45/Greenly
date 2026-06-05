@@ -4,8 +4,11 @@ import 'package:app/core/theme/app_theme.dart';
 import 'package:app/core/utils/currency_helper.dart';
 import 'package:app/features/cart/domain/data/cart_item_data.dart';
 import 'package:app/features/cart/presentation/bloc/cart_bloc.dart';
+import 'package:app/features/Main/features/profile/domain/data/profile_detail_data.dart';
 import 'package:app/features/order/domain/dto/checkout_dto.dart';
 import 'package:app/features/order/service/order_service.dart';
+import 'package:app/shared/services/me_service.dart';
+import 'package:app/shared/widgets/skeleton/cart_skeleton.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -65,7 +68,7 @@ class CartScreen extends StatelessWidget {
         },
         builder: (context, state) {
           if (state.isLoading) {
-            return const Center(child: CircularProgressIndicator());
+            return const CartSkeleton();
           }
 
           final groups = state.cart?.groupedByShop ?? const [];
@@ -432,18 +435,17 @@ class _CheckoutSheet extends StatefulWidget {
 }
 
 class _CheckoutSheetState extends State<_CheckoutSheet> {
-  static const _methods = <(String, String, IconData)>[
-    ('bank_transfer', 'Transfer Bank', Icons.account_balance_rounded),
-    ('gopay', 'GoPay', Icons.account_balance_wallet_rounded),
-    ('ovo', 'OVO', Icons.account_balance_wallet_outlined),
-    ('dana', 'DANA', Icons.payments_rounded),
-    ('credit_card', 'Kartu Kredit', Icons.credit_card_rounded),
-  ];
-
   final _promoController = TextEditingController();
   final _orderService = OrderService();
-  String _method = 'bank_transfer';
+  ProfileDetailData? _profile;
+  bool _loadingAddress = true;
   bool _loading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProfile();
+  }
 
   @override
   void dispose() {
@@ -451,7 +453,40 @@ class _CheckoutSheetState extends State<_CheckoutSheet> {
     super.dispose();
   }
 
+  Future<void> _loadProfile() async {
+    final res = await MeService.getProfileDetail();
+    if (!mounted) return;
+    setState(() {
+      _profile = res.data;
+      _loadingAddress = false;
+    });
+  }
+
   Future<void> _submit() async {
+    final invalidItem = widget.group.items.any(
+      (item) => item.productPrice == null || item.productPrice! <= 0,
+    );
+    if (invalidItem) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Data harga produk belum lengkap'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    final shippingAddress = _shippingAddress;
+    if (shippingAddress == null || shippingAddress.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Lengkapi alamat pengiriman di profil terlebih dahulu'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
     setState(() => _loading = true);
 
     final res = await _orderService.checkout(
@@ -459,10 +494,23 @@ class _CheckoutSheetState extends State<_CheckoutSheet> {
         shopId: widget.group.shopId,
         shopName: widget.group.shopName,
         itemIds: widget.group.productIds,
-        paymentMethod: _method,
+        paymentMethod: 'STRIPE',
         promoCode: _promoController.text.trim().isEmpty
             ? null
             : _promoController.text.trim(),
+        shippingAddress: shippingAddress,
+        items: widget.group.items
+            .map(
+              (item) => CheckoutItemSnapshotDto(
+                productId: item.productId,
+                productName: item.productName?.isNotEmpty == true
+                    ? item.productName!
+                    : 'Produk',
+                price: item.productPrice ?? 0,
+                quantity: item.quantity,
+              ),
+            )
+            .toList(),
       ),
     );
 
@@ -472,167 +520,284 @@ class _CheckoutSheetState extends State<_CheckoutSheet> {
     final messenger = ScaffoldMessenger.of(context);
     final navigator = Navigator.of(context);
 
-    if (res.isSuccess) {
-      widget.cartBloc.add(CartLoadRequested());
+    final data = res.data;
+    final paymentUrl = data?.paymentUrl;
+
+    if (res.isSuccess &&
+        data != null &&
+        paymentUrl != null &&
+        paymentUrl.isNotEmpty) {
+      final orderId = data.orderId;
+      final rootNavigator = Navigator.of(context, rootNavigator: true);
       navigator.pop();
-      messenger.showSnackBar(
-        SnackBar(
-          content: const Text('Checkout berhasil'),
-          backgroundColor: AppTheme.primaryColor,
-          action: SnackBarAction(
-            label: 'Lihat Pesanan',
-            textColor: Colors.white,
-            onPressed: () => navigator.pushNamed(AppRoutes.orders),
-          ),
-        ),
+      final result = await rootNavigator.pushNamed(
+        AppRoutes.paymentWebview,
+        arguments: {'paymentUrl': paymentUrl, 'orderId': orderId},
       );
+      widget.cartBloc.add(CartLoadRequested());
+      if (result == true) {
+        messenger.showSnackBar(
+          const SnackBar(
+            content: Text('Pembayaran sedang diverifikasi'),
+            backgroundColor: AppTheme.primaryColor,
+          ),
+        );
+      }
+      rootNavigator.pushNamed(AppRoutes.orderDetail, arguments: orderId);
     } else {
       messenger.showSnackBar(
-        SnackBar(content: Text(res.message), backgroundColor: Colors.red),
+        SnackBar(
+          content: Text(
+            res.isSuccess ? 'Link pembayaran tidak tersedia' : res.message,
+          ),
+          backgroundColor: Colors.red,
+        ),
       );
     }
   }
 
+  String? get _shippingAddress {
+    final data = _profile?.addressData;
+    if (data != null && data.composed.trim().isNotEmpty) {
+      return data.composed.trim();
+    }
+    final address = _profile?.address?.trim();
+    return address?.isNotEmpty == true ? address : null;
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.only(
-        left: UIConstants.paddingL,
-        right: UIConstants.paddingL,
-        top: UIConstants.paddingL,
-        bottom: MediaQuery.of(context).viewInsets.bottom + UIConstants.paddingL,
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Center(
-            child: Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: Colors.grey[300],
-                borderRadius: BorderRadius.circular(2),
+    final address = _shippingAddress;
+    final hasAddress = address != null && address.isNotEmpty;
+
+    return SafeArea(
+      child: SingleChildScrollView(
+        padding: EdgeInsets.only(
+          left: UIConstants.paddingL,
+          right: UIConstants.paddingL,
+          top: UIConstants.paddingL,
+          bottom:
+              MediaQuery.of(context).viewInsets.bottom + UIConstants.paddingL,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(2),
+                ),
               ),
             ),
-          ),
-          const SizedBox(height: UIConstants.spacingL),
-          Text(
-            'Checkout · ${widget.group.shopName}',
-            style: const TextStyle(
-              fontSize: UIConstants.fontSizeXL,
-              fontWeight: FontWeight.w800,
+            const SizedBox(height: UIConstants.spacingL),
+            Text(
+              'Checkout · ${widget.group.shopName}',
+              style: const TextStyle(
+                fontSize: UIConstants.fontSizeXL,
+                fontWeight: FontWeight.w800,
+              ),
             ),
-          ),
-          const SizedBox(height: UIConstants.spacingXS),
-          Text(
-            '${widget.group.totalQuantity} item · ${CurrencyHelper.formatRupiah(widget.group.subtotal)}',
-            style: TextStyle(
-              fontSize: UIConstants.fontSizeM,
-              color: Colors.grey[600],
+            const SizedBox(height: UIConstants.spacingXS),
+            Text(
+              '${widget.group.totalQuantity} item · ${CurrencyHelper.formatRupiah(widget.group.subtotal)}',
+              style: TextStyle(
+                fontSize: UIConstants.fontSizeM,
+                color: Colors.grey[600],
+              ),
             ),
-          ),
-          const SizedBox(height: UIConstants.spacingL),
-          const Text(
-            'Metode Pembayaran',
-            style: TextStyle(
-              fontSize: UIConstants.fontSizeM,
-              fontWeight: FontWeight.w700,
+            const SizedBox(height: UIConstants.spacingL),
+            const Text(
+              'Alamat Pengiriman',
+              style: TextStyle(
+                fontSize: UIConstants.fontSizeM,
+                fontWeight: FontWeight.w700,
+              ),
             ),
-          ),
-          const SizedBox(height: UIConstants.spacingS),
-          ..._methods.map((m) {
-            final selected = _method == m.$1;
-            return GestureDetector(
-              onTap: _loading ? null : () => setState(() => _method = m.$1),
-              child: Container(
-                margin: const EdgeInsets.only(bottom: UIConstants.spacingS),
-                padding: const EdgeInsets.all(UIConstants.paddingM),
-                decoration: BoxDecoration(
-                  color: selected
-                      ? AppTheme.primaryColor.withValues(alpha: 0.06)
-                      : Colors.white,
-                  borderRadius: BorderRadius.circular(UIConstants.radiusM),
-                  border: Border.all(
-                    color: selected
-                        ? AppTheme.primaryColor
-                        : Colors.grey.shade200,
-                    width: selected ? 1.5 : 1,
-                  ),
+            const SizedBox(height: UIConstants.spacingS),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(UIConstants.paddingM),
+              decoration: BoxDecoration(
+                color: hasAddress
+                    ? AppTheme.primaryColor.withValues(alpha: 0.05)
+                    : Colors.red.withValues(alpha: 0.05),
+                borderRadius: BorderRadius.circular(UIConstants.radiusM),
+                border: Border.all(
+                  color: hasAddress
+                      ? AppTheme.primaryColor.withValues(alpha: 0.25)
+                      : Colors.red.withValues(alpha: 0.25),
                 ),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(
+                    Icons.location_on_outlined,
+                    size: 20,
+                    color: hasAddress ? AppTheme.primaryColor : Colors.red,
+                  ),
+                  const SizedBox(width: UIConstants.spacingS),
+                  Expanded(
+                    child: _loadingAddress
+                        ? Text(
+                            'Memuat alamat...',
+                            style: TextStyle(
+                              fontSize: UIConstants.fontSizeM,
+                              color: Colors.grey[600],
+                            ),
+                          )
+                        : Text(
+                            hasAddress
+                                ? address
+                                : 'Alamat belum tersedia. Tambahkan alamat dari halaman profil.',
+                            style: TextStyle(
+                              fontSize: UIConstants.fontSizeM,
+                              color: hasAddress ? Colors.black87 : Colors.red,
+                              height: 1.4,
+                            ),
+                          ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: UIConstants.spacingL),
+            const Text(
+              'Ringkasan Item',
+              style: TextStyle(
+                fontSize: UIConstants.fontSizeM,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: UIConstants.spacingS),
+            ...widget.group.items.map(
+              (item) => Padding(
+                padding: const EdgeInsets.only(bottom: UIConstants.spacingS),
                 child: Row(
                   children: [
-                    Icon(
-                      m.$3,
-                      size: 20,
-                      color: selected
-                          ? AppTheme.primaryColor
-                          : Colors.grey[500],
-                    ),
-                    const SizedBox(width: UIConstants.spacingM),
                     Expanded(
                       child: Text(
-                        m.$2,
-                        style: TextStyle(
-                          fontSize: UIConstants.fontSizeM,
-                          fontWeight: selected
-                              ? FontWeight.w700
-                              : FontWeight.w500,
-                        ),
+                        '${item.quantity}x ${item.productName ?? 'Produk'}',
+                        style: const TextStyle(fontSize: UIConstants.fontSizeM),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                    if (selected)
-                      const Icon(
-                        Icons.check_circle_rounded,
-                        size: 18,
-                        color: AppTheme.primaryColor,
+                    const SizedBox(width: UIConstants.spacingS),
+                    Text(
+                      CurrencyHelper.formatRupiah(item.lineTotal),
+                      style: const TextStyle(
+                        fontSize: UIConstants.fontSizeM,
+                        fontWeight: FontWeight.w600,
                       ),
+                    ),
                   ],
                 ),
               ),
-            );
-          }),
-          const SizedBox(height: UIConstants.spacingS),
-          TextField(
-            controller: _promoController,
-            enabled: !_loading,
-            decoration: InputDecoration(
-              hintText: 'Kode promo (opsional)',
-              prefixIcon: const Icon(Icons.local_offer_outlined, size: 18),
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: UIConstants.paddingM,
-                vertical: 12,
-              ),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(UIConstants.radiusM),
+            ),
+            const Divider(height: UIConstants.spacingL),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'Subtotal',
+                  style: TextStyle(fontSize: UIConstants.fontSizeM),
+                ),
+                Text(
+                  CurrencyHelper.formatRupiah(widget.group.subtotal),
+                  style: const TextStyle(
+                    fontSize: UIConstants.fontSizeM,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: UIConstants.spacingL),
+            const Text(
+              'Metode Pembayaran',
+              style: TextStyle(
+                fontSize: UIConstants.fontSizeM,
+                fontWeight: FontWeight.w700,
               ),
             ),
-          ),
-          const SizedBox(height: UIConstants.spacingL),
-          SizedBox(
-            width: double.infinity,
-            height: UIConstants.buttonHeight,
-            child: ElevatedButton(
-              onPressed: _loading ? null : _submit,
-              child: _loading
-                  ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: Colors.white,
-                      ),
-                    )
-                  : const Text(
-                      'Bayar Sekarang',
+            const SizedBox(height: UIConstants.spacingS),
+            Container(
+              padding: const EdgeInsets.all(UIConstants.paddingM),
+              decoration: BoxDecoration(
+                color: AppTheme.primaryColor.withValues(alpha: 0.06),
+                borderRadius: BorderRadius.circular(UIConstants.radiusM),
+                border: Border.all(color: AppTheme.primaryColor),
+              ),
+              child: const Row(
+                children: [
+                  Icon(
+                    Icons.credit_card_rounded,
+                    size: 20,
+                    color: AppTheme.primaryColor,
+                  ),
+                  SizedBox(width: UIConstants.spacingM),
+                  Expanded(
+                    child: Text(
+                      'Stripe',
                       style: TextStyle(
-                        fontSize: UIConstants.fontSizeL,
+                        fontSize: UIConstants.fontSizeM,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
+                  ),
+                  Icon(
+                    Icons.check_circle_rounded,
+                    size: 18,
+                    color: AppTheme.primaryColor,
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+            const SizedBox(height: UIConstants.spacingS),
+            TextField(
+              controller: _promoController,
+              enabled: !_loading,
+              decoration: InputDecoration(
+                hintText: 'Kode promo (opsional)',
+                prefixIcon: const Icon(Icons.local_offer_outlined, size: 18),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: UIConstants.paddingM,
+                  vertical: 12,
+                ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(UIConstants.radiusM),
+                ),
+              ),
+            ),
+            const SizedBox(height: UIConstants.spacingL),
+            SizedBox(
+              width: double.infinity,
+              height: UIConstants.buttonHeight,
+              child: ElevatedButton(
+                onPressed: _loading || _loadingAddress ? null : _submit,
+                child: _loading
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : const Text(
+                        'Bayar dengan Stripe',
+                        style: TextStyle(
+                          fontSize: UIConstants.fontSizeL,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

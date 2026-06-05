@@ -4,6 +4,7 @@ import 'package:app/core/constants/ui_constants.dart';
 import 'package:app/core/router/app_routes.dart';
 import 'package:app/core/theme/app_theme.dart';
 import 'package:app/features/Main/features/chat/chat_service.dart';
+import 'package:app/shared/widgets/skeleton/chat_skeleton.dart';
 import 'package:flutter/material.dart';
 
 class ChatScreen extends StatefulWidget {
@@ -229,7 +230,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
   Widget _buildBody() {
     if (_loading) {
-      return const Center(child: CircularProgressIndicator());
+      return ChatSkeleton(showProductContext: _hasProductContext);
     }
 
     if (_error != null && _messages.isEmpty) {

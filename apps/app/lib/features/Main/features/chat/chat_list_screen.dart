@@ -2,6 +2,7 @@ import 'package:app/core/constants/ui_constants.dart';
 import 'package:app/core/router/app_routes.dart';
 import 'package:app/core/theme/app_theme.dart';
 import 'package:app/features/Main/features/chat/chat_service.dart';
+import 'package:app/shared/widgets/skeleton/chat_skeleton.dart';
 import 'package:flutter/material.dart';
 
 class ChatListScreen extends StatefulWidget {
@@ -58,7 +59,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
       future: _future,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
+          return const ChatListSkeleton();
         }
 
         final conversations = snapshot.data ?? [];

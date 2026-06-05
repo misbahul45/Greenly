@@ -7,6 +7,7 @@ import 'package:app/features/order/domain/dto/checkout_dto.dart';
 class OrderService {
   static String get _ordersBase => '${ENV.api}/core/orders';
   static String get _checkoutBase => '${ENV.api}/core/checkout';
+  static String get _stripeBase => '${ENV.api}/core/payments/stripe';
 
   Future<ApiResponse<List<OrderData>>> getMyOrders({
     int page = 1,
@@ -35,6 +36,14 @@ class OrderService {
     return ApiClient.post<CheckoutResultData>(
       _checkoutBase,
       dto.toJson(),
+      fromJsonT: (json) => CheckoutResultData.fromJson(json),
+    );
+  }
+
+  Future<ApiResponse<CheckoutResultData>> resumePayment(String orderId) {
+    return ApiClient.post<CheckoutResultData>(
+      '$_stripeBase/create-intent',
+      {'orderId': orderId},
       fromJsonT: (json) => CheckoutResultData.fromJson(json),
     );
   }

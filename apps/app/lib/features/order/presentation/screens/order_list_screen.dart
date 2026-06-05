@@ -6,6 +6,7 @@ import 'package:app/features/order/domain/data/order_data.dart';
 import 'package:app/features/order/presentation/bloc/order_bloc.dart';
 import 'package:app/features/order/presentation/widgets/order_status_badge.dart';
 import 'package:app/features/order/service/order_service.dart';
+import 'package:app/shared/widgets/skeleton/order_skeleton.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
@@ -79,7 +80,7 @@ class _OrderListScreenState extends State<OrderListScreen> {
               child: BlocBuilder<OrderBloc, OrderState>(
                 builder: (context, state) {
                   if (state.isLoading) {
-                    return const Center(child: CircularProgressIndicator());
+                    return const OrderListSkeleton();
                   }
 
                   if (state.error != null && state.data.isEmpty) {
@@ -108,10 +109,7 @@ class _OrderListScreenState extends State<OrderListScreen> {
                           const SizedBox(height: UIConstants.spacingS),
                       itemBuilder: (context, i) {
                         if (i >= state.data.length) {
-                          return const Padding(
-                            padding: EdgeInsets.all(UIConstants.paddingM),
-                            child: Center(child: CircularProgressIndicator()),
-                          );
+                          return const OrderCardSkeleton();
                         }
                         return _OrderCard(order: state.data[i]);
                       },

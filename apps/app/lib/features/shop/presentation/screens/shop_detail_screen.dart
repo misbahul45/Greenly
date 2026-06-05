@@ -7,6 +7,7 @@ import 'package:app/features/products/service/product_list_service.dart';
 import 'package:app/features/shop/presentation/bloc/shop_detail_bloc.dart';
 import 'package:app/features/shop/service/shop_service.dart';
 import 'package:app/shared/widgets/cart_button_widget.dart';
+import 'package:app/shared/widgets/skeleton/shop_skeleton.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -100,14 +101,33 @@ class _ShopDetailScreenState extends State<ShopDetailScreen> {
           },
           builder: (context, shopState) {
             if (shopState.isLoading && shopState.shop == null) {
-              return const Center(child: CircularProgressIndicator());
+              return const ShopDetailSkeleton();
             }
 
             if (shopState.shop == null) {
               return Center(
-                child: Text(
-                  shopState.error ?? 'Toko tidak ditemukan',
-                  style: TextStyle(color: Colors.grey[600]),
+                child: Padding(
+                  padding: const EdgeInsets.all(UIConstants.paddingL),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        shopState.error ?? 'Toko tidak ditemukan',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(color: Colors.grey[600]),
+                      ),
+                      const SizedBox(height: UIConstants.spacingM),
+                      ElevatedButton(
+                        onPressed: () => context.read<ShopDetailBloc>().add(
+                          ShopDetailRequested(
+                            widget.shopId,
+                            initiallyFollowing: widget.initiallyFollowing,
+                          ),
+                        ),
+                        child: const Text('Coba Lagi'),
+                      ),
+                    ],
+                  ),
                 ),
               );
             }
@@ -146,12 +166,7 @@ class _ShopDetailScreenState extends State<ShopDetailScreen> {
     return BlocBuilder<ProductListBloc, ProductListState>(
       builder: (context, state) {
         if (state.isLoading) {
-          return const SliverToBoxAdapter(
-            child: Padding(
-              padding: EdgeInsets.all(UIConstants.paddingXL),
-              child: Center(child: CircularProgressIndicator()),
-            ),
-          );
+          return const ShopProductGridSkeleton();
         }
 
         if (state.data.isEmpty) {

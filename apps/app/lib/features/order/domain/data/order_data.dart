@@ -2,7 +2,9 @@ int _toInt(dynamic value) {
   if (value == null) return 0;
   if (value is int) return value;
   if (value is num) return value.toInt();
-  return int.tryParse(value.toString()) ?? num.tryParse(value.toString())?.toInt() ?? 0;
+  return int.tryParse(value.toString()) ??
+      num.tryParse(value.toString())?.toInt() ??
+      0;
 }
 
 class OrderItemData {
@@ -35,16 +37,24 @@ class OrderPaymentData {
   final String id;
   final String status;
   final String method;
+  final String provider;
   final int grossAmount;
   final int netAmount;
+  final String? paymentUrl;
+  final String? checkoutSessionId;
+  final String? stripePaymentIntentId;
   final DateTime? paidAt;
 
   const OrderPaymentData({
     required this.id,
     required this.status,
     required this.method,
+    this.provider = '',
     required this.grossAmount,
     required this.netAmount,
+    this.paymentUrl,
+    this.checkoutSessionId,
+    this.stripePaymentIntentId,
     this.paidAt,
   });
 
@@ -53,8 +63,13 @@ class OrderPaymentData {
       id: json['id']?.toString() ?? '',
       status: json['status']?.toString() ?? '',
       method: json['method']?.toString() ?? '',
+      provider:
+          json['provider']?.toString() ?? json['method']?.toString() ?? '',
       grossAmount: _toInt(json['grossAmount']),
       netAmount: _toInt(json['netAmount']),
+      paymentUrl: json['paymentUrl']?.toString(),
+      checkoutSessionId: json['checkoutSessionId']?.toString(),
+      stripePaymentIntentId: json['stripePaymentIntentId']?.toString(),
       paidAt: json['paidAt'] != null
           ? DateTime.tryParse(json['paidAt'].toString())
           : null,
@@ -83,8 +98,7 @@ class OrderData {
     this.payment,
   });
 
-  int get totalQuantity =>
-      items.fold(0, (sum, item) => sum + item.quantity);
+  int get totalQuantity => items.fold(0, (sum, item) => sum + item.quantity);
 
   factory OrderData.fromJson(Map<String, dynamic> json) {
     final rawItems = json['items'];

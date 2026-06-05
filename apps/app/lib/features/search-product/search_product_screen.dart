@@ -1,7 +1,8 @@
 import 'package:app/core/constants/ui_constants.dart';
 import 'package:app/core/router/app_routes.dart';
 import 'package:app/core/theme/app_theme.dart';
-import 'package:app/features/Main/features/home/bloc/home_bloc.dart';
+import 'package:app/features/Main/features/home/domains/data/category_data.dart';
+import 'package:app/features/Main/features/home/home_service.dart';
 import 'package:app/features/search-product/bloc/search_product_bloc.dart';
 import 'package:app/features/search-product/domain/data/search_product_result.dart';
 import 'package:app/features/search-product/domain/dto/search_product_filter.dart';
@@ -10,6 +11,7 @@ import 'package:app/features/search-product/widgets/search_bar_widget.dart';
 import 'package:app/features/search-product/widgets/search_filter_sheet.dart';
 import 'package:app/features/search-product/widgets/search_history_widget.dart';
 import 'package:app/features/search-product/widgets/search_result_card.dart';
+import 'package:app/shared/widgets/skeleton/search_result_skeleton.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -36,6 +38,22 @@ class _SearchView extends StatefulWidget {
 
 class _SearchViewState extends State<_SearchView> {
   final TextEditingController _ctrl = TextEditingController();
+  final HomeService _homeService = HomeService();
+  List<CategoryData> _categories = const [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadCategories();
+  }
+
+  Future<void> _loadCategories() async {
+    final res = await _homeService.getCategories(page: 1, limit: 50);
+    if (!mounted || !res.isSuccess) return;
+    setState(() {
+      _categories = res.data?.data ?? const [];
+    });
+  }
 
   @override
   void dispose() {
@@ -52,7 +70,6 @@ class _SearchViewState extends State<_SearchView> {
 
   Future<void> _openFilter() async {
     final bloc = context.read<SearchProductBloc>();
-    final homeState = context.read<HomeBloc>().state;
     final result = await showModalBottomSheet<SearchProductFilter>(
       context: context,
       isScrollControlled: true,
@@ -63,7 +80,7 @@ class _SearchViewState extends State<_SearchView> {
       ),
       builder: (_) => SearchFilterSheet(
         current: bloc.state.filter,
-        categories: homeState.category.data,
+        categories: _categories,
       ),
     );
     if (result != null && mounted) {
@@ -109,8 +126,7 @@ class _SearchViewState extends State<_SearchView> {
 
               String? categoryName;
               if (state.filter.categoryId != null) {
-                final cats = context.read<HomeBloc>().state.category.data;
-                final matches = cats
+                final matches = _categories
                     .where((c) => c.id == state.filter.categoryId)
                     .toList();
                 categoryName = matches.isNotEmpty
@@ -153,9 +169,7 @@ class _SearchViewState extends State<_SearchView> {
           Expanded(
             child: BlocBuilder<SearchProductBloc, SearchProductState>(
               builder: (context, state) => switch (state.status) {
-                SearchStatus.loading => const Center(
-                  child: CircularProgressIndicator(),
-                ),
+                SearchStatus.loading => const SearchResultSkeletonList(),
                 SearchStatus.error => _ErrorView(
                   message: state.error ?? 'Terjadi kesalahan',
                   onRetry: () => context.read<SearchProductBloc>().add(

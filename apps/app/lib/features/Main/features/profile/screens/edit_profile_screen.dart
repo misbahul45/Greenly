@@ -1,9 +1,12 @@
 import 'package:app/core/constants/ui_constants.dart';
 import 'package:app/core/theme/app_theme.dart';
+import 'package:app/features/Main/features/profile/domain/data/profile_detail_data.dart';
+import 'package:app/features/Main/features/profile/widgets/address_form_section_widget.dart';
 import 'package:app/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:app/features/auth/presentation/bloc/auth_event.dart';
 import 'package:app/shared/domains/dto/update_profile_dto.dart';
 import 'package:app/shared/services/me_service.dart';
+import 'package:app/shared/widgets/skeleton/profile_skeleton.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -18,8 +21,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _phoneController = TextEditingController();
-  final _addressController = TextEditingController();
   final _avatarController = TextEditingController();
+  final _receiverNameController = TextEditingController();
+  final _addressLineController = TextEditingController();
+  final _cityController = TextEditingController();
+  final _provinceController = TextEditingController();
+  final _postalCodeController = TextEditingController();
+  final _notesController = TextEditingController();
 
   bool _loading = true;
   bool _saving = false;
@@ -36,10 +44,16 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     if (!mounted) return;
     if (res.isSuccess && res.data != null) {
       final p = res.data!;
+      final address = p.addressData;
       _nameController.text = p.fullName;
-      _phoneController.text = p.phone ?? '';
-      _addressController.text = p.address ?? '';
+      _phoneController.text = address.phone ?? p.phone ?? '';
       _avatarController.text = p.avatarUrl ?? '';
+      _receiverNameController.text = address.receiverName ?? p.fullName;
+      _addressLineController.text = address.addressLine ?? p.address ?? '';
+      _cityController.text = address.city ?? '';
+      _provinceController.text = address.province ?? '';
+      _postalCodeController.text = address.postalCode ?? '';
+      _notesController.text = address.notes ?? '';
       _avatarPreview = p.avatarUrl ?? '';
     }
     setState(() => _loading = false);
@@ -49,8 +63,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   void dispose() {
     _nameController.dispose();
     _phoneController.dispose();
-    _addressController.dispose();
     _avatarController.dispose();
+    _receiverNameController.dispose();
+    _addressLineController.dispose();
+    _cityController.dispose();
+    _provinceController.dispose();
+    _postalCodeController.dispose();
+    _notesController.dispose();
     super.dispose();
   }
 
@@ -58,12 +77,28 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _saving = true);
 
+    final address = ProfileAddressData(
+      receiverName: _receiverNameController.text.trim(),
+      phone: _phoneController.text.trim(),
+      addressLine: _addressLineController.text.trim(),
+      city: _cityController.text.trim(),
+      province: _provinceController.text.trim(),
+      postalCode: _postalCodeController.text.trim(),
+      notes: _notesController.text.trim(),
+    );
+
     final res = await MeService.updateProfile(
       UpdateProfileDto(
         name: _nameController.text.trim(),
         phone: _phoneController.text.trim(),
-        address: _addressController.text.trim(),
+        address: address.composed,
         avatarUrl: _avatarController.text.trim(),
+        receiverName: _receiverNameController.text.trim(),
+        addressLine: _addressLineController.text.trim(),
+        city: _cityController.text.trim(),
+        province: _provinceController.text.trim(),
+        postalCode: _postalCodeController.text.trim(),
+        notes: _notesController.text.trim(),
       ),
     );
 
@@ -78,7 +113,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       navigator.pop();
       messenger.showSnackBar(
         const SnackBar(
-          content: Text('Profil berhasil diperbarui'),
+          content: Text('Profil dan alamat berhasil diperbarui'),
           backgroundColor: AppTheme.primaryColor,
         ),
       );
@@ -107,7 +142,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         ),
       ),
       body: _loading
-          ? const Center(child: CircularProgressIndicator())
+          ? const EditProfileSkeleton()
           : SingleChildScrollView(
               padding: const EdgeInsets.all(UIConstants.paddingL),
               child: Form(
@@ -122,25 +157,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       controller: _nameController,
                       hint: 'Masukkan nama lengkap',
                       icon: Icons.person_outline_rounded,
+                      enabled: !_saving,
                       validator: (v) => (v == null || v.trim().length < 3)
                           ? 'Nama minimal 3 karakter'
                           : null,
-                    ),
-                    const SizedBox(height: UIConstants.spacingL),
-                    _label('Telepon'),
-                    _field(
-                      controller: _phoneController,
-                      hint: '08xxxxxxxxxx',
-                      icon: Icons.phone_outlined,
-                      keyboardType: TextInputType.phone,
-                    ),
-                    const SizedBox(height: UIConstants.spacingL),
-                    _label('Alamat'),
-                    _field(
-                      controller: _addressController,
-                      hint: 'Masukkan alamat',
-                      icon: Icons.location_on_outlined,
-                      maxLines: 2,
                     ),
                     const SizedBox(height: UIConstants.spacingL),
                     _label('URL Foto Profil'),
@@ -148,9 +168,21 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       controller: _avatarController,
                       hint: 'https://...',
                       icon: Icons.image_outlined,
+                      enabled: !_saving,
                       keyboardType: TextInputType.url,
                       onChanged: (v) =>
                           setState(() => _avatarPreview = v.trim()),
+                    ),
+                    const SizedBox(height: UIConstants.spacingXXL),
+                    AddressFormSectionWidget(
+                      receiverNameController: _receiverNameController,
+                      phoneController: _phoneController,
+                      addressLineController: _addressLineController,
+                      cityController: _cityController,
+                      provinceController: _provinceController,
+                      postalCodeController: _postalCodeController,
+                      notesController: _notesController,
+                      enabled: !_saving,
                     ),
                     const SizedBox(height: UIConstants.spacingXXXL),
                     SizedBox(
@@ -236,9 +268,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     TextInputType? keyboardType,
     int maxLines = 1,
     void Function(String)? onChanged,
+    bool enabled = true,
   }) {
     return TextFormField(
       controller: controller,
+      enabled: enabled,
       validator: validator,
       keyboardType: keyboardType,
       maxLines: maxLines,

@@ -103,6 +103,13 @@ services:
       JWT_ACCESS_EXPIRES: 30d
       JWT_REFRESH_EXPIRES: 30d
       API_URL: http://localhost/api/core
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
+      STRIPE_PUBLISHABLE_KEY: ${STRIPE_PUBLISHABLE_KEY:-}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
+      STRIPE_SUCCESS_URL: ${STRIPE_SUCCESS_URL:-http://localhost/payment-success?session_id={CHECKOUT_SESSION_ID}}
+      STRIPE_CANCEL_URL: ${STRIPE_CANCEL_URL:-http://localhost/payment-cancel?session_id={CHECKOUT_SESSION_ID}}
+      STRIPE_CURRENCY: ${STRIPE_CURRENCY:-idr}
+      STRIPE_CHECKOUT_EXPIRES_HOURS: ${STRIPE_CHECKOUT_EXPIRES_HOURS:-24}
 
     develop:
       watch:

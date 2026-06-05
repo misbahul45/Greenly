@@ -4,6 +4,7 @@ import 'package:app/core/theme/app_theme.dart';
 import 'package:app/features/shop/domain/data/shop_data.dart';
 import 'package:app/features/shop/presentation/bloc/following_shops_bloc.dart';
 import 'package:app/features/shop/service/shop_service.dart';
+import 'package:app/shared/widgets/skeleton/shop_skeleton.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -62,7 +63,7 @@ class _FollowingShopsScreenState extends State<FollowingShopsScreen> {
         body: BlocBuilder<FollowingShopsBloc, FollowingShopsState>(
           builder: (context, state) {
             if (state.isLoading) {
-              return const Center(child: CircularProgressIndicator());
+              return const FollowingShopsSkeleton();
             }
 
             if (state.data.isEmpty) {
@@ -79,10 +80,7 @@ class _FollowingShopsScreenState extends State<FollowingShopsScreen> {
                     const SizedBox(height: UIConstants.spacingS),
                 itemBuilder: (context, i) {
                   if (i >= state.data.length) {
-                    return const Padding(
-                      padding: EdgeInsets.all(UIConstants.paddingM),
-                      child: Center(child: CircularProgressIndicator()),
-                    );
+                    return const FollowingShopTileSkeleton();
                   }
                   return _ShopTile(shop: state.data[i]);
                 },

@@ -316,6 +316,9 @@ model Payment {
   method         String
   status         PaymentStatus @default(PENDING)
   transactionId  String?
+  paymentUrl     String?       @db.Text
+  stripeCheckoutSessionId String?
+  stripePaymentIntentId   String?
   createdAt      DateTime      @default(now())
   paidAt         DateTime?
   updatedAt      DateTime      @updatedAt
@@ -323,6 +326,9 @@ model Payment {
   order   Order    @relation(fields: [orderId], references: [id])
   refunds Refund[]
 
+  @@index([transactionId])
+  @@index([stripeCheckoutSessionId])
+  @@index([stripePaymentIntentId])
   @@map("payments")
 }
 

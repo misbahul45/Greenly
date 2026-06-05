@@ -10,6 +10,7 @@ import 'package:app/features/onboarding/presentation/screens/onboarding_coordina
 import 'package:app/features/onboarding/presentation/screens/splash_screen.dart';
 import 'package:app/features/order/presentation/screens/order_list_screen.dart';
 import 'package:app/features/order/presentation/screens/order_detail_screen.dart';
+import 'package:app/features/order/presentation/screens/payment_webview_screen.dart';
 import 'package:app/features/products/presentation/screens/product_list_screen.dart';
 import 'package:app/features/Main/features/profile/screens/edit_profile_screen.dart';
 import 'package:app/features/shop/presentation/screens/following_shops_screen.dart';
@@ -105,6 +106,21 @@ class RouterGenerate {
       case AppRoutes.orderDetail:
         final orderId = settings.arguments as String;
         return _page(OrderDetailScreen(orderId: orderId));
+
+      case AppRoutes.paymentWebview:
+        final args = (settings.arguments as Map?) ?? const {};
+        final paymentUrl = args['paymentUrl']?.toString() ?? '';
+        final orderId = args['orderId']?.toString() ?? '';
+        if (paymentUrl.isEmpty || orderId.isEmpty) {
+          return _page(
+            const Scaffold(
+              body: Center(child: Text('Data pembayaran tidak lengkap')),
+            ),
+          );
+        }
+        return _page(
+          PaymentWebViewScreen(paymentUrl: paymentUrl, orderId: orderId),
+        );
 
       case AppRoutes.editProfile:
         return _page(const EditProfileScreen());
