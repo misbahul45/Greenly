@@ -4,6 +4,7 @@ class ShopData {
   final String? description;
   final String status;
   final int followerCount;
+  final String? avatarUrl;
   final String? ownerName;
   final String? ownerAvatar;
 
@@ -13,12 +14,17 @@ class ShopData {
     this.description,
     required this.status,
     this.followerCount = 0,
+    this.avatarUrl,
     this.ownerName,
     this.ownerAvatar,
   });
 
   factory ShopData.fromJson(Map<String, dynamic> json) {
     final owner = json['owner'];
+    final ownerAvatar = owner is Map<String, dynamic>
+        ? owner['avatarUrl']?.toString()
+        : null;
+
     return ShopData(
       id: json['id']?.toString() ?? '',
       name: json['name']?.toString() ?? '',
@@ -27,12 +33,11 @@ class ShopData {
       followerCount: json['followerCount'] is int
           ? json['followerCount'] as int
           : int.tryParse('${json['followerCount']}') ?? 0,
+      avatarUrl: json['avatarUrl']?.toString() ?? ownerAvatar,
       ownerName: owner is Map<String, dynamic>
           ? owner['fullName']?.toString() ?? owner['email']?.toString()
           : null,
-      ownerAvatar: owner is Map<String, dynamic>
-          ? owner['avatarUrl']?.toString()
-          : null,
+      ownerAvatar: ownerAvatar,
     );
   }
 

@@ -6,8 +6,8 @@ import 'package:app/features/review/domain/data/my_review_data.dart';
 import 'package:app/features/review/domain/dto/review_dto.dart';
 
 class ReviewService {
-  static String get _base => '${ENV.API}/catalog/reviews';
-  static String get _catalogBase => '${ENV.API}/catalog';
+  static String get _base => '${ENV.api}/catalog/reviews';
+  static String get _catalogBase => '${ENV.api}/catalog';
 
   Future<({List<MyReviewData> items, bool hasMore, int page})> getMyReviews({
     int page = 1,

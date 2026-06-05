@@ -17,7 +17,7 @@ class IllustrationEco extends StatelessWidget {
             height: 200,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: AppTheme.tertiaryColor.withOpacity(0.25),
+              color: AppTheme.tertiaryColor.withValues(alpha: 0.25),
             ),
           ),
           Container(
@@ -25,7 +25,7 @@ class IllustrationEco extends StatelessWidget {
             height: 140,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: AppTheme.tertiaryColor.withOpacity(0.4),
+              color: AppTheme.tertiaryColor.withValues(alpha: 0.4),
             ),
           ),
           Container(

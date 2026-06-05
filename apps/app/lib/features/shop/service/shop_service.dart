@@ -4,8 +4,8 @@ import 'package:app/core/utils/api_response.dart';
 import 'package:app/features/shop/domain/data/shop_data.dart';
 
 class ShopService {
-  static String get _base => '${ENV.API}/core/shops';
-  static String get _meBase => '${ENV.API}/core/me';
+  static String get _base => '${ENV.api}/core/shops';
+  static String get _meBase => '${ENV.api}/core/me';
 
   Future<ApiResponse<ShopData>> getShopById(String id) {
     return ApiClient.get<ShopData>(

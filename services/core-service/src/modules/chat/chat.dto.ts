@@ -1,8 +1,10 @@
 import { z } from 'zod';
 
 export const CreateConversationSchema = z.object({
-  type: z.string().min(1).default('ASSISTANT'),
-  title: z.string().min(1).optional(),
+  type: z.enum(['SHOP']),
+  shopId: z.string().min(1),
+  title: z.string().min(1),
+  metadata: z.record(z.string(), z.any()).optional(),
 });
 
 export const ConversationParamSchema = z.object({
@@ -16,6 +18,8 @@ export const SendMessageSchema = z.object({
 export const ChatQuerySchema = z.object({
   page: z.coerce.number().int().positive().default(1),
   limit: z.coerce.number().int().positive().max(100).default(30),
+  type: z.enum(['SHOP']).optional(),
+  shopId: z.string().optional(),
 });
 
 export type CreateConversationDto = z.infer<typeof CreateConversationSchema>;

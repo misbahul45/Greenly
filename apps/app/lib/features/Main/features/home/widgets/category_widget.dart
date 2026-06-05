@@ -6,11 +6,7 @@ class CategoryWidget extends StatelessWidget {
   final String id;
   final String title;
 
-  const CategoryWidget({
-    super.key,
-    required this.id,
-    required this.title,
-  });
+  const CategoryWidget({super.key, required this.id, required this.title});
 
   @override
   Widget build(BuildContext context) {

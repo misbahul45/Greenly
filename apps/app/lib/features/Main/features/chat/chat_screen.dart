@@ -1,13 +1,30 @@
 import 'dart:async';
 
+import 'package:app/core/constants/ui_constants.dart';
 import 'package:app/core/router/app_routes.dart';
 import 'package:app/core/theme/app_theme.dart';
-import 'package:app/core/utils/currency_helper.dart';
 import 'package:app/features/Main/features/chat/chat_service.dart';
 import 'package:flutter/material.dart';
 
 class ChatScreen extends StatefulWidget {
-  const ChatScreen({super.key});
+  final String shopId;
+  final String shopName;
+  final String? shopAvatarUrl;
+  final String? productId;
+  final String? productName;
+  final String? productImageUrl;
+  final String? productSlug;
+
+  const ChatScreen({
+    super.key,
+    required this.shopId,
+    required this.shopName,
+    this.shopAvatarUrl,
+    this.productId,
+    this.productName,
+    this.productImageUrl,
+    this.productSlug,
+  }) : assert(shopId != '');
 
   @override
   State<ChatScreen> createState() => _ChatScreenState();
@@ -35,19 +52,33 @@ class _ChatScreenState extends State<ChatScreen> {
       _error = null;
     });
 
-    final conversations = await _service.getConversations();
-    ChatConversationData? conversation;
+    final conversations = await _service.getShopConversations(
+      shopId: widget.shopId,
+    );
 
+    ChatConversationData? conversation;
     if (conversations.isSuccess && (conversations.data?.isNotEmpty ?? false)) {
       conversation = conversations.data!.first;
-    } else {
-      final created = await _service.createConversation();
+    } else if (conversations.isSuccess) {
+      final created = await _service.createShopConversation(
+        shopId: widget.shopId,
+        shopName: widget.shopName,
+        productId: widget.productId,
+        productName: widget.productName,
+      );
       if (created.isSuccess) {
         conversation = created.data;
+      } else if (mounted) {
+        setState(() {
+          _loading = false;
+          _error = created.message;
+        });
+        return;
       }
     }
 
     if (conversation == null) {
+      if (!mounted) return;
       setState(() {
         _loading = false;
         _error = conversations.message;
@@ -56,10 +87,11 @@ class _ChatScreenState extends State<ChatScreen> {
     }
 
     final messages = await _service.getMessages(conversation.id);
+    if (!mounted) return;
 
     setState(() {
       _conversationId = conversation!.id;
-      _messages = messages.data ?? [];
+      _messages = _uniqueMessages(messages.data ?? []);
       _loading = false;
       _error = messages.isSuccess ? null : messages.message;
     });
@@ -73,29 +105,30 @@ class _ChatScreenState extends State<ChatScreen> {
     if (content.isEmpty || conversationId == null || _sending) return;
 
     _controller.clear();
+    final optimisticMessage = ChatMessageData(
+      id: 'local-${DateTime.now().microsecondsSinceEpoch}',
+      senderType: 'USER',
+      content: content,
+      createdAt: DateTime.now(),
+    );
+
     setState(() {
       _sending = true;
-      _messages = [
-        ..._messages,
-        ChatMessageData(
-          id: DateTime.now().microsecondsSinceEpoch.toString(),
-          senderType: 'USER',
-          content: content,
-          recommendations: const [],
-        ),
-      ];
+      _messages = _uniqueMessages([..._messages, optimisticMessage]);
     });
 
-    final response = await _service.sendMessage(
-      conversationId: conversationId,
-      content: content,
-    );
+    final response = await _service.sendMessage(conversationId, content);
+    if (!mounted) return;
 
     setState(() {
       _sending = false;
       if (response.isSuccess && response.data != null) {
         _messages = _uniqueMessages(response.data!.messages);
+        _error = null;
       } else {
+        _messages = _messages
+            .where((message) => message.id != optimisticMessage.id)
+            .toList();
         _error = response.message;
       }
     });
@@ -120,7 +153,16 @@ class _ChatScreenState extends State<ChatScreen> {
       mapped[message.id] = message;
     }
 
-    return mapped.values.toList();
+    final result = mapped.values.toList();
+    result.sort((a, b) {
+      final aDate = a.createdAt;
+      final bDate = b.createdAt;
+      if (aDate == null && bDate == null) return 0;
+      if (aDate == null) return -1;
+      if (bDate == null) return 1;
+      return aDate.compareTo(bDate);
+    });
+    return result;
   }
 
   @override
@@ -130,23 +172,104 @@ class _ChatScreenState extends State<ChatScreen> {
     super.dispose();
   }
 
+  void _openShopDetail() {
+    Navigator.pushNamed(
+      context,
+      AppRoutes.shopDetail,
+      arguments: {'shopId': widget.shopId},
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFFF6FAF6),
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0,
+        titleSpacing: 0,
+        title: InkWell(
+          onTap: _openShopDetail,
+          child: Row(
+            children: [
+              _ShopAvatar(imageUrl: widget.shopAvatarUrl, radius: 18),
+              const SizedBox(width: UIConstants.spacingS),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      widget.shopName,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: UIConstants.fontSizeL,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    Text(
+                      'Toko',
+                      style: TextStyle(
+                        fontSize: UIConstants.fontSizeXS,
+                        color: Colors.grey[600],
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+      body: _buildBody(),
+    );
+  }
+
+  Widget _buildBody() {
     if (_loading) {
       return const Center(child: CircularProgressIndicator());
     }
 
     if (_error != null && _messages.isEmpty) {
-      return Center(child: Text(_error!));
+      return _ErrorState(message: _error!, onRetry: _loadChat);
     }
 
     return Column(
       children: [
+        if (_hasProductContext)
+          _ProductContextCard(
+            productName: widget.productName,
+            productImageUrl: widget.productImageUrl,
+            productSlug: widget.productSlug,
+          ),
+        if (_error != null)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(
+              UIConstants.paddingM,
+              UIConstants.spacingS,
+              UIConstants.paddingM,
+              0,
+            ),
+            child: Text(
+              _error!,
+              style: const TextStyle(
+                color: Colors.red,
+                fontSize: UIConstants.fontSizeS,
+              ),
+            ),
+          ),
         Expanded(
           child: _messages.isEmpty
-              ? const Center(child: Text('Tanyakan produk ramah lingkungan'))
+              ? Center(
+                  child: Text(
+                    'Belum ada pesan',
+                    style: TextStyle(color: Colors.grey[600]),
+                  ),
+                )
               : ListView.builder(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(UIConstants.paddingM),
                   itemCount: _messages.length,
                   itemBuilder: (context, index) {
                     return _ChatBubble(message: _messages[index]);
@@ -155,8 +278,14 @@ class _ChatScreenState extends State<ChatScreen> {
         ),
         SafeArea(
           top: false,
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+          child: Container(
+            color: Colors.white,
+            padding: const EdgeInsets.fromLTRB(
+              UIConstants.paddingM,
+              UIConstants.spacingS,
+              UIConstants.paddingM,
+              UIConstants.spacingM,
+            ),
             child: Row(
               children: [
                 Expanded(
@@ -164,27 +293,28 @@ class _ChatScreenState extends State<ChatScreen> {
                     controller: _controller,
                     minLines: 1,
                     maxLines: 4,
-                    decoration: InputDecoration(
-                      hintText: 'Cari produk eco...',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 12,
+                    textInputAction: TextInputAction.send,
+                    decoration: const InputDecoration(
+                      hintText: 'Tulis pesan ke toko',
+                      contentPadding: EdgeInsets.symmetric(
+                        horizontal: UIConstants.paddingM,
+                        vertical: UIConstants.spacingM,
                       ),
                     ),
                     onSubmitted: (_) => _sendMessage(),
                   ),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: UIConstants.spacingS),
                 IconButton.filled(
                   onPressed: _sending ? null : _sendMessage,
                   icon: _sending
                       ? const SizedBox(
                           width: 18,
                           height: 18,
-                          child: CircularProgressIndicator(strokeWidth: 2),
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
                         )
                       : const Icon(Icons.send_rounded),
                 ),
@@ -195,6 +325,10 @@ class _ChatScreenState extends State<ChatScreen> {
       ],
     );
   }
+
+  bool get _hasProductContext {
+    return widget.productId != null && widget.productId!.isNotEmpty;
+  }
 }
 
 class _ChatBubble extends StatelessWidget {
@@ -204,111 +338,187 @@ class _ChatBubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isUser = message.senderType == 'USER';
+    final senderType = message.senderType.toUpperCase();
+    final isUser = senderType == 'USER' || senderType == 'BUYER';
+    final isSystem = senderType == 'SYSTEM';
+
+    if (isSystem) {
+      return Center(
+        child: Container(
+          margin: const EdgeInsets.only(bottom: UIConstants.spacingM),
+          padding: const EdgeInsets.symmetric(
+            horizontal: UIConstants.paddingM,
+            vertical: UIConstants.spacingS,
+          ),
+          decoration: BoxDecoration(
+            color: Colors.grey.shade200,
+            borderRadius: BorderRadius.circular(UIConstants.radiusL),
+          ),
+          child: Text(
+            message.content,
+            style: TextStyle(
+              color: Colors.grey[700],
+              fontSize: UIConstants.fontSizeS,
+            ),
+          ),
+        ),
+      );
+    }
 
     return Align(
       alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
       child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
+        margin: const EdgeInsets.only(bottom: UIConstants.spacingM),
         constraints: BoxConstraints(
-          maxWidth: MediaQuery.of(context).size.width * 0.82,
+          maxWidth: MediaQuery.of(context).size.width * 0.78,
         ),
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.all(UIConstants.paddingM),
         decoration: BoxDecoration(
-          color: isUser ? AppTheme.primaryColor : Colors.grey.shade100,
-          borderRadius: BorderRadius.circular(14),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              message.content,
-              style: TextStyle(
-                color: isUser ? Colors.white : Colors.black87,
-                fontWeight: FontWeight.w500,
-              ),
+          color: isUser ? AppTheme.primaryColor : Colors.white,
+          borderRadius: BorderRadius.only(
+            topLeft: const Radius.circular(UIConstants.radiusM),
+            topRight: const Radius.circular(UIConstants.radiusM),
+            bottomLeft: Radius.circular(
+              isUser ? UIConstants.radiusM : UIConstants.radiusS,
             ),
-            if (message.recommendations.isNotEmpty) ...[
-              const SizedBox(height: 10),
-              ...message.recommendations.map(
-                (product) => _RecommendationTile(product: product),
-              ),
-            ],
-          ],
+            bottomRight: Radius.circular(
+              isUser ? UIConstants.radiusS : UIConstants.radiusM,
+            ),
+          ),
+          border: isUser ? null : Border.all(color: Colors.grey.shade200),
+        ),
+        child: Text(
+          message.content,
+          style: TextStyle(
+            color: isUser ? Colors.white : Colors.black87,
+            fontSize: UIConstants.fontSizeM,
+            height: 1.35,
+          ),
         ),
       ),
     );
   }
 }
 
-class _RecommendationTile extends StatelessWidget {
-  final ChatProductRecommendation product;
+class _ProductContextCard extends StatelessWidget {
+  final String? productName;
+  final String? productImageUrl;
+  final String? productSlug;
 
-  const _RecommendationTile({required this.product});
+  const _ProductContextCard({
+    required this.productName,
+    required this.productImageUrl,
+    required this.productSlug,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: product.slug == null || product.slug!.isEmpty
-          ? null
-          : () {
-              Navigator.pushNamed(
-                context,
-                AppRoutes.productDetail,
-                arguments: product.slug,
-              );
-            },
-      child: Container(
-        margin: const EdgeInsets.only(top: 8),
-        padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: Row(
-          children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: product.imageUrl == null || product.imageUrl!.isEmpty
-                  ? Container(
-                      width: 48,
-                      height: 48,
-                      color: Colors.grey.shade100,
-                      child: const Icon(Icons.eco, color: AppTheme.primaryColor),
-                    )
-                  : Image.network(
-                      product.imageUrl!,
-                      width: 48,
-                      height: 48,
-                      fit: BoxFit.cover,
+    final canOpenProduct = productSlug != null && productSlug!.isNotEmpty;
+
+    return Container(
+      color: Colors.white,
+      padding: const EdgeInsets.all(UIConstants.paddingM),
+      child: Row(
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(UIConstants.radiusS),
+            child: productImageUrl == null || productImageUrl!.isEmpty
+                ? Container(
+                    width: 56,
+                    height: 56,
+                    color: Colors.grey.shade100,
+                    child: const Icon(
+                      Icons.inventory_2_outlined,
+                      color: AppTheme.primaryColor,
                     ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    product.name,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 12,
-                    ),
+                  )
+                : Image.network(
+                    productImageUrl!,
+                    width: 56,
+                    height: 56,
+                    fit: BoxFit.cover,
                   ),
-                  if (product.price != null)
-                    Text(
-                      CurrencyHelper.formatRupiah(product.price!),
-                      style: const TextStyle(
-                        color: AppTheme.primaryColor,
-                        fontWeight: FontWeight.w700,
-                        fontSize: 12,
-                      ),
-                    ),
-                ],
+          ),
+          const SizedBox(width: UIConstants.spacingM),
+          Expanded(
+            child: Text(
+              productName == null || productName!.isEmpty
+                  ? 'Produk terkait'
+                  : productName!,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                fontWeight: FontWeight.w700,
+                fontSize: UIConstants.fontSizeM,
               ),
             ),
+          ),
+          const SizedBox(width: UIConstants.spacingS),
+          OutlinedButton(
+            onPressed: canOpenProduct
+                ? () => Navigator.pushNamed(
+                    context,
+                    AppRoutes.productDetail,
+                    arguments: productSlug,
+                  )
+                : null,
+            child: const Text('Lihat Produk'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ShopAvatar extends StatelessWidget {
+  final String? imageUrl;
+  final double radius;
+
+  const _ShopAvatar({required this.imageUrl, required this.radius});
+
+  @override
+  Widget build(BuildContext context) {
+    if (imageUrl != null && imageUrl!.isNotEmpty) {
+      return CircleAvatar(
+        radius: radius,
+        backgroundImage: NetworkImage(imageUrl!),
+        backgroundColor: AppTheme.primaryColor.withValues(alpha: 0.1),
+      );
+    }
+
+    return CircleAvatar(
+      radius: radius,
+      backgroundColor: AppTheme.primaryColor.withValues(alpha: 0.1),
+      child: Icon(
+        Icons.storefront_rounded,
+        color: AppTheme.primaryColor,
+        size: radius,
+      ),
+    );
+  }
+}
+
+class _ErrorState extends StatelessWidget {
+  final String message;
+  final VoidCallback onRetry;
+
+  const _ErrorState({required this.message, required this.onRetry});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(UIConstants.paddingL),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.grey[700]),
+            ),
+            const SizedBox(height: UIConstants.spacingM),
+            ElevatedButton(onPressed: onRetry, child: const Text('Coba Lagi')),
           ],
         ),
       ),

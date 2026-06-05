@@ -24,16 +24,14 @@ class EcoScoreBadge extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            Icons.eco_rounded,
-            size: compact ? 10 : 12,
-            color: color,
-          ),
+          Icon(Icons.eco_rounded, size: compact ? 10 : 12, color: color),
           const SizedBox(width: 3),
           Text(
             'Eco ${score.round()}',
             style: TextStyle(
-              fontSize: compact ? UIConstants.fontSizeXS - 1 : UIConstants.fontSizeXS,
+              fontSize: compact
+                  ? UIConstants.fontSizeXS - 1
+                  : UIConstants.fontSizeXS,
               color: color,
               fontWeight: FontWeight.w700,
             ),

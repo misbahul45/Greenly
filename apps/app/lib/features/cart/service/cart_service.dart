@@ -4,9 +4,9 @@ import 'package:app/core/utils/api_response.dart';
 import 'package:app/features/cart/domain/data/cart_item_data.dart';
 
 class CartService {
-  static String get _base => '${ENV.API}/core/cart';
-  static String get _coreBase => '${ENV.API}/core';
-  static String get _catalogBase => '${ENV.API}/catalog';
+  static String get _base => '${ENV.api}/core/cart';
+  static String get _coreBase => '${ENV.api}/core';
+  static String get _catalogBase => '${ENV.api}/catalog';
 
   final Map<String, String> _shopNameCache = {};
 

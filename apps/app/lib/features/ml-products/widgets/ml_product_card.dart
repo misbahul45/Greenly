@@ -17,10 +17,10 @@ class MlProductCard extends StatelessWidget {
     return GestureDetector(
       onTap: product.slug?.isNotEmpty == true
           ? () => Navigator.pushNamed(
-                context,
-                AppRoutes.productDetail,
-                arguments: product.slug,
-              )
+              context,
+              AppRoutes.productDetail,
+              arguments: product.slug,
+            )
           : null,
       child: Container(
         width: 150,
@@ -114,11 +114,7 @@ class _ProductImage extends StatelessWidget {
     return Container(
       color: const Color(0xFFF1F8E9),
       child: const Center(
-        child: Icon(
-          Icons.eco_outlined,
-          color: AppTheme.primaryColor,
-          size: 32,
-        ),
+        child: Icon(Icons.eco_outlined, color: AppTheme.primaryColor, size: 32),
       ),
     );
   }

@@ -1,4 +1,4 @@
-import 'package:app/features/Main/features/chat/chat_screen.dart';
+import 'package:app/features/Main/features/chat/chat_list_screen.dart';
 import 'package:app/features/Main/features/home/home_screen.dart';
 import 'package:app/features/Main/features/notification/notification_screen.dart';
 import 'package:app/features/Main/features/profile/profile_screen.dart';
@@ -19,21 +19,16 @@ class _MainScreenState extends State<MainScreen> {
   final List<Widget> screens = const [
     HomeScreen(),
     NotificationScreen(),
-    ChatScreen(),
+    ChatListScreen(),
     ProfileScreen(),
   ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: MainAppBar(
-        currentIndex: currentIndex,
-      ),
+      appBar: MainAppBar(currentIndex: currentIndex),
 
-      body: IndexedStack(
-        index: currentIndex,
-        children: screens,
-      ),
+      body: IndexedStack(index: currentIndex, children: screens),
 
       bottomNavigationBar: MainBottomBar(
         currentIndex: currentIndex,

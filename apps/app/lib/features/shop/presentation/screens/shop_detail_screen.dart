@@ -1,4 +1,5 @@
 import 'package:app/core/constants/ui_constants.dart';
+import 'package:app/core/router/app_routes.dart';
 import 'package:app/core/theme/app_theme.dart';
 import 'package:app/features/Main/features/home/widgets/product_widget.dart';
 import 'package:app/features/products/presentation/bloc/product_list_bloc.dart';
@@ -203,18 +204,20 @@ class _ShopHeader extends StatelessWidget {
         children: [
           Row(
             children: [
-              Container(
-                width: 64,
-                height: 64,
-                decoration: BoxDecoration(
-                  color: AppTheme.primaryColor.withValues(alpha: 0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.storefront_rounded,
-                  size: 32,
-                  color: AppTheme.primaryColor,
-                ),
+              CircleAvatar(
+                radius: 32,
+                backgroundColor: AppTheme.primaryColor.withValues(alpha: 0.1),
+                backgroundImage:
+                    shop.avatarUrl == null || shop.avatarUrl!.isEmpty
+                    ? null
+                    : NetworkImage(shop.avatarUrl!),
+                child: shop.avatarUrl == null || shop.avatarUrl!.isEmpty
+                    ? const Icon(
+                        Icons.storefront_rounded,
+                        size: 32,
+                        color: AppTheme.primaryColor,
+                      )
+                    : null,
               ),
               const SizedBox(width: UIConstants.spacingL),
               Expanded(
@@ -253,29 +256,48 @@ class _ShopHeader extends StatelessWidget {
             ),
           ],
           const SizedBox(height: UIConstants.spacingL),
-          SizedBox(
-            width: double.infinity,
-            child: state.isFollowing
-                ? OutlinedButton.icon(
-                    onPressed: state.isToggling
-                        ? null
-                        : () =>
-                              context.read<ShopDetailBloc>().add(
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: () {
+                    Navigator.pushNamed(
+                      context,
+                      AppRoutes.chat,
+                      arguments: {
+                        'shopId': shop.id,
+                        'shopName': shop.name,
+                        'shopAvatarUrl': shop.avatarUrl,
+                      },
+                    );
+                  },
+                  icon: const Icon(Icons.chat_bubble_outline_rounded, size: 18),
+                  label: const Text('Chat Toko'),
+                ),
+              ),
+              const SizedBox(width: UIConstants.spacingM),
+              Expanded(
+                child: state.isFollowing
+                    ? OutlinedButton.icon(
+                        onPressed: state.isToggling
+                            ? null
+                            : () => context.read<ShopDetailBloc>().add(
                                 ShopFollowToggled(),
                               ),
-                    icon: const Icon(Icons.check_rounded, size: 18),
-                    label: const Text('Mengikuti'),
-                  )
-                : ElevatedButton.icon(
-                    onPressed: state.isToggling
-                        ? null
-                        : () =>
-                              context.read<ShopDetailBloc>().add(
+                        icon: const Icon(Icons.check_rounded, size: 18),
+                        label: const Text('Mengikuti'),
+                      )
+                    : ElevatedButton.icon(
+                        onPressed: state.isToggling
+                            ? null
+                            : () => context.read<ShopDetailBloc>().add(
                                 ShopFollowToggled(),
                               ),
-                    icon: const Icon(Icons.add_rounded, size: 18),
-                    label: const Text('Ikuti Toko'),
-                  ),
+                        icon: const Icon(Icons.add_rounded, size: 18),
+                        label: const Text('Ikuti Toko'),
+                      ),
+              ),
+            ],
           ),
         ],
       ),

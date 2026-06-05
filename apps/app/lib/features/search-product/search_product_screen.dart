@@ -19,8 +19,9 @@ class SearchProductScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) => SearchProductBloc(SearchProductService())
-        ..add(const SearchProductStarted()),
+      create: (_) =>
+          SearchProductBloc(SearchProductService())
+            ..add(const SearchProductStarted()),
       child: const _SearchView(),
     );
   }
@@ -45,8 +46,8 @@ class _SearchViewState extends State<_SearchView> {
   void _submit(String query) {
     final filter = context.read<SearchProductBloc>().state.filter;
     context.read<SearchProductBloc>().add(
-          SearchProductSubmitted(query: query, filter: filter),
-        );
+      SearchProductSubmitted(query: query, filter: filter),
+    );
   }
 
   Future<void> _openFilter() async {
@@ -56,8 +57,9 @@ class _SearchViewState extends State<_SearchView> {
       context: context,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
-        borderRadius:
-            BorderRadius.vertical(top: Radius.circular(UIConstants.radiusL)),
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(UIConstants.radiusL),
+        ),
       ),
       builder: (_) => SearchFilterSheet(
         current: bloc.state.filter,
@@ -119,62 +121,67 @@ class _SearchViewState extends State<_SearchView> {
               return _ActiveFilterChips(
                 filter: state.filter,
                 categoryName: categoryName,
-                onRemovePrice: () =>
-                    context.read<SearchProductBloc>().add(
-                          SearchProductFilterUpdated(SearchProductFilter(
-                            categoryId: state.filter.categoryId,
-                            minEcoScore: state.filter.minEcoScore,
-                          )),
-                        ),
-                onRemoveEco: () =>
-                    context.read<SearchProductBloc>().add(
-                          SearchProductFilterUpdated(SearchProductFilter(
-                            categoryId: state.filter.categoryId,
-                            minPrice: state.filter.minPrice,
-                            maxPrice: state.filter.maxPrice,
-                          )),
-                        ),
-                onRemoveCategory: () =>
-                    context.read<SearchProductBloc>().add(
-                          SearchProductFilterUpdated(SearchProductFilter(
-                            minPrice: state.filter.minPrice,
-                            maxPrice: state.filter.maxPrice,
-                            minEcoScore: state.filter.minEcoScore,
-                          )),
-                        ),
+                onRemovePrice: () => context.read<SearchProductBloc>().add(
+                  SearchProductFilterUpdated(
+                    SearchProductFilter(
+                      categoryId: state.filter.categoryId,
+                      minEcoScore: state.filter.minEcoScore,
+                    ),
+                  ),
+                ),
+                onRemoveEco: () => context.read<SearchProductBloc>().add(
+                  SearchProductFilterUpdated(
+                    SearchProductFilter(
+                      categoryId: state.filter.categoryId,
+                      minPrice: state.filter.minPrice,
+                      maxPrice: state.filter.maxPrice,
+                    ),
+                  ),
+                ),
+                onRemoveCategory: () => context.read<SearchProductBloc>().add(
+                  SearchProductFilterUpdated(
+                    SearchProductFilter(
+                      minPrice: state.filter.minPrice,
+                      maxPrice: state.filter.maxPrice,
+                      minEcoScore: state.filter.minEcoScore,
+                    ),
+                  ),
+                ),
               );
             },
           ),
           Expanded(
             child: BlocBuilder<SearchProductBloc, SearchProductState>(
               builder: (context, state) => switch (state.status) {
-                SearchStatus.loading =>
-                  const Center(child: CircularProgressIndicator()),
+                SearchStatus.loading => const Center(
+                  child: CircularProgressIndicator(),
+                ),
                 SearchStatus.error => _ErrorView(
-                    message: state.error ?? 'Terjadi kesalahan',
-                    onRetry: () => context
-                        .read<SearchProductBloc>()
-                        .add(const SearchProductRetryRequested()),
+                  message: state.error ?? 'Terjadi kesalahan',
+                  onRetry: () => context.read<SearchProductBloc>().add(
+                    const SearchProductRetryRequested(),
                   ),
-                SearchStatus.loaded => state.results.isEmpty
-                    ? _EmptyView(query: state.lastQuery)
-                    : _ResultList(
-                        results: state.results,
-                        fromFallback: state.fromFallback,
-                      ),
+                ),
+                SearchStatus.loaded =>
+                  state.results.isEmpty
+                      ? _EmptyView(query: state.lastQuery)
+                      : _ResultList(
+                          results: state.results,
+                          fromFallback: state.fromFallback,
+                        ),
                 SearchStatus.initial => SearchHistoryWidget(
-                    history: state.history,
-                    onTap: (q) {
-                      _ctrl.text = q;
-                      _submit(q);
-                    },
-                    onRemove: (q) => context
-                        .read<SearchProductBloc>()
-                        .add(SearchProductHistoryItemRemoved(q)),
-                    onClearAll: () => context
-                        .read<SearchProductBloc>()
-                        .add(const SearchProductHistoryClearRequested()),
+                  history: state.history,
+                  onTap: (q) {
+                    _ctrl.text = q;
+                    _submit(q);
+                  },
+                  onRemove: (q) => context.read<SearchProductBloc>().add(
+                    SearchProductHistoryItemRemoved(q),
                   ),
+                  onClearAll: () => context.read<SearchProductBloc>().add(
+                    const SearchProductHistoryClearRequested(),
+                  ),
+                ),
               },
             ),
           ),
@@ -247,10 +254,7 @@ class _ActiveFilterChips extends StatelessWidget {
               onDelete: onRemoveCategory,
             ),
           if (hasPrice)
-            _Chip(
-              label: _priceLabel(filter),
-              onDelete: onRemovePrice,
-            ),
+            _Chip(label: _priceLabel(filter), onDelete: onRemovePrice),
           if (hasEco)
             _Chip(
               label: 'Eco ≥ ${filter.minEcoScore!.toInt()}',
@@ -281,8 +285,10 @@ class _Chip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Chip(
-      label: Text(label,
-          style: const TextStyle(fontSize: UIConstants.fontSizeXS)),
+      label: Text(
+        label,
+        style: const TextStyle(fontSize: UIConstants.fontSizeXS),
+      ),
       deleteIcon: const Icon(Icons.close, size: 14),
       onDeleted: onDelete,
       backgroundColor: AppTheme.primaryColor.withValues(alpha: 0.08),
@@ -304,18 +310,17 @@ class _ResultList extends StatelessWidget {
     return ListView.separated(
       padding: const EdgeInsets.all(UIConstants.paddingM),
       itemCount: results.length,
-      separatorBuilder: (_, _) =>
-          const SizedBox(height: UIConstants.spacingM),
+      separatorBuilder: (_, _) => const SizedBox(height: UIConstants.spacingM),
       itemBuilder: (_, index) {
         final item = results[index];
         return SearchResultCard(
           result: item,
           onTap: item.slug != null && item.slug!.isNotEmpty
               ? () => Navigator.pushNamed(
-                    context,
-                    AppRoutes.productDetail,
-                    arguments: item.slug,
-                  )
+                  context,
+                  AppRoutes.productDetail,
+                  arguments: item.slug,
+                )
               : null,
         );
       },
@@ -336,8 +341,11 @@ class _EmptyView extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.search_off_rounded,
-                size: 64, color: Colors.grey.shade400),
+            Icon(
+              Icons.search_off_rounded,
+              size: 64,
+              color: Colors.grey.shade400,
+            ),
             const SizedBox(height: UIConstants.spacingL),
             Text(
               'Tidak ada produk untuk "$query"',

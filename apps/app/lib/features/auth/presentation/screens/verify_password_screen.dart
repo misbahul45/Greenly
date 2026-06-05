@@ -3,7 +3,7 @@ import 'package:app/core/theme/app_theme.dart';
 import 'package:app/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:app/features/auth/presentation/bloc/auth_event.dart';
 import 'package:app/features/auth/presentation/bloc/auth_state.dart';
-import 'package:app/features/auth/presentation/widgets/Form_otp_email.dart';
+import 'package:app/features/auth/presentation/widgets/form_otp_email.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 

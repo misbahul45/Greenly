@@ -30,15 +30,30 @@ class ProductImageSection extends StatelessWidget {
         AspectRatio(
           aspectRatio: 1.05,
           child: ClipRRect(
-            borderRadius:
-                const BorderRadius.vertical(top: Radius.circular(16)),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
             child: ColorFiltered(
               colorFilter: isOutOfStock
                   ? const ColorFilter.matrix([
-                      0.2126, 0.7152, 0.0722, 0, 0,
-                      0.2126, 0.7152, 0.0722, 0, 0,
-                      0.2126, 0.7152, 0.0722, 0, 0,
-                      0,      0,      0,      1, 0,
+                      0.2126,
+                      0.7152,
+                      0.0722,
+                      0,
+                      0,
+                      0.2126,
+                      0.7152,
+                      0.0722,
+                      0,
+                      0,
+                      0.2126,
+                      0.7152,
+                      0.0722,
+                      0,
+                      0,
+                      0,
+                      0,
+                      0,
+                      1,
+                      0,
                     ])
                   : const ColorFilter.mode(
                       Colors.transparent,
@@ -60,8 +75,7 @@ class ProductImageSection extends StatelessWidget {
           left: 0,
           right: 0,
           child: ClipRRect(
-            borderRadius:
-                const BorderRadius.vertical(top: Radius.circular(16)),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
             child: Container(
               height: 36,
               decoration: BoxDecoration(
@@ -69,7 +83,7 @@ class ProductImageSection extends StatelessWidget {
                   begin: Alignment.bottomCenter,
                   end: Alignment.topCenter,
                   colors: [
-                    Colors.black.withOpacity(0.22),
+                    Colors.black.withValues(alpha: 0.22),
                     Colors.transparent,
                   ],
                 ),
@@ -82,8 +96,7 @@ class ProductImageSection extends StatelessWidget {
             top: 8,
             left: 8,
             child: Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
               decoration: BoxDecoration(
                 color: AppTheme.primaryColor,
                 borderRadius: BorderRadius.circular(20),
@@ -105,23 +118,22 @@ class ProductImageSection extends StatelessWidget {
             right: 0,
             child: ProductPromoBadge(label: promotion!.code),
           ),
-          if (favoriteButton != null)
-            Positioned(
-              top: 8,
-              right: 8,
-              child: favoriteButton!,
-            ),
+        if (favoriteButton != null)
+          Positioned(top: 8, right: 8, child: favoriteButton!),
         if (isOutOfStock)
           Positioned.fill(
             child: ClipRRect(
-              borderRadius:
-                  const BorderRadius.vertical(top: Radius.circular(16)),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(16),
+              ),
               child: Center(
                 child: Container(
                   padding: const EdgeInsets.symmetric(
-                      horizontal: 12, vertical: 5),
+                    horizontal: 12,
+                    vertical: 5,
+                  ),
                   decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.55),
+                    color: Colors.black.withValues(alpha: 0.55),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: const Text(

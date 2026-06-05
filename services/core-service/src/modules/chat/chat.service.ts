@@ -1,5 +1,6 @@
-import { Injectable, MessageEvent, NotFoundException } from '@nestjs/common';
+import { Injectable, MessageEvent } from '@nestjs/common';
 import { from, Observable, switchMap } from 'rxjs';
+import { AppError } from '../../libs/errors/app.error';
 import { ChatQueryDto, CreateConversationDto, SendMessageDto } from './chat.dto';
 import { ChatRealtime } from './chat.realtime';
 import { ChatRepository } from './chat.repository';
@@ -52,11 +53,6 @@ export class ChatService {
 
     this.chatRealtime.emit(conversation.id, 'chat.message_created', userMessage);
 
-    if (conversation.type === 'ASSISTANT') {
-      const assistantMessage = await this.createAssistantMessage(conversation.id, dto.content);
-      this.chatRealtime.emit(conversation.id, 'chat.message_created', assistantMessage);
-    }
-
     const messages = await this.chatRepo.findMessages(userId, conversationId, {
       page: 1,
       limit: 30,
@@ -80,45 +76,8 @@ export class ChatService {
   private async ensureConversation(userId: string, conversationId: string) {
     const conversation = await this.chatRepo.findConversation(userId, conversationId);
     if (!conversation) {
-      throw new NotFoundException('Conversation not found');
+      throw new AppError('Conversation not found', 404);
     }
     return conversation;
-  }
-
-  private async createAssistantMessage(conversationId: string, query: string) {
-    const recommendations = await this.searchProducts(query);
-    const content = recommendations.length > 0
-      ? 'Aku menemukan beberapa produk yang cocok dengan pencarian kamu.'
-      : 'Aku belum menemukan produk yang cocok. Coba gunakan kata kunci lain.';
-
-    return this.chatRepo.createMessage(
-      conversationId,
-      null,
-      'ASSISTANT',
-      content,
-      { recommendations },
-    );
-  }
-
-  private async searchProducts(query: string) {
-    const baseUrl = process.env.ML_ENGINE_URL || 'http://ml-engine:8000';
-
-    try {
-      const response = await fetch(`${baseUrl}/search`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          query,
-          limit: 5,
-        }),
-      });
-
-      const payload = await response.json() as { data?: unknown };
-      return Array.isArray(payload.data) ? payload.data : [];
-    } catch {
-      return [];
-    }
   }
 }

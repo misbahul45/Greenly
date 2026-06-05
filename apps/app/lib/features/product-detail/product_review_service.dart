@@ -4,7 +4,7 @@ import 'package:app/core/utils/api_response.dart';
 import 'package:app/features/product-detail/domains/respon/get_reviews_respon.dart';
 
 class ProductReviewService {
-  static String get _baseUrlCatalog => "${ENV.API}/catalog";
+  static String get _baseUrlCatalog => "${ENV.api}/catalog";
 
   Future<ApiResponse<GetReviewsRespon>> getProductReviews({
     required String productId,

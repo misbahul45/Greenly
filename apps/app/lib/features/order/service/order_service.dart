@@ -5,8 +5,8 @@ import 'package:app/features/order/domain/data/order_data.dart';
 import 'package:app/features/order/domain/dto/checkout_dto.dart';
 
 class OrderService {
-  static String get _ordersBase => '${ENV.API}/core/orders';
-  static String get _checkoutBase => '${ENV.API}/core/checkout';
+  static String get _ordersBase => '${ENV.api}/core/orders';
+  static String get _checkoutBase => '${ENV.api}/core/checkout';
 
   Future<ApiResponse<List<OrderData>>> getMyOrders({
     int page = 1,

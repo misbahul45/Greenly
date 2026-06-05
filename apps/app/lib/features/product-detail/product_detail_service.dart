@@ -3,7 +3,7 @@ import 'package:app/core/utils/api_client.dart';
 import 'package:app/core/utils/api_response.dart';
 import 'package:app/features/product-detail/domains/respon/get_detail_product_respon.dart';
 class ProductDetailService {
-    static String get _baseUrlCatalog => "${ENV.API}/catalog";
+    static String get _baseUrlCatalog => "${ENV.api}/catalog";
 
   Future<ApiResponse<GetDetailProductRespon>> getProducts({
     required String slug

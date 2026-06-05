@@ -2,6 +2,8 @@ class AppRoutes {
   static const String main = '/main';
   static const String searchProduct = '/search-product';
   static const String cart = '/cart';
+  static const String chat = '/chat';
+  static const String chatList = '/chat-list';
   static const String settings = '/settings';
   static const String productDetail = '/product-detail';
   static const String categoryProducts = '/category-products';

@@ -269,7 +269,7 @@ class _CategoriesSkeletonGrid extends StatelessWidget {
         childAspectRatio: 1.1,
       ),
       itemCount: 12,
-      itemBuilder: (_, __) => _CategoryCardSkeleton(),
+      itemBuilder: (context, index) => _CategoryCardSkeleton(),
     );
   }
 }

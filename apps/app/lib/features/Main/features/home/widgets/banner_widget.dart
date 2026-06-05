@@ -22,10 +22,7 @@ class _BannerWidgetState extends State<BannerWidget> {
   @override
   void initState() {
     super.initState();
-    _controller = PageController(
-      viewportFraction: 0.92,
-      initialPage: 0,
-    );
+    _controller = PageController(viewportFraction: 0.92, initialPage: 0);
   }
 
   void _startAutoScroll(int itemCount) {
@@ -117,7 +114,7 @@ class _BannerWidgetState extends State<BannerWidget> {
                       color: AppTheme.primaryColor,
                       boxShadow: [
                         BoxShadow(
-                          color: AppTheme.primaryColor.withOpacity(0.1),
+                          color: AppTheme.primaryColor.withValues(alpha: 0.1),
                           blurRadius: 10,
                           offset: const Offset(0, 6),
                         ),
@@ -145,7 +142,7 @@ class _BannerWidgetState extends State<BannerWidget> {
                                 begin: Alignment.bottomCenter,
                                 end: Alignment.topCenter,
                                 colors: [
-                                  AppTheme.primaryColor.withOpacity(0.7),
+                                  AppTheme.primaryColor.withValues(alpha: 0.7),
                                   Colors.transparent,
                                 ],
                               ),
@@ -194,7 +191,7 @@ class _BannerWidgetState extends State<BannerWidget> {
                   margin: const EdgeInsets.only(left: 4),
                   padding: const EdgeInsets.all(6),
                   decoration: BoxDecoration(
-                    color: AppTheme.primaryColor.withOpacity(0.5),
+                    color: AppTheme.primaryColor.withValues(alpha: 0.5),
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(
@@ -213,7 +210,7 @@ class _BannerWidgetState extends State<BannerWidget> {
                   margin: const EdgeInsets.only(right: 4),
                   padding: const EdgeInsets.all(6),
                   decoration: BoxDecoration(
-                    color: AppTheme.primaryColor.withOpacity(0.5),
+                    color: AppTheme.primaryColor.withValues(alpha: 0.5),
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(
@@ -238,7 +235,7 @@ class _BannerWidgetState extends State<BannerWidget> {
                     decoration: BoxDecoration(
                       color: isActive
                           ? Colors.white
-                          : AppTheme.tertiaryColor.withOpacity(0.7),
+                          : AppTheme.tertiaryColor.withValues(alpha: 0.7),
                       borderRadius: BorderRadius.circular(3),
                     ),
                   );

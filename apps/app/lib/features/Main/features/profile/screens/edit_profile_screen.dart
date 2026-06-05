@@ -149,7 +149,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       hint: 'https://...',
                       icon: Icons.image_outlined,
                       keyboardType: TextInputType.url,
-                      onChanged: (v) => setState(() => _avatarPreview = v.trim()),
+                      onChanged: (v) =>
+                          setState(() => _avatarPreview = v.trim()),
                     ),
                     const SizedBox(height: UIConstants.spacingXXXL),
                     SizedBox(

@@ -6,7 +6,6 @@ import 'package:app/features/Main/features/home/bloc/home_ml_event.dart';
 import 'package:app/features/Main/features/home/bloc/home_ml_state.dart';
 import 'package:app/features/Main/features/home/widgets/banner_widget.dart';
 import 'package:app/features/Main/features/home/widgets/categories_widget.dart';
-import 'package:app/features/Main/features/home/widgets/home_search_entry_card.dart';
 import 'package:app/features/Main/features/home/widgets/products_widget.dart';
 import 'package:app/features/ml-products/widgets/ml_recommendation_section.dart';
 import 'package:flutter/material.dart';

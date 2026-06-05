@@ -3,7 +3,7 @@ import 'package:app/core/utils/api_client.dart';
 import 'package:app/core/utils/api_response.dart';
 
 class NotificationService {
-  static String get _base => '${ENV.API}/core/notifications';
+  static String get _base => '${ENV.api}/core/notifications';
 
   Future<ApiResponse<List<NotificationData>>> getNotifications({
     int page = 1,

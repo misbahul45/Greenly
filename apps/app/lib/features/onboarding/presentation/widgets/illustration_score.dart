@@ -18,7 +18,7 @@ class IllustrationScore extends StatelessWidget {
               child: CircularProgressIndicator(
                 value: 0.88,
                 strokeWidth: 12,
-                backgroundColor: AppTheme.tertiaryColor.withOpacity(0.3),
+                backgroundColor: AppTheme.tertiaryColor.withValues(alpha: 0.3),
                 valueColor: const AlwaysStoppedAnimation<Color>(
                   AppTheme.primaryColor,
                 ),

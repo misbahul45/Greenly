@@ -16,9 +16,9 @@ class ProductStockBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: color.withOpacity(0.4), width: 0.8),
+        border: Border.all(color: color.withValues(alpha: 0.4), width: 0.8),
       ),
       child: Text(
         label,

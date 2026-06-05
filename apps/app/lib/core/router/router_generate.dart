@@ -1,4 +1,6 @@
-import 'package:app/features/Main/Main_screen.dart';
+import 'package:app/features/Main/main_screen.dart';
+import 'package:app/features/Main/features/chat/chat_list_screen.dart';
+import 'package:app/features/Main/features/chat/chat_screen.dart';
 import 'package:app/features/categories/all_categories_screen.dart';
 import 'package:app/features/auth/presentation/screens/change_password_screen.dart';
 import 'package:app/features/auth/presentation/screens/verify_password_screen.dart';
@@ -54,6 +56,32 @@ class RouterGenerate {
 
       case AppRoutes.cart:
         return _page(const CartScreen());
+
+      case AppRoutes.chatList:
+        return _page(const ChatListScreen(showAppBar: true));
+
+      case AppRoutes.chat:
+        final args = (settings.arguments as Map?) ?? const {};
+        final shopId = args['shopId']?.toString() ?? '';
+        final shopName = args['shopName']?.toString() ?? '';
+        if (shopId.isEmpty || shopName.isEmpty) {
+          return _page(
+            const Scaffold(
+              body: Center(child: Text('Data toko tidak lengkap')),
+            ),
+          );
+        }
+        return _page(
+          ChatScreen(
+            shopId: shopId,
+            shopName: shopName,
+            shopAvatarUrl: args['shopAvatarUrl']?.toString(),
+            productId: args['productId']?.toString(),
+            productName: args['productName']?.toString(),
+            productImageUrl: args['productImageUrl']?.toString(),
+            productSlug: args['productSlug']?.toString(),
+          ),
+        );
 
       case AppRoutes.allCategories:
         return _page(const AllCategoriesScreen());

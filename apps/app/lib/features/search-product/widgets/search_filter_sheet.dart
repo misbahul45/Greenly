@@ -49,12 +49,14 @@ class _SearchFilterSheetState extends State<SearchFilterSheet> {
   void _apply() {
     final minPrice = double.tryParse(_minPriceCtrl.text.trim());
     final maxPrice = double.tryParse(_maxPriceCtrl.text.trim());
-    Navigator.of(context).pop(SearchProductFilter(
-      categoryId: _selectedCategoryId,
-      minPrice: minPrice,
-      maxPrice: maxPrice,
-      minEcoScore: _ecoScoreEnabled ? _ecoScore : null,
-    ));
+    Navigator.of(context).pop(
+      SearchProductFilter(
+        categoryId: _selectedCategoryId,
+        minPrice: minPrice,
+        maxPrice: maxPrice,
+        minEcoScore: _ecoScoreEnabled ? _ecoScore : null,
+      ),
+    );
   }
 
   void _reset() {
@@ -97,8 +99,7 @@ class _SearchFilterSheetState extends State<SearchFilterSheet> {
                     _CategoryChip(
                       label: 'Semua',
                       selected: _selectedCategoryId == null,
-                      onTap: () =>
-                          setState(() => _selectedCategoryId = null),
+                      onTap: () => setState(() => _selectedCategoryId = null),
                     ),
                     ...widget.categories.map(
                       (cat) => _CategoryChip(
@@ -132,7 +133,8 @@ class _SearchFilterSheetState extends State<SearchFilterSheet> {
                 ),
                 const Padding(
                   padding: EdgeInsets.symmetric(
-                      horizontal: UIConstants.spacingS),
+                    horizontal: UIConstants.spacingS,
+                  ),
                   child: Text('–'),
                 ),
                 Expanded(

@@ -4,8 +4,8 @@ import 'package:app/core/utils/api_response.dart';
 import 'package:app/features/favorite/domain/data/favorite_data.dart';
 
 class FavoriteService {
-  static String get _base => '${ENV.API}/catalog/favorites';
-  static String get _catalogBase => '${ENV.API}/catalog';
+  static String get _base => '${ENV.api}/catalog/favorites';
+  static String get _catalogBase => '${ENV.api}/catalog';
 
   Future<ApiResponse<ToggleFavoriteData>> toggle({
     required String productId,

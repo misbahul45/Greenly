@@ -27,7 +27,7 @@ class SearchProductService {
       );
 
       final mlResp = await ApiClient.post<List<SearchProductResult>>(
-        '${ENV.API}/ml/search',
+        '${ENV.api}/ml/search',
         request.toJson(),
         fromJsonT: _parseMlResults,
       );
@@ -38,7 +38,7 @@ class SearchProductService {
     } catch (_) {}
 
     final catalogResp = await ApiClient.get<List<SearchProductResult>>(
-      '${ENV.API}/catalog/products/search',
+      '${ENV.api}/catalog/products/search',
       query: {'q': query, 'page': 1, 'limit': limit},
       fromJsonT: _parseCatalogResults,
     );

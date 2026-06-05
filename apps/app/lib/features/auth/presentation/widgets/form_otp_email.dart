@@ -37,9 +37,9 @@ class _FormOtpEmailState extends State<FormOtpEmail> {
 
   void handleSubmitOtp() {
     if (otpController.text.length < 6) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("OTP tidak valid")),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("OTP tidak valid")));
       return;
     }
     widget.onSubmitOtp(otpController.text.trim());
@@ -63,12 +63,7 @@ class _FormOtpEmailState extends State<FormOtpEmail> {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final maxWidth = constraints.maxWidth;
-        final horizontalPadding = 8.0;
-        final totalSpacing = 5 * 8.0;
-        final fieldWidth =
-            ((maxWidth - horizontalPadding * 2 - totalSpacing) / 6)
-                .clamp(40.0, 56.0);
+        const horizontalPadding = 8.0;
 
         return Form(
           key: _formKey,
@@ -115,8 +110,7 @@ class _FormOtpEmailState extends State<FormOtpEmail> {
                     color: AppTheme.tertiaryColor.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(14),
                     border: Border.all(
-                      color:
-                          AppTheme.tertiaryColor.withValues(alpha: 0.3),
+                      color: AppTheme.tertiaryColor.withValues(alpha: 0.3),
                     ),
                   ),
                   child: OtpFieldWidget(
@@ -215,10 +209,7 @@ class _FormOtpEmailState extends State<FormOtpEmail> {
                     onPressed: toggleView,
                     child: Text(
                       "Kembali ke OTP",
-                      style: TextStyle(
-                        color: Colors.grey[500],
-                        fontSize: 13,
-                      ),
+                      style: TextStyle(color: Colors.grey[500], fontSize: 13),
                     ),
                   ),
                 ),

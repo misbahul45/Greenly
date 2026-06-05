@@ -285,6 +285,12 @@ class _ProductDetailView extends StatelessWidget {
                     child: ShopInfoWidget(
                       shopId: product.shopId,
                       categoryName: product.categoryName,
+                      productId: product.id,
+                      productName: product.name,
+                      productImageUrl: product.imageUrls.isNotEmpty
+                          ? product.imageUrls.first
+                          : null,
+                      productSlug: product.slug,
                     ),
                   ),
                   const SizedBox(height: UIConstants.spacingS),

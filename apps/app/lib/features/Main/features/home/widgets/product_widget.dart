@@ -37,7 +37,7 @@ class ProductWidget extends StatelessWidget {
           boxShadow: [
             BoxShadow(
               blurRadius: UIConstants.spacingM,
-              color: AppTheme.primaryColor.withOpacity(0.08),
+              color: AppTheme.primaryColor.withValues(alpha: 0.08),
               offset: const Offset(0, UIConstants.paddingXS),
             ),
           ],

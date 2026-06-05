@@ -483,11 +483,16 @@ model ChatConversation {
   id           String            @id @default(cuid())
   type         String            @default("ASSISTANT")
   title        String?
+  shopId       String?
+  buyerId      String?
+  metadata     Json?
   createdAt    DateTime          @default(now())
   updatedAt    DateTime          @updatedAt
   participants ChatParticipant[]
   messages     ChatMessage[]
 
+  @@index([shopId])
+  @@index([buyerId])
   @@map("chat_conversations")
 }
 

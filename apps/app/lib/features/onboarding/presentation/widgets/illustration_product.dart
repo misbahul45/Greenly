@@ -16,7 +16,9 @@ class IllustrationProduct extends StatelessWidget {
           decoration: BoxDecoration(
             color: const Color(0xFFF6FAF6),
             borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: AppTheme.tertiaryColor.withOpacity(0.5)),
+            border: Border.all(
+              color: AppTheme.tertiaryColor.withValues(alpha: 0.5),
+            ),
           ),
           padding: const EdgeInsets.all(16),
           child: Column(
@@ -50,7 +52,7 @@ class IllustrationProduct extends StatelessWidget {
               Container(
                 height: 80,
                 decoration: BoxDecoration(
-                  color: AppTheme.tertiaryColor.withOpacity(0.3),
+                  color: AppTheme.tertiaryColor.withValues(alpha: 0.3),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: const Center(

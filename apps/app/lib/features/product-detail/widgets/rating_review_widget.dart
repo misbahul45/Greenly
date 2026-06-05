@@ -1,4 +1,3 @@
-import 'package:app/core/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 
 class RatingReviewWidget extends StatelessWidget {
@@ -50,13 +49,7 @@ class RatingReviewWidget extends StatelessWidget {
       children: [
         Icon(icon, size: 16, color: Colors.grey[600]),
         const SizedBox(width: 4),
-        Text(
-          text,
-          style: TextStyle(
-            fontSize: 12,
-            color: Colors.grey[600],
-          ),
-        ),
+        Text(text, style: TextStyle(fontSize: 12, color: Colors.grey[600])),
       ],
     );
   }

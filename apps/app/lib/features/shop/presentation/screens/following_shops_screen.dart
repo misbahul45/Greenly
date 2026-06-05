@@ -184,11 +184,7 @@ class _EmptyFollowing extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.storefront_outlined,
-            size: 64,
-            color: Colors.grey[300],
-          ),
+          Icon(Icons.storefront_outlined, size: 64, color: Colors.grey[300]),
           const SizedBox(height: UIConstants.spacingM),
           Text(
             error ?? 'Belum mengikuti toko apa pun',

@@ -1,5 +1,4 @@
 import 'package:app/core/constants/ui_constants.dart';
-import 'package:app/core/theme/app_theme.dart';
 import 'package:app/features/product-detail/domains/data/review_data.dart';
 import 'package:app/features/review/domain/dto/review_dto.dart';
 import 'package:app/features/review/service/review_service.dart';
@@ -60,9 +59,12 @@ class _ReviewFormSheetState extends State<ReviewFormSheet> {
   @override
   void initState() {
     super.initState();
-    _titleController = TextEditingController(text: widget.existing?.title ?? '');
-    _commentController =
-        TextEditingController(text: widget.existing?.comment ?? '');
+    _titleController = TextEditingController(
+      text: widget.existing?.title ?? '',
+    );
+    _commentController = TextEditingController(
+      text: widget.existing?.comment ?? '',
+    );
     _rating = widget.existing?.rating ?? 5;
   }
 
@@ -180,9 +182,8 @@ class _ReviewFormSheetState extends State<ReviewFormSheet> {
               controller: _titleController,
               enabled: !_saving,
               decoration: const InputDecoration(hintText: 'Judul ulasan'),
-              validator: (v) => (v == null || v.trim().isEmpty)
-                  ? 'Judul wajib diisi'
-                  : null,
+              validator: (v) =>
+                  (v == null || v.trim().isEmpty) ? 'Judul wajib diisi' : null,
             ),
             const SizedBox(height: UIConstants.spacingM),
             TextFormField(

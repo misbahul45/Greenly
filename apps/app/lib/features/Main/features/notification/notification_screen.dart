@@ -103,10 +103,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
                 children: [
                   const Text(
                     'Notifikasi',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w800,
-                    ),
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
                   ),
                   TextButton(
                     onPressed: _items.any((item) => !item.isRead)
@@ -126,7 +123,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
           else
             SliverList.separated(
               itemCount: _items.length,
-              separatorBuilder: (_, __) => const Divider(height: 1),
+              separatorBuilder: (context, index) => const Divider(height: 1),
               itemBuilder: (context, index) {
                 final item = _items[index];
                 return ListTile(
@@ -134,7 +131,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
                   leading: CircleAvatar(
                     backgroundColor: item.isRead
                         ? Colors.grey.shade100
-                        : AppTheme.primaryColor.withOpacity(0.12),
+                        : AppTheme.primaryColor.withValues(alpha: 0.12),
                     child: Icon(
                       item.isRead
                           ? Icons.notifications_none
@@ -147,8 +144,9 @@ class _NotificationScreenState extends State<NotificationScreen> {
                   title: Text(
                     item.title,
                     style: TextStyle(
-                      fontWeight:
-                          item.isRead ? FontWeight.w600 : FontWeight.w800,
+                      fontWeight: item.isRead
+                          ? FontWeight.w600
+                          : FontWeight.w800,
                     ),
                   ),
                   subtitle: Padding(
