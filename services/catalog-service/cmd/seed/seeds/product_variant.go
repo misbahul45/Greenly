@@ -18,40 +18,68 @@ func SeedProductVariants(ctx context.Context, db *mongo.Database, productIDs []s
 	}
 
 	variantsByProduct := [][]variantDef{
-		{{"128GB Hitam", "VAR-HP001-128-BLK"}, {"256GB Hitam", "VAR-HP001-256-BLK"}, {"256GB Putih", "VAR-HP001-256-WHT"}},
-		{{"256GB Hitam Titanium", "VAR-HP002-256-BLK"}, {"512GB Hitam Titanium", "VAR-HP002-512-BLK"}, {"1TB Natural Titanium", "VAR-HP002-1T-NAT"}},
-		{{"12GB/256GB Hitam", "VAR-HP003-256-BLK"}, {"16GB/512GB Putih", "VAR-HP003-512-WHT"}},
-		{{"64GB Silver", "VAR-TAB001-64-SLV"}, {"128GB Graphite", "VAR-TAB001-128-GRP"}},
-		{{"RTX 4060 Eclipse Gray", "VAR-LPT001-4060-GRY"}, {"RTX 4070 Eclipse Gray", "VAR-LPT001-4070-GRY"}},
-		{{"Hitam", "VAR-AUD001-BLK"}, {"Putih", "VAR-AUD001-WHT"}, {"Silver", "VAR-AUD001-SLV"}},
-		{{"Graphite", "VAR-AUD002-GRP"}, {"White", "VAR-AUD002-WHT"}},
-		{{"Body Only", "VAR-KMR001-BODY"}, {"Kit 28-70mm", "VAR-KMR001-KIT"}},
-		{{"S Merah", "VAR-DRS001-S-RED"}, {"M Merah", "VAR-DRS001-M-RED"}, {"L Biru", "VAR-DRS001-L-BLU"}, {"XL Biru", "VAR-DRS001-XL-BLU"}},
-		{{"S", "VAR-BLS001-S"}, {"M", "VAR-BLS001-M"}, {"L", "VAR-BLS001-L"}, {"XL", "VAR-BLS001-XL"}},
-		{{"S Krem", "VAR-KBY001-S-CRM"}, {"M Krem", "VAR-KBY001-M-CRM"}, {"L Navy", "VAR-KBY001-L-NVY"}},
-		{{"S", "VAR-KMJ001-S"}, {"M", "VAR-KMJ001-M"}, {"L", "VAR-KMJ001-L"}, {"XL", "VAR-KMJ001-XL"}, {"XXL", "VAR-KMJ001-XXL"}},
-		{{"S", "VAR-BTK001-S"}, {"M", "VAR-BTK001-M"}, {"L", "VAR-BTK001-L"}, {"XL", "VAR-BTK001-XL"}},
-		{{"Coklat Muda", "VAR-TAS001-LBR"}, {"Coklat Tua", "VAR-TAS001-DBR"}, {"Hitam", "VAR-TAS001-BLK"}},
-		{{"36 Nude", "VAR-HLS001-36-NUD"}, {"37 Nude", "VAR-HLS001-37-NUD"}, {"38 Hitam", "VAR-HLS001-38-BLK"}, {"39 Hitam", "VAR-HLS001-39-BLK"}},
-		{{"39 Hitam", "VAR-OXF001-39-BLK"}, {"40 Hitam", "VAR-OXF001-40-BLK"}, {"41 Coklat", "VAR-OXF001-41-BRN"}, {"42 Coklat", "VAR-OXF001-42-BRN"}},
-		{{"Original 500gr", "VAR-RND001-500"}, {"Pedas 500gr", "VAR-RND001-500-HOT"}, {"Original 1kg", "VAR-RND001-1KG"}},
+		// 0: botol stainless thermos
+		{{"500ml Hitam Matte", "VAR-BTL001-500-BLK"}, {"500ml Silver", "VAR-BTL001-500-SLV"}, {"750ml Hitam Matte", "VAR-BTL001-750-BLK"}},
+		// 1: tumbler bambu
+		{{"350ml Natural", "VAR-BTL002-350-NAT"}, {"500ml Natural", "VAR-BTL002-500-NAT"}},
+		// 2: tas kanvas organik
+		{{"Natural Cream", "VAR-TAS001-NAT"}, {"Navy Blue", "VAR-TAS001-NVY"}, {"Olive Green", "VAR-TAS001-OLV"}},
+		// 3: tas bambu artisanal
+		{{"Natural Medium", "VAR-TAS002-M"}, {"Natural Large", "VAR-TAS002-L"}},
+		// 4: set sedotan stainless
+		{{"Lurus 6pcs", "VAR-SDT001-STR"}, {"Bengkok 6pcs", "VAR-SDT001-BND"}, {"Mix Lurus+Bengkok", "VAR-SDT001-MIX"}},
+		// 5: peralatan makan bambu
+		{{"Set 5pcs Natural", "VAR-PMK001-5"}, {"Set 8pcs Natural", "VAR-PMK001-8"}},
+		// 6: lilin soy wax
+		{{"Lavender 150gr", "VAR-LLN001-LAV"}, {"Eucalyptus 150gr", "VAR-LLN001-EUC"}, {"Vanilla 150gr", "VAR-LLN001-VNL"}},
+		// 7: lap microfiber
+		{{"Set 5pcs", "VAR-LAP001-5"}, {"Set 10pcs", "VAR-LAP001-10"}},
+		// 8: rak bambu
+		{{"3 Susun Natural", "VAR-RAK001-3"}, {"4 Susun Natural", "VAR-RAK001-4"}},
+		// 9: kaos katun organik
+		{{"S Natural White", "VAR-KOS001-S"}, {"M Natural White", "VAR-KOS001-M"}, {"L Natural White", "VAR-KOS001-L"}, {"XL Natural White", "VAR-KOS001-XL"}},
+		// 10: celana linen
+		{{"S/M Natural", "VAR-CLN001-SM"}, {"L/XL Natural", "VAR-CLN001-LXL"}, {"XXL Natural", "VAR-CLN001-XXL"}},
+		// 11: jaket hemp
+		{{"S Olive", "VAR-JKT001-S-OLV"}, {"M Olive", "VAR-JKT001-M-OLV"}, {"L Olive", "VAR-JKT001-L-OLV"}, {"XL Olive", "VAR-JKT001-XL-OLV"}},
+		// 12: topi bambu
+		{{"Free Size Natural", "VAR-TOP001-FS-NAT"}, {"Free Size Cokelat", "VAR-TOP001-FS-BRN"}},
+		// 13: dompet cork
+		{{"Slim Horizontal Natural", "VAR-DMP001-H"}, {"Bifold Vertikal Natural", "VAR-DMP001-V"}},
+		// 14: kacamata bambu
+		{{"Kotak Regular", "VAR-KCM001-REG"}, {"Bulat Round", "VAR-KCM001-RND"}},
+		// 15: beras organik
+		{{"1kg", "VAR-BRS001-1KG"}, {"2kg", "VAR-BRS001-2KG"}, {"5kg", "VAR-BRS001-5KG"}},
+		// 16: teh hijau
+		{{"50gr Loose Leaf", "VAR-TEH001-50"}, {"100gr Loose Leaf", "VAR-TEH001-100"}, {"Box 20 Sachet", "VAR-TEH001-BOX"}},
+		// 17: madu hutan
+		{{"250gr", "VAR-MDU001-250"}, {"500gr", "VAR-MDU001-500"}, {"1000gr", "VAR-MDU001-1KG"}},
+		// 18: granola
+		{{"Original 300gr", "VAR-GRN001-ORI"}, {"Cokelat 300gr", "VAR-GRN001-CHC"}, {"Mixed Berry 300gr", "VAR-GRN001-BRY"}},
+		// 19: kopi flores
 		{{"Biji 250gr", "VAR-KPI001-BEAN-250"}, {"Bubuk 250gr", "VAR-KPI001-GRD-250"}, {"Biji 500gr", "VAR-KPI001-BEAN-500"}},
-		{{"Original 200gr", "VAR-SMB001-200"}, {"Extra Pedas 200gr", "VAR-SMB001-200-HOT"}},
-		{{"Original 250gr", "VAR-KRP001-250"}, {"Pedas 250gr", "VAR-KRP001-250-HOT"}, {"Keju 250gr", "VAR-KRP001-250-CHS"}},
-		{{"Original 500gr", "VAR-DDL001-500"}, {"Wijen 500gr", "VAR-DDL001-500-SES"}},
-		{{"39 Hitam", "VAR-SPT001-39-BLK"}, {"40 Hitam", "VAR-SPT001-40-BLK"}, {"41 Biru", "VAR-SPT001-41-BLU"}, {"42 Biru", "VAR-SPT001-42-BLU"}, {"43 Merah", "VAR-SPT001-43-RED"}},
-		{{"S", "VAR-JRS001-S"}, {"M", "VAR-JRS001-M"}, {"L", "VAR-JRS001-L"}, {"XL", "VAR-JRS001-XL"}, {"XXL", "VAR-JRS001-XXL"}},
-		{{"2-24kg Hitam", "VAR-DBL001-BLK"}, {"2-24kg Silver", "VAR-DBL001-SLV"}},
-		{{"Hijau 6mm", "VAR-YGM001-GRN"}, {"Ungu 6mm", "VAR-YGM001-PRP"}, {"Biru 6mm", "VAR-YGM001-BLU"}},
-		{{"Chocolate 1kg", "VAR-WPI001-CHC-1KG"}, {"Vanilla 1kg", "VAR-WPI001-VNL-1KG"}, {"Strawberry 1kg", "VAR-WPI001-STR-1KG"}},
+		// 20: kit hidroponik
+		{{"Starter Kit", "VAR-HDP001-STR"}, {"Pro Kit", "VAR-HDP001-PRO"}},
+		// 21: pupuk organik
+		{{"500ml", "VAR-PPK001-500"}, {"1000ml", "VAR-PPK001-1L"}},
+		// 22: serum rosehip
 		{{"30ml", "VAR-SRM001-30"}, {"50ml", "VAR-SRM001-50"}},
-		{{"50ml Normal", "VAR-MST001-50-NRM"}, {"50ml Oily", "VAR-MST001-50-OLY"}, {"100ml Normal", "VAR-MST001-100-NRM"}},
-		{{"200ml", "VAR-TNR001-200"}, {"400ml", "VAR-TNR001-400"}},
+		// 23: pelembab shea
+		{{"60ml Normal Skin", "VAR-PLB001-NRM"}, {"60ml Sensitive Skin", "VAR-PLB001-SEN"}, {"100ml Normal Skin", "VAR-PLB001-NRM-100"}},
+		// 24: toner rose water
+		{{"100ml Travel", "VAR-TNR001-100"}, {"200ml Regular", "VAR-TNR001-200"}},
+		// 25: sunscreen mineral
 		{{"50ml SPF50", "VAR-SUN001-50"}, {"100ml SPF50", "VAR-SUN001-100"}, {"50ml SPF30", "VAR-SUN001-50-30"}},
-		{{"#01 Ivory", "VAR-FND001-01"}, {"#02 Beige", "VAR-FND001-02"}, {"#03 Sand", "VAR-FND001-03"}, {"#04 Caramel", "VAR-FND001-04"}},
-		{{"#01 Coral", "VAR-LPT001-01"}, {"#02 Rose", "VAR-LPT001-02"}, {"#03 Berry", "VAR-LPT001-03"}, {"#04 Brick", "VAR-LPT001-04"}},
-		{{"50ml", "VAR-HSR001-50"}, {"100ml", "VAR-HSR001-100"}},
-		{{"250ml Normal", "VAR-SHP001-250-NRM"}, {"250ml Oily", "VAR-SHP001-250-OLY"}, {"500ml Normal", "VAR-SHP001-500-NRM"}},
+		// 26: sikat gigi bambu
+		{{"Soft Pack 4", "VAR-SBG001-SOFT"}, {"Medium Pack 4", "VAR-SBG001-MED"}},
+		// 27: sabun batang lavender
+		{{"100gr Single", "VAR-SBN001-100"}, {"200gr Twin Pack", "VAR-SBN001-TW"}, {"Rose 100gr", "VAR-SBN001-ROSE"}},
+		// 28: sampo padat
+		{{"60gr Normal Hair", "VAR-SMP001-NRM"}, {"60gr Oily Hair", "VAR-SMP001-OLY"}, {"60gr Dry Hair", "VAR-SMP001-DRY"}},
+		// 29: panel surya portable
+		{{"20W Kuning", "VAR-PSR001-YLW"}, {"20W Hitam", "VAR-PSR001-BLK"}},
+		// 30: lampu LED smart
+		{{"9W Warm White Set 4", "VAR-LMP001-WW"}, {"9W Cool White Set 4", "VAR-LMP001-CW"}},
 	}
 
 	docs := make([]interface{}, 0)

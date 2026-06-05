@@ -22,6 +22,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
+// productEventPublisher adapts rabbitmq.Publisher to product.ProductEventPublisher
 type productEventPublisher struct {
 	publisher rabbitmq.Publisher
 }
@@ -50,28 +51,89 @@ func toRabbitProductPayload(payload product.ProductEventPayload) rabbitmq.Produc
 	}
 }
 
+// inventoryEventPublisher adapts rabbitmq.Publisher to inventory.InventoryEventPublisher
+type inventoryEventPublisher struct {
+	publisher rabbitmq.Publisher
+}
+
+func (p inventoryEventPublisher) PublishInventoryUpdated(ctx context.Context, productID string, stock int) error {
+	return p.publisher.PublishInventoryUpdated(ctx, rabbitmq.InventoryEventPayload{
+		ProductID: productID,
+		Stock:     stock,
+	})
+}
+
+// priceEventPublisher adapts rabbitmq.Publisher to price.PriceEventPublisher
+type priceEventPublisher struct {
+	publisher rabbitmq.Publisher
+}
+
+func (p priceEventPublisher) PublishPriceUpdated(ctx context.Context, productID string, amount float64, currency string) error {
+	return p.publisher.PublishPriceUpdated(ctx, rabbitmq.PriceEventPayload{
+		ProductID: productID,
+		Amount:    amount,
+		Currency:  currency,
+	})
+}
+
+// discountEventPublisher adapts rabbitmq.Publisher to discount.DiscountEventPublisher
+type discountEventPublisher struct {
+	publisher rabbitmq.Publisher
+}
+
+func (p discountEventPublisher) PublishDiscountApplied(ctx context.Context, productID string, percentage float64, fixedAmount float64) error {
+	return p.publisher.PublishDiscountApplied(ctx, rabbitmq.DiscountEventPayload{
+		ProductID:   productID,
+		Percentage:  percentage,
+		FixedAmount: fixedAmount,
+		IsActive:    true,
+	})
+}
+
+// ecoAttrEventPublisher adapts rabbitmq.Publisher to ecoattribute.EcoAttrEventPublisher
+type ecoAttrEventPublisher struct {
+	publisher rabbitmq.Publisher
+}
+
+func (p ecoAttrEventPublisher) PublishEcoAttributeUpdated(ctx context.Context, productID string, ecoScore float64, materialType string, recyclable bool, carbonFootprint float64) error {
+	return p.publisher.PublishEcoAttributeUpdated(ctx, rabbitmq.EcoAttributeEventPayload{
+		ProductID:       productID,
+		EcoScore:        ecoScore,
+		MaterialType:    materialType,
+		Recyclable:      recyclable,
+		CarbonFootprint: carbonFootprint,
+	})
+}
+
 func Routes(
 	r *gin.RouterGroup,
 	db *mongo.Database,
 	coreSvc coreclient.Client,
 	redisCache cache.Cache,
 ) {
-	publisher, err := rabbitmq.NewPublisher()
-	var productPublishers []product.ProductEventPublisher
+	pub, err := rabbitmq.NewPublisher()
 	if err != nil {
 		log.Printf("RabbitMQ publisher unavailable: %v", err)
-	} else {
-		productPublishers = append(productPublishers, productEventPublisher{publisher: publisher})
 	}
 
 	category.CategoryRouter(r, db, coreSvc, redisCache)
-	product.ProductRouter(r, db, coreSvc, redisCache, productPublishers...)
-	inventory.InventoryRouter(r, db, coreSvc, redisCache)
-	price.PriceRouter(r, db, coreSvc, redisCache)
+
+	if pub != nil {
+		product.ProductRouter(r, db, coreSvc, redisCache, productEventPublisher{publisher: pub})
+		inventory.InventoryRouter(r, db, coreSvc, redisCache, inventoryEventPublisher{publisher: pub})
+		price.PriceRouter(r, db, coreSvc, redisCache, priceEventPublisher{publisher: pub})
+		discount.ProductDiscountRouter(r, db, coreSvc, redisCache, discountEventPublisher{publisher: pub})
+		ecoattribute.EcoAttributeRouter(r, db, coreSvc, redisCache, ecoAttrEventPublisher{publisher: pub})
+	} else {
+		product.ProductRouter(r, db, coreSvc, redisCache)
+		inventory.InventoryRouter(r, db, coreSvc, redisCache)
+		price.PriceRouter(r, db, coreSvc, redisCache)
+		discount.ProductDiscountRouter(r, db, coreSvc, redisCache)
+		ecoattribute.EcoAttributeRouter(r, db, coreSvc, redisCache)
+	}
+
 	activeprice.ActivePriceRouter(r, db)
-	discount.ProductDiscountRouter(r, db, coreSvc, redisCache)
 	productimage.ProductImageRouter(r, db, coreSvc, redisCache)
-	ecoattribute.EcoAttributeRouter(r, db, coreSvc, redisCache)
 	favorite.FavoriteRouter(r, db, coreSvc, redisCache)
 	review.ReviewRouter(r, db, coreSvc, redisCache)
 	productrating.ProductRatingRouter(r, db)

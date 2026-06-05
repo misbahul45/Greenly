@@ -19,6 +19,9 @@ import 'package:app/features/Main/features/home/widgets/product_grid.dart';
 import 'package:app/features/cart/presentation/bloc/cart_bloc.dart';
 import 'package:app/features/favorite/bloc/favorite_bloc.dart';
 import 'package:app/features/favorite/service/favorite_service.dart';
+import 'package:app/features/ml-products/service/ml_product_service.dart';
+import 'package:app/features/product-detail/bloc/similar_products_bloc.dart';
+import 'package:app/features/product-detail/widgets/similar_products_section.dart';
 import 'package:app/shared/widgets/cart_button_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -37,6 +40,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   late final ProductDetailBloc _detailBloc;
   late final HomeBloc _homeBloc;
   late final FavoriteBloc _favoriteBloc;
+  late final SimilarProductsBloc _similarBloc;
 
   @override
   void initState() {
@@ -49,6 +53,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
 
     _homeBloc = HomeBloc(HomeService())..add(GetFeaturedProductsRequested());
     _favoriteBloc = FavoriteBloc(FavoriteService());
+    _similarBloc = SimilarProductsBloc(MlProductService());
 
     _scrollController = ScrollController();
     _scrollController.addListener(_onScroll);
@@ -68,6 +73,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     _detailBloc.close();
     _homeBloc.close();
     _favoriteBloc.close();
+    _similarBloc.close();
     super.dispose();
   }
 
@@ -78,6 +84,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         BlocProvider.value(value: _detailBloc),
         BlocProvider.value(value: _homeBloc),
         BlocProvider.value(value: _favoriteBloc),
+        BlocProvider.value(value: _similarBloc),
       ],
       child: _ProductDetailView(
         slug: widget.slug,
@@ -316,6 +323,8 @@ class _ProductDetailView extends StatelessWidget {
                       productName: product.name,
                     ),
                   ),
+                  const SizedBox(height: UIConstants.spacingS),
+                  SimilarProductsSection(productId: product.id),
                   const SizedBox(height: UIConstants.spacingS),
                   const _RelatedProductsSection(),
                 ],

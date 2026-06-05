@@ -1,10 +1,13 @@
 import json
+import logging
 import os
 from pathlib import Path
 
 import numpy as np
 
 from app.schemas import ProductIndexItem, SearchFilters, SearchResult
+
+logger = logging.getLogger(__name__)
 
 try:
     import faiss
@@ -40,14 +43,28 @@ class VectorStore:
                     self.embeddings = np.asarray(embeddings, dtype="float32")
                     self.dimension = int(raw.get("dimension", self.embeddings.shape[1]))
             except Exception:
+                logger.exception("[vector_store] failed to load meta from %s", self.meta_path)
                 self.products = []
                 self.embeddings = None
 
         if faiss is not None and self.index_path.exists():
             try:
-                self.index = faiss.read_index(str(self.index_path))
-                self.dimension = self.index.d
+                loaded = faiss.read_index(str(self.index_path))
+                meta_dim = self.embeddings.shape[1] if self.embeddings is not None else self.dimension
+                if loaded.d != meta_dim:
+                    logger.warning(
+                        "[vector_store] FAISS index dimension %d != meta dimension %d — rebuilding FAISS from meta",
+                        loaded.d, meta_dim,
+                    )
+                    self.index = faiss.IndexFlatIP(meta_dim)
+                    self.dimension = meta_dim
+                    if self.embeddings is not None and len(self.embeddings):
+                        self.index.add(self.embeddings)
+                else:
+                    self.index = loaded
+                    self.dimension = loaded.d
             except Exception:
+                logger.exception("[vector_store] failed to load FAISS index from %s", self.index_path)
                 self.index = faiss.IndexFlatIP(self.dimension)
         elif faiss is not None:
             self.index = faiss.IndexFlatIP(self.dimension)

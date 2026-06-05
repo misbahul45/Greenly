@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"log"
+	"time"
 
 	"catalog-service/internal/rabbitmq"
 	catalogActivePrice "catalog-service/modules/active_price"
@@ -52,24 +53,29 @@ func initRabbitMQ(db *mongo.Database) {
 	ecoAttributeService := catalogEcoAttribute.NewService(ecoAttributeRepo)
 	_ = productImageRepo
 
-	rabbitMQ, err := rabbitmq.NewRabbitMQ(
-		productService,
-		inventoryService,
-		priceService,
-		discountService,
-		activePriceService,
-		ecoAttributeService,
-	)
-	if err != nil {
-		log.Printf("Warning: RabbitMQ not available: %v", err)
-		return
-	}
+	for {
+		rabbitMQ, err := rabbitmq.NewRabbitMQ(
+			productService,
+			inventoryService,
+			priceService,
+			discountService,
+			activePriceService,
+			ecoAttributeService,
+		)
+		if err != nil {
+			log.Printf("[rabbitmq] connection failed, retry in 5s: %v", err)
+			time.Sleep(5 * time.Second)
+			continue
+		}
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-	defer rabbitMQ.Stop()
+		if err := rabbitMQ.Start(context.Background()); err != nil {
+			log.Printf("[rabbitmq] consumer start failed, retry in 5s: %v", err)
+			rabbitMQ.Stop()
+			time.Sleep(5 * time.Second)
+			continue
+		}
 
-	if err := rabbitMQ.Start(ctx); err != nil {
-		log.Printf("RabbitMQ consumer error: %v", err)
+		log.Println("[rabbitmq] consumer started")
+		select {}
 	}
 }

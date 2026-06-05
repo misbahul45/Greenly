@@ -14,7 +14,7 @@ import 'package:app/features/shop/presentation/screens/following_shops_screen.da
 import 'package:app/features/shop/presentation/screens/shop_detail_screen.dart';
 import 'package:app/features/product-detail/product_detail_screen.dart';
 import 'package:app/features/product-detail/reviews_screen.dart';
-import 'package:app/features/search-product/search_product_scereen.dart';
+import 'package:app/features/search-product/search_product_screen.dart';
 import 'package:flutter/material.dart';
 
 import 'package:app/features/auth/presentation/screens/login_screen.dart';

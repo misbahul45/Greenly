@@ -3,7 +3,12 @@ package productdiscount
 import (
 	"context"
 	"errors"
+	"log"
 )
+
+type DiscountEventPublisher interface {
+	PublishDiscountApplied(ctx context.Context, productID string, percentage float64, fixedAmount float64) error
+}
 
 type Service interface {
 	GetByProductID(ctx context.Context, productID string) ([]ProductDiscountResponse, error)
@@ -14,10 +19,15 @@ type Service interface {
 
 type service struct {
 	repository Repository
+	publisher  DiscountEventPublisher
 }
 
-func NewService(repository Repository) Service {
-	return &service{repository: repository}
+func NewService(repository Repository, publishers ...DiscountEventPublisher) Service {
+	var pub DiscountEventPublisher
+	if len(publishers) > 0 {
+		pub = publishers[0]
+	}
+	return &service{repository: repository, publisher: pub}
 }
 
 func (s *service) GetByProductID(ctx context.Context, productID string) ([]ProductDiscountResponse, error) {
@@ -34,15 +44,28 @@ func (s *service) GetByProductID(ctx context.Context, productID string) ([]Produ
 
 func (s *service) Create(ctx context.Context, dto CreateDiscountDTO) (ProductDiscount, error) {
 	discount := ProductDiscount{
-		ProductID:  dto.ProductID,
-		Name:       dto.Name,
-		Percentage: dto.Percentage,
+		ProductID:   dto.ProductID,
+		Name:        dto.Name,
+		Percentage:  dto.Percentage,
 		FixedAmount: dto.FixedAmount,
-		ValidFrom:  dto.ValidFrom,
-		ValidTo:    dto.ValidTo,
-		IsActive:   true,
+		ValidFrom:   dto.ValidFrom,
+		ValidTo:     dto.ValidTo,
+		IsActive:    true,
 	}
-	return s.repository.Create(ctx, discount)
+	created, err := s.repository.Create(ctx, discount)
+	if err != nil {
+		return ProductDiscount{}, err
+	}
+
+	if s.publisher != nil {
+		go func() {
+			if err := s.publisher.PublishDiscountApplied(context.Background(), created.ProductID, created.Percentage, created.FixedAmount); err != nil {
+				log.Printf("[discount] failed to publish discount.applied for %s: %v", created.ProductID, err)
+			}
+		}()
+	}
+
+	return created, nil
 }
 
 func (s *service) Update(ctx context.Context, id string, dto UpdateDiscountDTO) (ProductDiscount, error) {
@@ -68,7 +91,20 @@ func (s *service) Update(ctx context.Context, id string, dto UpdateDiscountDTO) 
 	if dto.IsActive != nil {
 		existing.IsActive = *dto.IsActive
 	}
-	return s.repository.Update(ctx, id, existing)
+	updated, err := s.repository.Update(ctx, id, existing)
+	if err != nil {
+		return ProductDiscount{}, err
+	}
+
+	if s.publisher != nil {
+		go func() {
+			if err := s.publisher.PublishDiscountApplied(context.Background(), updated.ProductID, updated.Percentage, updated.FixedAmount); err != nil {
+				log.Printf("[discount] failed to publish discount.applied for %s: %v", updated.ProductID, err)
+			}
+		}()
+	}
+
+	return updated, nil
 }
 
 func (s *service) Delete(ctx context.Context, id string) error {

@@ -13,40 +13,37 @@ func SeedPrices(ctx context.Context, db *mongo.Database, productIDs []string) {
 	now := time.Now()
 
 	amounts := []float64{
-		4999000,
-		18999000,
-		8499000,
-		6799000,
-		17999000,
-		3500000,
-		1299000,
-		24999000,
-		280000,
-		350000,
-		750000,
-		195000,
-		225000,
-		899000,
-		650000,
-		580000,
-		120000,
-		95000,
-		45000,
-		35000,
-		28000,
-		1450000,
-		350000,
-		2800000,
-		185000,
-		450000,
-		220000,
-		189000,
-		165000,
-		180000,
-		125000,
-		89000,
-		175000,
-		145000,
+		145000, // botol stainless thermos
+		185000, // tumbler bambu
+		75000,  // tas kanvas organik
+		225000, // tas bambu artisanal
+		65000,  // set sedotan stainless
+		195000, // set peralatan makan bambu
+		85000,  // lilin soy wax
+		55000,  // lap microfiber daur ulang
+		275000, // rak bambu desktop
+		185000, // kaos katun organik GOTS
+		245000, // celana linen natural
+		385000, // jaket hemp organik
+		155000, // topi anyaman bambu
+		195000, // dompet cork oak
+		325000, // kacamata bambu
+		45000,  // beras organik cianjur
+		65000,  // teh hijau organik
+		185000, // madu hutan kalimantan
+		75000,  // granola oat organik
+		95000,  // kopi arabika organik flores
+		275000, // kit hidroponik pemula
+		55000,  // pupuk organik cair
+		175000, // serum rosehip organik
+		145000, // pelembab shea butter
+		95000,  // toner rose water organik
+		165000, // sunscreen mineral SPF50
+		45000,  // sikat gigi bambu charcoal
+		35000,  // sabun batang lavender
+		55000,  // sampo padat organik
+		875000, // panel surya portable 20W
+		145000, // lampu LED smart set 4
 	}
 
 	docs := make([]interface{}, 0, len(productIDs))
