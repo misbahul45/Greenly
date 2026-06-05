@@ -32,16 +32,23 @@ class VectorStore:
 
     def load(self) -> None:
         if self.meta_path.exists():
-            raw = json.loads(self.meta_path.read_text())
-            self.products = [ProductIndexItem(**item) for item in raw.get("products", [])]
-            embeddings = raw.get("embeddings")
-            if embeddings:
-                self.embeddings = np.asarray(embeddings, dtype="float32")
-                self.dimension = int(raw.get("dimension", self.embeddings.shape[1]))
+            try:
+                raw = json.loads(self.meta_path.read_text())
+                self.products = [ProductIndexItem(**item) for item in raw.get("products", [])]
+                embeddings = raw.get("embeddings")
+                if embeddings:
+                    self.embeddings = np.asarray(embeddings, dtype="float32")
+                    self.dimension = int(raw.get("dimension", self.embeddings.shape[1]))
+            except Exception:
+                self.products = []
+                self.embeddings = None
 
         if faiss is not None and self.index_path.exists():
-            self.index = faiss.read_index(str(self.index_path))
-            self.dimension = self.index.d
+            try:
+                self.index = faiss.read_index(str(self.index_path))
+                self.dimension = self.index.d
+            except Exception:
+                self.index = faiss.IndexFlatIP(self.dimension)
         elif faiss is not None:
             self.index = faiss.IndexFlatIP(self.dimension)
 
@@ -67,8 +74,9 @@ class VectorStore:
                 if item.id != product.id
             ]
         products.append(product)
-        embeddings.append(embedding.astype("float32"))
-        self.rebuild(products, np.vstack(embeddings).astype("float32"))
+        embeddings.append(np.asarray(embedding, dtype="float32"))
+        matrix = np.vstack(embeddings).astype("float32") if embeddings else np.empty((0, self.dimension), dtype="float32")
+        self.rebuild(products, matrix)
 
     def delete(self, product_id: str) -> bool:
         if not self.products:
@@ -91,6 +99,7 @@ class VectorStore:
 
     def save(self) -> None:
         os.makedirs(self.index_path.parent, exist_ok=True)
+        os.makedirs(self.meta_path.parent, exist_ok=True)
         if faiss is not None and self.index is not None:
             faiss.write_index(self.index, str(self.index_path))
 

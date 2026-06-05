@@ -17,10 +17,10 @@ class CatalogClient:
                 response = await client.get("/products", params={"page": page, "limit": page_size, "is_active": "true"})
                 response.raise_for_status()
                 payload = response.json()
-                items = payload.get("data", [])
+                items = _extract_items(payload)
                 meta = payload.get("metaData") or payload.get("meta") or {}
 
-                products.extend(normalize_product(item) for item in items if item.get("id"))
+                products.extend(normalize_product(item) for item in items if isinstance(item, dict) and _get_id(item))
 
                 total = int(meta.get("total", len(products)) or len(products))
                 last_page = int(meta.get("lastPage", page) or page)
@@ -38,31 +38,84 @@ class CatalogClient:
             response.raise_for_status()
             payload = response.json()
             item = payload.get("data") if isinstance(payload, dict) else None
-            if not isinstance(item, dict) or not item.get("id"):
+            if isinstance(item, dict) and isinstance(item.get("product"), dict):
+                item = item["product"]
+            if not isinstance(item, dict) or not _get_id(item):
                 return None
             return normalize_product(item)
 
 
+def _extract_items(payload: dict) -> list[dict]:
+    data = payload.get("data", []) if isinstance(payload, dict) else []
+    if isinstance(data, list):
+        return data
+    if isinstance(data, dict):
+        for key in ("items", "products", "rows", "result", "results"):
+            value = data.get(key)
+            if isinstance(value, list):
+                return value
+    return []
+
+
+def _get_id(item: dict) -> str | None:
+    return item.get("id") or item.get("_id") or item.get("productId") or item.get("product_id")
+
+
+def _to_float(value) -> float | None:
+    if value is None:
+        return None
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _to_int(value) -> int | None:
+    if value is None:
+        return None
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _image_urls(item: dict) -> list[str]:
+    images = item.get("imageUrls") or item.get("image_urls") or item.get("images") or []
+    if isinstance(images, list):
+        urls: list[str] = []
+        for image in images:
+            if isinstance(image, str):
+                urls.append(image)
+            elif isinstance(image, dict):
+                url = image.get("url") or image.get("imageUrl") or image.get("image_url")
+                if url:
+                    urls.append(str(url))
+        return urls
+    return []
+
+
 def normalize_product(item: dict) -> ProductIndexItem:
+    eco = item.get("ecoAttribute") or item.get("eco_attribute") or {}
+    rating = item.get("rating") or item.get("productRating") or item.get("product_rating") or {}
     return ProductIndexItem(
-        id=str(item.get("id")),
+        id=str(_get_id(item)),
         shop_id=item.get("shopId") or item.get("shop_id"),
         category_id=item.get("categoryId") or item.get("category_id"),
         name=item.get("name") or "",
         slug=item.get("slug"),
         description=item.get("description"),
         sku=item.get("sku"),
-        price=item.get("price"),
+        price=_to_float(item.get("price") or item.get("finalPrice") or item.get("final_price")),
         currency=item.get("currency"),
-        stock=item.get("stock"),
-        image_urls=item.get("imageUrls") or item.get("image_urls") or [],
-        rating_average=item.get("ratingAverage") or item.get("rating_average"),
-        review_count=item.get("reviewCount") or item.get("review_count"),
-        favorite_count=item.get("favoriteCount") or item.get("favorite_count"),
-        eco_score=item.get("ecoScore") or item.get("eco_score"),
-        material_type=item.get("materialType") or item.get("material_type"),
-        recyclable=item.get("recyclable"),
-        carbon_footprint=item.get("carbonFootprint") or item.get("carbon_footprint"),
+        stock=_to_int(item.get("stock")),
+        image_urls=_image_urls(item),
+        rating_average=_to_float(item.get("ratingAverage") or item.get("rating_average") or rating.get("average")),
+        review_count=_to_int(item.get("reviewCount") or item.get("review_count") or rating.get("reviewCount")),
+        favorite_count=_to_int(item.get("favoriteCount") or item.get("favorite_count")),
+        eco_score=_to_float(item.get("ecoScore") or item.get("eco_score") or eco.get("ecoScore") or eco.get("eco_score")),
+        material_type=item.get("materialType") or item.get("material_type") or eco.get("materialType") or eco.get("material_type"),
+        recyclable=item.get("recyclable") if item.get("recyclable") is not None else eco.get("recyclable"),
+        carbon_footprint=_to_float(item.get("carbonFootprint") or item.get("carbon_footprint") or eco.get("carbonFootprint") or eco.get("carbon_footprint")),
         created_at=item.get("createdAt") or item.get("created_at"),
         updated_at=item.get("updatedAt") or item.get("updated_at"),
     )

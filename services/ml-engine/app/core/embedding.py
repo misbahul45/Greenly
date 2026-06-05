@@ -38,6 +38,9 @@ class EmbeddingService:
 
     def embed_texts(self, texts: Iterable[str]) -> np.ndarray:
         values = list(texts)
+        if not values:
+            return np.empty((0, self.dimension), dtype="float32")
+
         self.load()
 
         if self._model is not None:

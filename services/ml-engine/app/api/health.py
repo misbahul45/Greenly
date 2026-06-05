@@ -12,10 +12,21 @@ async def health(request: Request):
     store = get_vector_store()
     return {
         "status": "ok",
+        "statusCode": 200,
+        "path": request.url.path,
+        "message": "ml-engine healthy",
         "service": "ml-engine",
         "model_loaded": embedder.model_loaded,
         "index_loaded": store.index_loaded,
         "model_name": get_settings().model_name,
         "indexed_products": store.count,
         "model_error": embedder.load_error,
+        "data": {
+            "service": "ml-engine",
+            "model_loaded": embedder.model_loaded,
+            "index_loaded": store.index_loaded,
+            "model_name": get_settings().model_name,
+            "indexed_products": store.count,
+            "model_error": embedder.load_error,
+        },
     }
