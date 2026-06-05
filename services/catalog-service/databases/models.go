@@ -46,6 +46,7 @@ type Product struct {
 	Base `bson:",inline"`
 
 	ShopID     string `bson:"shop_id" json:"shopId"`
+	ShopName   string `bson:"shop_name,omitempty" json:"shopName,omitempty"`
 	CategoryID string `bson:"category_id" json:"categoryId"`
 
 	Name        string `bson:"name" json:"name"`

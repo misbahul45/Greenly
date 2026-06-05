@@ -2,7 +2,9 @@ import { ShopStatus } from "generated/prisma/enums";
 
 export interface MeResponse {
   id: string;
+  email: string;
   name: string;
+  status: string;
   emailVerified: Date;
 
   profile: {

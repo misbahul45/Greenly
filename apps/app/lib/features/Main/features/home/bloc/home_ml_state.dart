@@ -33,10 +33,7 @@ class HomeMlState {
     this.ecoRecs = const MlSectionState(),
   });
 
-  HomeMlState copyWith({
-    MlSectionState? homeRecs,
-    MlSectionState? ecoRecs,
-  }) {
+  HomeMlState copyWith({MlSectionState? homeRecs, MlSectionState? ecoRecs}) {
     return HomeMlState(
       homeRecs: homeRecs ?? this.homeRecs,
       ecoRecs: ecoRecs ?? this.ecoRecs,

@@ -36,6 +36,13 @@ func (h *handler) FindMany(c *gin.Context) {
 		return
 	}
 
+	if query.Page <= 0 {
+		query.Page = 1
+	}
+	if query.Limit <= 0 || query.Limit > 100 {
+		query.Limit = 10
+	}
+
 	res, total, err := h.service.FindMany(c.Request.Context(), query)
 	if err != nil {
 		c.Error(middleware.NewAppError(500, "Failed to fetch products", nil))

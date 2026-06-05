@@ -1,3 +1,4 @@
+import 'package:app/shared/widgets/product/product_card_skeleton.dart';
 import 'package:flutter/material.dart';
 
 class ProductSkeleton extends StatelessWidget {
@@ -5,23 +6,6 @@ class ProductSkeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: 6,
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        crossAxisSpacing: 14,
-        mainAxisSpacing: 14,
-      ),
-      itemBuilder: (_, _) {
-        return Container(
-          decoration: BoxDecoration(
-            color: Colors.grey.shade300,
-            borderRadius: BorderRadius.circular(18),
-          ),
-        );
-      },
-    );
+    return const ProductCardSkeleton();
   }
 }

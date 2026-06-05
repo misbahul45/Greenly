@@ -23,6 +23,7 @@ import 'package:app/features/ml-products/service/ml_product_service.dart';
 import 'package:app/features/product-detail/bloc/similar_products_bloc.dart';
 import 'package:app/features/product-detail/widgets/similar_products_section.dart';
 import 'package:app/shared/widgets/cart_button_widget.dart';
+import 'package:app/shared/widgets/product/product_card_skeleton.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -284,6 +285,9 @@ class _ProductDetailView extends StatelessWidget {
                     padding: const EdgeInsets.all(UIConstants.paddingM),
                     child: ShopInfoWidget(
                       shopId: product.shopId,
+                      shopName: product.shopName.isNotEmpty
+                          ? product.shopName
+                          : null,
                       categoryName: product.categoryName,
                       productId: product.id,
                       productName: product.name,
@@ -435,7 +439,7 @@ class _RelatedProductsSection extends StatelessWidget {
           return Container(
             color: Colors.white,
             padding: const EdgeInsets.all(UIConstants.paddingM),
-            child: const Center(child: CircularProgressIndicator()),
+            child: const ProductCardSkeleton(padding: EdgeInsets.zero),
           );
         }
 

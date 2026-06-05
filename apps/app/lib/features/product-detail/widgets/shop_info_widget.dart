@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 
 class ShopInfoWidget extends StatefulWidget {
   final String shopId;
+  final String? shopName;
   final String? categoryName;
   final String? productId;
   final String? productName;
@@ -16,6 +17,7 @@ class ShopInfoWidget extends StatefulWidget {
   const ShopInfoWidget({
     super.key,
     required this.shopId,
+    this.shopName,
     this.categoryName,
     this.productId,
     this.productName,
@@ -44,25 +46,25 @@ class _ShopInfoWidgetState extends State<ShopInfoWidget> {
 
   void _openShop(ShopData? shop) {
     if (widget.shopId.isEmpty) return;
-
     Navigator.pushNamed(
       context,
       AppRoutes.shopDetail,
       arguments: {
         'shopId': widget.shopId,
         if (shop != null) 'shopName': shop.name,
+        if (shop == null && widget.shopName != null) 'shopName': widget.shopName,
       },
     );
   }
 
-  void _openChat(ShopData shop) {
+  void _openChat(String name, String? avatarUrl) {
     Navigator.pushNamed(
       context,
       AppRoutes.chat,
       arguments: {
-        'shopId': shop.id,
-        'shopName': shop.name,
-        'shopAvatarUrl': shop.avatarUrl,
+        'shopId': widget.shopId,
+        'shopName': name,
+        'shopAvatarUrl': avatarUrl,
         'productId': widget.productId,
         'productName': widget.productName,
         'productImageUrl': widget.productImageUrl,
@@ -78,9 +80,16 @@ class _ShopInfoWidgetState extends State<ShopInfoWidget> {
       builder: (context, snapshot) {
         final shop = snapshot.data;
         final isLoading = snapshot.connectionState == ConnectionState.waiting;
-        final title =
+
+        final displayName =
             shop?.name ??
-            (isLoading ? 'Memuat toko' : widget.categoryName ?? 'Toko');
+            widget.shopName ??
+            (isLoading ? 'Memuat toko...' : widget.categoryName ?? 'Toko');
+
+        final canChat =
+            !isLoading &&
+            widget.shopId.isNotEmpty &&
+            displayName.isNotEmpty;
 
         return Container(
           padding: const EdgeInsets.all(UIConstants.paddingM),
@@ -105,7 +114,7 @@ class _ShopInfoWidgetState extends State<ShopInfoWidget> {
                       ),
                     ),
                     Text(
-                      title,
+                      displayName,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
@@ -119,12 +128,15 @@ class _ShopInfoWidgetState extends State<ShopInfoWidget> {
               const SizedBox(width: UIConstants.spacingS),
               IconButton.outlined(
                 tooltip: 'Chat Toko',
-                onPressed: shop == null ? null : () => _openChat(shop),
+                onPressed: canChat
+                    ? () => _openChat(displayName, shop?.avatarUrl)
+                    : null,
                 icon: const Icon(Icons.chat_bubble_outline_rounded),
               ),
               const SizedBox(width: UIConstants.spacingXS),
               TextButton(
-                onPressed: widget.shopId.isEmpty ? null : () => _openShop(shop),
+                onPressed:
+                    widget.shopId.isEmpty ? null : () => _openShop(shop),
                 child: const Text('Kunjungi'),
               ),
             ],
@@ -153,7 +165,10 @@ class _ShopAvatar extends StatelessWidget {
     return CircleAvatar(
       radius: 24,
       backgroundColor: AppTheme.primaryColor.withValues(alpha: 0.1),
-      child: const Icon(Icons.storefront_rounded, color: AppTheme.primaryColor),
+      child: const Icon(
+        Icons.storefront_rounded,
+        color: AppTheme.primaryColor,
+      ),
     );
   }
 }

@@ -14,6 +14,9 @@ class MlProductResult extends Equatable {
   final double? ratingAverage;
   final int? reviewCount;
   final int? favoriteCount;
+  final int? stock;
+  final String? categoryName;
+  final String? shopName;
   final String reason;
 
   const MlProductResult({
@@ -30,6 +33,9 @@ class MlProductResult extends Equatable {
     this.ratingAverage,
     this.reviewCount,
     this.favoriteCount,
+    this.stock,
+    this.categoryName,
+    this.shopName,
     required this.reason,
   });
 
@@ -59,6 +65,9 @@ class MlProductResult extends Equatable {
       ratingAverage: _d(json['rating_average'] ?? json['ratingAverage']),
       reviewCount: _i(json['review_count'] ?? json['reviewCount']),
       favoriteCount: _i(json['favorite_count'] ?? json['favoriteCount']),
+      stock: _i(json['stock']),
+      categoryName: json['category_name'] as String? ?? json['categoryName'] as String?,
+      shopName: json['shop_name'] as String? ?? json['shopName'] as String?,
       reason: json['reason'] as String? ?? '',
     );
   }

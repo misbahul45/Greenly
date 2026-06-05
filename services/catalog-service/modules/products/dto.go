@@ -92,6 +92,7 @@ type ProductResponse struct {
 	ImageURLs     []string  `json:"imageUrls,omitempty"`
 	CategoryName  string    `json:"categoryName,omitempty"`
 	ShopName      string    `json:"shopName,omitempty"`
+	EcoScore      float64   `json:"ecoScore,omitempty"`
 	CreatedAt     time.Time `json:"createdAt"`
 	UpdatedAt     time.Time `json:"updatedAt"`
 }

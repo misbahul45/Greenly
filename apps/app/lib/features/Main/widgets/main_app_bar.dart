@@ -108,7 +108,7 @@ class MainAppBar extends StatelessWidget implements PreferredSizeWidget {
       if (config.showSetting)
         IconButton(
           onPressed: () {
-            Navigator.pushNamed(context, AppRoutes.settings);
+            Navigator.pushNamed(context, AppRoutes.editProfile);
           },
           icon: const Icon(Icons.settings_outlined),
           color: AppTheme.primaryColor,

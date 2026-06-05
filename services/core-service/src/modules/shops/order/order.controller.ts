@@ -33,7 +33,7 @@ export class OrderController {
     query: OrderQueryDTO,
   ) {
     return ErrorHandler(() =>
-      this.service.findAll(params.shopId, query),
+      this.service.findAll(params.id, query),
     );
   }
 

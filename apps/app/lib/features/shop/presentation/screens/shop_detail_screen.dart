@@ -7,6 +7,8 @@ import 'package:app/features/products/service/product_list_service.dart';
 import 'package:app/features/shop/presentation/bloc/shop_detail_bloc.dart';
 import 'package:app/features/shop/service/shop_service.dart';
 import 'package:app/shared/widgets/cart_button_widget.dart';
+import 'package:app/shared/widgets/charts/stat_card.dart';
+import 'package:app/shared/widgets/product/product_card_skeleton.dart';
 import 'package:app/shared/widgets/skeleton/shop_skeleton.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -88,13 +90,15 @@ class _ShopDetailScreenState extends State<ShopDetailScreen> {
           ],
         ),
         body: BlocConsumer<ShopDetailBloc, ShopDetailState>(
-          listenWhen: (p, c) => c.error != null && p.error != c.error,
+          listenWhen: (p, c) =>
+              c.error != null && p.error != c.error && c.shop != null,
           listener: (context, state) {
             if (state.error != null) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text(state.error!),
-                  backgroundColor: Colors.red,
+                  content: Text(_friendlyShopError(state.error)),
+                  backgroundColor: Colors.red.shade700,
+                  behavior: SnackBarBehavior.floating,
                 ),
               );
             }
@@ -105,28 +109,12 @@ class _ShopDetailScreenState extends State<ShopDetailScreen> {
             }
 
             if (shopState.shop == null) {
-              return Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(UIConstants.paddingL),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        shopState.error ?? 'Toko tidak ditemukan',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(color: Colors.grey[600]),
-                      ),
-                      const SizedBox(height: UIConstants.spacingM),
-                      ElevatedButton(
-                        onPressed: () => context.read<ShopDetailBloc>().add(
-                          ShopDetailRequested(
-                            widget.shopId,
-                            initiallyFollowing: widget.initiallyFollowing,
-                          ),
-                        ),
-                        child: const Text('Coba Lagi'),
-                      ),
-                    ],
+              return _ShopErrorState(
+                message: _friendlyShopError(shopState.error),
+                onRetry: () => context.read<ShopDetailBloc>().add(
+                  ShopDetailRequested(
+                    widget.shopId,
+                    initiallyFollowing: widget.initiallyFollowing,
                   ),
                 ),
               );
@@ -162,11 +150,29 @@ class _ShopDetailScreenState extends State<ShopDetailScreen> {
     );
   }
 
+  String _friendlyShopError(String? raw) {
+    if (raw == null) return 'Toko tidak ditemukan.';
+    final lower = raw.toLowerCase();
+    if (lower.contains('validation')) {
+      return 'Data toko tidak valid. Silakan kembali dan buka toko dari produk yang tersedia.';
+    }
+    if (lower.contains('not found') || lower.contains('404')) {
+      return 'Toko tidak ditemukan.';
+    }
+    if (lower.contains('server') || lower.contains('500')) {
+      return 'Server sedang bermasalah. Coba lagi nanti.';
+    }
+    if (lower.contains('unauthorized') || lower.contains('401')) {
+      return 'Silakan login ulang.';
+    }
+    return raw;
+  }
+
   Widget _buildProductSliver() {
     return BlocBuilder<ProductListBloc, ProductListState>(
       builder: (context, state) {
         if (state.isLoading) {
-          return const ShopProductGridSkeleton();
+          return const SliverToBoxAdapter(child: ProductCardSkeleton());
         }
 
         if (state.data.isEmpty) {
@@ -190,7 +196,7 @@ class _ShopDetailScreenState extends State<ShopDetailScreen> {
               crossAxisCount: 2,
               crossAxisSpacing: UIConstants.spacingM,
               mainAxisSpacing: UIConstants.spacingM,
-              childAspectRatio: 0.62,
+              childAspectRatio: 0.55,
             ),
             delegate: SliverChildBuilderDelegate(
               (context, i) => ProductWidget(product: state.data[i]),
@@ -271,6 +277,32 @@ class _ShopHeader extends StatelessWidget {
             ),
           ],
           const SizedBox(height: UIConstants.spacingL),
+          BlocBuilder<ProductListBloc, ProductListState>(
+            builder: (context, productState) {
+              return Row(
+                children: [
+                  Expanded(
+                    child: StatCard(
+                      label: 'Pengikut',
+                      value: '${state.followerCount}',
+                      icon: Icons.people_outline_rounded,
+                      compact: true,
+                    ),
+                  ),
+                  const SizedBox(width: UIConstants.spacingS),
+                  Expanded(
+                    child: StatCard(
+                      label: 'Produk',
+                      value: '${productState.data.length}',
+                      icon: Icons.inventory_2_outlined,
+                      compact: true,
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
+          const SizedBox(height: UIConstants.spacingL),
           Row(
             children: [
               Expanded(
@@ -315,6 +347,53 @@ class _ShopHeader extends StatelessWidget {
             ],
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _ShopErrorState extends StatelessWidget {
+  final String message;
+  final VoidCallback onRetry;
+
+  const _ShopErrorState({required this.message, required this.onRetry});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(UIConstants.paddingL),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.storefront_rounded, size: 56, color: Colors.grey[300]),
+            const SizedBox(height: UIConstants.spacingM),
+            const Text(
+              'Toko gagal dimuat',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontWeight: FontWeight.w700,
+                fontSize: UIConstants.fontSizeL,
+              ),
+            ),
+            const SizedBox(height: UIConstants.spacingS),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: Colors.grey[600],
+                fontSize: UIConstants.fontSizeM,
+              ),
+            ),
+            const SizedBox(height: UIConstants.spacingL),
+            ElevatedButton(onPressed: onRetry, child: const Text('Coba Lagi')),
+            const SizedBox(height: UIConstants.spacingS),
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Kembali'),
+            ),
+          ],
+        ),
       ),
     );
   }

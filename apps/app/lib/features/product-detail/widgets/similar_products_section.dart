@@ -3,6 +3,7 @@ import 'package:app/features/ml-products/widgets/ml_product_horizontal_list.dart
 import 'package:app/features/product-detail/bloc/similar_products_bloc.dart';
 import 'package:app/features/product-detail/bloc/similar_products_event.dart';
 import 'package:app/features/product-detail/bloc/similar_products_state.dart';
+import 'package:app/shared/widgets/product/product_compact_card_skeleton.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -12,8 +13,7 @@ class SimilarProductsSection extends StatefulWidget {
   const SimilarProductsSection({super.key, required this.productId});
 
   @override
-  State<SimilarProductsSection> createState() =>
-      _SimilarProductsSectionState();
+  State<SimilarProductsSection> createState() => _SimilarProductsSectionState();
 }
 
 class _SimilarProductsSectionState extends State<SimilarProductsSection> {
@@ -32,9 +32,9 @@ class _SimilarProductsSectionState extends State<SimilarProductsSection> {
   }
 
   void _fetch(String productId) {
-    context
-        .read<SimilarProductsBloc>()
-        .add(SimilarProductsRequested(productId: productId));
+    context.read<SimilarProductsBloc>().add(
+      SimilarProductsRequested(productId: productId),
+    );
   }
 
   @override
@@ -69,10 +69,7 @@ class _SimilarProductsSectionState extends State<SimilarProductsSection> {
                 ),
               ),
               if (state.isLoading)
-                const SizedBox(
-                  height: 80,
-                  child: Center(child: CircularProgressIndicator()),
-                )
+                const ProductCompactSkeletonRow()
               else
                 MlProductHorizontalList(products: state.products),
             ],

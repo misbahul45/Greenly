@@ -3,6 +3,7 @@ import 'package:app/features/Main/features/home/widgets/product_widget.dart';
 import 'package:app/features/products/presentation/bloc/product_list_bloc.dart';
 import 'package:app/features/products/service/product_list_service.dart';
 import 'package:app/shared/widgets/cart_button_widget.dart';
+import 'package:app/shared/widgets/product/product_card_skeleton.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -69,7 +70,10 @@ class _ProductListScreenState extends State<ProductListScreen> {
         body: BlocBuilder<ProductListBloc, ProductListState>(
           builder: (context, state) {
             if (state.isLoading) {
-              return const Center(child: CircularProgressIndicator());
+              return const ProductCardSkeleton(
+                shrinkWrap: false,
+                physics: AlwaysScrollableScrollPhysics(),
+              );
             }
 
             if (state.error != null && state.data.isEmpty) {
@@ -96,12 +100,12 @@ class _ProductListScreenState extends State<ProductListScreen> {
                   crossAxisCount: 2,
                   crossAxisSpacing: UIConstants.spacingM,
                   mainAxisSpacing: UIConstants.spacingM,
-                  childAspectRatio: 0.62,
+                  childAspectRatio: 0.55,
                 ),
                 itemCount: state.data.length + (state.isLoadingMore ? 2 : 0),
                 itemBuilder: (context, i) {
                   if (i >= state.data.length) {
-                    return const _ProductCardSkeleton();
+                    return const ProductCardSkeletonTile();
                   }
                   return ProductWidget(product: state.data[i]);
                 },
@@ -109,20 +113,6 @@ class _ProductListScreenState extends State<ProductListScreen> {
             );
           },
         ),
-      ),
-    );
-  }
-}
-
-class _ProductCardSkeleton extends StatelessWidget {
-  const _ProductCardSkeleton();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(UIConstants.radiusM),
       ),
     );
   }
@@ -137,11 +127,7 @@ class _EmptyView extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.inventory_2_outlined,
-            size: 64,
-            color: Colors.grey[300],
-          ),
+          Icon(Icons.inventory_2_outlined, size: 64, color: Colors.grey[300]),
           const SizedBox(height: UIConstants.spacingM),
           Text(
             'Belum ada produk',

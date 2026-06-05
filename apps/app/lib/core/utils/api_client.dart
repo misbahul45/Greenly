@@ -116,11 +116,26 @@ class ApiClient {
     try {
       decodedBody = res.body.isNotEmpty ? jsonDecode(res.body) : {};
     } catch (_) {
+      final sc = res.statusCode;
+      final String msg;
+      if (sc == 502 || sc == 503) {
+        msg = 'Server sedang tidak tersedia. Pastikan layanan backend berjalan.';
+      } else if (sc == 504) {
+        msg = 'Gateway timeout. Server terlalu lama merespons.';
+      } else if (sc >= 500) {
+        msg = 'Server mengalami gangguan (HTTP $sc). Coba lagi nanti.';
+      } else if (sc == 404) {
+        msg = 'Endpoint tidak ditemukan (HTTP $sc).';
+      } else if (sc == 0) {
+        msg = 'Tidak dapat terhubung ke server.';
+      } else {
+        msg = 'Respons tidak valid dari server (HTTP $sc).';
+      }
       return ApiResponse<T>(
         status: "error",
-        statusCode: res.statusCode,
+        statusCode: sc,
         path: url,
-        message: "Invalid JSON response",
+        message: msg,
         timestamp: DateTime.now().toIso8601String(),
       );
     }

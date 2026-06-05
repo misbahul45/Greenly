@@ -18,14 +18,16 @@ class UserModel {
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
+    final profile = json['profile'];
+    final fullName = profile is Map ? profile['fullName']?.toString() : null;
     return UserModel(
-      id: json['id'] ?? '',
-      name: json['profile']?['fullName'] ?? '',
-      email: json['email'] ?? '',
-      status: json['status'] ?? '',
+      id: json['id']?.toString() ?? '',
+      name: fullName ?? json['name']?.toString() ?? '',
+      email: json['email']?.toString() ?? '',
+      status: json['status']?.toString() ?? '',
       roles: List<String>.from(json['roles'] ?? []),
       shops: (json['shop'] as List<dynamic>? ?? [])
-          .map((shop) => ShopModel.fromJson(shop))
+          .map((shop) => ShopModel.fromJson(shop as Map<String, dynamic>))
           .toList(),
     );
   }

@@ -45,7 +45,7 @@ func initRabbitMQ(db *mongo.Database) {
 
 	priceAcc := &priceAccessor{repo: priceRepo}
 
-	productService := catalogProducts.NewService(productRepo)
+	productService := catalogProducts.NewService(productRepo, nil)
 	inventoryService := catalogInventory.NewService(inventoryRepo)
 	priceService := catalogPrice.NewService(priceRepo)
 	activePriceService := catalogActivePrice.NewService(activePriceRepo, priceAcc)

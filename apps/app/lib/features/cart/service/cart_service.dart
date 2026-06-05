@@ -60,6 +60,11 @@ class CartService {
             productImageUrl: images.isNotEmpty ? images.first.toString() : null,
             productPrice: _parsePrice(p['price']),
             shopId: p['shopId']?.toString(),
+            shopName: p['shopName']?.toString(),
+            slug: p['slug']?.toString(),
+            stock: (p['stock'] as num?)?.toInt(),
+            rating: (p['ratingAverage'] as num?)?.toDouble(),
+            categoryName: p['categoryName']?.toString(),
           );
         }
       } catch (_) {}
@@ -67,7 +72,10 @@ class CartService {
     });
 
     final withProduct = await Future.wait(futures);
-    return _attachShopNames(withProduct);
+    final needsShopLookup = withProduct.any(
+      (item) => item.shopId != null && (item.shopName == null || item.shopName!.isEmpty),
+    );
+    return needsShopLookup ? _attachShopNames(withProduct) : withProduct;
   }
 
   Future<List<CartItemData>> _attachShopNames(

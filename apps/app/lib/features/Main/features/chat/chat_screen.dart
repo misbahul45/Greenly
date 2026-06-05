@@ -67,12 +67,12 @@ class _ChatScreenState extends State<ChatScreen> {
         productId: widget.productId,
         productName: widget.productName,
       );
-      if (created.isSuccess) {
+      if (created.isSuccess && created.data != null) {
         conversation = created.data;
       } else if (mounted) {
         setState(() {
           _loading = false;
-          _error = created.message;
+          _error = _mapError(created.statusCode, created.message);
         });
         return;
       }
@@ -82,7 +82,7 @@ class _ChatScreenState extends State<ChatScreen> {
       if (!mounted) return;
       setState(() {
         _loading = false;
-        _error = conversations.message;
+        _error = _mapError(conversations.statusCode, conversations.message);
       });
       return;
     }
@@ -94,10 +94,22 @@ class _ChatScreenState extends State<ChatScreen> {
       _conversationId = conversation!.id;
       _messages = _uniqueMessages(messages.data ?? []);
       _loading = false;
-      _error = messages.isSuccess ? null : messages.message;
+      _error = messages.isSuccess
+          ? null
+          : _mapError(messages.statusCode, messages.message);
     });
 
     _subscribeRealtime(conversation.id);
+  }
+
+  String _mapError(int statusCode, String message) {
+    if (statusCode == 500) return 'Server chat sedang bermasalah. Coba lagi nanti.';
+    if (statusCode == 401 || statusCode == 403) return 'Silakan login ulang.';
+    if (statusCode == 404) return 'Data toko tidak ditemukan.';
+    if (statusCode == 400) return 'Data toko tidak valid.';
+    if (statusCode == 408) return 'Koneksi lambat. Periksa internet Anda.';
+    if (message.isNotEmpty) return message;
+    return 'Terjadi kesalahan. Coba lagi.';
   }
 
   Future<void> _sendMessage() async {
@@ -513,13 +525,33 @@ class _ErrorState extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            Icon(Icons.chat_bubble_outline_rounded,
+                size: 48, color: Colors.grey[300]),
+            const SizedBox(height: UIConstants.spacingM),
+            const Text(
+              'Chat toko gagal dimuat',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontWeight: FontWeight.w700,
+                fontSize: UIConstants.fontSizeL,
+              ),
+            ),
+            const SizedBox(height: UIConstants.spacingS),
             Text(
               message,
               textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.grey[700]),
+              style: TextStyle(
+                color: Colors.grey[600],
+                fontSize: UIConstants.fontSizeM,
+              ),
             ),
-            const SizedBox(height: UIConstants.spacingM),
+            const SizedBox(height: UIConstants.spacingL),
             ElevatedButton(onPressed: onRetry, child: const Text('Coba Lagi')),
+            const SizedBox(height: UIConstants.spacingS),
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Kembali'),
+            ),
           ],
         ),
       ),

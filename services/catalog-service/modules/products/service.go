@@ -2,11 +2,13 @@ package product
 
 import (
 	"catalog-service/databases"
+	"catalog-service/internal/coreclient"
 	"catalog-service/utils"
 	"context"
 	"errors"
 	"log"
 	"strings"
+	"sync"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -28,8 +30,10 @@ type Service interface {
 }
 
 type service struct {
-	repository Repository
-	publisher  ProductEventPublisher
+	repository     Repository
+	publisher      ProductEventPublisher
+	coreSvc        coreclient.Client
+	shopNameCache  sync.Map
 }
 
 type ProductEventPublisher interface {
@@ -55,7 +59,7 @@ var (
 	ErrCategoryInvalid = errors.New("category not found")
 )
 
-func NewService(repository Repository, publishers ...ProductEventPublisher) Service {
+func NewService(repository Repository, coreSvc coreclient.Client, publishers ...ProductEventPublisher) Service {
 	var publisher ProductEventPublisher
 	if len(publishers) > 0 {
 		publisher = publishers[0]
@@ -64,6 +68,7 @@ func NewService(repository Repository, publishers ...ProductEventPublisher) Serv
 	return &service{
 		repository: repository,
 		publisher:  publisher,
+		coreSvc:    coreSvc,
 	}
 }
 
@@ -470,9 +475,24 @@ func (s *service) validateCategory(ctx context.Context, categoryID string) error
 }
 
 func (s *service) enrichProductResponse(ctx context.Context, product databases.Product) ProductResponse {
+	shopName := product.ShopName
+	if shopName == "" && s.coreSvc != nil {
+		if cached, ok := s.shopNameCache.Load(product.ShopID); ok {
+			shopName = cached.(string)
+		} else {
+			shop, err := s.coreSvc.GetShop(ctx, product.ShopID)
+			if err == nil && shop != nil {
+				shopName = shop.Name
+				s.shopNameCache.Store(product.ShopID, shopName)
+				go s.repository.UpdateShopName(context.Background(), product.ID, shopName)
+			}
+		}
+	}
+
 	response := ProductResponse{
 		ID:            product.ID,
 		ShopID:        product.ShopID,
+		ShopName:      shopName,
 		CategoryID:    product.CategoryID,
 		Name:          product.Name,
 		Slug:          product.Slug,
@@ -505,6 +525,11 @@ func (s *service) enrichProductResponse(ctx context.Context, product databases.P
 	category, err := s.repository.FindCategoryById(ctx, product.CategoryID)
 	if err == nil {
 		response.CategoryName = category.Name
+	}
+
+	eco, err := s.repository.GetEcoAttribute(ctx, product.ID)
+	if err == nil {
+		response.EcoScore = eco.EcoScore
 	}
 
 	return response

@@ -1,4 +1,4 @@
-class  ProductData {
+class ProductData {
   final String id;
   final String shopId;
   final String categoryId;
@@ -10,6 +10,7 @@ class  ProductData {
   final int favoriteCount;
   final int reviewCount;
   final double ratingAverage;
+  final double ecoScore;
 
   final bool isActive;
 
@@ -20,6 +21,7 @@ class  ProductData {
   final List<String> imageUrls;
 
   final String categoryName;
+  final String shopName;
 
   final DateTime createdAt;
   final DateTime updatedAt;
@@ -35,12 +37,14 @@ class  ProductData {
     required this.favoriteCount,
     required this.reviewCount,
     required this.ratingAverage,
+    required this.ecoScore,
     required this.isActive,
     required this.price,
     required this.currency,
     required this.stock,
     required this.imageUrls,
     required this.categoryName,
+    required this.shopName,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -57,12 +61,14 @@ class  ProductData {
       favoriteCount: json['favoriteCount'] ?? 0,
       reviewCount: json['reviewCount'] ?? 0,
       ratingAverage: (json['ratingAverage'] ?? 0).toDouble(),
+      ecoScore: (json['ecoScore'] as num?)?.toDouble() ?? 0,
       isActive: json['isActive'] ?? false,
       price: json['price'] ?? 0,
       currency: json['currency'] ?? '',
       stock: json['stock'] ?? 0,
       imageUrls: List<String>.from(json['imageUrls'] ?? []),
       categoryName: json['categoryName'] ?? '',
+      shopName: json['shopName'] ?? '',
       createdAt: DateTime.parse(json['createdAt']),
       updatedAt: DateTime.parse(json['updatedAt']),
     );

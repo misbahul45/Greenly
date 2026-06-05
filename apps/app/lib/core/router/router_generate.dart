@@ -130,9 +130,17 @@ class RouterGenerate {
 
       case AppRoutes.shopDetail:
         final args = (settings.arguments as Map?) ?? const {};
+        final shopId = args['shopId']?.toString() ?? '';
+        if (shopId.isEmpty) {
+          return _page(
+            const Scaffold(
+              body: Center(child: Text('Data toko tidak tersedia')),
+            ),
+          );
+        }
         return _page(
           ShopDetailScreen(
-            shopId: args['shopId'] as String? ?? '',
+            shopId: shopId,
             initiallyFollowing: args['following'] as bool? ?? false,
           ),
         );

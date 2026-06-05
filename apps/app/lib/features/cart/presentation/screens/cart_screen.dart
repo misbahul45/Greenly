@@ -8,6 +8,9 @@ import 'package:app/features/Main/features/profile/domain/data/profile_detail_da
 import 'package:app/features/order/domain/dto/checkout_dto.dart';
 import 'package:app/features/order/service/order_service.dart';
 import 'package:app/shared/services/me_service.dart';
+import 'package:app/shared/widgets/charts/stat_card.dart';
+import 'package:app/shared/widgets/product/product_card_data.dart';
+import 'package:app/shared/widgets/product/product_horizontal_card.dart';
 import 'package:app/shared/widgets/skeleton/cart_skeleton.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -178,6 +181,35 @@ class _ShopGroupCard extends StatelessWidget {
           ),
           const Divider(height: 1),
           Padding(
+            padding: const EdgeInsets.fromLTRB(
+              UIConstants.paddingM,
+              UIConstants.spacingM,
+              UIConstants.paddingM,
+              0,
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: StatCard(
+                    label: 'Subtotal',
+                    value: CurrencyHelper.formatRupiah(group.subtotal),
+                    icon: Icons.receipt_long_outlined,
+                    compact: true,
+                  ),
+                ),
+                const SizedBox(width: UIConstants.spacingS),
+                Expanded(
+                  child: StatCard(
+                    label: 'Jumlah Item',
+                    value: '${group.totalQuantity}',
+                    icon: Icons.shopping_bag_outlined,
+                    compact: true,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Padding(
             padding: const EdgeInsets.all(UIConstants.paddingM),
             child: Row(
               children: [
@@ -255,171 +287,32 @@ class _CartItemRow extends StatelessWidget {
         return AnimatedOpacity(
           opacity: removing ? 0.4 : 1.0,
           duration: const Duration(milliseconds: 200),
-          child: Row(
-            children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(UIConstants.radiusM),
-                child: item.productImageUrl != null
-                    ? Image.network(
-                        item.productImageUrl!,
-                        width: 64,
-                        height: 64,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, _, _) => _placeholder(),
-                      )
-                    : _placeholder(),
+          child: ProductHorizontalCard(
+            data: ProductCardData(
+              productId: item.productId,
+              name: item.productName ?? 'Produk',
+              imageUrl: item.productImageUrl,
+              price: item.productPrice ?? 0,
+              quantity: item.quantity,
+              isLoading: removing,
+              variant: ProductCardVariant.horizontal,
+            ),
+            imageSize: 64,
+            showQuantityControl: true,
+            showRemoveButton: true,
+            showEcoBadge: false,
+            onQuantityChanged: (quantity) => context.read<CartBloc>().add(
+              CartUpdateItemRequested(
+                productId: item.productId,
+                quantity: quantity,
               ),
-              const SizedBox(width: UIConstants.spacingM),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      item.productName ?? 'Produk',
-                      style: const TextStyle(
-                        fontSize: UIConstants.fontSizeM,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.black87,
-                        height: 1.3,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    if (item.productPrice != null) ...[
-                      const SizedBox(height: UIConstants.spacingXS),
-                      Text(
-                        CurrencyHelper.formatRupiah(item.productPrice!),
-                        style: const TextStyle(
-                          fontSize: UIConstants.fontSizeM,
-                          fontWeight: FontWeight.w700,
-                          color: AppTheme.primaryColor,
-                        ),
-                      ),
-                    ],
-                    const SizedBox(height: UIConstants.spacingS),
-                    _QuantityControl(item: item),
-                  ],
-                ),
-              ),
-              const SizedBox(width: UIConstants.spacingS),
-              GestureDetector(
-                onTap: removing
-                    ? null
-                    : () => context.read<CartBloc>().add(
-                        CartRemoveItemRequested(productId: item.productId),
-                      ),
-                child: removing
-                    ? const SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.red,
-                        ),
-                      )
-                    : const Icon(
-                        Icons.delete_outline_rounded,
-                        size: 20,
-                        color: Colors.red,
-                      ),
-              ),
-            ],
+            ),
+            onRemove: () => context.read<CartBloc>().add(
+              CartRemoveItemRequested(productId: item.productId),
+            ),
           ),
         );
       },
-    );
-  }
-
-  Widget _placeholder() {
-    return Container(
-      width: 64,
-      height: 64,
-      decoration: BoxDecoration(
-        color: AppTheme.tertiaryColor.withValues(alpha: 0.2),
-        borderRadius: BorderRadius.circular(UIConstants.radiusM),
-      ),
-      child: const Icon(
-        Icons.shopping_bag_outlined,
-        color: AppTheme.primaryColor,
-        size: 28,
-      ),
-    );
-  }
-}
-
-class _QuantityControl extends StatelessWidget {
-  final CartItemData item;
-
-  const _QuantityControl({required this.item});
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        _QtyButton(
-          icon: Icons.remove_rounded,
-          onTap: item.quantity <= 1
-              ? null
-              : () => context.read<CartBloc>().add(
-                  CartUpdateItemRequested(
-                    productId: item.productId,
-                    quantity: item.quantity - 1,
-                  ),
-                ),
-        ),
-        Container(
-          width: 32,
-          alignment: Alignment.center,
-          child: Text(
-            '${item.quantity}',
-            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
-          ),
-        ),
-        _QtyButton(
-          icon: Icons.add_rounded,
-          onTap: () => context.read<CartBloc>().add(
-            CartUpdateItemRequested(
-              productId: item.productId,
-              quantity: item.quantity + 1,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _QtyButton extends StatelessWidget {
-  final IconData icon;
-  final VoidCallback? onTap;
-
-  const _QtyButton({required this.icon, this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 28,
-        height: 28,
-        decoration: BoxDecoration(
-          color: onTap == null
-              ? Colors.grey[100]
-              : AppTheme.primaryColor.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(UIConstants.radiusS),
-          border: Border.all(
-            color: onTap == null
-                ? Colors.grey[200]!
-                : AppTheme.primaryColor.withValues(alpha: 0.3),
-          ),
-        ),
-        child: Icon(
-          icon,
-          size: 16,
-          color: onTap == null ? Colors.grey[400] : AppTheme.primaryColor,
-        ),
-      ),
     );
   }
 }

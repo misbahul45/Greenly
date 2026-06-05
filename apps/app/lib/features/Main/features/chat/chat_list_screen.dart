@@ -28,10 +28,18 @@ class _ChatListScreenState extends State<ChatListScreen> {
   Future<List<ChatConversationData>> _loadConversations() async {
     final response = await _service.getAllShopConversations();
     if (!response.isSuccess) {
-      _error = response.message;
+      if (mounted) {
+        setState(() {
+          _error = response.message;
+        });
+      }
       return [];
     }
-    _error = null;
+    if (mounted) {
+      setState(() {
+        _error = null;
+      });
+    }
     return response.data ?? [];
   }
 
@@ -62,12 +70,13 @@ class _ChatListScreenState extends State<ChatListScreen> {
           return const ChatListSkeleton();
         }
 
+        if (_error != null) {
+          return _ChatErrorState(error: _error!, onRetry: _refresh);
+        }
+
         final conversations = snapshot.data ?? [];
         if (conversations.isEmpty) {
-          return _EmptyChatList(
-            message: _error ?? 'Belum ada percakapan toko',
-            onRetry: _refresh,
-          );
+          return _ChatEmptyState(onRetry: _refresh);
         }
 
         return RefreshIndicator(
@@ -172,11 +181,55 @@ class _ConversationTile extends StatelessWidget {
   }
 }
 
-class _EmptyChatList extends StatelessWidget {
-  final String message;
+class _ChatErrorState extends StatelessWidget {
+  final String error;
   final Future<void> Function() onRetry;
 
-  const _EmptyChatList({required this.message, required this.onRetry});
+  const _ChatErrorState({required this.error, required this.onRetry});
+
+  @override
+  Widget build(BuildContext context) {
+    final String message;
+    if (error.toLowerCase().contains('server') ||
+        error.toLowerCase().contains('500')) {
+      message = 'Server chat sedang bermasalah. Coba lagi nanti.';
+    } else if (error.toLowerCase().contains('unauthorized') ||
+        error.toLowerCase().contains('401')) {
+      message = 'Silakan login ulang.';
+    } else {
+      message = 'Gagal memuat daftar chat.';
+    }
+
+    return RefreshIndicator(
+      onRefresh: onRetry,
+      child: ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        children: [
+          SizedBox(height: MediaQuery.of(context).size.height * 0.22),
+          Icon(Icons.cloud_off_rounded, size: 48, color: Colors.grey[300]),
+          const SizedBox(height: UIConstants.spacingM),
+          Text(
+            message,
+            textAlign: TextAlign.center,
+            style: TextStyle(color: Colors.grey[600]),
+          ),
+          const SizedBox(height: UIConstants.spacingM),
+          Center(
+            child: ElevatedButton(
+              onPressed: onRetry,
+              child: const Text('Coba Lagi'),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ChatEmptyState extends StatelessWidget {
+  final Future<void> Function() onRetry;
+
+  const _ChatEmptyState({required this.onRetry});
 
   @override
   Widget build(BuildContext context) {
@@ -185,7 +238,7 @@ class _EmptyChatList extends StatelessWidget {
       child: ListView(
         physics: const AlwaysScrollableScrollPhysics(),
         children: [
-          SizedBox(height: MediaQuery.of(context).size.height * 0.22),
+          SizedBox(height: MediaQuery.of(context).size.height * 0.2),
           Icon(
             Icons.chat_bubble_outline_rounded,
             size: 48,
@@ -193,9 +246,22 @@ class _EmptyChatList extends StatelessWidget {
           ),
           const SizedBox(height: UIConstants.spacingM),
           Text(
-            message,
+            'Belum ada chat toko',
             textAlign: TextAlign.center,
-            style: TextStyle(color: Colors.grey[600]),
+            style: TextStyle(
+              color: Colors.grey[700],
+              fontSize: UIConstants.fontSizeL,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: UIConstants.spacingS),
+          Text(
+            'Mulai chat dari halaman detail produk atau toko.',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: Colors.grey[500],
+              fontSize: UIConstants.fontSizeS,
+            ),
           ),
         ],
       ),

@@ -6,7 +6,9 @@ import { UserResponse } from "src/modules/identity/users/types";
 export function toMeResponse(user: any): MeResponse {
   return {
     id: user.id,
+    email: user.email,
     name: user.name,
+    status: user.status,
     emailVerified: user.emailVerified,
 
     profile: {

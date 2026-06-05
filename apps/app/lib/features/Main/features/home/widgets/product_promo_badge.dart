@@ -20,7 +20,11 @@ class ProductPromoBadge extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.local_offer_rounded, size: 10, color: Colors.white),
+            const Icon(
+              Icons.local_offer_rounded,
+              size: 10,
+              color: Colors.white,
+            ),
             const SizedBox(width: 3),
             Text(
               label,

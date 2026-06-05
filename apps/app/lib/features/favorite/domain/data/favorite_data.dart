@@ -32,6 +32,17 @@ class FavoriteItemData {
   final String productId;
   final String shopId;
   final DateTime createdAt;
+  final String name;
+  final String slug;
+  final String imageUrl;
+  final int price;
+  final String currency;
+  final int stock;
+  final String categoryName;
+  final String shopName;
+  final double ratingAverage;
+  final int reviewCount;
+  final int favoriteCount;
 
   const FavoriteItemData({
     required this.id,
@@ -39,15 +50,38 @@ class FavoriteItemData {
     required this.productId,
     required this.shopId,
     required this.createdAt,
+    this.name = '',
+    this.slug = '',
+    this.imageUrl = '',
+    this.price = 0,
+    this.currency = 'IDR',
+    this.stock = 0,
+    this.categoryName = '',
+    this.shopName = '',
+    this.ratingAverage = 0,
+    this.reviewCount = 0,
+    this.favoriteCount = 0,
   });
 
   factory FavoriteItemData.fromJson(Map<String, dynamic> json) {
+    final product = json['product'] as Map<String, dynamic>? ?? {};
     return FavoriteItemData(
-      id: json['id'] ?? '',
-      userId: json['userId'] ?? '',
-      productId: json['productId'] ?? '',
-      shopId: json['shopId'] ?? '',
-      createdAt: DateTime.tryParse(json['createdAt'] ?? '') ?? DateTime.now(),
+      id: json['id']?.toString() ?? '',
+      userId: json['userId']?.toString() ?? '',
+      productId: json['productId']?.toString() ?? '',
+      shopId: json['shopId']?.toString() ?? '',
+      createdAt: DateTime.tryParse(json['createdAt']?.toString() ?? '') ?? DateTime.now(),
+      name: product['name']?.toString() ?? '',
+      slug: product['slug']?.toString() ?? '',
+      imageUrl: product['imageUrl']?.toString() ?? '',
+      price: (product['price'] as num?)?.toInt() ?? 0,
+      currency: product['currency']?.toString() ?? 'IDR',
+      stock: (product['stock'] as num?)?.toInt() ?? 0,
+      categoryName: product['categoryName']?.toString() ?? '',
+      shopName: product['shopName']?.toString() ?? '',
+      ratingAverage: (product['ratingAverage'] as num?)?.toDouble() ?? 0,
+      reviewCount: (product['reviewCount'] as num?)?.toInt() ?? 0,
+      favoriteCount: (product['favoriteCount'] as num?)?.toInt() ?? 0,
     );
   }
 }
@@ -60,7 +94,7 @@ class FavoriteListData {
   factory FavoriteListData.fromJson(Map<String, dynamic> json) {
     return FavoriteListData(
       favorites: (json['favorites'] as List<dynamic>? ?? [])
-          .map((e) => FavoriteItemData.fromJson(e))
+          .map((e) => FavoriteItemData.fromJson(e as Map<String, dynamic>))
           .toList(),
     );
   }
@@ -78,6 +112,9 @@ class FavoriteProductData {
   final double ratingAverage;
   final int reviewCount;
   final int stock;
+  final String categoryName;
+  final String shopName;
+  final int favoriteCount;
 
   const FavoriteProductData({
     required this.favoriteId,
@@ -91,5 +128,8 @@ class FavoriteProductData {
     required this.ratingAverage,
     required this.reviewCount,
     required this.stock,
+    this.categoryName = '',
+    this.shopName = '',
+    this.favoriteCount = 0,
   });
 }

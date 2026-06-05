@@ -68,6 +68,7 @@ class FavoriteBloc extends Bloc<FavoriteEvent, FavoriteState> {
         favorites: result.items,
         listPage: result.page,
         listHasReachedMax: !result.hasMore,
+        totalFavorites: result.total,
       ),
     );
   }

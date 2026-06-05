@@ -11,10 +11,7 @@ class HomeMlBloc extends Bloc<HomeMlEvent, HomeMlState> {
     on<HomeMlRefreshed>(_onRefreshed);
   }
 
-  Future<void> _onStarted(
-    HomeMlStarted _,
-    Emitter<HomeMlState> emit,
-  ) async {
+  Future<void> _onStarted(HomeMlStarted _, Emitter<HomeMlState> emit) async {
     await _load(emit);
   }
 
@@ -22,18 +19,22 @@ class HomeMlBloc extends Bloc<HomeMlEvent, HomeMlState> {
     HomeMlRefreshed _,
     Emitter<HomeMlState> emit,
   ) async {
-    emit(state.copyWith(
-      homeRecs: state.homeRecs.copyWith(isLoading: true, error: null),
-      ecoRecs: state.ecoRecs.copyWith(isLoading: true, error: null),
-    ));
+    emit(
+      state.copyWith(
+        homeRecs: state.homeRecs.copyWith(isLoading: true, error: null),
+        ecoRecs: state.ecoRecs.copyWith(isLoading: true, error: null),
+      ),
+    );
     await _load(emit);
   }
 
   Future<void> _load(Emitter<HomeMlState> emit) async {
-    emit(state.copyWith(
-      homeRecs: state.homeRecs.copyWith(isLoading: true, error: null),
-      ecoRecs: state.ecoRecs.copyWith(isLoading: true, error: null),
-    ));
+    emit(
+      state.copyWith(
+        homeRecs: state.homeRecs.copyWith(isLoading: true, error: null),
+        ecoRecs: state.ecoRecs.copyWith(isLoading: true, error: null),
+      ),
+    );
 
     final results = await Future.wait([
       _service.getHomeRecommendations(limit: 10),
@@ -43,17 +44,19 @@ class HomeMlBloc extends Bloc<HomeMlEvent, HomeMlState> {
     final homeRes = results[0];
     final ecoRes = results[1];
 
-    emit(state.copyWith(
-      homeRecs: MlSectionState(
-        data: homeRes.data ?? const [],
-        isLoading: false,
-        error: homeRes.isSuccess ? null : homeRes.message,
+    emit(
+      state.copyWith(
+        homeRecs: MlSectionState(
+          data: homeRes.data ?? const [],
+          isLoading: false,
+          error: homeRes.isSuccess ? null : homeRes.message,
+        ),
+        ecoRecs: MlSectionState(
+          data: ecoRes.data ?? const [],
+          isLoading: false,
+          error: ecoRes.isSuccess ? null : ecoRes.message,
+        ),
       ),
-      ecoRecs: MlSectionState(
-        data: ecoRes.data ?? const [],
-        isLoading: false,
-        error: ecoRes.isSuccess ? null : ecoRes.message,
-      ),
-    ));
+    );
   }
 }

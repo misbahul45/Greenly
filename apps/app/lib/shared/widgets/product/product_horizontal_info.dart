@@ -43,7 +43,9 @@ class ProductHorizontalInfo extends StatelessWidget {
           const SizedBox(height: UIConstants.spacingXS),
           _ReasonLine(data.semanticReason!),
         ],
-        if (showShopName && data.shopName != null && data.shopName!.isNotEmpty) ...[
+        if (showShopName &&
+            data.shopName != null &&
+            data.shopName!.isNotEmpty) ...[
           const SizedBox(height: UIConstants.spacingXS),
           Text(
             data.shopName!,

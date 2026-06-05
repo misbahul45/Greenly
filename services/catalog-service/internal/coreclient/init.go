@@ -50,32 +50,35 @@ func NewClient(baseURL string) Client {
 }
 
 func (c *client) GetShop(ctx context.Context, shopID string) (*Shop, error) {
-	url := fmt.Sprintf("%s/v1/shops/%s", c.baseURL, shopID)
+	url := fmt.Sprintf("%s/shops/%s", c.baseURL, shopID)
 	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
 	if err != nil {
 		return nil, err
 	}
 
 	resp, err := c.httpClient.Do(req)
-	bodyBytes, err := io.ReadAll(resp.Body)
-	log.Printf(">>> STATUS: %d\n", resp.StatusCode)
-	log.Printf(">>> HEADERS: %+v\n", resp.Header)
-	log.Printf(">>> BODY: %s\n", string(bodyBytes))
 	if err != nil {
 		return nil, err
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("failed to get shop: status %d", resp.StatusCode)
-	}
-
-	var shop Shop
-	if err := json.NewDecoder(resp.Body).Decode(&shop); err != nil {
+	bodyBytes, err := io.ReadAll(resp.Body)
+	if err != nil {
 		return nil, err
 	}
 
-	return &shop, nil
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("failed to get shop: status %d, body: %s", resp.StatusCode, string(bodyBytes))
+	}
+
+	var result struct {
+		Data Shop `json:"data"`
+	}
+	if err := json.Unmarshal(bodyBytes, &result); err != nil {
+		return nil, err
+	}
+
+	return &result.Data, nil
 }
 
 func (c *client) ValidateShopMembership(ctx context.Context, shopID, userID string) (*ShopMembership, error) {

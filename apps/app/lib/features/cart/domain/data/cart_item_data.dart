@@ -8,6 +8,10 @@ class CartItemData {
   final int? productPrice;
   final String? shopId;
   final String? shopName;
+  final String? slug;
+  final int? stock;
+  final double? rating;
+  final String? categoryName;
 
   const CartItemData({
     required this.id,
@@ -19,6 +23,10 @@ class CartItemData {
     this.productPrice,
     this.shopId,
     this.shopName,
+    this.slug,
+    this.stock,
+    this.rating,
+    this.categoryName,
   });
 
   factory CartItemData.fromJson(Map<String, dynamic> json) {
@@ -39,6 +47,10 @@ class CartItemData {
     int? quantity,
     String? shopId,
     String? shopName,
+    String? slug,
+    int? stock,
+    double? rating,
+    String? categoryName,
   }) {
     return CartItemData(
       id: id,
@@ -50,6 +62,10 @@ class CartItemData {
       productPrice: productPrice ?? this.productPrice,
       shopId: shopId ?? this.shopId,
       shopName: shopName ?? this.shopName,
+      slug: slug ?? this.slug,
+      stock: stock ?? this.stock,
+      rating: rating ?? this.rating,
+      categoryName: categoryName ?? this.categoryName,
     );
   }
 }

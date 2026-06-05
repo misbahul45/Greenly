@@ -1,10 +1,12 @@
 import 'package:app/core/constants/ui_constants.dart';
 import 'package:app/core/router/app_routes.dart';
 import 'package:app/core/theme/app_theme.dart';
-import 'package:app/core/utils/currency_helper.dart';
 import 'package:app/features/favorite/bloc/favorite_bloc.dart';
 import 'package:app/features/favorite/domain/data/favorite_data.dart';
 import 'package:app/features/favorite/service/favorite_service.dart';
+import 'package:app/shared/widgets/product/product_card.dart';
+import 'package:app/shared/widgets/product/product_card_data.dart';
+import 'package:app/shared/widgets/product/product_card_skeleton.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -56,9 +58,42 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
             onPressed: () => Navigator.pop(context),
           ),
           centerTitle: true,
-          title: const Text(
-            'Favorit Saya',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+          title: BlocBuilder<FavoriteBloc, FavoriteState>(
+            buildWhen: (p, c) =>
+                p.totalFavorites != c.totalFavorites ||
+                p.isListLoading != c.isListLoading,
+            builder: (context, state) {
+              return Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    'Favorit Saya',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                  ),
+                  if (!state.isListLoading && state.totalFavorites > 0) ...[
+                    const SizedBox(width: 6),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppTheme.primaryColor,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        '${state.totalFavorites}',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
+              );
+            },
           ),
         ),
         body: BlocBuilder<FavoriteBloc, FavoriteState>(
@@ -68,7 +103,10 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
               p.isListLoadingMore != c.isListLoadingMore,
           builder: (context, state) {
             if (state.isListLoading) {
-              return const Center(child: CircularProgressIndicator());
+              return const ProductCardSkeleton(
+                shrinkWrap: false,
+                physics: AlwaysScrollableScrollPhysics(),
+              );
             }
 
             if (state.favorites.isEmpty) {
@@ -84,20 +122,13 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
                   crossAxisCount: 2,
                   crossAxisSpacing: UIConstants.spacingM,
                   mainAxisSpacing: UIConstants.spacingM,
-                  childAspectRatio: 0.72,
+                  childAspectRatio: 0.55,
                 ),
                 itemCount:
                     state.favorites.length + (state.isListLoadingMore ? 2 : 0),
                 itemBuilder: (context, i) {
                   if (i >= state.favorites.length) {
-                    return Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(
-                          UIConstants.radiusM,
-                        ),
-                      ),
-                    );
+                    return const ProductCardSkeletonTile();
                   }
                   return _FavoriteProductCard(product: state.favorites[i]);
                 },
@@ -117,141 +148,35 @@ class _FavoriteProductCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () {
-        if (product.slug.isNotEmpty) {
-          Navigator.pushNamed(
-            context,
-            AppRoutes.productDetail,
-            arguments: product.slug,
-          );
-        }
+    return ProductCard(
+      data: ProductCardData(
+        productId: product.productId,
+        slug: product.slug,
+        name: product.name.isEmpty ? 'Produk' : product.name,
+        imageUrl: product.imageUrl,
+        price: product.price,
+        rating: product.ratingAverage > 0 ? product.ratingAverage : null,
+        reviewCount: product.reviewCount,
+        favoriteCount: product.favoriteCount > 0 ? product.favoriteCount : null,
+        stock: product.stock,
+        categoryName: product.categoryName.isNotEmpty ? product.categoryName : null,
+        shopName: product.shopName.isNotEmpty ? product.shopName : null,
+        isFavorite: true,
+      ),
+      showFavoriteButton: true,
+      onTap: product.slug.isEmpty
+          ? null
+          : () => Navigator.pushNamed(
+              context,
+              AppRoutes.productDetail,
+              arguments: product.slug,
+            ),
+      onFavoriteTap: () {
+        context.read<FavoriteBloc>().add(
+          FavoriteToggleRequested(productId: product.productId),
+        );
+        context.read<FavoriteBloc>().add(FavoriteListRequested());
       },
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(UIConstants.radiusM),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Stack(
-              children: [
-                ClipRRect(
-                  borderRadius: const BorderRadius.vertical(
-                    top: Radius.circular(UIConstants.radiusM),
-                  ),
-                  child: product.imageUrl.isNotEmpty
-                      ? Image.network(
-                          product.imageUrl,
-                          height: 130,
-                          width: double.infinity,
-                          fit: BoxFit.cover,
-                          errorBuilder: (_, _, _) => _placeholder(),
-                        )
-                      : _placeholder(),
-                ),
-                Positioned(
-                  top: UIConstants.spacingS,
-                  right: UIConstants.spacingS,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.9),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.favorite,
-                      color: Colors.red,
-                      size: 18,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(
-                  UIConstants.spacingS,
-                  UIConstants.spacingXS,
-                  UIConstants.spacingS,
-                  UIConstants.spacingS,
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      product.name.isNotEmpty ? product.name : 'Produk',
-                      style: const TextStyle(
-                        fontSize: UIConstants.fontSizeS,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.black87,
-                        height: 1.3,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const Spacer(),
-                    if (product.ratingAverage > 0)
-                      Row(
-                        children: [
-                          const Icon(
-                            Icons.star_rounded,
-                            size: 12,
-                            color: Color(0xFFFFC107),
-                          ),
-                          const SizedBox(width: 2),
-                          Text(
-                            product.ratingAverage.toStringAsFixed(1),
-                            style: TextStyle(
-                              fontSize: UIConstants.fontSizeXS,
-                              color: Colors.grey[600],
-                            ),
-                          ),
-                          Text(
-                            '  (${product.reviewCount})',
-                            style: TextStyle(
-                              fontSize: UIConstants.fontSizeXS,
-                              color: Colors.grey[400],
-                            ),
-                          ),
-                        ],
-                      ),
-                    const SizedBox(height: UIConstants.spacingXS),
-                    Text(
-                      CurrencyHelper.formatRupiah(product.price),
-                      style: const TextStyle(
-                        fontSize: UIConstants.fontSizeM,
-                        fontWeight: FontWeight.w800,
-                        color: AppTheme.primaryColor,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _placeholder() {
-    return Container(
-      height: 130,
-      width: double.infinity,
-      color: AppTheme.tertiaryColor.withValues(alpha: 0.2),
-      child: const Icon(
-        Icons.shopping_bag_outlined,
-        color: AppTheme.primaryColor,
-        size: 36,
-      ),
     );
   }
 }

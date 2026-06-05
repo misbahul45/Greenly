@@ -3,11 +3,7 @@ class PromotionData {
   final String code;
   final String name;
 
-  PromotionData({
-    required this.id,
-    required this.code,
-    required this.name,
-  });
+  PromotionData({required this.id, required this.code, required this.name});
 
   factory PromotionData.fromJson(Map<String, dynamic> json) {
     return PromotionData(

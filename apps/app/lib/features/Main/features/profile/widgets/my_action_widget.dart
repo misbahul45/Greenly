@@ -74,53 +74,56 @@ class MyActionWidget extends StatelessWidget {
               color: Colors.white,
               borderRadius: BorderRadius.circular(UIConstants.radiusL),
             ),
-            child: Column(
-              children: items.map((item) {
-                return Column(
-                  children: [
-                    ListTile(
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: UIConstants.paddingM,
-                        vertical: UIConstants.spacingS,
-                      ),
-                      leading: Container(
-                        padding: const EdgeInsets.all(UIConstants.paddingS),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF5F5F5),
-                          borderRadius: BorderRadius.circular(UIConstants.radiusS),
+            child: Material(
+              type: MaterialType.transparency,
+              child: Column(
+                children: items.map((item) {
+                  return Column(
+                    children: [
+                      ListTile(
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: UIConstants.paddingM,
+                          vertical: UIConstants.spacingS,
                         ),
-                        child: Icon(
-                          item.icon,
-                          size: UIConstants.iconSizeL,
-                          color: item.isDanger ? Colors.red : AppTheme.primaryColor,
+                        leading: Container(
+                          padding: const EdgeInsets.all(UIConstants.paddingS),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF5F5F5),
+                            borderRadius: BorderRadius.circular(UIConstants.radiusS),
+                          ),
+                          child: Icon(
+                            item.icon,
+                            size: UIConstants.iconSizeL,
+                            color: item.isDanger ? Colors.red : AppTheme.primaryColor,
+                          ),
                         ),
-                      ),
-                      title: Text(
-                        item.title,
-                        style: TextStyle(
-                          fontSize: UIConstants.fontSizeL,
-                          fontWeight: FontWeight.w600,
-                          color: item.isDanger ? Colors.red : const Color(0xFF1A1A2E),
+                        title: Text(
+                          item.title,
+                          style: TextStyle(
+                            fontSize: UIConstants.fontSizeL,
+                            fontWeight: FontWeight.w600,
+                            color: item.isDanger ? Colors.red : const Color(0xFF1A1A2E),
+                          ),
                         ),
-                      ),
-                      subtitle: Text(
-                        item.subtitle,
-                        style: const TextStyle(
-                          fontSize: UIConstants.fontSizeXS,
-                          color: Colors.grey,
+                        subtitle: Text(
+                          item.subtitle,
+                          style: const TextStyle(
+                            fontSize: UIConstants.fontSizeXS,
+                            color: Colors.grey,
+                          ),
                         ),
+                        trailing: const Icon(Icons.chevron_right, color: Colors.grey),
+                        onTap: item.onTap,
                       ),
-                      trailing: const Icon(Icons.chevron_right, color: Colors.grey),
-                      onTap: item.onTap,
-                    ),
-                    const Divider(
-                      height: 1,
-                      thickness: 1,
-                      color: Color(0xFFF0F0F0),
-                    ),
-                  ],
-                );
-              }).toList(),
+                      const Divider(
+                        height: 1,
+                        thickness: 1,
+                        color: Color(0xFFF0F0F0),
+                      ),
+                    ],
+                  );
+                }).toList(),
+              ),
             ),
           ),
         ],

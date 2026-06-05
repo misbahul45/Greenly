@@ -1,14 +1,10 @@
-import 'package:app/core/constants/ui_constants.dart';
 import 'package:app/core/router/app_routes.dart';
-import 'package:app/core/utils/currency_helper.dart';
 import 'package:app/features/Main/features/home/domains/data/product_data.dart';
 import 'package:app/features/Main/features/home/domains/data/promotion_data.dart';
-import 'package:app/features/Main/features/home/widgets/product_image_section.dart';
-import 'package:app/features/Main/features/home/widgets/product_stats_row.dart';
-import 'package:app/features/Main/features/home/widgets/product_stock_badge.dart';
 import 'package:app/features/cart/presentation/bloc/cart_bloc.dart';
+import 'package:app/shared/widgets/product/product_card.dart';
+import 'package:app/shared/widgets/product/product_card_data.dart';
 import 'package:flutter/material.dart';
-import 'package:app/core/theme/app_theme.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 class ProductWidget extends StatelessWidget {
@@ -19,165 +15,51 @@ class ProductWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isLowStock = product.stock > 0 && product.stock <= 5;
-    final isOutOfStock = product.stock == 0;
-
-    return GestureDetector(
-      onTap: () {
-        Navigator.pushNamed(
-          context,
-          AppRoutes.productDetail,
-          arguments: product.slug,
-        );
-      },
-      child: Container(
-        decoration: BoxDecoration(
-          color: AppTheme.backgroundColor,
-          borderRadius: BorderRadius.circular(UIConstants.radiusM),
-          boxShadow: [
-            BoxShadow(
-              blurRadius: UIConstants.spacingM,
-              color: AppTheme.primaryColor.withValues(alpha: 0.08),
-              offset: const Offset(0, UIConstants.paddingXS),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ProductImageSection(
-              image: product.imageUrls.isNotEmpty
-                  ? product.imageUrls.first
-                  : '',
-              hasPromo: promotion != null,
-              promotion: promotion,
-              categoryName: product.categoryName,
-              isOutOfStock: isOutOfStock,
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(
-                UIConstants.paddingS,
-                UIConstants.paddingXS,
-                UIConstants.paddingS,
-                UIConstants.paddingS,
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    product.name,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w700,
-                      fontSize: UIConstants.fontSizeS,
-                      height: 1.3,
-                      color: Color(0xFF1A1A2E),
-                    ),
-                  ),
-                  const SizedBox(height: UIConstants.spacingXS),
-                  if (product.description.isNotEmpty)
-                    Text(
-                      product.description,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: UIConstants.fontSizeXS,
-                        color: Colors.grey.shade500,
-                        height: 1.3,
-                      ),
-                    ),
-                  const SizedBox(height: UIConstants.paddingXS),
-                  ProductStatsRow(
-                    ratingAverage: product.ratingAverage,
-                    reviewCount: product.reviewCount,
-                    favoriteCount: product.favoriteCount,
-                  ),
-                  const SizedBox(height: UIConstants.spacingS),
-                  if (isOutOfStock)
-                    const ProductStockBadge(
-                      label: 'Habis',
-                      color: Color(0xFF9E9E9E),
-                    )
-                  else if (isLowStock)
-                    ProductStockBadge(
-                      label: 'Sisa ${product.stock}',
-                      color: Color(0xFFFF7043),
-                    ),
-                  if (isOutOfStock || isLowStock)
-                    const SizedBox(height: UIConstants.paddingXS),
-                  Text(
-                    CurrencyHelper.formatRupiah(product.price),
-                    style: const TextStyle(
-                      color: AppTheme.primaryColor,
-                      fontWeight: FontWeight.w800,
-                      fontSize: UIConstants.fontSizeM,
-                    ),
-                  ),
-                  const SizedBox(height: UIConstants.spacingXS),
-                  _AddToCartButton(productId: product.id),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _AddToCartButton extends StatelessWidget {
-  final String productId;
-
-  const _AddToCartButton({required this.productId});
-
-  @override
-  Widget build(BuildContext context) {
     return BlocBuilder<CartBloc, CartState>(
-      buildWhen: (p, c) => p.isAdding(productId) != c.isAdding(productId),
+      buildWhen: (p, c) => p.isAdding(product.id) != c.isAdding(product.id),
       builder: (context, state) {
-        final loading = state.isAdding(productId);
-        return SizedBox(
-          width: double.infinity,
-          height: 32,
-          child: ElevatedButton.icon(
-            onPressed: loading
-                ? null
-                : () {
-                    context.read<CartBloc>().add(
-                      CartAddItemRequested(productId: productId),
-                    );
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Ditambahkan ke keranjang'),
-                        duration: Duration(seconds: 1),
-                        behavior: SnackBarBehavior.floating,
-                      ),
-                    );
-                  },
-            icon: loading
-                ? const SizedBox(
-                    width: 12,
-                    height: 12,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: Colors.white,
-                    ),
-                  )
-                : const Icon(Icons.add_shopping_cart_rounded, size: 14),
-            label: const Text(
-              'Keranjang',
-              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
-            ),
-            style: ElevatedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(horizontal: 8),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(UIConstants.radiusS),
+        final data = ProductCardData(
+          productId: product.id,
+          slug: product.slug,
+          name: product.name,
+          imageUrl: product.imageUrls.isNotEmpty
+              ? product.imageUrls.first
+              : null,
+          price: product.price,
+          rating: product.ratingAverage,
+          reviewCount: product.reviewCount,
+          favoriteCount: product.favoriteCount,
+          stock: product.stock,
+          categoryName: product.categoryName,
+          shopName: product.shopName.isNotEmpty ? product.shopName : null,
+          ecoScore: product.ecoScore > 0 ? product.ecoScore : null,
+          promotionCode: promotion?.code,
+          isLoading: state.isAdding(product.id),
+        );
+
+        return ProductCard(
+          data: data,
+          showCartButton: true,
+          showStock: true,
+          onTap: product.slug.isEmpty
+              ? null
+              : () => Navigator.pushNamed(
+                  context,
+                  AppRoutes.productDetail,
+                  arguments: product.slug,
+                ),
+          onAddToCart: () {
+            context.read<CartBloc>().add(
+              CartAddItemRequested(productId: product.id),
+            );
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Ditambahkan ke keranjang'),
+                duration: Duration(seconds: 1),
+                behavior: SnackBarBehavior.floating,
               ),
-            ),
-          ),
+            );
+          },
         );
       },
     );

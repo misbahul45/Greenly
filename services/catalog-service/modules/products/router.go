@@ -11,7 +11,7 @@ import (
 
 func ProductRouter(rg *gin.RouterGroup, db *mongo.Database, coreSvc coreclient.Client, redisCache cache.Cache, publishers ...ProductEventPublisher) {
 	repo := NewRepository(db)
-	service := NewService(repo, publishers...)
+	service := NewService(repo, coreSvc, publishers...)
 	handler := NewHandler(service)
 
 	auth := middleware.JWTAuthMiddleware(coreSvc, redisCache)

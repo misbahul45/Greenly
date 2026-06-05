@@ -1,66 +1,53 @@
+import 'package:app/core/constants/ui_constants.dart';
 import 'package:app/features/Main/features/home/bloc/home_state.dart';
 import 'package:app/features/Main/features/home/widgets/product_widget.dart';
-import 'package:app/features/Main/features/home/widgets/skeleton/product_item_loading.dart';
-import 'package:app/features/Main/features/home/widgets/skeleton/product_skeleton.dart';
+import 'package:app/shared/widgets/product/product_card_skeleton.dart';
 import 'package:flutter/material.dart';
-import 'package:app/core/constants/ui_constants.dart';
 
 class ProductGrid extends StatelessWidget {
   final ProductState state;
+  final EdgeInsetsGeometry padding;
+  final bool shrinkWrap;
+  final ScrollPhysics? physics;
 
   const ProductGrid({
     super.key,
     required this.state,
+    this.padding = const EdgeInsets.symmetric(horizontal: UIConstants.paddingM),
+    this.shrinkWrap = true,
+    this.physics = const NeverScrollableScrollPhysics(),
   });
 
   @override
   Widget build(BuildContext context) {
     if (state.isLoading) {
-      return const ProductSkeleton();
+      return ProductCardSkeleton(padding: padding);
     }
 
     if (state.data.isEmpty) {
-      return const Center(child: Text("No products"));
-    }
-
-    final totalCount = state.data.length + (state.isLoadingMore ? 2 : 0);
-
-    final leftColumn = <Widget>[];
-    final rightColumn = <Widget>[];
-
-    for (int i = 0; i < totalCount; i++) {
-      final child = i >= state.data.length
-          ? const ProductItemLoading()
-          : ProductWidget(product: state.data[i]);
-
-      final padded = Padding(
-        padding: const EdgeInsets.only(bottom: UIConstants.spacingS),
-        child: child,
+      return const Padding(
+        padding: EdgeInsets.all(UIConstants.paddingL),
+        child: Center(child: Text('Belum ada produk')),
       );
-
-      i.isEven ? leftColumn.add(padded) : rightColumn.add(padded);
     }
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: UIConstants.paddingS),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: leftColumn,
-            ),
-          ),
-          const SizedBox(width: UIConstants.spacingS),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: rightColumn,
-            ),
-          ),
-        ],
+    return GridView.builder(
+      shrinkWrap: shrinkWrap,
+      physics: physics,
+      padding: padding,
+      itemCount: state.data.length + (state.isLoadingMore ? 2 : 0),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        crossAxisSpacing: UIConstants.spacingM,
+        mainAxisSpacing: UIConstants.spacingM,
+        childAspectRatio: 0.55,
       ),
+      itemBuilder: (context, index) {
+        if (index >= state.data.length) {
+          return const ProductCardSkeletonTile();
+        }
+        return ProductWidget(product: state.data[index]);
+      },
     );
   }
 }

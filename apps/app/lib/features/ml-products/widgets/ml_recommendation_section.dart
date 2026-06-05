@@ -1,6 +1,7 @@
 import 'package:app/core/constants/ui_constants.dart';
 import 'package:app/features/ml-products/domain/ml_product_result.dart';
 import 'package:app/features/ml-products/widgets/ml_product_horizontal_list.dart';
+import 'package:app/shared/widgets/product/product_compact_card_skeleton.dart';
 import 'package:flutter/material.dart';
 
 class MlRecommendationSection extends StatelessWidget {
@@ -45,37 +46,12 @@ class MlRecommendationSection extends StatelessWidget {
           ),
         ),
         if (isLoading)
-          const _SkeletonRow()
+          const ProductCompactSkeletonRow()
         else if (error != null)
           _ErrorRow(message: error!, onRetry: onRetry)
         else
           MlProductHorizontalList(products: products),
       ],
-    );
-  }
-}
-
-class _SkeletonRow extends StatelessWidget {
-  const _SkeletonRow();
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      height: 230,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: UIConstants.paddingM),
-        itemCount: 4,
-        separatorBuilder: (_, _) =>
-            const SizedBox(width: UIConstants.spacingM),
-        itemBuilder: (_, _) => Container(
-          width: 150,
-          decoration: BoxDecoration(
-            color: Colors.grey.shade200,
-            borderRadius: BorderRadius.circular(UIConstants.radiusM),
-          ),
-        ),
-      ),
     );
   }
 }
@@ -107,10 +83,7 @@ class _ErrorRow extends StatelessWidget {
             ),
           ),
           if (onRetry != null)
-            TextButton(
-              onPressed: onRetry,
-              child: const Text('Coba lagi'),
-            ),
+            TextButton(onPressed: onRetry, child: const Text('Coba lagi')),
         ],
       ),
     );
