@@ -13,10 +13,33 @@ export const loginFn = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const api = createApi();
 
-      const res = await api.post<ApiResponse<LoginResponse>>("/auth/login", data);
+      // const res = await api.post<ApiResponse<LoginResponse>>("/auth/login", data);
+
+      const res = {
+         data: {
+            status: "success",
+            statusCode: 200,
+            data: {
+                tokens: {
+                    accessToken: "fakeAccessToken",
+                    refreshToken: "fakeRefreshToken"
+                },
+                user: {
+                    id: 1,
+                    email: "john.doe@example.com",
+                    name: "John Doe",
+                    roles: ["user"]
+                }
+            },
+            message: "Login successful",
+            timestamp: new Date().toISOString()
+         }
+      }
+
+      await new Promise((resolve) => setTimeout(resolve, 1000));
 
       const tokens = res.data.data?.tokens;
-      if (!tokens?.accessToken || !tokens?.refreshToken) {
+    if (!tokens?.accessToken || !tokens?.refreshToken) {
         throw new Error("Login failed: tokens not returned by API");
      }
     const { accessToken, refreshToken } = tokens;
