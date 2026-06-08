@@ -28,7 +28,7 @@ export const loginFn = createServerFn({ method: "POST" })
                     id: 1,
                     email: "john.doe@example.com",
                     name: "John Doe",
-                    roles: ["user"]
+                    roles: ["user", "admin"]
                 }
             },
             message: "Login successful",
