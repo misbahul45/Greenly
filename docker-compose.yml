@@ -1,6 +1,6 @@
 networks:
   greenly_network:
-    name: greenly_network
+    name: ${COMPOSE_PROJECT_NAME:-greenly}_network
 
 volumes:
   mysql_data:
@@ -15,14 +15,14 @@ services:
   traefik:
     image: traefik:v2.11
     command:
-      - "--api.insecure=true"
+      - "--api.insecure=${TRAEFIK_API_INSECURE:-true}"
       - "--providers.docker=true"
       - "--providers.docker.exposedbydefault=false"
-      - "--providers.docker.network=greenly_network"
-      - "--entrypoints.web.address=:80"
+      - "--providers.docker.network=${COMPOSE_PROJECT_NAME:-greenly}_network"
+      - "--entrypoints.web.address=:${HTTP_PORT:-80}"
     ports:
-      - "80:80"
-      - "8080:8080"
+      - "${HTTP_PORT:-80}:${HTTP_PORT:-80}"
+      - "${TRAEFIK_DASHBOARD_PORT:-8080}:8080"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
     networks:
@@ -32,12 +32,12 @@ services:
     image: mysql:8.0
     restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: greenly_core
-      MYSQL_USER: greenly
-      MYSQL_PASSWORD: greenly
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
     ports:
-      - "3307:3306"
+      - "${MYSQL_PORT:-3307}:${MYSQL_CONTAINER_PORT:-3306}"
     volumes:
       - mysql_data:/var/lib/mysql
     networks:
@@ -47,10 +47,10 @@ services:
     image: mongo:7
     restart: always
     environment:
-      MONGO_INITDB_ROOT_USERNAME: root
-      MONGO_INITDB_ROOT_PASSWORD: root
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
     ports:
-      - "27017:27017"
+      - "${MONGODB_PORT:-27017}:${MONGODB_CONTAINER_PORT:-27017}"
     volumes:
       - mongo_data:/data/db
     networks:
@@ -60,7 +60,7 @@ services:
     image: redis:7
     restart: always
     ports:
-      - "6379:6379"
+      - "${REDIS_PORT:-6379}:${REDIS_CONTAINER_PORT:-6379}"
     volumes:
       - redis_data:/data
     networks:
@@ -68,11 +68,14 @@ services:
 
   rabbitmq:
     image: rabbitmq:3-management
-    container_name: greenly_rabbitmq
+    container_name: ${RABBITMQ_CONTAINER_NAME:-greenly_rabbitmq}
     restart: always
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
     ports:
-      - "5672:5672"
-      - "15672:15672"
+      - "${RABBITMQ_PORT:-5672}:${RABBITMQ_CONTAINER_PORT:-5672}"
+      - "${RABBITMQ_MANAGEMENT_PORT:-15672}:${RABBITMQ_MANAGEMENT_CONTAINER_PORT:-15672}"
     networks:
       - greenly_network
 
@@ -89,25 +92,35 @@ services:
       - rabbitmq
 
     environment:
-      DATABASE_HOST: mysql
-      DATABASE_PORT: 3306
-      DATABASE_USER: greenly
-      DATABASE_PASSWORD: greenly
-      DATABASE_NAME: greenly_core
-      REDIS_HOST: redis
-      REDIS_PORT: 6379
-      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672/
-      ML_ENGINE_URL: http://ml-engine:8000
-      JWT_ACCESS_SECRET_KEY: greenly-dev-access-secret
-      JWT_REFRESH_SECRET_KEY: greenly-dev-refresh-secret
-      JWT_ACCESS_EXPIRES: 30d
-      JWT_REFRESH_EXPIRES: 30d
-      API_URL: http://localhost/api/core
+      NODE_ENV: ${NODE_ENV:-development}
+      PORT: ${CORE_SERVICE_PORT:-3000}
+      DATABASE_URL: ${DATABASE_URL}
+      DATABASE_HOST: ${DATABASE_HOST}
+      DATABASE_PORT: ${DATABASE_CONTAINER_PORT:-3306}
+      DATABASE_USER: ${MYSQL_USER}
+      DATABASE_PASSWORD: ${MYSQL_PASSWORD}
+      DATABASE_NAME: ${MYSQL_DATABASE}
+      REDIS_HOST: ${REDIS_HOST}
+      REDIS_PORT: ${REDIS_CONTAINER_PORT:-6379}
+      REDIS_URL: ${REDIS_URL}
+      RABBITMQ_URL: ${RABBITMQ_URL}
+      RABBITMQ_QUEUE: ${CORE_RABBITMQ_QUEUE:-greenly_queue}
+      RABBITMQ_NO_ACK: ${RABBITMQ_NO_ACK:-false}
+      ML_ENGINE_URL: ${ML_ENGINE_INTERNAL_URL}
+      JWT_ACCESS_SECRET_KEY: ${JWT_ACCESS_SECRET_KEY}
+      JWT_REFRESH_SECRET_KEY: ${JWT_REFRESH_SECRET_KEY}
+      JWT_ACCESS_EXPIRES: ${JWT_ACCESS_EXPIRES:-30d}
+      JWT_REFRESH_EXPIRES: ${JWT_REFRESH_EXPIRES:-30d}
+      EMAIL_JS_SERVICE_ID: ${EMAIL_JS_SERVICE_ID:-}
+      EMAIL_JS_PUBLIC_ID: ${EMAIL_JS_PUBLIC_ID:-}
+      EMAIL_JS_PRIVATE_KEY: ${EMAIL_JS_PRIVATE_KEY:-}
+      EMAIL_JS_VERIFY_EMAIL_TEMPLATE_ID: ${EMAIL_JS_VERIFY_EMAIL_TEMPLATE_ID:-}
+      API_URL: ${CORE_SERVICE_PUBLIC_URL}
       STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
       STRIPE_PUBLISHABLE_KEY: ${STRIPE_PUBLISHABLE_KEY:-}
       STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
-      STRIPE_SUCCESS_URL: ${STRIPE_SUCCESS_URL:-http://localhost/payment-success?session_id={CHECKOUT_SESSION_ID}}
-      STRIPE_CANCEL_URL: ${STRIPE_CANCEL_URL:-http://localhost/payment-cancel?session_id={CHECKOUT_SESSION_ID}}
+      STRIPE_SUCCESS_URL: ${STRIPE_SUCCESS_URL}
+      STRIPE_CANCEL_URL: ${STRIPE_CANCEL_URL}
       STRIPE_CURRENCY: ${STRIPE_CURRENCY:-idr}
       STRIPE_CHECKOUT_EXPIRES_HOURS: ${STRIPE_CHECKOUT_EXPIRES_HOURS:-24}
 
@@ -149,14 +162,16 @@ services:
       - rabbitmq
 
     environment:
-      ML_PORT: 8000
-      MODEL_NAME: sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2
-      CATALOG_SERVICE_URL: http://catalog-service:8081
-      CORE_SERVICE_URL: http://core-service:3000
-      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672/
-      REDIS_URL: redis://redis:6379/0
-      FAISS_INDEX_PATH: /app/app/storage/indexes/products.faiss
-      PRODUCT_META_PATH: /app/app/storage/indexes/products_meta.json
+      APP_ENV: ${APP_ENV:-development}
+      ML_PORT: ${ML_ENGINE_PORT:-8000}
+      MODEL_NAME: ${ML_MODEL_NAME}
+      CATALOG_SERVICE_URL: ${CATALOG_SERVICE_INTERNAL_URL}
+      CORE_SERVICE_URL: ${CORE_SERVICE_INTERNAL_URL}
+      RABBITMQ_URL: ${RABBITMQ_URL}
+      REDIS_URL: ${REDIS_URL}
+      FAISS_INDEX_PATH: ${FAISS_INDEX_PATH}
+      PRODUCT_META_PATH: ${PRODUCT_META_PATH}
+      ML_USE_HASH_EMBEDDINGS: ${ML_USE_HASH_EMBEDDINGS:-false}
 
     develop:
       watch:
@@ -188,13 +203,18 @@ services:
       - mongodb
       - redis
     environment:
-      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672/
-      MONGODB_URI: mongodb://root:root@mongodb:27017/?authSource=admin
-      MONGODB_URL: mongodb://root:root@mongodb:27017/?authSource=admin
-      CORE_SERVICE_URL: http://core-service:3000
-      REDIS_HOST: redis
-      REDIS_PORT: 6379
-      JWT_ACCESS_SECRET_KEY: greenly-dev-access-secret
+      APP_ENV: ${APP_ENV:-development}
+      GIN_MODE: ${GIN_MODE:-debug}
+      PORT: ${CATALOG_SERVICE_PORT:-8081}
+      RABBITMQ_URL: ${RABBITMQ_URL}
+      RABBITMQ_NO_ACK: ${RABBITMQ_NO_ACK:-false}
+      MONGODB_URI: ${MONGODB_URL}
+      MONGODB_URL: ${MONGODB_URL}
+      CORE_SERVICE_URL: ${CORE_SERVICE_INTERNAL_URL}
+      REDIS_HOST: ${REDIS_HOST}
+      REDIS_PORT: ${REDIS_CONTAINER_PORT:-6379}
+      JWT_ACCESS_SECRET_KEY: ${JWT_ACCESS_SECRET_KEY}
+      IMAGEKIT_PRIVATE_KEY: ${IMAGEKIT_PRIVATE_KEY:-}
 
     develop:
       watch:
