@@ -9,6 +9,8 @@ export default async function ErrorHandler<T>(
     if (error instanceof AppError) {
       throw error;
     }
+
+    console.log(error)
     throw new AppError(
       'Internal server error',
       500,
