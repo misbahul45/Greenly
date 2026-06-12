@@ -2,6 +2,7 @@ package inventory
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -61,7 +62,7 @@ func (r *repository) UpdateStock(ctx context.Context, productID string, stock in
 }
 
 func (r *repository) ReserveStock(ctx context.Context, productID string, quantity int) error {
-	_, err := r.collection.UpdateOne(ctx,
+	result, err := r.collection.UpdateOne(ctx,
 		bson.M{"product_id": productID, "stock": bson.M{"$gte": quantity}},
 		bson.M{
 			"$inc": bson.M{
@@ -71,11 +72,20 @@ func (r *repository) ReserveStock(ctx context.Context, productID string, quantit
 			"$set": bson.M{"updated_at": time.Now()},
 		},
 	)
-	return err
+	if err != nil {
+		return err
+	}
+	if result.MatchedCount == 0 {
+		return errors.New("product not found")
+	}
+	if result.ModifiedCount == 0 {
+		return errors.New("insufficient stock")
+	}
+	return nil
 }
 
 func (r *repository) ReleaseStock(ctx context.Context, productID string, quantity int) error {
-	_, err := r.collection.UpdateOne(ctx,
+	result, err := r.collection.UpdateOne(ctx,
 		bson.M{"product_id": productID},
 		bson.M{
 			"$inc": bson.M{
@@ -85,7 +95,13 @@ func (r *repository) ReleaseStock(ctx context.Context, productID string, quantit
 			"$set": bson.M{"updated_at": time.Now()},
 		},
 	)
-	return err
+	if err != nil {
+		return err
+	}
+	if result.MatchedCount == 0 {
+		return errors.New("product not found")
+	}
+	return nil
 }
 
 func (r *repository) Delete(ctx context.Context, productID string) error {

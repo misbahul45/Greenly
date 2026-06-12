@@ -11,7 +11,14 @@ import (
 
 func FavoriteRouter(rg *gin.RouterGroup, db *mongo.Database, coreSvc coreclient.Client, redisCache cache.Cache) {
 	repo := NewRepository(db)
-	service := NewService(repo, db.Collection("products"))
+	service := NewService(
+		repo,
+		db.Collection("products"),
+		db.Collection("prices"),
+		db.Collection("inventories"),
+		db.Collection("product_images"),
+		db.Collection("categories"),
+	)
 	handler := NewHandler(service)
 
 	auth := middleware.JWTAuthMiddleware(coreSvc, redisCache)

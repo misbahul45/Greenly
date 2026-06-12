@@ -9,9 +9,9 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-func EcoAttributeRouter(rg *gin.RouterGroup, db *mongo.Database, coreSvc coreclient.Client, redisCache cache.Cache) {
+func EcoAttributeRouter(rg *gin.RouterGroup, db *mongo.Database, coreSvc coreclient.Client, redisCache cache.Cache, publishers ...EcoAttrEventPublisher) {
 	repo := NewRepository(db)
-	service := NewService(repo)
+	service := NewService(repo, publishers...)
 	handler := NewHandler(service)
 
 	auth := middleware.JWTAuthMiddleware(coreSvc, redisCache)

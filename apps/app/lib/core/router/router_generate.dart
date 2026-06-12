@@ -1,4 +1,6 @@
-import 'package:app/features/Main/Main_screen.dart';
+import 'package:app/features/Main/main_screen.dart';
+import 'package:app/features/Main/features/chat/chat_list_screen.dart';
+import 'package:app/features/Main/features/chat/chat_screen.dart';
 import 'package:app/features/categories/all_categories_screen.dart';
 import 'package:app/features/auth/presentation/screens/change_password_screen.dart';
 import 'package:app/features/auth/presentation/screens/verify_password_screen.dart';
@@ -6,9 +8,16 @@ import 'package:app/features/cart/presentation/screens/cart_screen.dart';
 import 'package:app/features/favorite/favorite_screen.dart';
 import 'package:app/features/onboarding/presentation/screens/onboarding_coordinator_screen.dart';
 import 'package:app/features/onboarding/presentation/screens/splash_screen.dart';
+import 'package:app/features/order/presentation/screens/order_list_screen.dart';
+import 'package:app/features/order/presentation/screens/order_detail_screen.dart';
+import 'package:app/features/order/presentation/screens/payment_webview_screen.dart';
+import 'package:app/features/products/presentation/screens/product_list_screen.dart';
+import 'package:app/features/Main/features/profile/screens/edit_profile_screen.dart';
+import 'package:app/features/shop/presentation/screens/following_shops_screen.dart';
+import 'package:app/features/shop/presentation/screens/shop_detail_screen.dart';
 import 'package:app/features/product-detail/product_detail_screen.dart';
 import 'package:app/features/product-detail/reviews_screen.dart';
-import 'package:app/features/search-product/search_product_scereen.dart';
+import 'package:app/features/search-product/search_product_screen.dart';
 import 'package:flutter/material.dart';
 
 import 'package:app/features/auth/presentation/screens/login_screen.dart';
@@ -49,6 +58,32 @@ class RouterGenerate {
       case AppRoutes.cart:
         return _page(const CartScreen());
 
+      case AppRoutes.chatList:
+        return _page(const ChatListScreen(showAppBar: true));
+
+      case AppRoutes.chat:
+        final args = (settings.arguments as Map?) ?? const {};
+        final shopId = args['shopId']?.toString() ?? '';
+        final shopName = args['shopName']?.toString() ?? '';
+        if (shopId.isEmpty || shopName.isEmpty) {
+          return _page(
+            const Scaffold(
+              body: Center(child: Text('Data toko tidak lengkap')),
+            ),
+          );
+        }
+        return _page(
+          ChatScreen(
+            shopId: shopId,
+            shopName: shopName,
+            shopAvatarUrl: args['shopAvatarUrl']?.toString(),
+            productId: args['productId']?.toString(),
+            productName: args['productName']?.toString(),
+            productImageUrl: args['productImageUrl']?.toString(),
+            productSlug: args['productSlug']?.toString(),
+          ),
+        );
+
       case AppRoutes.allCategories:
         return _page(const AllCategoriesScreen());
 
@@ -59,19 +94,84 @@ class RouterGenerate {
         return _page(const MainScreen());
 
       case AppRoutes.productDetail:
-        final slug = settings.arguments as String;
+        final slug = _stringArg(settings.arguments);
+        if (slug == null || slug.isEmpty) {
+          return _errorPage('Data produk tidak tersedia');
+        }
         return _page(ProductDetailScreen(slug: slug));
 
       case AppRoutes.searchProduct:
         return _page(const SearchProductScreen());
 
-      case AppRoutes.reviews:
-        final args = settings.arguments as Map<String, dynamic>;
+      case AppRoutes.orders:
+        return _page(const OrderListScreen());
+
+      case AppRoutes.orderDetail:
+        final orderId = _stringArg(settings.arguments);
+        if (orderId == null || orderId.isEmpty) {
+          return _errorPage('Data pesanan tidak tersedia');
+        }
+        return _page(OrderDetailScreen(orderId: orderId));
+
+      case AppRoutes.paymentWebview:
+        final args = (settings.arguments as Map?) ?? const {};
+        final paymentUrl = args['paymentUrl']?.toString() ?? '';
+        final orderId = args['orderId']?.toString() ?? '';
+        if (paymentUrl.isEmpty || orderId.isEmpty) {
+          return _page(
+            const Scaffold(
+              body: Center(child: Text('Data pembayaran tidak lengkap')),
+            ),
+          );
+        }
         return _page(
-          ReviewsScreen(
-            productId: args['productId'] as String,
-            productName: args['productName'] as String,
+          PaymentWebViewScreen(paymentUrl: paymentUrl, orderId: orderId),
+        );
+
+      case AppRoutes.editProfile:
+        return _page(const EditProfileScreen());
+
+      case AppRoutes.shopFollowers:
+        return _page(const FollowingShopsScreen());
+
+      case AppRoutes.shopDetail:
+        final args = (settings.arguments as Map?) ?? const {};
+        final shopId = args['shopId']?.toString() ?? '';
+        if (shopId.isEmpty) {
+          return _page(
+            const Scaffold(
+              body: Center(child: Text('Data toko tidak tersedia')),
+            ),
+          );
+        }
+        return _page(
+          ShopDetailScreen(
+            shopId: shopId,
+            initiallyFollowing: args['following'] as bool? ?? false,
           ),
+        );
+
+      case AppRoutes.products:
+        return _page(const ProductListScreen(title: 'Semua Produk'));
+
+      case AppRoutes.categoryProducts:
+        final args = (settings.arguments as Map?) ?? const {};
+        return _page(
+          ProductListScreen(
+            categoryId: args['categoryId']?.toString(),
+            title: args['categoryName']?.toString() ?? 'Produk',
+          ),
+        );
+
+      case AppRoutes.reviews:
+        final args = (settings.arguments as Map?) ?? const {};
+        final productId = args['productId']?.toString() ?? '';
+        final productName = args['productName']?.toString() ?? '';
+        if (productId.isEmpty || productName.isEmpty) {
+          return _errorPage('Data ulasan tidak tersedia');
+        }
+        return _page(
+          ReviewsScreen(productId: productId, productName: productName),
         );
 
       default:
@@ -83,5 +183,24 @@ class RouterGenerate {
 
   static MaterialPageRoute _page(Widget child) {
     return MaterialPageRoute(builder: (_) => child);
+  }
+
+  static MaterialPageRoute _errorPage(String message) {
+    return _page(
+      Scaffold(
+        appBar: AppBar(title: const Text('Halaman Tidak Tersedia')),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Text(message, textAlign: TextAlign.center),
+          ),
+        ),
+      ),
+    );
+  }
+
+  static String? _stringArg(Object? value) {
+    if (value is String) return value;
+    return null;
   }
 }

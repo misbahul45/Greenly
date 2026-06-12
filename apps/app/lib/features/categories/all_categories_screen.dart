@@ -1,10 +1,10 @@
 import 'package:app/core/constants/ui_constants.dart';
 import 'package:app/core/router/app_routes.dart';
-import 'package:app/core/theme/app_theme.dart';
-import 'package:app/features/Main/features/home/domains/data/category_data.dart';
 import 'package:app/features/Main/features/home/home_service.dart';
 import 'package:app/features/categories/bloc/categories_bloc.dart';
 import 'package:app/shared/widgets/cart_button_widget.dart';
+import 'package:app/shared/widgets/category/category_grid.dart';
+import 'package:app/shared/widgets/category/category_grid_skeleton.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -68,7 +68,11 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
         body: BlocBuilder<AllCategoriesBloc, AllCategoriesState>(
           builder: (context, state) {
             if (state.isLoading) {
-              return _CategoriesSkeletonGrid();
+              return const CategoryGridSkeleton(
+                itemCount: 12,
+                shrinkWrap: false,
+                physics: AlwaysScrollableScrollPhysics(),
+              );
             }
 
             if (state.error != null && state.data.isEmpty) {
@@ -122,154 +126,25 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
 
             return RefreshIndicator(
               onRefresh: () async => _bloc.add(AllCategoriesRequested()),
-              child: GridView.builder(
+              child: CategoryGrid(
+                categories: state.data,
                 controller: _scrollController,
-                padding: const EdgeInsets.all(UIConstants.paddingM),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 3,
-                  crossAxisSpacing: UIConstants.spacingM,
-                  mainAxisSpacing: UIConstants.spacingM,
-                  childAspectRatio: 1.1,
+                itemCountOverride:
+                    state.data.length + (state.isLoadingMore ? 3 : 0),
+                loadingItemBuilder: (_, _) => const CategoryCardSkeleton(),
+                onTap: (category) => Navigator.pushNamed(
+                  context,
+                  AppRoutes.categoryProducts,
+                  arguments: {
+                    'categoryId': category.id,
+                    'categoryName': category.name,
+                  },
                 ),
-                itemCount: state.data.length + (state.isLoadingMore ? 3 : 0),
-                itemBuilder: (context, i) {
-                  if (i >= state.data.length) {
-                    return _CategoryCardSkeleton();
-                  }
-                  return _CategoryCard(category: state.data[i]);
-                },
               ),
             );
           },
         ),
       ),
-    );
-  }
-}
-
-class _CategoryCard extends StatelessWidget {
-  final CategoryData category;
-
-  const _CategoryCard({required this.category});
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () => Navigator.pushNamed(
-        context,
-        AppRoutes.categoryProducts,
-        arguments: {'category': category.slug},
-      ),
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(UIConstants.radiusM),
-          boxShadow: [
-            BoxShadow(
-              color: AppTheme.primaryColor.withValues(alpha: 0.06),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                color: AppTheme.primaryColor.withValues(alpha: 0.1),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.category_rounded,
-                color: AppTheme.primaryColor,
-                size: 22,
-              ),
-            ),
-            const SizedBox(height: UIConstants.spacingS),
-            Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: UIConstants.spacingXS,
-              ),
-              child: Text(
-                category.name,
-                textAlign: TextAlign.center,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  fontSize: UIConstants.fontSizeS,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.black87,
-                  height: 1.3,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _CategoryCardSkeleton extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(UIConstants.radiusM),
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: Colors.grey[200],
-              shape: BoxShape.circle,
-            ),
-          ),
-          const SizedBox(height: UIConstants.spacingS),
-          Container(
-            width: 60,
-            height: 10,
-            decoration: BoxDecoration(
-              color: Colors.grey[200],
-              borderRadius: BorderRadius.circular(4),
-            ),
-          ),
-          const SizedBox(height: 4),
-          Container(
-            width: 40,
-            height: 10,
-            decoration: BoxDecoration(
-              color: Colors.grey[200],
-              borderRadius: BorderRadius.circular(4),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _CategoriesSkeletonGrid extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return GridView.builder(
-      padding: const EdgeInsets.all(UIConstants.paddingM),
-      physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 3,
-        crossAxisSpacing: UIConstants.spacingM,
-        mainAxisSpacing: UIConstants.spacingM,
-        childAspectRatio: 1.1,
-      ),
-      itemCount: 12,
-      itemBuilder: (_, __) => _CategoryCardSkeleton(),
     );
   }
 }

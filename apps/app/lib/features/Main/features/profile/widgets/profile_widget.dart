@@ -1,4 +1,5 @@
 import 'package:app/core/constants/ui_constants.dart';
+import 'package:app/core/router/app_routes.dart';
 import 'package:app/core/theme/app_theme.dart';
 import 'package:app/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:app/features/auth/presentation/bloc/auth_state.dart';
@@ -130,7 +131,8 @@ class ProfileWidget extends StatelessWidget {
                 ),
               ),
               IconButton(
-                onPressed: () {},
+                onPressed: () =>
+                    Navigator.pushNamed(context, AppRoutes.editProfile),
                 icon: const Icon(
                   Icons.edit_outlined,
                   size: UIConstants.iconSizeL,

@@ -75,7 +75,7 @@ func (h *handler) GetUserFavorites(c *gin.Context) {
 	}
 
 	meta := utils.NewPaginationMeta(total, int64(query.Page), int64(query.Limit))
-	utils.OKWithMeta(c, res, meta)
+	utils.OKWithMeta(c, FavoriteListResponse{Favorites: res}, meta)
 }
 
 func (h *handler) GetProductFavorites(c *gin.Context) {

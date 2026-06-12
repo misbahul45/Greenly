@@ -12,6 +12,7 @@ class FavoriteState extends Equatable {
   final bool isListLoadingMore;
   final int listPage;
   final bool listHasReachedMax;
+  final int totalFavorites;
 
   const FavoriteState({
     this.productId,
@@ -24,6 +25,7 @@ class FavoriteState extends Equatable {
     this.isListLoadingMore = false,
     this.listPage = 1,
     this.listHasReachedMax = false,
+    this.totalFavorites = 0,
   });
 
   FavoriteState copyWith({
@@ -37,6 +39,7 @@ class FavoriteState extends Equatable {
     bool? isListLoadingMore,
     int? listPage,
     bool? listHasReachedMax,
+    int? totalFavorites,
   }) {
     return FavoriteState(
       productId: productId ?? this.productId,
@@ -49,6 +52,7 @@ class FavoriteState extends Equatable {
       isListLoadingMore: isListLoadingMore ?? this.isListLoadingMore,
       listPage: listPage ?? this.listPage,
       listHasReachedMax: listHasReachedMax ?? this.listHasReachedMax,
+      totalFavorites: totalFavorites ?? this.totalFavorites,
     );
   }
 
@@ -64,5 +68,6 @@ class FavoriteState extends Equatable {
     isListLoadingMore,
     listPage,
     listHasReachedMax,
+    totalFavorites,
   ];
 }

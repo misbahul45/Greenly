@@ -13,4 +13,4 @@ RUN pnpm install --shamefully-hoist --prod=false
 
 COPY . .
 
-CMD ["sh", "-c", "pnpm install --shamefully-hoist --prod=false && pnpm run start:dev"]
+CMD ["pnpm", "run", "start"]

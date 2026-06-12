@@ -4,7 +4,9 @@ import 'package:app/core/theme/app_theme.dart';
 import 'package:app/features/auth/auth_service.dart';
 import 'package:app/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:app/features/Main/features/home/bloc/home_bloc.dart';
+import 'package:app/features/Main/features/home/bloc/home_ml_bloc.dart';
 import 'package:app/features/Main/features/home/home_service.dart';
+import 'package:app/features/ml-products/service/ml_product_service.dart';
 import 'package:app/features/product-detail/product_detail_service.dart';
 import 'package:app/features/cart/presentation/bloc/cart_bloc.dart';
 import 'package:app/features/cart/service/cart_service.dart';
@@ -16,7 +18,7 @@ import 'package:intl/date_symbol_data_local.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await dotenv.load(fileName: '.env');
+  await _loadEnv();
   await initializeDateFormatting('id_ID', null);
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
@@ -25,6 +27,14 @@ Future<void> main() async {
     ),
   );
   runApp(const MyApp());
+}
+
+Future<void> _loadEnv() async {
+  try {
+    await dotenv.load(fileName: '.env');
+  } catch (_) {
+    await dotenv.load(fileName: '.env.example');
+  }
 }
 
 class MyApp extends StatelessWidget {
@@ -40,6 +50,7 @@ class MyApp extends StatelessWidget {
           create: (_) => ProductDetailService(),
         ),
         RepositoryProvider<CartService>(create: (_) => CartService()),
+        RepositoryProvider<MlProductService>(create: (_) => MlProductService()),
       ],
       child: MultiBlocProvider(
         providers: [
@@ -48,6 +59,9 @@ class MyApp extends StatelessWidget {
           ),
           BlocProvider<HomeBloc>(
             create: (context) => HomeBloc(context.read<HomeService>()),
+          ),
+          BlocProvider<HomeMlBloc>(
+            create: (context) => HomeMlBloc(context.read<MlProductService>()),
           ),
           BlocProvider<CartBloc>(
             create: (context) =>

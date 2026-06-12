@@ -5,79 +5,318 @@ import (
 	"log"
 	"time"
 
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 func SeedProductVariants(ctx context.Context, db *mongo.Database, productIDs []string) []string {
 	col := db.Collection("product_variants")
 	now := time.Now()
 
+	ensureProductVariantIndexes(ctx, col)
+
 	type variantDef struct {
-		name string
-		sku  string
+		Name string
+		SKU  string
 	}
 
 	variantsByProduct := [][]variantDef{
-		{{"128GB Hitam", "VAR-HP001-128-BLK"}, {"256GB Hitam", "VAR-HP001-256-BLK"}, {"256GB Putih", "VAR-HP001-256-WHT"}},
-		{{"256GB Hitam Titanium", "VAR-HP002-256-BLK"}, {"512GB Hitam Titanium", "VAR-HP002-512-BLK"}, {"1TB Natural Titanium", "VAR-HP002-1T-NAT"}},
-		{{"12GB/256GB Hitam", "VAR-HP003-256-BLK"}, {"16GB/512GB Putih", "VAR-HP003-512-WHT"}},
-		{{"64GB Silver", "VAR-TAB001-64-SLV"}, {"128GB Graphite", "VAR-TAB001-128-GRP"}},
-		{{"RTX 4060 Eclipse Gray", "VAR-LPT001-4060-GRY"}, {"RTX 4070 Eclipse Gray", "VAR-LPT001-4070-GRY"}},
-		{{"Hitam", "VAR-AUD001-BLK"}, {"Putih", "VAR-AUD001-WHT"}, {"Silver", "VAR-AUD001-SLV"}},
-		{{"Graphite", "VAR-AUD002-GRP"}, {"White", "VAR-AUD002-WHT"}},
-		{{"Body Only", "VAR-KMR001-BODY"}, {"Kit 28-70mm", "VAR-KMR001-KIT"}},
-		{{"S Merah", "VAR-DRS001-S-RED"}, {"M Merah", "VAR-DRS001-M-RED"}, {"L Biru", "VAR-DRS001-L-BLU"}, {"XL Biru", "VAR-DRS001-XL-BLU"}},
-		{{"S", "VAR-BLS001-S"}, {"M", "VAR-BLS001-M"}, {"L", "VAR-BLS001-L"}, {"XL", "VAR-BLS001-XL"}},
-		{{"S Krem", "VAR-KBY001-S-CRM"}, {"M Krem", "VAR-KBY001-M-CRM"}, {"L Navy", "VAR-KBY001-L-NVY"}},
-		{{"S", "VAR-KMJ001-S"}, {"M", "VAR-KMJ001-M"}, {"L", "VAR-KMJ001-L"}, {"XL", "VAR-KMJ001-XL"}, {"XXL", "VAR-KMJ001-XXL"}},
-		{{"S", "VAR-BTK001-S"}, {"M", "VAR-BTK001-M"}, {"L", "VAR-BTK001-L"}, {"XL", "VAR-BTK001-XL"}},
-		{{"Coklat Muda", "VAR-TAS001-LBR"}, {"Coklat Tua", "VAR-TAS001-DBR"}, {"Hitam", "VAR-TAS001-BLK"}},
-		{{"36 Nude", "VAR-HLS001-36-NUD"}, {"37 Nude", "VAR-HLS001-37-NUD"}, {"38 Hitam", "VAR-HLS001-38-BLK"}, {"39 Hitam", "VAR-HLS001-39-BLK"}},
-		{{"39 Hitam", "VAR-OXF001-39-BLK"}, {"40 Hitam", "VAR-OXF001-40-BLK"}, {"41 Coklat", "VAR-OXF001-41-BRN"}, {"42 Coklat", "VAR-OXF001-42-BRN"}},
-		{{"Original 500gr", "VAR-RND001-500"}, {"Pedas 500gr", "VAR-RND001-500-HOT"}, {"Original 1kg", "VAR-RND001-1KG"}},
-		{{"Biji 250gr", "VAR-KPI001-BEAN-250"}, {"Bubuk 250gr", "VAR-KPI001-GRD-250"}, {"Biji 500gr", "VAR-KPI001-BEAN-500"}},
-		{{"Original 200gr", "VAR-SMB001-200"}, {"Extra Pedas 200gr", "VAR-SMB001-200-HOT"}},
-		{{"Original 250gr", "VAR-KRP001-250"}, {"Pedas 250gr", "VAR-KRP001-250-HOT"}, {"Keju 250gr", "VAR-KRP001-250-CHS"}},
-		{{"Original 500gr", "VAR-DDL001-500"}, {"Wijen 500gr", "VAR-DDL001-500-SES"}},
-		{{"39 Hitam", "VAR-SPT001-39-BLK"}, {"40 Hitam", "VAR-SPT001-40-BLK"}, {"41 Biru", "VAR-SPT001-41-BLU"}, {"42 Biru", "VAR-SPT001-42-BLU"}, {"43 Merah", "VAR-SPT001-43-RED"}},
-		{{"S", "VAR-JRS001-S"}, {"M", "VAR-JRS001-M"}, {"L", "VAR-JRS001-L"}, {"XL", "VAR-JRS001-XL"}, {"XXL", "VAR-JRS001-XXL"}},
-		{{"2-24kg Hitam", "VAR-DBL001-BLK"}, {"2-24kg Silver", "VAR-DBL001-SLV"}},
-		{{"Hijau 6mm", "VAR-YGM001-GRN"}, {"Ungu 6mm", "VAR-YGM001-PRP"}, {"Biru 6mm", "VAR-YGM001-BLU"}},
-		{{"Chocolate 1kg", "VAR-WPI001-CHC-1KG"}, {"Vanilla 1kg", "VAR-WPI001-VNL-1KG"}, {"Strawberry 1kg", "VAR-WPI001-STR-1KG"}},
-		{{"30ml", "VAR-SRM001-30"}, {"50ml", "VAR-SRM001-50"}},
-		{{"50ml Normal", "VAR-MST001-50-NRM"}, {"50ml Oily", "VAR-MST001-50-OLY"}, {"100ml Normal", "VAR-MST001-100-NRM"}},
-		{{"200ml", "VAR-TNR001-200"}, {"400ml", "VAR-TNR001-400"}},
-		{{"50ml SPF50", "VAR-SUN001-50"}, {"100ml SPF50", "VAR-SUN001-100"}, {"50ml SPF30", "VAR-SUN001-50-30"}},
-		{{"#01 Ivory", "VAR-FND001-01"}, {"#02 Beige", "VAR-FND001-02"}, {"#03 Sand", "VAR-FND001-03"}, {"#04 Caramel", "VAR-FND001-04"}},
-		{{"#01 Coral", "VAR-LPT001-01"}, {"#02 Rose", "VAR-LPT001-02"}, {"#03 Berry", "VAR-LPT001-03"}, {"#04 Brick", "VAR-LPT001-04"}},
-		{{"50ml", "VAR-HSR001-50"}, {"100ml", "VAR-HSR001-100"}},
-		{{"250ml Normal", "VAR-SHP001-250-NRM"}, {"250ml Oily", "VAR-SHP001-250-OLY"}, {"500ml Normal", "VAR-SHP001-500-NRM"}},
+		// 0: Botol Stainless Thermos
+		{
+			{Name: "500ml Hitam Matte", SKU: "VAR-BTL001-500-BLK"},
+			{Name: "500ml Silver", SKU: "VAR-BTL001-500-SLV"},
+			{Name: "750ml Hitam Matte", SKU: "VAR-BTL001-750-BLK"},
+		},
+
+		// 1: Tumbler Bambu
+		{
+			{Name: "350ml Natural Bamboo", SKU: "VAR-BTL002-350-NAT"},
+			{Name: "500ml Natural Bamboo", SKU: "VAR-BTL002-500-NAT"},
+		},
+
+		// 2: Tas Kanvas Organik
+		{
+			{Name: "Natural Cream", SKU: "VAR-TAS001-NAT"},
+			{Name: "Navy Blue", SKU: "VAR-TAS001-NVY"},
+			{Name: "Olive Green", SKU: "VAR-TAS001-OLV"},
+		},
+
+		// 3: Tas Bambu Artisanal
+		{
+			{Name: "Natural Medium", SKU: "VAR-TAS002-M"},
+			{Name: "Natural Large", SKU: "VAR-TAS002-L"},
+		},
+
+		// 4: Set Sedotan Stainless
+		{
+			{Name: "Lurus 6pcs", SKU: "VAR-SDT001-STR"},
+			{Name: "Bengkok 6pcs", SKU: "VAR-SDT001-BND"},
+			{Name: "Mix Lurus + Bengkok 6pcs", SKU: "VAR-SDT001-MIX"},
+		},
+
+		// 5: Peralatan Makan Bambu
+		{
+			{Name: "Set 5pcs Natural", SKU: "VAR-PMK001-5"},
+			{Name: "Set 8pcs Natural", SKU: "VAR-PMK001-8"},
+		},
+
+		// 6: Lilin Soy Wax
+		{
+			{Name: "Lavender 150gr", SKU: "VAR-LLN001-LAV"},
+			{Name: "Eucalyptus 150gr", SKU: "VAR-LLN001-EUC"},
+			{Name: "Vanilla 150gr", SKU: "VAR-LLN001-VNL"},
+		},
+
+		// 7: Lap Microfiber
+		{
+			{Name: "Set 5pcs", SKU: "VAR-LAP001-5"},
+			{Name: "Set 10pcs", SKU: "VAR-LAP001-10"},
+		},
+
+		// 8: Rak Bambu
+		{
+			{Name: "3 Susun Natural", SKU: "VAR-RAK001-3"},
+			{Name: "4 Susun Natural", SKU: "VAR-RAK001-4"},
+		},
+
+		// 9: Kaos Katun Organik
+		{
+			{Name: "S Natural White", SKU: "VAR-KOS001-S-WHT"},
+			{Name: "M Natural White", SKU: "VAR-KOS001-M-WHT"},
+			{Name: "L Natural White", SKU: "VAR-KOS001-L-WHT"},
+			{Name: "XL Natural White", SKU: "VAR-KOS001-XL-WHT"},
+		},
+
+		// 10: Celana Linen
+		{
+			{Name: "S/M Natural Beige", SKU: "VAR-CLN001-SM-BGE"},
+			{Name: "L/XL Natural Beige", SKU: "VAR-CLN001-LXL-BGE"},
+			{Name: "XXL Natural Beige", SKU: "VAR-CLN001-XXL-BGE"},
+		},
+
+		// 11: Jaket Hemp
+		{
+			{Name: "S Olive", SKU: "VAR-JKT001-S-OLV"},
+			{Name: "M Olive", SKU: "VAR-JKT001-M-OLV"},
+			{Name: "L Olive", SKU: "VAR-JKT001-L-OLV"},
+			{Name: "XL Olive", SKU: "VAR-JKT001-XL-OLV"},
+		},
+
+		// 12: Topi Bambu
+		{
+			{Name: "Free Size Natural", SKU: "VAR-TOP001-FS-NAT"},
+			{Name: "Free Size Cokelat", SKU: "VAR-TOP001-FS-BRN"},
+		},
+
+		// 13: Dompet Cork
+		{
+			{Name: "Slim Horizontal Natural", SKU: "VAR-DMP001-H-NAT"},
+			{Name: "Bifold Vertical Natural", SKU: "VAR-DMP001-V-NAT"},
+		},
+
+		// 14: Kacamata Bambu
+		{
+			{Name: "Kotak Regular", SKU: "VAR-KCM001-REG"},
+			{Name: "Bulat Round", SKU: "VAR-KCM001-RND"},
+		},
+
+		// 15: Beras Organik
+		{
+			{Name: "1kg", SKU: "VAR-BRS001-1KG"},
+			{Name: "2kg", SKU: "VAR-BRS001-2KG"},
+			{Name: "5kg", SKU: "VAR-BRS001-5KG"},
+		},
+
+		// 16: Teh Hijau Organik
+		{
+			{Name: "50gr Loose Leaf", SKU: "VAR-TEH001-50"},
+			{Name: "100gr Loose Leaf", SKU: "VAR-TEH001-100"},
+			{Name: "Box 20 Sachet", SKU: "VAR-TEH001-BOX20"},
+		},
+
+		// 17: Madu Hutan
+		{
+			{Name: "250gr", SKU: "VAR-MDU001-250"},
+			{Name: "500gr", SKU: "VAR-MDU001-500"},
+			{Name: "1000gr", SKU: "VAR-MDU001-1KG"},
+		},
+
+		// 18: Granola Organik
+		{
+			{Name: "Original 300gr", SKU: "VAR-GRN001-ORI-300"},
+			{Name: "Cokelat 300gr", SKU: "VAR-GRN001-CHC-300"},
+			{Name: "Mixed Berry 300gr", SKU: "VAR-GRN001-BRY-300"},
+		},
+
+		// 19: Kopi Flores Organik
+		{
+			{Name: "Biji 250gr", SKU: "VAR-KPI001-BEAN-250"},
+			{Name: "Bubuk 250gr", SKU: "VAR-KPI001-GRD-250"},
+			{Name: "Biji 500gr", SKU: "VAR-KPI001-BEAN-500"},
+		},
+
+		// 20: Kit Hidroponik
+		{
+			{Name: "Starter Kit", SKU: "VAR-HDP001-STR"},
+			{Name: "Pro Kit", SKU: "VAR-HDP001-PRO"},
+		},
+
+		// 21: Pupuk Organik Cair
+		{
+			{Name: "500ml", SKU: "VAR-PPK001-500"},
+			{Name: "1000ml", SKU: "VAR-PPK001-1L"},
+		},
+
+		// 22: Serum Rosehip
+		{
+			{Name: "30ml", SKU: "VAR-SRM001-30"},
+			{Name: "50ml", SKU: "VAR-SRM001-50"},
+		},
+
+		// 23: Pelembab Shea Butter
+		{
+			{Name: "60ml Normal Skin", SKU: "VAR-PLB001-NRM-60"},
+			{Name: "60ml Sensitive Skin", SKU: "VAR-PLB001-SEN-60"},
+			{Name: "100ml Normal Skin", SKU: "VAR-PLB001-NRM-100"},
+		},
+
+		// 24: Toner Rose Water
+		{
+			{Name: "100ml Travel", SKU: "VAR-TNR001-100"},
+			{Name: "200ml Regular", SKU: "VAR-TNR001-200"},
+		},
+
+		// 25: Sunscreen Mineral
+		{
+			{Name: "50ml SPF50", SKU: "VAR-SUN001-SPF50-50"},
+			{Name: "100ml SPF50", SKU: "VAR-SUN001-SPF50-100"},
+			{Name: "50ml SPF30", SKU: "VAR-SUN001-SPF30-50"},
+		},
+
+		// 26: Sikat Gigi Bambu
+		{
+			{Name: "Soft Pack 4", SKU: "VAR-SBG001-SOFT-4"},
+			{Name: "Medium Pack 4", SKU: "VAR-SBG001-MED-4"},
+		},
+
+		// 27: Sabun Batang Lavender
+		{
+			{Name: "Lavender 100gr Single", SKU: "VAR-SBN001-LAV-100"},
+			{Name: "Lavender 200gr Twin Pack", SKU: "VAR-SBN001-LAV-TW"},
+			{Name: "Rose 100gr Single", SKU: "VAR-SBN001-ROSE-100"},
+		},
+
+		// 28: Sampo Padat
+		{
+			{Name: "60gr Normal Hair", SKU: "VAR-SMP001-NRM-60"},
+			{Name: "60gr Oily Hair", SKU: "VAR-SMP001-OLY-60"},
+			{Name: "60gr Dry Hair", SKU: "VAR-SMP001-DRY-60"},
+		},
+
+		// 29: Panel Surya Portable
+		{
+			{Name: "20W Kuning", SKU: "VAR-PSR001-20W-YLW"},
+			{Name: "20W Hitam", SKU: "VAR-PSR001-20W-BLK"},
+		},
+
+		// 30: Lampu LED Smart
+		{
+			{Name: "9W Warm White Set 4", SKU: "VAR-LMP001-9W-WW-4"},
+			{Name: "9W Cool White Set 4", SKU: "VAR-LMP001-9W-CW-4"},
+		},
 	}
 
-	docs := make([]interface{}, 0)
+	if len(productIDs) == 0 {
+		log.Println("⚠️  Product variants skipped: no product IDs provided")
+		return []string{}
+	}
+
+	limit := len(productIDs)
+	if len(variantsByProduct) < limit {
+		limit = len(variantsByProduct)
+		log.Printf(
+			"⚠️  Product variants warning: productIDs=%d but variant definitions=%d. Extra products skipped.",
+			len(productIDs),
+			len(variantsByProduct),
+		)
+	}
+
 	variantIDs := make([]string, 0)
 
-	for i, productID := range productIDs {
-		variants := variantsByProduct[i%len(variantsByProduct)]
+	for i := 0; i < limit; i++ {
+		productID := productIDs[i]
+		variants := variantsByProduct[i]
+
 		for _, v := range variants {
-			id := NewID()
-			variantIDs = append(variantIDs, id)
-			docs = append(docs, map[string]interface{}{
-				"_id":        id,
+			generatedID := NewID()
+
+			filter := bson.M{
 				"product_id": productID,
-				"name":       v.name,
-				"sku":        v.sku,
-				"is_active":  true,
-				"created_at": now,
-				"updated_at": now,
+				"sku":        v.SKU,
 				"deleted_at": nil,
-			})
+			}
+
+			update := bson.M{
+				"$set": bson.M{
+					"name":       v.Name,
+					"is_active":  true,
+					"updated_at": now,
+					"deleted_at": nil,
+				},
+				"$setOnInsert": bson.M{
+					"_id":        generatedID,
+					"product_id": productID,
+					"sku":        v.SKU,
+					"created_at": now,
+				},
+			}
+
+			opts := options.FindOneAndUpdate().
+				SetUpsert(true).
+				SetReturnDocument(options.After)
+
+			var result struct {
+				ID string `bson:"_id"`
+			}
+
+			if err := col.FindOneAndUpdate(ctx, filter, update, opts).Decode(&result); err != nil {
+				log.Printf("⚠️  Product variant upsert failed sku=%s product_id=%s: %v", v.SKU, productID, err)
+				continue
+			}
+
+			variantIDs = append(variantIDs, result.ID)
 		}
 	}
 
-	if _, err := col.InsertMany(ctx, docs); err != nil {
-		log.Printf("⚠️  Product variants insert: %v", err)
-	}
-	log.Printf("✅ Product variants seeded (%d)", len(docs))
+	log.Printf("✅ Product variants seeded/updated (%d)", len(variantIDs))
 	return variantIDs
+}
+
+func ensureProductVariantIndexes(ctx context.Context, col *mongo.Collection) {
+	indexes := []mongo.IndexModel{
+		{
+			Keys: bson.D{
+				{Key: "sku", Value: 1},
+			},
+			Options: options.Index().
+				SetName("uniq_active_product_variant_sku").
+				SetUnique(true).
+				SetPartialFilterExpression(bson.M{
+					"deleted_at": nil,
+				}),
+		},
+		{
+			Keys: bson.D{
+				{Key: "product_id", Value: 1},
+				{Key: "sku", Value: 1},
+			},
+			Options: options.Index().
+				SetName("idx_product_variant_product_sku"),
+		},
+	}
+
+	if _, err := col.Indexes().CreateMany(ctx, indexes); err != nil {
+		log.Printf("⚠️  Product variant index warning: %v", err)
+	}
 }

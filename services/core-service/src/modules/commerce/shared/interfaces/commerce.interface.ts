@@ -35,6 +35,7 @@ export interface OrderCreatedPayload {
   shopId: string;
   totalAmount: string;
   timestamp: string;
+  items: Array<{ productId: string; quantity: number }>;
 }
 
 export interface OrderStatusChangedPayload {

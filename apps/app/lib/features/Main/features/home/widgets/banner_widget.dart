@@ -1,4 +1,5 @@
 import 'dart:async';
+
 import 'package:app/core/theme/app_theme.dart';
 import 'package:app/features/Main/features/home/bloc/home_bloc.dart';
 import 'package:app/features/Main/features/home/bloc/home_state.dart';
@@ -14,49 +15,82 @@ class BannerWidget extends StatefulWidget {
 }
 
 class _BannerWidgetState extends State<BannerWidget> {
-  late PageController _controller;
+  late final PageController _controller;
+
   Timer? _timer;
+
   int _currentPage = 0;
+  int _lastItemCount = 0;
+
   static const int _multiplier = 1000;
 
   @override
   void initState() {
     super.initState();
-    _controller = PageController(
-      viewportFraction: 0.92,
-      initialPage: 0,
-    );
+    _controller = PageController(viewportFraction: 0.9);
   }
 
-  void _startAutoScroll(int itemCount) {
+  void _setupCarousel(int itemCount) {
+    if (!mounted || itemCount <= 0) return;
+
+    if (_lastItemCount == itemCount && _timer != null) return;
+
+    _lastItemCount = itemCount;
     _timer?.cancel();
-    _timer = Timer.periodic(const Duration(seconds: 3), (_) {
-      if (!_controller.hasClients) return;
-      final next = _controller.page!.round() + 1;
-      _controller.animateToPage(
-        next,
-        duration: const Duration(milliseconds: 400),
-        curve: Curves.easeInOut,
-      );
+
+    final initialPage = itemCount * (_multiplier ~/ 2);
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !_controller.hasClients) return;
+
+      final currentPage = _controller.page?.round() ?? 0;
+
+      if (currentPage == 0 && itemCount > 1) {
+        _controller.jumpToPage(initialPage);
+      }
+
+      if (itemCount > 1) {
+        _startAutoScroll();
+      }
     });
   }
 
-  void _goNext(int itemCount) {
-    final next = _controller.page!.round() + 1;
+  void _startAutoScroll() {
+    _timer?.cancel();
+
+    _timer = Timer.periodic(const Duration(seconds: 4), (_) {
+      if (!mounted || !_controller.hasClients) return;
+
+      final current = _controller.page?.round() ?? _controller.initialPage;
+      _animateToPage(current + 1);
+    });
+  }
+
+  void _animateToPage(int page) {
+    if (!_controller.hasClients) return;
+
     _controller.animateToPage(
-      next,
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeInOut,
+      page,
+      duration: const Duration(milliseconds: 420),
+      curve: Curves.easeOutCubic,
     );
   }
 
+  void _goNext() {
+    final current = _controller.page?.round() ?? _controller.initialPage;
+    _animateToPage(current + 1);
+    _restartAutoScrollAfterManualAction();
+  }
+
   void _goPrev() {
-    final prev = _controller.page!.round() - 1;
-    _controller.animateToPage(
-      prev,
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeInOut,
-    );
+    final current = _controller.page?.round() ?? _controller.initialPage;
+    _animateToPage(current - 1);
+    _restartAutoScrollAfterManualAction();
+  }
+
+  void _restartAutoScrollAfterManualAction() {
+    if (_lastItemCount <= 1) return;
+    _startAutoScroll();
   }
 
   @override
@@ -77,177 +111,382 @@ class _BannerWidgetState extends State<BannerWidget> {
           return const BannerSkeleton();
         }
 
-        if (bannerState.data.isEmpty) {
-          return const SizedBox();
+        final items = bannerState.data;
+
+        if (items.isEmpty) {
+          _timer?.cancel();
+          _lastItemCount = 0;
+          return const SizedBox.shrink();
         }
 
-        final items = bannerState.data;
         final itemCount = items.length;
-        final virtualCount = itemCount * _multiplier;
-        final initialPage = itemCount * (_multiplier ~/ 2);
+        final virtualCount = itemCount == 1 ? 1 : itemCount * _multiplier;
 
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (_controller.hasClients && _controller.page == 0) {
-            _controller.jumpToPage(initialPage);
-          }
-          _startAutoScroll(itemCount);
-        });
+        _setupCarousel(itemCount);
 
-        return Stack(
-          alignment: Alignment.center,
-          children: [
-            SizedBox(
-              height: 200,
-              child: PageView.builder(
-                controller: _controller,
-                physics: const PageScrollPhysics(),
-                itemCount: virtualCount,
-                onPageChanged: (index) {
-                  setState(() {
-                    _currentPage = index % itemCount;
-                  });
-                },
-                itemBuilder: (context, index) {
-                  final item = items[index % itemCount];
+        return LayoutBuilder(
+          builder: (context, constraints) {
+            final width = constraints.maxWidth;
 
-                  return Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 6),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(16),
-                      color: AppTheme.primaryColor,
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppTheme.primaryColor.withOpacity(0.1),
-                          blurRadius: 10,
-                          offset: const Offset(0, 6),
-                        ),
-                      ],
+            final isTiny = width < 340;
+            final isMobile = width < 600;
+            final isTablet = width >= 600 && width < 900;
+
+            final height = isTiny
+                ? 158.0
+                : isMobile
+                    ? 178.0
+                    : isTablet
+                        ? 220.0
+                        : 260.0;
+
+            final horizontalMargin = isMobile ? 7.0 : 10.0;
+            final borderRadius = isMobile ? 18.0 : 24.0;
+            final showArrows = itemCount > 1 && width >= 390;
+
+            return SizedBox(
+              height: height + 18,
+              width: double.infinity,
+              child: Stack(
+                clipBehavior: Clip.none,
+                alignment: Alignment.center,
+                children: [
+                  Positioned.fill(
+                    top: 4,
+                    bottom: 14,
+                    child: PageView.builder(
+                      controller: _controller,
+                      physics: itemCount > 1
+                          ? const PageScrollPhysics()
+                          : const NeverScrollableScrollPhysics(),
+                      itemCount: virtualCount,
+                      onPageChanged: (index) {
+                        if (!mounted) return;
+
+                        setState(() {
+                          _currentPage = index % itemCount;
+                        });
+                      },
+                      itemBuilder: (context, index) {
+                        final item = items[index % itemCount];
+
+                        return AnimatedBuilder(
+                          animation: _controller,
+                          builder: (context, child) {
+                            double scale = 1;
+                            double translateY = 0;
+
+                            if (_controller.hasClients && _controller.position.haveDimensions) {
+                              final page = _controller.page ?? _controller.initialPage.toDouble();
+                              final distance = (page - index).abs();
+
+                              scale = (1 - (distance * 0.055)).clamp(0.92, 1.0).toDouble();
+
+                              translateY = (distance * 8).clamp(0.0, 8.0).toDouble();
+                            }
+
+                            return Transform.translate(
+                              offset: Offset(0, translateY),
+                              child: Transform.scale(
+                                scale: scale,
+                                child: child,
+                              ),
+                            );
+                          },
+                          child: _FloatingBannerCard(
+                            imageUrl: item.imageUrl,
+                            title: item.title,
+                            description: item.description,
+                            isMobile: isMobile,
+                            horizontalMargin: horizontalMargin,
+                            borderRadius: borderRadius,
+                          ),
+                        );
+                      },
                     ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(14),
-                      child: Stack(
-                        fit: StackFit.expand,
-                        children: [
-                          Image.network(
-                            item.imageUrl,
-                            fit: BoxFit.cover,
-                            errorBuilder: (_, _, _) => Container(
-                              color: AppTheme.tertiaryColor,
-                              child: const Icon(
-                                Icons.image_not_supported,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ),
-                          Container(
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                begin: Alignment.bottomCenter,
-                                end: Alignment.topCenter,
-                                colors: [
-                                  AppTheme.primaryColor.withOpacity(0.7),
-                                  Colors.transparent,
-                                ],
-                              ),
-                            ),
-                          ),
-                          Positioned(
-                            left: 16,
-                            bottom: 16,
-                            right: 16,
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  item.title,
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  item.description,
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(
-                                    color: Colors.white70,
-                                    fontSize: 13,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
+                  ),
+                  if (showArrows) ...[
+                    Positioned(
+                      left: 4,
+                      child: _BannerArrowButton(
+                        icon: Icons.chevron_left_rounded,
+                        onTap: _goPrev,
                       ),
                     ),
-                  );
-                },
-              ),
-            ),
-            Positioned(
-              left: 0,
-              child: GestureDetector(
-                onTap: _goPrev,
-                child: Container(
-                  margin: const EdgeInsets.only(left: 4),
-                  padding: const EdgeInsets.all(6),
-                  decoration: BoxDecoration(
-                    color: AppTheme.primaryColor.withOpacity(0.5),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.chevron_left,
-                    color: Colors.white,
-                    size: 20,
-                  ),
-                ),
-              ),
-            ),
-            Positioned(
-              right: 0,
-              child: GestureDetector(
-                onTap: () => _goNext(itemCount),
-                child: Container(
-                  margin: const EdgeInsets.only(right: 4),
-                  padding: const EdgeInsets.all(6),
-                  decoration: BoxDecoration(
-                    color: AppTheme.primaryColor.withOpacity(0.5),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.chevron_right,
-                    color: Colors.white,
-                    size: 20,
-                  ),
-                ),
-              ),
-            ),
-            Positioned(
-              bottom: 8,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: List.generate(itemCount, (index) {
-                  final isActive = index == _currentPage;
-                  return AnimatedContainer(
-                    duration: const Duration(milliseconds: 300),
-                    margin: const EdgeInsets.symmetric(horizontal: 3),
-                    width: isActive ? 16 : 6,
-                    height: 6,
-                    decoration: BoxDecoration(
-                      color: isActive
-                          ? Colors.white
-                          : AppTheme.tertiaryColor.withOpacity(0.7),
-                      borderRadius: BorderRadius.circular(3),
+                    Positioned(
+                      right: 4,
+                      child: _BannerArrowButton(
+                        icon: Icons.chevron_right_rounded,
+                        onTap: _goNext,
+                      ),
                     ),
-                  );
-                }),
+                  ],
+                  if (itemCount > 1)
+                    Positioned(
+                      bottom: 4,
+                      child: _BannerIndicator(
+                        itemCount: itemCount,
+                        currentPage: _currentPage,
+                      ),
+                    ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+}
+
+class _FloatingBannerCard extends StatelessWidget {
+  const _FloatingBannerCard({
+    required this.imageUrl,
+    required this.title,
+    required this.description,
+    required this.isMobile,
+    required this.horizontalMargin,
+    required this.borderRadius,
+  });
+
+  final String imageUrl;
+  final String title;
+  final String description;
+  final bool isMobile;
+  final double horizontalMargin;
+  final double borderRadius;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: EdgeInsets.symmetric(horizontal: horizontalMargin),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(borderRadius),
+        color: AppTheme.primaryColor,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.12),
+            blurRadius: 22,
+            spreadRadius: -4,
+            offset: const Offset(0, 14),
+          ),
+          BoxShadow(
+            color: AppTheme.primaryColor.withValues(alpha: 0.16),
+            blurRadius: 26,
+            spreadRadius: -10,
+            offset: const Offset(0, 18),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(borderRadius),
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            Image.network(
+              imageUrl,
+              fit: BoxFit.cover,
+              loadingBuilder: (context, child, loadingProgress) {
+                if (loadingProgress == null) return child;
+
+                return Container(
+                  color: AppTheme.primaryColor.withValues(alpha: 0.08),
+                  child: const Center(
+                    child: SizedBox(
+                      width: 22,
+                      height: 22,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                  ),
+                );
+              },
+              errorBuilder: (_, _, _) {
+                return Container(
+                  color: AppTheme.tertiaryColor,
+                  child: const Center(
+                    child: Icon(
+                      Icons.image_not_supported_outlined,
+                      color: Colors.white,
+                      size: 34,
+                    ),
+                  ),
+                );
+              },
+            ),
+            DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.bottomCenter,
+                  end: Alignment.topCenter,
+                  colors: [
+                    Colors.black.withValues(alpha: 0.72),
+                    Colors.black.withValues(alpha: 0.22),
+                    Colors.transparent,
+                  ],
+                  stops: const [0, 0.52, 1],
+                ),
+              ),
+            ),
+            Positioned(
+              left: isMobile ? 14 : 20,
+              right: isMobile ? 14 : 20,
+              bottom: isMobile ? 28 : 34,
+              child: _BannerTextContent(
+                title: title,
+                description: description,
+                isMobile: isMobile,
               ),
             ),
           ],
-        );
-      },
+        ),
+      ),
+    );
+  }
+}
+
+class _BannerTextContent extends StatelessWidget {
+  const _BannerTextContent({
+    required this.title,
+    required this.description,
+    required this.isMobile,
+  });
+
+  final String title;
+  final String description;
+  final bool isMobile;
+
+  @override
+  Widget build(BuildContext context) {
+    return ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 520),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            maxLines: isMobile ? 1 : 2,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: isMobile ? 14 : 17,
+              height: 1.15,
+              fontWeight: FontWeight.w700,
+              letterSpacing: -0.1,
+            ),
+          ),
+          const SizedBox(height: 5),
+          Text(
+            description,
+            maxLines: isMobile ? 2 : 3,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.82),
+              fontSize: isMobile ? 11.5 : 13,
+              height: 1.35,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _BannerArrowButton extends StatelessWidget {
+  const _BannerArrowButton({
+    required this.icon,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      shape: const CircleBorder(),
+      child: InkWell(
+        onTap: onTap,
+        customBorder: const CircleBorder(),
+        child: Container(
+          width: 34,
+          height: 34,
+          decoration: BoxDecoration(
+            color: Colors.black.withValues(alpha: 0.32),
+            shape: BoxShape.circle,
+            border: Border.all(
+              color: Colors.white.withValues(alpha: 0.28),
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.18),
+                blurRadius: 14,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
+          child: Icon(
+            icon,
+            color: Colors.white,
+            size: 24,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _BannerIndicator extends StatelessWidget {
+  const _BannerIndicator({
+    required this.itemCount,
+    required this.currentPage,
+  });
+
+  final int itemCount;
+  final int currentPage;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: 8,
+        vertical: 5,
+      ),
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.24),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(
+          color: Colors.white.withValues(alpha: 0.16),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.12),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: List.generate(itemCount, (index) {
+          final isActive = index == currentPage;
+
+          return AnimatedContainer(
+            duration: const Duration(milliseconds: 280),
+            curve: Curves.easeOutCubic,
+            margin: const EdgeInsets.symmetric(horizontal: 3),
+            width: isActive ? 18 : 6,
+            height: 6,
+            decoration: BoxDecoration(
+              color: isActive
+                  ? Colors.white
+                  : Colors.white.withValues(alpha: 0.45),
+              borderRadius: BorderRadius.circular(99),
+            ),
+          );
+        }),
+      ),
     );
   }
 }

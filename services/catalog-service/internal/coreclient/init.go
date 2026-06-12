@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"time"
 )
@@ -50,36 +49,39 @@ func NewClient(baseURL string) Client {
 }
 
 func (c *client) GetShop(ctx context.Context, shopID string) (*Shop, error) {
-	url := fmt.Sprintf("%s/v1/shops/%s", c.baseURL, shopID)
+	url := fmt.Sprintf("%s/shops/%s", c.baseURL, shopID)
 	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
 	if err != nil {
 		return nil, err
 	}
 
 	resp, err := c.httpClient.Do(req)
-	bodyBytes, err := io.ReadAll(resp.Body)
-	log.Printf(">>> STATUS: %d\n", resp.StatusCode)
-	log.Printf(">>> HEADERS: %+v\n", resp.Header)
-	log.Printf(">>> BODY: %s\n", string(bodyBytes))
 	if err != nil {
 		return nil, err
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("failed to get shop: status %d", resp.StatusCode)
-	}
-
-	var shop Shop
-	if err := json.NewDecoder(resp.Body).Decode(&shop); err != nil {
+	bodyBytes, err := io.ReadAll(resp.Body)
+	if err != nil {
 		return nil, err
 	}
 
-	return &shop, nil
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("failed to get shop: status %d, body: %s", resp.StatusCode, string(bodyBytes))
+	}
+
+	var result struct {
+		Data Shop `json:"data"`
+	}
+	if err := json.Unmarshal(bodyBytes, &result); err != nil {
+		return nil, err
+	}
+
+	return &result.Data, nil
 }
 
 func (c *client) ValidateShopMembership(ctx context.Context, shopID, userID string) (*ShopMembership, error) {
-	url := fmt.Sprintf("%s/v1/shops/%s/members/%s", c.baseURL, shopID, userID)
+	url := fmt.Sprintf("%s/shops/%s/members/%s", c.baseURL, shopID, userID)
 	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
 	if err != nil {
 		return nil, err
@@ -110,8 +112,6 @@ func (c *client) ValidateShopMembership(ctx context.Context, shopID, userID stri
 func (c *client) GetMe(ctx context.Context, token string) (*User, error) {
 	url := fmt.Sprintf("%s/auth/me", c.baseURL)
 
-	log.Printf(">>> Verifying user | token: %s | url: %s\n", token, url)
-
 	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
 	if err != nil {
 		return nil, err
@@ -127,9 +127,6 @@ func (c *client) GetMe(ctx context.Context, token string) (*User, error) {
 
 	body, _ := io.ReadAll(resp.Body)
 
-	log.Printf(">>> STATUS: %d\n", resp.StatusCode)
-	log.Printf(">>> BODY: %s\n", string(body))
-
 	if resp.StatusCode == http.StatusUnauthorized {
 		return nil, fmt.Errorf("unauthorized: %s", string(body))
 	}
@@ -138,10 +135,12 @@ func (c *client) GetMe(ctx context.Context, token string) (*User, error) {
 		return nil, fmt.Errorf("failed: %d | %s", resp.StatusCode, string(body))
 	}
 
-	var user User
-	if err := json.Unmarshal(body, &user); err != nil {
+	var envelope struct {
+		Data *User `json:"data"`
+	}
+	if err := json.Unmarshal(body, &envelope); err != nil {
 		return nil, err
 	}
 
-	return &user, nil
+	return envelope.Data, nil
 }

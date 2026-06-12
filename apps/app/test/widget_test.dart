@@ -1,30 +1,41 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
+import 'package:app/core/router/app_routes.dart';
+import 'package:app/core/router/router_generate.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:app/main.dart';
-
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  testWidgets('router shows fallback for invalid product detail args', (
+    tester,
+  ) async {
+    await tester.pumpWidget(_routeHarness(AppRoutes.productDetail));
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
-
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
-
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    expect(find.text('Data produk tidak tersedia'), findsOneWidget);
   });
+
+  testWidgets('router shows fallback for invalid order detail args', (
+    tester,
+  ) async {
+    await tester.pumpWidget(_routeHarness(AppRoutes.orderDetail));
+
+    expect(find.text('Data pesanan tidak tersedia'), findsOneWidget);
+  });
+
+  testWidgets('router shows fallback for invalid review args', (tester) async {
+    await tester.pumpWidget(_routeHarness(AppRoutes.reviews));
+
+    expect(find.text('Data ulasan tidak tersedia'), findsOneWidget);
+  });
+}
+
+Widget _routeHarness(String routeName) {
+  return MaterialApp(
+    home: Builder(
+      builder: (context) {
+        final route =
+            RouterGenerate.generateRoute(RouteSettings(name: routeName))
+                as MaterialPageRoute<dynamic>;
+        return route.builder(context);
+      },
+    ),
+  );
 }

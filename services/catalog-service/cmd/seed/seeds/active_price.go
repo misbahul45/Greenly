@@ -13,40 +13,37 @@ func SeedActivePrices(ctx context.Context, db *mongo.Database, productIDs []stri
 	now := time.Now()
 
 	finalPrices := []float64{
-		4499100,
-		16149150,
-		7224150,
-		5983120,
-		16559080,
-		2975000,
-		1104150,
-		20249180,
-		224000,
-		297500,
-		675000,
-		175500,
-		198000,
-		674250,
-		552500,
-		522000,
-		105000,
-		90250,
-		40500,
-		32200,
-		24640,
-		1276000,
-		315000,
-		2240000,
-		157250,
-		405000,
-		165000,
-		151200,
-		140250,
-		153000,
-		102500,
-		71200,
-		154000,
-		130500,
+		130500, // botol stainless thermos (10% off)
+		157250, // tumbler bambu (15% off)
+		67500,  // tas kanvas organik (10% off)
+		202500, // tas bambu artisanal (10% off)
+		58500,  // set sedotan stainless (10% off)
+		175500, // set peralatan makan bambu (10% off)
+		76500,  // lilin soy wax (10% off)
+		49500,  // lap microfiber (10% off)
+		247500, // rak bambu desktop (10% off)
+		166500, // kaos katun organik GOTS (10% off)
+		220500, // celana linen natural (10% off)
+		346500, // jaket hemp organik (10% off)
+		139500, // topi anyaman bambu (10% off)
+		175500, // dompet cork oak (10% off)
+		292500, // kacamata bambu (10% off)
+		40500,  // beras organik cianjur (10% off)
+		58500,  // teh hijau organik (10% off)
+		166500, // madu hutan kalimantan (10% off)
+		67500,  // granola oat organik (10% off)
+		85500,  // kopi arabika organik (10% off)
+		247500, // kit hidroponik (10% off)
+		49500,  // pupuk organik cair (10% off)
+		131250, // serum rosehip organik (25% off)
+		108750, // pelembab shea butter (25% off)
+		76000,  // toner rose water (20% off)
+		140250, // sunscreen mineral (15% off)
+		36000,  // sikat gigi bambu (20% off)
+		28000,  // sabun batang lavender (20% off)
+		48400,  // sampo padat organik (12% off)
+		787500, // panel surya portable (10% off)
+		130500, // lampu LED smart (10% off)
 	}
 
 	docs := make([]interface{}, 0, len(productIDs))

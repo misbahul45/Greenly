@@ -6,7 +6,9 @@ import { UserResponse } from "src/modules/identity/users/types";
 export function toMeResponse(user: any): MeResponse {
   return {
     id: user.id,
+    email: user.email,
     name: user.name,
+    status: user.status,
     emailVerified: user.emailVerified,
 
     profile: {
@@ -50,6 +52,7 @@ export function transformUser(user: any): UserResponse {
     status: user.status,
     isActive: user.isActive,
     createdAt: user.createdAt,
+    roles: user.roles?.map((r: any) => r.role?.name || r.roleName) ?? [],
 
     profile: user.profile
       ? {

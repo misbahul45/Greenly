@@ -1,121 +1,546 @@
-import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
-import { DatabaseService } from '../../../libs/database/database.service';
-import { PaymentRepository } from './payment.repository';
-import { PaymentCompletedPublisher, PaymentFailedPublisher } from './publishers/payment-publishers';
-import { ListPaymentsQueryDto, UpdatePaymentStatusDto } from './payment.dto';
+import {
+    Injectable,
+    BadRequestException,
+    NotFoundException,
+} from "@nestjs/common";
+import {DatabaseService} from "../../../libs/database/database.service";
+import {PaymentRepository} from "./payment.repository";
+import {
+    PaymentCompletedPublisher,
+    PaymentFailedPublisher,
+} from "./publishers/payment-publishers";
+import {
+    CreateStripeIntentDto,
+    ListPaymentsQueryDto,
+    UpdatePaymentStatusDto,
+} from "./payment.dto";
+import {StripeService} from "./stripe.service";
+import type {Request} from "express";
 
 @Injectable()
 export class PaymentService {
-  constructor(
-    private readonly db: DatabaseService,
-    private readonly paymentRepo: PaymentRepository,
-    private readonly completedPublisher: PaymentCompletedPublisher,
-    private readonly failedPublisher: PaymentFailedPublisher,
-  ) {}
+    constructor(
+        private readonly db: DatabaseService,
+        private readonly paymentRepo: PaymentRepository,
+        private readonly completedPublisher: PaymentCompletedPublisher,
+        private readonly failedPublisher: PaymentFailedPublisher,
+        private readonly stripeService: StripeService
+    ) {}
 
-  async getPayments(query: ListPaymentsQueryDto, shopId?: string) {
-    const [data, total] = await this.paymentRepo.findByShopIdAndFilters(shopId, query);
-    
-    return {
-      data,
-      meta: {
-        total,
-        page: query.page,
-        limit: query.limit,
-        lastPage: Math.ceil(total / query.limit),
-      },
-      message: 'Payments retrieved successfully',
-    };
-  }
+    async getPayments(query: ListPaymentsQueryDto, shopId?: string) {
+        const [data, total] = await this.paymentRepo.findByShopIdAndFilters(
+            shopId,
+            query
+        );
 
-  async updatePaymentStatus(id: string, dto: UpdatePaymentStatusDto) {
-    const payment = await this.paymentRepo.findById(id);
-    if (!payment) throw new NotFoundException('Payment not found');
-
-    if (payment.status === dto.status) {
-      throw new BadRequestException(`Payment is already ${dto.status}`);
+        return {
+            data,
+            meta: {
+                total,
+                page: query.page,
+                limit: query.limit,
+                lastPage: Math.ceil(total / query.limit),
+            },
+            message: "Payments retrieved successfully",
+        };
     }
 
-    if (payment.status === 'SUCCESS') {
-      throw new BadRequestException('Cannot change status of a successful payment');
+    async updatePaymentStatus(id: string, dto: UpdatePaymentStatusDto) {
+        const payment = await this.paymentRepo.findById(id);
+        if (!payment) throw new NotFoundException("Payment not found");
+
+        if (payment.status === dto.status) {
+            throw new BadRequestException(`Payment is already ${dto.status}`);
+        }
+
+        if (payment.status === "SUCCESS" && dto.status !== "REFUNDED") {
+            throw new BadRequestException(
+                "Cannot change status of a successful payment"
+            );
+        }
+
+        const isSuccess = dto.status === "SUCCESS";
+        const paidAt = isSuccess ? new Date() : undefined;
+
+        const updated = await this.db.$transaction(async (tx) => {
+            const p = await tx.payment.update({
+                where: {id},
+                data: {
+                    status: dto.status as any,
+                    ...(dto.transactionId && {
+                        transactionId: dto.transactionId,
+                    }),
+                    ...(paidAt && {paidAt}),
+                },
+                include: {order: true},
+            });
+
+            if (isSuccess && p.order) {
+                await this.creditSuccessfulPayment(tx, p);
+            }
+
+            if (dto.status === "EXPIRED" && p.order) {
+                await tx.order.update({
+                    where: {id: p.orderId},
+                    data: {status: "CANCELLED"},
+                });
+            }
+
+            return p;
+        });
+
+        if (isSuccess) {
+            await this.publishCompleted(updated, updated.transactionId);
+        } else {
+            await this.failedPublisher.publish({
+                paymentId: updated.id,
+                orderId: updated.orderId,
+                shopId: updated.order.shopId,
+                reason: `Payment manually updated to ${dto.status} by admin`,
+            });
+        }
+
+        return {
+            data: updated,
+            message: `Payment status updated to ${dto.status}`,
+        };
     }
 
-    const isSuccess = dto.status === 'SUCCESS';
-    const paidAt = isSuccess ? new Date() : undefined;
-
-    const updated = await this.db.$transaction(async (tx) => {
-      const p = await tx.payment.update({
-        where: { id },
-        data: {
-          status: dto.status as any,
-          ...(dto.transactionId && { transactionId: dto.transactionId }),
-          ...(paidAt && { paidAt }),
-        },
-        include: { order: true },
-      });
-
-      if (isSuccess && p.order) {
-        // Credit the shop's ledger with the net amount
-        await tx.shopLedger.create({
-          data: {
-            shopId: p.order.shopId,
-            type: 'CREDIT',
-            amount: p.netAmount,
-            reference: `PAYMENT_${p.id}`,
-            description: `Payment for order ${p.order.id}`,
-          },
+    async createStripeIntent(userId: string, dto: CreateStripeIntentDto) {
+        const order = await this.db.order.findFirst({
+            where: {
+                id: dto.orderId,
+                userId,
+            },
+            include: {
+                items: true,
+                payment: true,
+            },
         });
 
-        // Update shop balance
-        await tx.shop.update({
-          where: { id: p.order.shopId, deletedAt: null },
-          data: { balance: { increment: p.netAmount } },
+        if (!order) {
+            throw new NotFoundException("Order not found");
+        }
+
+        if (order.status !== "PENDING") {
+            throw new BadRequestException("Order is not payable");
+        }
+
+        if (order.payment?.status === "SUCCESS") {
+            throw new BadRequestException("Order already paid");
+        }
+
+        const payment = order.payment;
+        if (!payment) {
+            throw new NotFoundException("Payment not found");
+        }
+
+        const grossAmount = this.toNumber(order.totalAmount);
+        const currency = this.stripeService.currency;
+        const session =
+            await this.stripeService.stripe.checkout.sessions.create({
+                mode: "payment",
+                line_items: [
+                    {
+                        quantity: 1,
+                        price_data: {
+                            currency,
+                            unit_amount: this.stripeService.toStripeAmount(
+                                grossAmount,
+                                currency
+                            ),
+                            product_data: {
+                                name: `Order ${order.id}`,
+                            },
+                        },
+                    },
+                ],
+                metadata: {
+                    orderId: order.id,
+                    paymentId: payment.id,
+                    userId,
+                    shopId: order.shopId,
+                },
+                payment_intent_data: {
+                    metadata: {
+                        orderId: order.id,
+                        paymentId: payment.id,
+                        userId,
+                        shopId: order.shopId,
+                    },
+                },
+                success_url: this.stripeService.successUrl,
+                cancel_url: this.stripeService.cancelUrl,
+                expires_at:
+                    Math.floor(Date.now() / 1000) +
+                    this.stripeService.checkoutExpiresHours * 3600,
+            });
+
+        const updated = await this.db.payment.update({
+            where: {id: payment.id},
+            data: {
+                status: "PENDING",
+                method: "STRIPE",
+                transactionId: session.id,
+                stripeCheckoutSessionId: session.id,
+                stripePaymentIntentId:
+                    typeof session.payment_intent === "string"
+                        ? session.payment_intent
+                        : session.payment_intent?.id,
+                paymentUrl: session.url,
+            },
         });
 
-        // Update order status
+        return {
+            data: {
+                paymentId: updated.id,
+                orderId: order.id,
+                provider: "STRIPE",
+                status: updated.status,
+                totalAmount: Math.round(grossAmount),
+                paymentUrl: session.url,
+                checkoutSessionId: session.id,
+                clientSecret: null,
+            },
+            message: "Stripe checkout session created",
+        };
+    }
+
+    async handleStripeWebhook(
+        request: Request & {rawBody?: Buffer},
+        signature?: string
+    ) {
+        if (!signature) {
+            throw new BadRequestException("Missing Stripe signature");
+        }
+
+        const payload =
+            request.rawBody ?? Buffer.from(JSON.stringify(request.body));
+        const event = this.stripeService.constructEvent(payload, signature);
+
+        if (event.type === "checkout.session.completed") {
+            const session = event.data.object as any;
+            return this.applyStripeSuccess(session, "checkout_session");
+        }
+
+        if (event.type === "checkout.session.expired") {
+            const session = event.data.object as any;
+            return this.applyStripeFailure(session, "EXPIRED");
+        }
+
+        if (event.type === "payment_intent.succeeded") {
+            const intent = event.data.object as any;
+            return this.applyStripeSuccess(intent, "payment_intent");
+        }
+
+        if (event.type === "payment_intent.payment_failed") {
+            const intent = event.data.object as any;
+            return this.applyStripeFailure(intent, "FAILED");
+        }
+
+        if (event.type === "charge.refunded") {
+            const charge = event.data.object as any;
+            return this.applyStripeRefund(charge);
+        }
+
+        return {
+            data: {received: true, type: event.type},
+            message: "Stripe webhook ignored",
+        };
+    }
+
+    private async applyStripeSuccess(
+        payload: any,
+        source: "checkout_session" | "payment_intent"
+    ) {
+        const payment = await this.findStripePayment(payload);
+        if (!payment) {
+            throw new NotFoundException("Payment not found");
+        }
+
+        if (payment.status === "SUCCESS" || payment.status === "REFUNDED") {
+            return {
+                data: {
+                    received: true,
+                    paymentId: payment.id,
+                    status: payment.status,
+                },
+                message: "Stripe payment already processed",
+            };
+        }
+
+        const paymentIntentId = this.extractPaymentIntentId(payload);
+        const checkoutSessionId =
+            source === "checkout_session"
+                ? payload.id
+                : payment.stripeCheckoutSessionId;
+
+        const updated = await this.db.$transaction(async (tx) => {
+            const current = await tx.payment.update({
+                where: {id: payment.id},
+                data: {
+                    status: "SUCCESS",
+                    transactionId:
+                        checkoutSessionId || paymentIntentId || payload.id,
+                    stripeCheckoutSessionId: checkoutSessionId,
+                    stripePaymentIntentId: paymentIntentId,
+                    method: "STRIPE",
+                    paidAt: new Date(),
+                },
+                include: {order: {include: {items: true}}},
+            });
+
+            await this.creditSuccessfulPayment(tx, current);
+
+            const cart = await tx.cart.findUnique({
+                where: {userId: current.order.userId},
+            });
+
+            if (cart) {
+                await tx.cartItem.deleteMany({
+                    where: {
+                        cartId: cart.id,
+                        productId: {
+                            in: current.order.items.map(
+                                (item) => item.productId
+                            ),
+                        },
+                    },
+                });
+            }
+
+            return current;
+        });
+
+        await this.publishCompleted(updated, updated.transactionId);
+
+        return {
+            data: {
+                received: true,
+                paymentId: updated.id,
+                status: updated.status,
+            },
+            message: "Stripe payment succeeded",
+        };
+    }
+
+    private async applyStripeFailure(
+        payload: any,
+        status: "FAILED" | "EXPIRED"
+    ) {
+        const payment = await this.findStripePayment(payload);
+        if (!payment) {
+            throw new NotFoundException("Payment not found");
+        }
+
+        if (payment.status === "SUCCESS" || payment.status === "REFUNDED") {
+            return {
+                data: {
+                    received: true,
+                    paymentId: payment.id,
+                    status: payment.status,
+                },
+                message: "Stripe payment status unchanged",
+            };
+        }
+
+        if (payment.status === status) {
+            return {
+                data: {
+                    received: true,
+                    paymentId: payment.id,
+                    status: payment.status,
+                },
+                message: "Stripe payment already processed",
+            };
+        }
+
+        const paymentIntentId = this.extractPaymentIntentId(payload);
+        const checkoutSessionId =
+            payload.object === "checkout.session"
+                ? payload.id
+                : payment.stripeCheckoutSessionId;
+
+        const updated = await this.db.$transaction(async (tx) => {
+            const current = await tx.payment.update({
+                where: {id: payment.id},
+                data: {
+                    status: status as any,
+                    transactionId:
+                        checkoutSessionId || paymentIntentId || payload.id,
+                    stripeCheckoutSessionId: checkoutSessionId,
+                    stripePaymentIntentId: paymentIntentId,
+                    method: "STRIPE",
+                },
+                include: {order: true},
+            });
+
+            if (status === "EXPIRED") {
+                await tx.order.update({
+                    where: {id: current.orderId},
+                    data: {status: "CANCELLED"},
+                });
+            }
+
+            return current;
+        });
+
+        await this.failedPublisher.publish({
+            paymentId: updated.id,
+            orderId: updated.orderId,
+            shopId: updated.order.shopId,
+            reason:
+                payload.last_payment_error?.message ??
+                `Stripe payment ${status.toLowerCase()}`,
+        });
+
+        return {
+            data: {
+                received: true,
+                paymentId: updated.id,
+                status: updated.status,
+            },
+            message: `Stripe payment ${status.toLowerCase()}`,
+        };
+    }
+
+    private async applyStripeRefund(charge: any) {
+        const paymentIntentId =
+            typeof charge.payment_intent === "string"
+                ? charge.payment_intent
+                : charge.payment_intent?.id;
+        if (!paymentIntentId) {
+            return {
+                data: {received: true},
+                message: "Stripe refund has no payment intent",
+            };
+        }
+
+        const payment =
+            await this.paymentRepo.findByTransactionId(paymentIntentId);
+        if (!payment) {
+            throw new NotFoundException("Payment not found");
+        }
+
+        const updated = await this.db.$transaction(async (tx) => {
+            const current = await tx.payment.update({
+                where: {id: payment.id},
+                data: {status: "REFUNDED"},
+                include: {order: true},
+            });
+
+            await tx.order.update({
+                where: {id: current.orderId},
+                data: {status: "CANCELLED"},
+            });
+
+            return current;
+        });
+
+        return {
+            data: {
+                received: true,
+                paymentId: updated.id,
+                status: updated.status,
+            },
+            message: "Stripe charge refunded",
+        };
+    }
+
+    private async findStripePayment(payload: any) {
+        const paymentId = payload.metadata?.paymentId;
+        const orderId = payload.metadata?.orderId;
+
+        if (paymentId) {
+            return this.db.payment.findUnique({
+                where: {id: paymentId},
+                include: {order: true},
+            });
+        }
+
+        if (orderId) {
+            return this.db.payment.findUnique({
+                where: {orderId},
+                include: {order: true},
+            });
+        }
+
+        const ids = [payload.id, this.extractPaymentIntentId(payload)].filter(
+            Boolean
+        );
+
+        for (const id of ids) {
+            const payment = await this.paymentRepo.findByTransactionId(id);
+            if (payment) return payment;
+        }
+
+        return null;
+    }
+
+    private async creditSuccessfulPayment(tx: any, payment: any) {
         await tx.order.update({
-           where: { id: p.orderId },
-           data: { status: 'PAID' }
+            where: {id: payment.orderId},
+            data: {status: "PAID"},
         });
-      }
 
-      if ((dto.status === 'FAILED' || dto.status === 'EXPIRED') && p.order) {
-         await tx.order.update({
-           where: { id: p.orderId },
-           data: { status: 'CANCELLED' }
-         });
-      }
+        const existingLedger = await tx.shopLedger.findFirst({
+            where: {
+                shopId: payment.order.shopId,
+                reference: `PAYMENT_${payment.id}`,
+            },
+        });
 
-      return p;
-    });
+        if (!existingLedger) {
+            await tx.shopLedger.create({
+                data: {
+                    shopId: payment.order.shopId,
+                    type: "CREDIT",
+                    amount: payment.netAmount,
+                    reference: `PAYMENT_${payment.id}`,
+                    description: `Payment for order ${payment.orderId}`,
+                },
+            });
 
-    // @ts-ignore Prisma Decimal unwrap
-    const netAmountVal = typeof updated.netAmount.toNumber === 'function' ? updated.netAmount.toNumber() : Number(updated.netAmount);
-
-    if (isSuccess) {
-      await this.completedPublisher.publish({
-        paymentId: updated.id,
-        orderId: updated.orderId,
-        shopId: updated.order.shopId,
-        netAmount: netAmountVal,
-        fees: {
-           gateway: updated.gatewayFee,
-           marketplace: updated.marketplaceFee
-        },
-        transactionId: updated.transactionId,
-      });
-    } else {
-      await this.failedPublisher.publish({
-        paymentId: updated.id,
-        orderId: updated.orderId,
-        shopId: updated.order.shopId,
-        reason: `Payment manually updated to ${dto.status} by admin`,
-      });
+            await tx.shop.update({
+                where: {id: payment.order.shopId},
+                data: {balance: {increment: payment.netAmount}},
+            });
+        }
     }
 
-    return {
-      data: updated,
-      message: `Payment status updated to ${dto.status}`,
-    };
-  }
+    private async publishCompleted(
+        payment: any,
+        transactionId?: string | null
+    ) {
+        await this.completedPublisher.publish({
+            paymentId: payment.id,
+            orderId: payment.orderId,
+            shopId: payment.order.shopId,
+            netAmount: this.toNumber(payment.netAmount),
+            fees: {
+                gateway: payment.gatewayFee,
+                marketplace: payment.marketplaceFee,
+            },
+            transactionId,
+        });
+    }
+
+    private extractPaymentIntentId(payload: any) {
+        if (typeof payload.payment_intent === "string")
+            return payload.payment_intent;
+        if (payload.payment_intent?.id) return payload.payment_intent.id;
+        if (payload.object === "payment_intent") return payload.id;
+        return undefined;
+    }
+
+    private toNumber(value: unknown) {
+        if (
+            value &&
+            typeof (value as {toNumber?: unknown}).toNumber === "function"
+        ) {
+            return (value as {toNumber: () => number}).toNumber();
+        }
+
+        return Number(value);
+    }
 }

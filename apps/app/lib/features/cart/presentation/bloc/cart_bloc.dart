@@ -72,30 +72,39 @@ class CartBloc extends Bloc<CartEvent, CartState> {
     emit(
       state.copyWith(
         removingProductIds: {...state.removingProductIds, event.productId},
+        error: null,
       ),
     );
-    await _service.removeItem(productId: event.productId);
+    final res = await _service.removeItem(productId: event.productId);
     final updated = Set<String>.from(state.removingProductIds)
       ..remove(event.productId);
-    emit(state.copyWith(removingProductIds: updated));
-    add(CartLoadRequested());
+    if (res.isSuccess) {
+      emit(state.copyWith(removingProductIds: updated));
+      add(CartLoadRequested());
+    } else {
+      emit(state.copyWith(removingProductIds: updated, error: res.message));
+    }
   }
 
   Future<void> _onClear(
     CartClearRequested event,
     Emitter<CartState> emit,
   ) async {
-    emit(state.copyWith(isLoading: true));
-    await _service.clearCart();
-    emit(
-      state.copyWith(
-        isLoading: false,
-        cart: CartData(
-          userId: state.cart?.userId ?? '',
-          items: [],
-          totalItems: 0,
+    emit(state.copyWith(isLoading: true, error: null));
+    final res = await _service.clearCart();
+    if (res.isSuccess) {
+      emit(
+        state.copyWith(
+          isLoading: false,
+          cart: CartData(
+            userId: state.cart?.userId ?? '',
+            items: [],
+            totalItems: 0,
+          ),
         ),
-      ),
-    );
+      );
+    } else {
+      emit(state.copyWith(isLoading: false, error: res.message));
+    }
   }
 }

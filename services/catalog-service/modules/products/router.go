@@ -9,9 +9,9 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-func ProductRouter(rg *gin.RouterGroup, db *mongo.Database, coreSvc coreclient.Client, redisCache cache.Cache) {
+func ProductRouter(rg *gin.RouterGroup, db *mongo.Database, coreSvc coreclient.Client, redisCache cache.Cache, publishers ...ProductEventPublisher) {
 	repo := NewRepository(db)
-	service := NewService(repo)
+	service := NewService(repo, coreSvc, publishers...)
 	handler := NewHandler(service)
 
 	auth := middleware.JWTAuthMiddleware(coreSvc, redisCache)

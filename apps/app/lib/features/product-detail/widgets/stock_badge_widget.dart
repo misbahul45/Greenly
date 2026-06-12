@@ -1,13 +1,9 @@
-import 'package:app/core/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 
 class StockBadgeWidget extends StatelessWidget {
   final int stock;
 
-  const StockBadgeWidget({
-    super.key,
-    required this.stock,
-  });
+  const StockBadgeWidget({super.key, required this.stock});
 
   @override
   Widget build(BuildContext context) {
@@ -41,10 +37,7 @@ class StockBadgeWidget extends StatelessWidget {
           Container(
             width: 8,
             height: 8,
-            decoration: BoxDecoration(
-              color: textColor,
-              shape: BoxShape.circle,
-            ),
+            decoration: BoxDecoration(color: textColor, shape: BoxShape.circle),
           ),
           const SizedBox(width: 6),
           Text(

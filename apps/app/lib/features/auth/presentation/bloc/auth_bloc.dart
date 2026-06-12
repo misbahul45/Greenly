@@ -19,6 +19,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<AuthVerifyEmailRequested>(_onVerifyEmail);
     on<AuthLogoutRequested>(_onLogout);
     on<AuthCheckRequested>(_onCheckAuth);
+    on<AuthRefreshUserRequested>(_onRefreshUser);
     on<AuthResendOtpRequested>(_onResendOtp);
     on<AuthForgotPasswordRequested>(_onForgotPassword);
     on<AuthVerifyPasswordRequested>(_onVerifyPassword);
@@ -129,7 +130,6 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     Emitter<AuthState> emit,
   ) async {
     emit(AuthLoading());
-    AuthStorage.clear();
     final token = await AuthStorage.getAccessToken();
     final refreshToken = await AuthStorage.getRefreshToken();
     final user = await AuthStorage.getUser();
@@ -141,6 +141,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         ),
       );
     } else {
+      await AuthStorage.clear();
       emit(AuthUnauthenticated());
     }
   }
@@ -198,8 +199,34 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
     if (response.isSuccess) {
       emit(AuthChangePasswordSuccess());
+    } else {
+      emit(AuthError(response.message));
     }
-    
+  }
+
+  Future<void> _onRefreshUser(
+    AuthRefreshUserRequested event,
+    Emitter<AuthState> emit,
+  ) async {
+    final meResponse = await MeService.getMe();
+    if (!meResponse.isSuccess || meResponse.data == null) return;
+
+    final user = meResponse.data!;
+    await AuthStorage.saveUser(user);
+
+    final accessToken = await AuthStorage.getAccessToken();
+    final refreshToken = await AuthStorage.getRefreshToken();
+    if (accessToken == null || refreshToken == null) return;
+
+    emit(
+      AuthAuthenticated(
+        user: user,
+        tokens: TokenModel(
+          accessToken: accessToken,
+          refreshToken: refreshToken,
+        ),
+      ),
+    );
   }
 
   Future<void> _onLogout(

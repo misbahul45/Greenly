@@ -1,0 +1,263 @@
+networks:
+  greenly_network:
+    name: ${COMPOSE_PROJECT_NAME:-greenly}_network
+
+volumes:
+  mysql_data:
+  mongo_data:
+  redis_data:
+  core_node_modules:
+  catalog_node_modules:
+  ml_venv:
+  go_mod_cache:
+
+services:
+  traefik:
+    image: traefik:v2.11
+    command:
+      - "--api.insecure=${TRAEFIK_API_INSECURE:-true}"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--providers.docker.network=${COMPOSE_PROJECT_NAME:-greenly}_network"
+      - "--entrypoints.web.address=:${HTTP_PORT:-80}"
+    ports:
+      - "${HTTP_PORT:-80}:${HTTP_PORT:-80}"
+      - "${TRAEFIK_DASHBOARD_PORT:-8080}:8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - greenly_network
+
+  mysql:
+    image: mysql:8.0
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    ports:
+      - "${MYSQL_PORT:-3307}:${MYSQL_CONTAINER_PORT:-3306}"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - greenly_network
+
+  mongodb:
+    image: mongo:7
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
+    ports:
+      - "${MONGODB_PORT:-27017}:${MONGODB_CONTAINER_PORT:-27017}"
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - greenly_network
+
+  redis:
+    image: redis:7
+    restart: always
+    ports:
+      - "${REDIS_PORT:-6379}:${REDIS_CONTAINER_PORT:-6379}"
+    volumes:
+      - redis_data:/data
+    networks:
+      - greenly_network
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: ${RABBITMQ_CONTAINER_NAME:-greenly_rabbitmq}
+    restart: always
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
+    ports:
+      - "${RABBITMQ_PORT:-5672}:${RABBITMQ_CONTAINER_PORT:-5672}"
+      - "${RABBITMQ_MANAGEMENT_PORT:-15672}:${RABBITMQ_MANAGEMENT_CONTAINER_PORT:-15672}"
+    networks:
+      - greenly_network
+
+  core-service:
+    build:
+      context: ./services/core-service
+      dockerfile: Dockerfile.dev
+    volumes:
+    - core_node_modules:/app/node_modules
+
+    depends_on:
+      - mysql
+      - redis
+      - rabbitmq
+
+    environment:
+      NODE_ENV: ${NODE_ENV:-development}
+      PORT: ${CORE_SERVICE_PORT:-3000}
+      DATABASE_URL: ${DATABASE_URL}
+      DATABASE_HOST: ${DATABASE_HOST}
+      DATABASE_PORT: ${DATABASE_CONTAINER_PORT:-3306}
+      DATABASE_USER: ${MYSQL_USER}
+      DATABASE_PASSWORD: ${MYSQL_PASSWORD}
+      DATABASE_NAME: ${MYSQL_DATABASE}
+      REDIS_HOST: ${REDIS_HOST}
+      REDIS_PORT: ${REDIS_CONTAINER_PORT:-6379}
+      REDIS_URL: ${REDIS_URL}
+      RABBITMQ_URL: ${RABBITMQ_URL}
+      RABBITMQ_QUEUE: ${CORE_RABBITMQ_QUEUE:-greenly_queue}
+      RABBITMQ_NO_ACK: ${RABBITMQ_NO_ACK:-false}
+      ML_ENGINE_URL: ${ML_ENGINE_INTERNAL_URL}
+      JWT_ACCESS_SECRET_KEY: ${JWT_ACCESS_SECRET_KEY}
+      JWT_REFRESH_SECRET_KEY: ${JWT_REFRESH_SECRET_KEY}
+      JWT_ACCESS_EXPIRES: ${JWT_ACCESS_EXPIRES:-30d}
+      JWT_REFRESH_EXPIRES: ${JWT_REFRESH_EXPIRES:-30d}
+      EMAIL_JS_SERVICE_ID: ${EMAIL_JS_SERVICE_ID:-}
+      EMAIL_JS_PUBLIC_ID: ${EMAIL_JS_PUBLIC_ID:-}
+      EMAIL_JS_PRIVATE_KEY: ${EMAIL_JS_PRIVATE_KEY:-}
+      EMAIL_JS_VERIFY_EMAIL_TEMPLATE_ID: ${EMAIL_JS_VERIFY_EMAIL_TEMPLATE_ID:-}
+      API_URL: ${CORE_SERVICE_PUBLIC_URL}
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
+      STRIPE_PUBLISHABLE_KEY: ${STRIPE_PUBLISHABLE_KEY:-}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
+      STRIPE_SUCCESS_URL: ${STRIPE_SUCCESS_URL}
+      STRIPE_CANCEL_URL: ${STRIPE_CANCEL_URL}
+      STRIPE_CURRENCY: ${STRIPE_CURRENCY:-idr}
+      STRIPE_CHECKOUT_EXPIRES_HOURS: ${STRIPE_CHECKOUT_EXPIRES_HOURS:-24}
+
+    develop:
+      watch:
+        - action: sync
+          path: ./services/core-service
+          target: /app
+          ignore:
+            - node_modules/
+            - dist/
+
+        - action: rebuild
+          path: ./services/core-service/package.json
+
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.core.rule=PathPrefix(`/api/core`)"
+      - "traefik.http.routers.core.entrypoints=web"
+      - "traefik.http.services.core.loadbalancer.server.port=3000"
+      - "traefik.http.middlewares.core-strip.stripprefix.prefixes=/api/core"
+      - "traefik.http.routers.core.middlewares=core-strip"
+
+    networks:
+      - greenly_network
+
+  ml-engine:
+    build:
+      context: ./services/ml-engine
+      dockerfile: Dockerfile.dev
+
+    volumes:
+      - ./services/ml-engine:/app
+      - ml_venv:/app/.venv
+
+    depends_on:
+      - catalog-service
+      - redis
+      - rabbitmq
+
+    environment:
+      APP_ENV: ${APP_ENV:-development}
+      ML_PORT: ${ML_ENGINE_PORT:-8000}
+      MODEL_NAME: ${ML_MODEL_NAME}
+      CATALOG_SERVICE_URL: ${CATALOG_SERVICE_INTERNAL_URL}
+      CORE_SERVICE_URL: ${CORE_SERVICE_INTERNAL_URL}
+      RABBITMQ_URL: ${RABBITMQ_URL}
+      REDIS_URL: ${REDIS_URL}
+      FAISS_INDEX_PATH: ${FAISS_INDEX_PATH}
+      PRODUCT_META_PATH: ${PRODUCT_META_PATH}
+      ML_INTERNAL_TOKEN: ${ML_INTERNAL_TOKEN:-greenly-local-ml-internal-token}
+      ML_USE_HASH_EMBEDDINGS: ${ML_USE_HASH_EMBEDDINGS:-false}
+
+    develop:
+      watch:
+        - action: sync
+          path: ./services/ml-engine
+          target: /app
+
+        - action: rebuild
+          path: ./services/ml-engine/pyproject.toml
+
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.ml.rule=PathPrefix(`/api/ml`)"
+      - "traefik.http.routers.ml.entrypoints=web"
+      - "traefik.http.services.ml.loadbalancer.server.port=8000"
+      - "traefik.http.middlewares.ml-strip.stripprefix.prefixes=/api/ml"
+      - "traefik.http.routers.ml.middlewares=ml-strip"
+
+    networks:
+      - greenly_network
+
+  ml-worker:
+    build:
+      context: ./services/ml-engine
+      dockerfile: Dockerfile.dev
+    volumes:
+      - ./services/ml-engine:/app
+      - ml_venv:/app/.venv
+    depends_on:
+      - rabbitmq
+      - redis
+    environment:
+      APP_ENV: ${APP_ENV:-development}
+      RABBITMQ_URL: ${RABBITMQ_URL}
+      REDIS_URL: ${REDIS_URL}
+      MODEL_NAME: ${ML_MODEL_NAME}
+      CATALOG_SERVICE_URL: ${CATALOG_SERVICE_INTERNAL_URL}
+      CORE_SERVICE_URL: ${CORE_SERVICE_INTERNAL_URL}
+      FAISS_INDEX_PATH: ${FAISS_INDEX_PATH}
+      PRODUCT_META_PATH: ${PRODUCT_META_PATH}
+      ML_INTERNAL_TOKEN: ${ML_INTERNAL_TOKEN:-greenly-local-ml-internal-token}
+      ML_USE_HASH_EMBEDDINGS: ${ML_USE_HASH_EMBEDDINGS:-false}
+    command: uv run celery -A app.workers.celery_app worker --loglevel=info --concurrency=2
+    networks:
+      - greenly_network
+
+  catalog-service:
+    build:
+      context: ./services/catalog-service
+      dockerfile: Dockerfile.dev
+
+    depends_on:
+      - rabbitmq
+      - mongodb
+      - redis
+    environment:
+      APP_ENV: ${APP_ENV:-development}
+      GIN_MODE: ${GIN_MODE:-debug}
+      PORT: ${CATALOG_SERVICE_PORT:-8081}
+      RABBITMQ_URL: ${RABBITMQ_URL}
+      RABBITMQ_NO_ACK: ${RABBITMQ_NO_ACK:-false}
+      MONGODB_URI: ${MONGODB_URL}
+      MONGODB_URL: ${MONGODB_URL}
+      CORE_SERVICE_URL: ${CORE_SERVICE_INTERNAL_URL}
+      REDIS_HOST: ${REDIS_HOST}
+      REDIS_PORT: ${REDIS_CONTAINER_PORT:-6379}
+      JWT_ACCESS_SECRET_KEY: ${JWT_ACCESS_SECRET_KEY}
+      IMAGEKIT_PRIVATE_KEY: ${IMAGEKIT_PRIVATE_KEY:-}
+
+    develop:
+      watch:
+        - action: sync
+          path: ./services/catalog-service
+          target: /app
+
+        - action: rebuild
+          path: ./services/catalog-service/go.mod
+
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.catalog.rule=PathPrefix(`/api/catalog`)"
+      - "traefik.http.routers.catalog.entrypoints=web"
+      - "traefik.http.services.catalog.loadbalancer.server.port=8081"
+      - "traefik.http.middlewares.catalog-strip.stripprefix.prefixes=/api/catalog"
+      - "traefik.http.routers.catalog.middlewares=catalog-strip"
+
+    networks:
+      - greenly_network

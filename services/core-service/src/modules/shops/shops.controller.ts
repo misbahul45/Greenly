@@ -68,7 +68,7 @@ export class ShopsController {
     params: ShopIdParamDTO,
   ) {
     return ErrorHandler(() =>
-      this.service.findOne(params.shopId)
+      this.service.findOne(params.id)
     )
   }
 
@@ -81,7 +81,7 @@ export class ShopsController {
     @CurrentUser() user: UserLogin,
   ) {
     return ErrorHandler(() =>
-      this.service.update(params.shopId, user.sub, body)
+      this.service.update(params.id, user.sub, body)
     )
   }
 
@@ -92,7 +92,7 @@ export class ShopsController {
     @CurrentUser() user: UserLogin,
   ) {
     return ErrorHandler(() =>
-      this.service.delete(params.shopId, user.sub)
+      this.service.delete(params.id, user.sub)
     )
   }
 }

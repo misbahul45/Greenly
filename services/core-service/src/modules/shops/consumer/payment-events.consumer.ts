@@ -45,14 +45,26 @@ export class PaymentEventsConsumer {
     private readonly financeService: FinanceService,
   ) {}
 
-  @EventPattern('payment.success')
+  @EventPattern('payment.completed')
   async handlePaymentSuccess(@Payload() raw: unknown) {
     try {
       const data = PaymentSuccessEventSchema.parse(raw);
       await ErrorHandler(() => this.orderService.updateOrderStatus(data.shopId, data.orderId, 'PAID'));
-      this.logger.log(`Successfully processed payment.success for order ${data.orderId}`);
+      this.logger.log(`Successfully processed payment.completed for order ${data.orderId}`);
     } catch (error) {
-      this.logger.error(`Failed to process payment.success: ${error.message}`);
+      this.logger.error(`Failed to process payment.completed: ${error.message}`);
+      throw error;
+    }
+  }
+
+  @EventPattern('payment.success')
+  async handlePaymentSuccessLegacy(@Payload() raw: unknown) {
+    try {
+      const data = PaymentSuccessEventSchema.parse(raw);
+      await ErrorHandler(() => this.orderService.updateOrderStatus(data.shopId, data.orderId, 'PAID'));
+      this.logger.log(`Successfully processed payment.success (legacy) for order ${data.orderId}`);
+    } catch (error) {
+      this.logger.error(`Failed to process payment.success (legacy): ${error.message}`);
       throw error;
     }
   }

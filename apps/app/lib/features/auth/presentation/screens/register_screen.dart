@@ -37,6 +37,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
       ),
     );
 
+    if (!mounted) return;
+
     setState(() {
       isLoading = false;
     });

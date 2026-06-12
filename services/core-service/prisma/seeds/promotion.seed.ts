@@ -9,9 +9,9 @@ export async function seedPromotions(
 
   const promotions = [
     {
-      code: 'WELCOME10',
-      name: 'Welcome Discount 10%',
-      description: 'Diskon 10% untuk pembelian pertama',
+      code: 'ECOLIVING10',
+      name: 'Eco Living Welcome 10%',
+      description: 'Diskon 10% untuk pembelian pertama produk eco-friendly',
       discountVal: 10,
       type: 'PERCENTAGE' as const,
       minPurchaseAmount: 50000,
@@ -24,8 +24,8 @@ export async function seedPromotions(
     },
     {
       code: 'HEMAT50K',
-      name: 'Hemat 50 Ribu',
-      description: 'Potongan langsung Rp 50.000',
+      name: 'Hemat 50 Ribu Eco',
+      description: 'Potongan langsung Rp 50.000 untuk produk organik',
       discountVal: 50000,
       type: 'FIXED' as const,
       minPurchaseAmount: 200000,
@@ -37,9 +37,9 @@ export async function seedPromotions(
       isActive: true,
     },
     {
-      code: 'FLASH20',
-      name: 'Flash Sale 20%',
-      description: 'Diskon 20% flash sale terbatas',
+      code: 'ZEROWASTE20',
+      name: 'Zero Waste Flash Sale 20%',
+      description: 'Diskon 20% flash sale untuk produk zero waste',
       discountVal: 20,
       type: 'PERCENTAGE' as const,
       minPurchaseAmount: 100000,
@@ -50,12 +50,10 @@ export async function seedPromotions(
       endDate: future,
       isActive: true,
     },
-
-    // ✅ FIX DI SINI
     {
-      code: 'GRATIS25K',
-      name: 'Gratis Ongkir 25K',
-      description: 'Subsidi ongkir Rp 25.000',
+      code: 'ONGKIRECO25K',
+      name: 'Gratis Ongkir Eco 25K',
+      description: 'Subsidi ongkir Rp 25.000 untuk produk ramah lingkungan',
       discountVal: 25000,
       type: 'FIXED' as const,
       minPurchaseAmount: 75000,
@@ -66,11 +64,10 @@ export async function seedPromotions(
       endDate: future,
       isActive: true,
     },
-
     {
-      code: 'LEBARAN15',
-      name: 'Promo Lebaran 15%',
-      description: 'Diskon spesial hari raya 15%',
+      code: 'EARTHDAY15',
+      name: 'Earth Day 15%',
+      description: 'Diskon spesial 15% peringatan Hari Bumi',
       discountVal: 15,
       type: 'PERCENTAGE' as const,
       minPurchaseAmount: 150000,
@@ -82,9 +79,9 @@ export async function seedPromotions(
       isActive: true,
     },
     {
-      code: 'NEWUSER30',
-      name: 'New User 30%',
-      description: 'Diskon 30% khusus pengguna baru',
+      code: 'NEWGREENIE30',
+      name: 'New Greenie 30%',
+      description: 'Diskon 30% khusus pengguna baru Greenly',
       discountVal: 30,
       type: 'PERCENTAGE' as const,
       minPurchaseAmount: 100000,
@@ -97,8 +94,8 @@ export async function seedPromotions(
     },
     {
       code: 'CASHBACK100K',
-      name: 'Cashback 100K',
-      description: 'Cashback Rp 100.000 untuk transaksi di atas 500K',
+      name: 'Cashback Eco 100K',
+      description: 'Cashback Rp 100.000 untuk transaksi eco di atas 500K',
       discountVal: 100000,
       type: 'FIXED' as const,
       minPurchaseAmount: 500000,
@@ -111,8 +108,8 @@ export async function seedPromotions(
     },
     {
       code: 'WEEKEND5',
-      name: 'Weekend Sale 5%',
-      description: 'Diskon 5% setiap akhir pekan',
+      name: 'Weekend Eco Sale 5%',
+      description: 'Diskon 5% setiap akhir pekan untuk semua produk hijau',
       discountVal: 5,
       type: 'PERCENTAGE' as const,
       minPurchaseAmount: 50000,
@@ -125,7 +122,7 @@ export async function seedPromotions(
     },
     {
       code: 'EXPIRED10',
-      name: 'Promo Expired',
+      name: 'Promo Lama (Tidak Aktif)',
       description: 'Promo yang sudah tidak aktif',
       discountVal: 10,
       type: 'PERCENTAGE' as const,
@@ -138,9 +135,9 @@ export async function seedPromotions(
       isActive: false,
     },
     {
-      code: 'HARBOLNAS25',
-      name: 'Harbolnas 25%',
-      description: 'Diskon besar hari belanja online nasional',
+      code: 'ECOFEST25',
+      name: 'Greenly Eco Fest 25%',
+      description: 'Diskon besar festival eco-friendly Greenly',
       discountVal: 25,
       type: 'PERCENTAGE' as const,
       minPurchaseAmount: 200000,
@@ -161,7 +158,6 @@ export async function seedPromotions(
       where: {
         code: p.code,
       },
-
       update: {
         name: p.name,
         description: p.description,
@@ -175,7 +171,6 @@ export async function seedPromotions(
         endDate: p.endDate,
         isActive: p.isActive,
       },
-
       create: {
         code: p.code,
         name: p.name,
@@ -204,9 +199,7 @@ export async function seedPromotions(
               shopId,
             },
           },
-
           update: {},
-
           create: {
             promotionId: promo.id,
             shopId,
@@ -217,6 +210,5 @@ export async function seedPromotions(
   }
 
   console.log('✅ Promotions Seeded Successfully')
-
   return createdPromoIds
 }

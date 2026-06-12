@@ -3,9 +3,14 @@ package ecoattribute
 import (
 	"context"
 	"errors"
+	"log"
 )
 
 var ErrEcoAttributeNotFound = errors.New("eco attribute not found")
+
+type EcoAttrEventPublisher interface {
+	PublishEcoAttributeUpdated(ctx context.Context, productID string, ecoScore float64, materialType string, recyclable bool, carbonFootprint float64) error
+}
 
 type Service interface {
 	GetByProductID(ctx context.Context, productID string) (EcoAttributeResponse, error)
@@ -16,10 +21,15 @@ type Service interface {
 
 type service struct {
 	repository Repository
+	publisher  EcoAttrEventPublisher
 }
 
-func NewService(repository Repository) Service {
-	return &service{repository: repository}
+func NewService(repository Repository, publishers ...EcoAttrEventPublisher) Service {
+	var pub EcoAttrEventPublisher
+	if len(publishers) > 0 {
+		pub = publishers[0]
+	}
+	return &service{repository: repository, publisher: pub}
 }
 
 func (s *service) GetByProductID(ctx context.Context, productID string) (EcoAttributeResponse, error) {
@@ -43,6 +53,15 @@ func (s *service) Create(ctx context.Context, dto CreateEcoAttributeDTO) (EcoAtt
 	if err != nil {
 		return EcoAttributeResponse{}, err
 	}
+
+	if s.publisher != nil {
+		go func() {
+			if err := s.publisher.PublishEcoAttributeUpdated(context.Background(), created.ProductID, created.EcoScore, created.MaterialType, created.Recyclable, created.CarbonFootprint); err != nil {
+				log.Printf("[eco_attribute] failed to publish eco_attribute.updated for %s: %v", created.ProductID, err)
+			}
+		}()
+	}
+
 	return ToResponse(&created), nil
 }
 
@@ -69,6 +88,15 @@ func (s *service) Update(ctx context.Context, productID string, dto UpdateEcoAtt
 	if err != nil {
 		return EcoAttributeResponse{}, err
 	}
+
+	if s.publisher != nil {
+		go func() {
+			if err := s.publisher.PublishEcoAttributeUpdated(context.Background(), updated.ProductID, updated.EcoScore, updated.MaterialType, updated.Recyclable, updated.CarbonFootprint); err != nil {
+				log.Printf("[eco_attribute] failed to publish eco_attribute.updated for %s: %v", updated.ProductID, err)
+			}
+		}()
+	}
+
 	return ToResponse(&updated), nil
 }
 

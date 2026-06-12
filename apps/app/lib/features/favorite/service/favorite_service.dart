@@ -4,8 +4,7 @@ import 'package:app/core/utils/api_response.dart';
 import 'package:app/features/favorite/domain/data/favorite_data.dart';
 
 class FavoriteService {
-  static String get _base => '${ENV.API}/catalog/favorites';
-  static String get _catalogBase => '${ENV.API}/catalog';
+  static String get _base => '${ENV.api}/catalog/favorites';
 
   Future<ApiResponse<ToggleFavoriteData>> toggle({
     required String productId,
@@ -23,62 +22,39 @@ class FavoriteService {
       fromJsonT: (json) => CheckFavoriteData.fromJson(json),
     );
   }
-  Future<({List<FavoriteProductData> items, bool hasMore, int page})>
+  Future<({List<FavoriteProductData> items, bool hasMore, int page, int total})>
   getUserFavorites({int page = 1, int limit = 20}) async {
     final res = await ApiClient.get(
       '$_base?page=$page&limit=$limit',
-      fromJsonT: (json) => FavoriteListData.fromJson(json),
+      fromJsonT: (json) => FavoriteListData.fromJson(json as Map<String, dynamic>),
     );
 
     if (!res.isSuccess || res.data == null) {
-      return (items: <FavoriteProductData>[], hasMore: false, page: page);
+      return (items: <FavoriteProductData>[], hasMore: false, page: page, total: 0);
     }
 
-    final items = res.data!.favorites;
+    final favItems = res.data!.favorites;
     final lastPage = res.metaData?.lastPage ?? 1;
+    final total = res.metaData?.total ?? favItems.length;
     final hasMore = page < lastPage;
 
-    final enriched = await Future.wait(
-      items.map((fav) async {
-        try {
-          final pRes = await ApiClient.get<Map<String, dynamic>>(
-            '$_catalogBase/products/${fav.productId}',
-            fromJsonT: (json) => json as Map<String, dynamic>,
-          );
-          if (pRes.isSuccess && pRes.data != null) {
-            final p = pRes.data!;
-            final images = (p['imageUrls'] as List<dynamic>? ?? []);
-            return FavoriteProductData(
-              favoriteId: fav.id,
-              productId: fav.productId,
-              shopId: fav.shopId,
-              name: p['name']?.toString() ?? '',
-              slug: p['slug']?.toString() ?? '',
-              imageUrl: images.isNotEmpty ? images.first.toString() : '',
-              price: p['price'] is int ? p['price'] as int : 0,
-              currency: p['currency']?.toString() ?? 'IDR',
-              ratingAverage: (p['ratingAverage'] as num?)?.toDouble() ?? 0,
-              reviewCount: p['reviewCount'] as int? ?? 0,
-              stock: p['stock'] as int? ?? 0,
-            );
-          }
-        } catch (_) {}
-        return FavoriteProductData(
-          favoriteId: fav.id,
-          productId: fav.productId,
-          shopId: fav.shopId,
-          name: '',
-          slug: '',
-          imageUrl: '',
-          price: 0,
-          currency: 'IDR',
-          ratingAverage: 0,
-          reviewCount: 0,
-          stock: 0,
-        );
-      }),
-    );
+    final items = favItems.map((fav) => FavoriteProductData(
+      favoriteId: fav.id,
+      productId: fav.productId,
+      shopId: fav.shopId,
+      name: fav.name,
+      slug: fav.slug,
+      imageUrl: fav.imageUrl,
+      price: fav.price,
+      currency: fav.currency,
+      ratingAverage: fav.ratingAverage,
+      reviewCount: fav.reviewCount,
+      stock: fav.stock,
+      categoryName: fav.categoryName,
+      shopName: fav.shopName,
+      favoriteCount: fav.favoriteCount,
+    )).toList();
 
-    return (items: enriched, hasMore: hasMore, page: page);
+    return (items: items, hasMore: hasMore, page: page, total: total);
   }
 }

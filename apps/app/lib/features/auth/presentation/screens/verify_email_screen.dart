@@ -3,7 +3,7 @@ import 'package:app/core/theme/app_theme.dart';
 import 'package:app/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:app/features/auth/presentation/bloc/auth_event.dart';
 import 'package:app/features/auth/presentation/bloc/auth_state.dart';
-import 'package:app/features/auth/presentation/widgets/Form_otp_email.dart';
+import 'package:app/features/auth/presentation/widgets/form_otp_email.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -27,15 +27,10 @@ class VerifyEmailScreen extends StatelessWidget {
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
-            constraints: BoxConstraints(
-              maxWidth: width > 500 ? 420 : width,
-            ),
+            constraints: BoxConstraints(maxWidth: width > 500 ? 420 : width),
             child: SingleChildScrollView(
               physics: const BouncingScrollPhysics(),
-              padding: const EdgeInsets.symmetric(
-                horizontal: 20,
-                vertical: 24,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
               child: BlocConsumer<AuthBloc, AuthState>(
                 listener: (context, state) {
                   if (state is AuthAuthenticated) {
@@ -52,9 +47,9 @@ class VerifyEmailScreen extends StatelessWidget {
                       ),
                     );
                   } else if (state is AuthError) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text(state.message)),
-                    );
+                    ScaffoldMessenger.of(
+                      context,
+                    ).showSnackBar(SnackBar(content: Text(state.message)));
                   }
                 },
                 builder: (context, state) {
@@ -73,10 +68,8 @@ class VerifyEmailScreen extends StatelessWidget {
                       const SizedBox(height: 36),
                       FormOtpEmail(
                         isLoading: isLoading,
-                        errorMessage:
-                            state is AuthError ? state.message : null,
-                        onSubmitOtp: (otp) =>
-                            handleVerifyOtp(context, otp),
+                        errorMessage: state is AuthError ? state.message : null,
+                        onSubmitOtp: (otp) => handleVerifyOtp(context, otp),
                         onResendOtp: (email) => handleResendOtp(
                           context,
                           email,
@@ -118,11 +111,7 @@ class _OtpIllustration extends StatelessWidget {
             shape: BoxShape.circle,
             color: AppTheme.primaryColor.withValues(alpha: 0.1),
           ),
-          child: Icon(
-            icon,
-            size: 42,
-            color: AppTheme.primaryColor,
-          ),
+          child: Icon(icon, size: 42, color: AppTheme.primaryColor),
         ),
         const SizedBox(height: 20),
         Text(
@@ -138,11 +127,7 @@ class _OtpIllustration extends StatelessWidget {
         Text(
           subtitle,
           textAlign: TextAlign.center,
-          style: TextStyle(
-            fontSize: 14,
-            color: Colors.grey[600],
-            height: 1.4,
-          ),
+          style: TextStyle(fontSize: 14, color: Colors.grey[600], height: 1.4),
         ),
       ],
     );

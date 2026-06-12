@@ -1,20 +1,22 @@
-import { Module } from '@nestjs/common';
-import { PaymentController } from './payment.controller';
-import { PaymentService } from './payment.service';
-import { PaymentRepository } from './payment.repository';
-import { PaymentCompletedPublisher, PaymentFailedPublisher } from './publishers/payment-publishers';
-
-@Module({
-  controllers: [PaymentController],
-  providers: [
-    PaymentService,
-    PaymentRepository,
+import {Module} from "@nestjs/common";
+import {PaymentController, StripePaymentController} from "./payment.controller";
+import {PaymentService} from "./payment.service";
+import {PaymentRepository} from "./payment.repository";
+import {
     PaymentCompletedPublisher,
     PaymentFailedPublisher,
-  ],
-  exports: [
-    PaymentService,
-    PaymentRepository,
-  ],
+} from "./publishers/payment-publishers";
+import {StripeService} from "./stripe.service";
+
+@Module({
+    controllers: [PaymentController, StripePaymentController],
+    providers: [
+        PaymentService,
+        PaymentRepository,
+        StripeService,
+        PaymentCompletedPublisher,
+        PaymentFailedPublisher,
+    ],
+    exports: [PaymentService, PaymentRepository, StripeService],
 })
 export class PaymentModule {}

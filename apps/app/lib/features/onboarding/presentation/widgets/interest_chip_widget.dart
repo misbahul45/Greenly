@@ -39,7 +39,7 @@ class _InterestChipWidgetState extends State<InterestChipWidget> {
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
           decoration: BoxDecoration(
             color: widget.isSelected
-                ? AppTheme.primaryColor.withOpacity(0.1)
+                ? AppTheme.primaryColor.withValues(alpha: 0.1)
                 : Colors.white,
             borderRadius: BorderRadius.circular(24),
             border: Border.all(

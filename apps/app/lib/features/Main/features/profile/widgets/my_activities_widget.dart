@@ -32,60 +32,67 @@ class MyActivitiesWidget extends StatelessWidget {
       children: [
         const SectionTitleWidget(title: 'Aktivitas Saya'),
         const SizedBox(height: UIConstants.spacingS),
-        Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(UIConstants.radiusL),
+          Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(UIConstants.radiusL),
+            ),
+            child: Material(
+              type: MaterialType.transparency,
+              child: Column(
+                children: items.map((item) {
+                  return Column(
+                    children: [
+                      ListTile(
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: UIConstants.paddingM,
+                          vertical: UIConstants.spacingS,
+                        ),
+                        leading: Container(
+                          padding: const EdgeInsets.all(UIConstants.paddingS),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF5F5F5),
+                            borderRadius:
+                                BorderRadius.circular(UIConstants.radiusS),
+                          ),
+                          child: Icon(
+                            item.icon,
+                            size: UIConstants.iconSizeL,
+                            color: AppTheme.primaryColor,
+                          ),
+                        ),
+                        title: Text(
+                          item.title,
+                          style: const TextStyle(
+                            fontSize: UIConstants.fontSizeL,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF1A1A2E),
+                          ),
+                        ),
+                        subtitle: Text(
+                          item.subtitle,
+                          style: const TextStyle(
+                            fontSize: UIConstants.fontSizeXS,
+                            color: Colors.grey,
+                          ),
+                        ),
+                        trailing: const Icon(
+                          Icons.chevron_right,
+                          color: Colors.grey,
+                        ),
+                        onTap: item.onTap,
+                      ),
+                      const Divider(
+                        height: 1,
+                        thickness: 1,
+                        color: Color(0xFFF0F0F0),
+                      ),
+                    ],
+                  );
+                }).toList(),
+              ),
+            ),
           ),
-          child: Column(
-            children: items.map((item) {
-              return Column(
-                children: [
-                  ListTile(
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: UIConstants.paddingM,
-                      vertical: UIConstants.spacingS,
-                    ),
-                    leading: Container(
-                      padding: const EdgeInsets.all(UIConstants.paddingS),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF5F5F5),
-                        borderRadius:
-                            BorderRadius.circular(UIConstants.radiusS),
-                      ),
-                      child: Icon(
-                        item.icon,
-                        size: UIConstants.iconSizeL,
-                        color: AppTheme.primaryColor,
-                      ),
-                    ),
-                    title: Text(
-                      item.title,
-                      style: const TextStyle(
-                        fontSize: UIConstants.fontSizeL,
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFF1A1A2E),
-                      ),
-                    ),
-                    subtitle: Text(
-                      item.subtitle,
-                      style: const TextStyle(
-                        fontSize: UIConstants.fontSizeXS,
-                        color: Colors.grey,
-                      ),
-                    ),
-                    trailing: const Icon(
-                      Icons.chevron_right,
-                      color: Colors.grey,
-                    ),
-                    onTap: item.onTap,
-                  ),
-                  const Divider(height: 1, thickness: 1, color: Color(0xFFF0F0F0)),
-                ],
-              );
-            }).toList(),
-          ),
-        ),
       ],
     );
   }

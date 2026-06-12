@@ -33,13 +33,13 @@ class PermissionCardWidget extends StatelessWidget {
         border: Border.all(
           color: isResolved
               ? (isGranted
-                    ? AppTheme.primaryColor.withOpacity(0.4)
+                    ? AppTheme.primaryColor.withValues(alpha: 0.4)
                     : const Color(0xFFE0E0E0))
               : const Color(0xFFE8E8E8),
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -54,7 +54,7 @@ class PermissionCardWidget extends StatelessWidget {
                 width: 44,
                 height: 44,
                 decoration: BoxDecoration(
-                  color: iconColor.withOpacity(0.1),
+                  color: iconColor.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(icon, color: iconColor, size: 22),
@@ -81,7 +81,7 @@ class PermissionCardWidget extends StatelessWidget {
                     ),
                     decoration: BoxDecoration(
                       color: isGranted
-                          ? AppTheme.primaryColor.withOpacity(0.1)
+                          ? AppTheme.primaryColor.withValues(alpha: 0.1)
                           : Colors.grey[100],
                       borderRadius: BorderRadius.circular(20),
                     ),

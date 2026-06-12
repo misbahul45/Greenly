@@ -2,10 +2,13 @@ package product
 
 import (
 	"catalog-service/databases"
+	"catalog-service/internal/coreclient"
 	"catalog-service/utils"
 	"context"
 	"errors"
+	"log"
 	"strings"
+	"sync"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -27,7 +30,26 @@ type Service interface {
 }
 
 type service struct {
-	repository Repository
+	repository     Repository
+	publisher      ProductEventPublisher
+	coreSvc        coreclient.Client
+	shopNameCache  sync.Map
+}
+
+type ProductEventPublisher interface {
+	PublishProductCreated(ctx context.Context, payload ProductEventPayload) error
+	PublishProductUpdated(ctx context.Context, payload ProductEventPayload) error
+	PublishProductDeleted(ctx context.Context, payload ProductEventPayload) error
+}
+
+type ProductEventPayload struct {
+	ProductID   string
+	Name        string
+	ShopID      string
+	CategoryID  string
+	Description string
+	SKU         string
+	IsActive    bool
 }
 
 var (
@@ -37,9 +59,16 @@ var (
 	ErrCategoryInvalid = errors.New("category not found")
 )
 
-func NewService(repository Repository) Service {
+func NewService(repository Repository, coreSvc coreclient.Client, publishers ...ProductEventPublisher) Service {
+	var publisher ProductEventPublisher
+	if len(publishers) > 0 {
+		publisher = publishers[0]
+	}
+
 	return &service{
 		repository: repository,
+		publisher:  publisher,
+		coreSvc:    coreSvc,
 	}
 }
 
@@ -247,6 +276,7 @@ func (s *service) Create(ctx context.Context, dto CreateProductDTO) (databases.P
 		}
 	}
 
+	s.publishProductEvent(context.Background(), "created", created)
 	return created, nil
 }
 
@@ -309,15 +339,22 @@ func (s *service) Update(ctx context.Context, id string, dto UpdateProductDTO) (
 		s.repository.UpdateImages(ctx, updated.ID, dto.ImageURLs)
 	}
 
+	s.publishProductEvent(context.Background(), "updated", updated)
 	return updated, nil
 }
 
 func (s *service) Delete(ctx context.Context, id string) error {
-	_, err := s.repository.FindById(ctx, id)
+	product, err := s.repository.FindById(ctx, id)
 	if err != nil {
 		return ErrProductNotFound
 	}
-	return s.repository.Delete(ctx, id)
+
+	if err := s.repository.Delete(ctx, id); err != nil {
+		return err
+	}
+
+	s.publishProductEvent(context.Background(), "deleted", product)
+	return nil
 }
 
 func (s *service) ToggleActive(ctx context.Context, id string, shopID string) (databases.Product, error) {
@@ -394,6 +431,37 @@ func (s *service) ValidateShopAndCategory(ctx context.Context, shopID, categoryI
 	return nil
 }
 
+func (s *service) publishProductEvent(ctx context.Context, action string, product databases.Product) {
+	if s.publisher == nil {
+		return
+	}
+
+	payload := ProductEventPayload{
+		ProductID:   product.ID,
+		Name:        product.Name,
+		ShopID:      product.ShopID,
+		CategoryID:  product.CategoryID,
+		Description: product.Description,
+		SKU:         product.SKU,
+		IsActive:    product.IsActive,
+	}
+
+	go func() {
+		var err error
+		switch action {
+		case "created":
+			err = s.publisher.PublishProductCreated(ctx, payload)
+		case "updated":
+			err = s.publisher.PublishProductUpdated(ctx, payload)
+		case "deleted":
+			err = s.publisher.PublishProductDeleted(ctx, payload)
+		}
+		if err != nil {
+			log.Printf("Failed to publish product.%s: %v", action, err)
+		}
+	}()
+}
+
 func (s *service) EnableProductsByShop(ctx context.Context, shopID string) error {
 	return s.repository.EnableProductsByShop(ctx, shopID)
 }
@@ -407,9 +475,24 @@ func (s *service) validateCategory(ctx context.Context, categoryID string) error
 }
 
 func (s *service) enrichProductResponse(ctx context.Context, product databases.Product) ProductResponse {
+	shopName := product.ShopName
+	if shopName == "" && s.coreSvc != nil {
+		if cached, ok := s.shopNameCache.Load(product.ShopID); ok {
+			shopName = cached.(string)
+		} else {
+			shop, err := s.coreSvc.GetShop(ctx, product.ShopID)
+			if err == nil && shop != nil {
+				shopName = shop.Name
+				s.shopNameCache.Store(product.ShopID, shopName)
+				go s.repository.UpdateShopName(context.Background(), product.ID, shopName)
+			}
+		}
+	}
+
 	response := ProductResponse{
 		ID:            product.ID,
 		ShopID:        product.ShopID,
+		ShopName:      shopName,
 		CategoryID:    product.CategoryID,
 		Name:          product.Name,
 		Slug:          product.Slug,
@@ -426,7 +509,47 @@ func (s *service) enrichProductResponse(ctx context.Context, product databases.P
 	price, err := s.repository.GetActivePrice(ctx, product.ID)
 	if err == nil {
 		response.Price = price.Amount
+		response.OriginalPrice = price.Amount
+		response.FinalPrice = price.Amount
 		response.Currency = price.Currency
+	}
+
+	// Handle Promotion/Discount
+	discount, err := s.repository.GetActiveDiscount(ctx, product.ID)
+	if err == nil {
+		hasPromo := true
+		var discountAmount float64
+		if discount.Percentage > 0 {
+			discountAmount = (discount.Percentage / 100) * response.OriginalPrice
+		} else if discount.FixedAmount > 0 {
+			discountAmount = discount.FixedAmount
+		}
+
+		response.FinalPrice = response.OriginalPrice - discountAmount
+		if response.FinalPrice < 0 {
+			response.FinalPrice = 0
+		}
+
+		label := discount.Name
+		if discount.Percentage > 0 {
+			label = "-" + utils.FormatFloat(discount.Percentage) + "%"
+		}
+
+		response.Promotion = &PromotionSummaryDTO{
+			HasPromo:        hasPromo,
+			Code:            discount.Name, // Using name as code for now
+			Title:           discount.Name,
+			Type:            "PERCENTAGE", // Default to percentage if name doesn't specify
+			DiscountPercent: discount.Percentage,
+			DiscountAmount:  discountAmount,
+			StartsAt:        discount.ValidFrom,
+			EndsAt:          discount.ValidTo,
+			Label:           label,
+			SavingLabel:     "Hemat Rp" + utils.FormatMoney(discountAmount),
+		}
+		if discount.FixedAmount > 0 {
+			response.Promotion.Type = "FIXED"
+		}
 	}
 
 	inventory, err := s.repository.GetInventory(ctx, product.ID)
@@ -444,7 +567,95 @@ func (s *service) enrichProductResponse(ctx context.Context, product databases.P
 		response.CategoryName = category.Name
 	}
 
+	// Handle Eco Attributes
+	eco, err := s.repository.GetEcoAttribute(ctx, product.ID)
+	if err == nil {
+		response.EcoScore = eco.EcoScore
+		
+		materialLabel := getMaterialLabel(eco.MaterialType)
+		carbonLabel := getCarbonLabel(eco.CarbonFootprint)
+		
+		badges := []string{}
+		if materialLabel != "" {
+			badges = append(badges, materialLabel)
+		}
+		if eco.Recyclable {
+			badges = append(badges, "Daur Ulang")
+		}
+		if eco.CarbonFootprint <= 2 {
+			badges = append(badges, "Carbon Rendah")
+		}
+		
+		// Max 3 badges
+		if len(badges) > 3 {
+			badges = badges[:3]
+		}
+		
+		reasons := []string{}
+		if materialLabel != "" {
+			reasons = append(reasons, "Menggunakan bahan " + materialLabel)
+		}
+		if eco.Recyclable {
+			reasons = append(reasons, "Dapat didaur ulang")
+		}
+		if eco.CarbonFootprint <= 2 {
+			reasons = append(reasons, "Carbon footprint rendah")
+		}
+		if strings.Contains(strings.ToLower(product.Description), "reusable") {
+			reasons = append(reasons, "Produk dapat digunakan kembali (reusable)")
+		}
+
+		response.Eco = &EcoSummaryDTO{
+			Score:           eco.EcoScore,
+			Label:           getEcoLabel(eco.EcoScore),
+			MaterialType:    eco.MaterialType,
+			MaterialLabel:   materialLabel,
+			Recyclable:      eco.Recyclable,
+			CarbonFootprint: eco.CarbonFootprint,
+			CarbonLabel:     carbonLabel,
+			Badges:          badges,
+			Reasons:         reasons,
+		}
+	}
+
 	return response
+}
+
+func getMaterialLabel(mType string) string {
+	mapping := map[string]string{
+		"bamboo":         "Bambu",
+		"organic_cotton": "Katun Organik",
+		"cotton":         "Katun",
+		"linen":          "Linen",
+		"hemp":           "Hemp",
+		"recycled":       "Daur Ulang",
+		"paper":          "Kertas",
+		"wood":           "Kayu",
+	}
+	if label, ok := mapping[mType]; ok {
+		return label
+	}
+	return strings.Title(strings.ReplaceAll(mType, "_", " "))
+}
+
+func getCarbonLabel(cf float64) string {
+	if cf <= 2 {
+		return "Carbon Rendah"
+	}
+	if cf <= 5 {
+		return "Carbon Sedang"
+	}
+	return "Carbon Tinggi"
+}
+
+func getEcoLabel(score float64) string {
+	if score >= 80 {
+		return "Eco Friendly"
+	}
+	if score >= 60 {
+		return "Good Choice"
+	}
+	return "Standard"
 }
 
 func generateSlug(name string) string {

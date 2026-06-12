@@ -25,11 +25,7 @@ class BannerSkeleton extends StatelessWidget {
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(16),
                 gradient: LinearGradient(
-                  colors: [
-                    baseColor,
-                    highlightColor,
-                    baseColor,
-                  ],
+                  colors: [baseColor, highlightColor, baseColor],
                 ),
               ),
             ),

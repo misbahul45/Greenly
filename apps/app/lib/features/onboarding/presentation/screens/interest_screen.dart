@@ -130,7 +130,7 @@ class _InterestScreenState extends State<InterestScreen> {
                           decoration: BoxDecoration(
                             color: widget.selectedCategories.isEmpty
                                 ? Colors.grey[100]
-                                : AppTheme.tertiaryColor.withOpacity(0.4),
+                                : AppTheme.tertiaryColor.withValues(alpha: 0.4),
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: Text(

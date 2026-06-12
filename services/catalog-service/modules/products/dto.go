@@ -75,23 +75,53 @@ type BulkUpdateResponse struct {
 }
 
 type ProductResponse struct {
-	ID            string    `json:"id"`
-	ShopID        string    `json:"shopId"`
-	CategoryID    string    `json:"categoryId"`
-	Name          string    `json:"name"`
-	Slug          string    `json:"slug"`
-	Description   string    `json:"description"`
-	SKU           string    `json:"sku"`
-	FavoriteCount int       `json:"favoriteCount"`
-	ReviewCount   int       `json:"reviewCount"`
-	RatingAverage float64   `json:"ratingAverage"`
-	IsActive      bool      `json:"isActive"`
-	Price         float64   `json:"price,omitempty"`
-	Currency      string    `json:"currency,omitempty"`
-	Stock         int       `json:"stock,omitempty"`
-	ImageURLs     []string  `json:"imageUrls,omitempty"`
-	CategoryName  string    `json:"categoryName,omitempty"`
-	ShopName      string    `json:"shopName,omitempty"`
-	CreatedAt     time.Time `json:"createdAt"`
-	UpdatedAt     time.Time `json:"updatedAt"`
+	ID            string               `json:"id"`
+	ShopID        string               `json:"shopId"`
+	CategoryID    string               `json:"categoryId"`
+	Name          string               `json:"name"`
+	Slug          string               `json:"slug"`
+	Description   string               `json:"description"`
+	SKU           string               `json:"sku"`
+	FavoriteCount int                  `json:"favoriteCount"`
+	ReviewCount   int                  `json:"reviewCount"`
+	RatingAverage float64              `json:"ratingAverage"`
+	IsActive      bool                 `json:"isActive"`
+	Price         float64              `json:"price,omitempty"`
+	OriginalPrice float64              `json:"originalPrice,omitempty"`
+	FinalPrice    float64              `json:"finalPrice,omitempty"`
+	Currency      string               `json:"currency,omitempty"`
+	Stock         int                  `json:"stock,omitempty"`
+	ImageURLs     []string             `json:"imageUrls,omitempty"`
+	CategoryName  string               `json:"categoryName,omitempty"`
+	ShopName      string               `json:"shopName,omitempty"`
+	EcoScore      float64              `json:"ecoScore,omitempty"`
+	Eco           *EcoSummaryDTO       `json:"eco,omitempty"`
+	Promotion     *PromotionSummaryDTO `json:"promotion,omitempty"`
+	CreatedAt     time.Time            `json:"createdAt"`
+	UpdatedAt     time.Time            `json:"updatedAt"`
+}
+
+type EcoSummaryDTO struct {
+	Score           float64  `json:"score"`
+	Label           string   `json:"label"`
+	MaterialType    string   `json:"materialType"`
+	MaterialLabel   string   `json:"materialLabel"`
+	Recyclable      bool     `json:"recyclable"`
+	CarbonFootprint float64  `json:"carbonFootprint"`
+	CarbonLabel     string   `json:"carbonLabel"`
+	Badges          []string `json:"badges"`
+	Reasons         []string `json:"reasons"`
+}
+
+type PromotionSummaryDTO struct {
+	HasPromo        bool      `json:"hasPromo"`
+	Code            string    `json:"code"`
+	Title           string    `json:"title"`
+	Type            string    `json:"type"`
+	DiscountPercent float64   `json:"discountPercent"`
+	DiscountAmount  float64   `json:"discountAmount"`
+	StartsAt        time.Time `json:"startsAt"`
+	EndsAt          time.Time `json:"endsAt"`
+	Label           string    `json:"label"`
+	SavingLabel     string    `json:"savingLabel"`
 }

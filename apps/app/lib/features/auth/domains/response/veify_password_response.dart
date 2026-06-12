@@ -23,11 +23,11 @@ class VerifyPasswordResponse {
       userId: json['userId'] ?? '',
       tokenHash: json['tokenHash'] ?? '',
       type: json['type'] ?? '',
-      expiresAt: DateTime.parse(json['expiresAt']),
+      expiresAt: DateTime.tryParse(json['expiresAt']?.toString() ?? '') ?? DateTime.now(),
       usedAt: json['usedAt'] != null
-          ? DateTime.parse(json['usedAt'])
+          ? DateTime.tryParse(json['usedAt'].toString())
           : null,
-      createdAt: DateTime.parse(json['createdAt']),
+      createdAt: DateTime.tryParse(json['createdAt']?.toString() ?? '') ?? DateTime.now(),
     );
   }
 }

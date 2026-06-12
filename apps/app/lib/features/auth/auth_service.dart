@@ -14,7 +14,7 @@ import 'package:app/features/auth/domains/response/verify_email_response.dart';
 import 'package:app/shared/domains/data/token_model.dart';
 
 class AuthService {
-  static String get _baseUrl => "${ENV.API}/core";
+  static String get _baseUrl => "${ENV.api}/core";
 
   static Future<ApiResponse<RegisterResponse>> register(RegisterDto payload) async {
     return await ApiClient.post<RegisterResponse>(
@@ -74,10 +74,13 @@ class AuthService {
     );
   }
   
-  static Future<ApiResponse<TokenModel>> refreshToken() async{
-    return await ApiClient.post<TokenModel>(
-      "$_baseUrl/auth/refresh",
-      {},
+  static Future<ApiResponse<TokenModel>> refreshToken() async {
+    return await ApiClient.request<TokenModel>(
+      method: "POST",
+      url: "$_baseUrl/auth/refresh-token",
+      body: {},
+      retry: false,
+      fromJsonT: (json) => TokenModel.fromJson(json),
     );
   }
 

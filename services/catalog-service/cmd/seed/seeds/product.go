@@ -13,14 +13,23 @@ func SeedProducts(ctx context.Context, db *mongo.Database, catIDs map[string]str
 	col := db.Collection("products")
 	now := time.Now()
 
-	shop1 := NewID()
-	shop2 := NewID()
-	shop3 := NewID()
-	shop4 := NewID()
-	shop5 := NewID()
+	shop1 := NewID() // EcoWare Indonesia
+	shop2 := NewID() // Bumi Hijau Fashion
+	shop3 := NewID() // Organik Nusantara
+	shop4 := NewID() // Pure Nature Beauty
+	shop5 := NewID() // Green Tech Solutions
+
+	const (
+		nameShop1 = "EcoWare Indonesia"
+		nameShop2 = "Bumi Hijau Fashion"
+		nameShop3 = "Organik Nusantara"
+		nameShop4 = "Pure Nature Beauty"
+		nameShop5 = "Green Tech Solutions"
+	)
 
 	type productDef struct {
 		shopID      string
+		shopName    string
 		categoryKey string
 		name        string
 		slug        string
@@ -32,40 +41,46 @@ func SeedProducts(ctx context.Context, db *mongo.Database, catIDs map[string]str
 	}
 
 	defs := []productDef{
-		{shop1, "hp-tablet", "Samsung Galaxy A55 5G", "samsung-galaxy-a55-5g", "Smartphone flagship dengan layar Super AMOLED 6.6 inci dan kamera 50MP", "SKU-HP-001", 245, 89, 4.7},
-		{shop1, "hp-tablet", "iPhone 15 Pro Max 256GB", "iphone-15-pro-max-256gb", "iPhone terbaru dengan chip A17 Pro dan kamera 48MP", "SKU-HP-002", 512, 201, 4.9},
-		{shop1, "hp-tablet", "Xiaomi 14 Ultra", "xiaomi-14-ultra", "Flagship Xiaomi dengan kamera Leica dan Snapdragon 8 Gen 3", "SKU-HP-003", 189, 74, 4.6},
-		{shop1, "hp-tablet", "Samsung Galaxy Tab S9 FE", "samsung-galaxy-tab-s9-fe", "Tablet premium dengan layar 10.9 inci dan S Pen", "SKU-TAB-001", 134, 52, 4.5},
-		{shop1, "laptop-komputer", "ASUS ROG Zephyrus G14 2024", "asus-rog-zephyrus-g14-2024", "Laptop gaming tipis dengan AMD Ryzen 9 dan RTX 4060", "SKU-LPT-001", 321, 118, 4.8},
-		{shop1, "audio-headphone", "Headphone Sony WH-1000XM5", "headphone-sony-wh1000xm5", "Headphone noise cancelling terbaik dengan battery 30 jam", "SKU-AUD-001", 178, 64, 4.9},
-		{shop1, "audio-headphone", "TWS Earbuds Samsung Galaxy Buds3 Pro", "samsung-galaxy-buds3-pro", "True wireless earbuds premium dengan ANC adaptif", "SKU-AUD-002", 267, 93, 4.7},
-		{shop1, "kamera-foto", "Sony Alpha A7 IV Mirrorless", "sony-alpha-a7-iv-mirrorless", "Kamera mirrorless full-frame 33MP untuk profesional", "SKU-KMR-001", 98, 41, 4.8},
-		{shop2, "pakaian-wanita", "Dress Batik Modern Motif Parang", "dress-batik-modern-parang", "Dress batik modern dengan motif parang klasik, cocok untuk acara formal", "SKU-DRS-001", 156, 43, 4.5},
-		{shop2, "pakaian-wanita", "Blouse Tenun Ikat NTT Premium", "blouse-tenun-ikat-ntt-premium", "Blouse tenun ikat asli NTT dengan motif tradisional", "SKU-BLS-001", 112, 38, 4.6},
-		{shop2, "pakaian-wanita", "Kebaya Modern Brokat Elegan", "kebaya-modern-brokat-elegan", "Kebaya modern berbahan brokat premium untuk acara pernikahan", "SKU-KBY-001", 203, 87, 4.7},
-		{shop2, "pakaian-pria", "Kemeja Flanel Premium Pria", "kemeja-flanel-premium-pria", "Kemeja flanel premium bahan katun 100% nyaman dipakai sehari-hari", "SKU-KMJ-001", 98, 37, 4.4},
-		{shop2, "pakaian-pria", "Batik Pria Slim Fit Motif Kawung", "batik-pria-slim-fit-kawung", "Kemeja batik pria slim fit dengan motif kawung klasik", "SKU-BTK-001", 145, 56, 4.5},
-		{shop2, "aksesoris-fashion", "Tas Kulit Wanita Handmade", "tas-kulit-wanita-handmade", "Tas kulit sapi asli handmade dengan jahitan tangan", "SKU-TAS-001", 234, 91, 4.8},
-		{shop2, "sepatu-wanita", "Sepatu Heels Kulit Asli 7cm", "sepatu-heels-kulit-asli-7cm", "Sepatu heels elegan berbahan kulit asli dengan tinggi 7cm", "SKU-HLS-001", 167, 62, 4.4},
-		{shop2, "sepatu-pria", "Sepatu Pantofel Kulit Oxford", "sepatu-pantofel-kulit-oxford", "Sepatu pantofel formal berbahan kulit oxford premium", "SKU-OXF-001", 89, 34, 4.6},
-		{shop3, "kuliner", "Rendang Daging Sapi Premium 500gr", "rendang-daging-sapi-premium-500gr", "Rendang daging sapi asli Padang dengan bumbu rempah pilihan", "SKU-RND-001", 421, 187, 4.8},
-		{shop3, "kuliner", "Kopi Arabika Gayo Aceh 250gr", "kopi-arabika-gayo-aceh-250gr", "Kopi arabika single origin dari dataran tinggi Gayo Aceh", "SKU-KPI-001", 289, 134, 4.7},
-		{shop3, "kuliner", "Sambal Matah Bali Homemade 200gr", "sambal-matah-bali-homemade-200gr", "Sambal matah segar khas Bali dengan bahan pilihan", "SKU-SMB-001", 356, 142, 4.8},
-		{shop3, "kuliner", "Keripik Tempe Malang Original 250gr", "keripik-tempe-malang-original-250gr", "Keripik tempe renyah khas Malang dengan bumbu original", "SKU-KRP-001", 198, 87, 4.6},
-		{shop3, "kuliner", "Dodol Garut Asli 500gr", "dodol-garut-asli-500gr", "Dodol garut asli dengan cita rasa manis legit tradisional", "SKU-DDL-001", 143, 61, 4.5},
-		{shop4, "olahraga", "Sepatu Running Nike Air Zoom Pegasus 41", "sepatu-running-nike-air-zoom-pegasus-41", "Sepatu lari dengan teknologi Air Zoom untuk kenyamanan maksimal", "SKU-SPT-001", 534, 221, 4.8},
-		{shop4, "olahraga", "Jersey Bola Timnas Indonesia 2024", "jersey-bola-timnas-indonesia-2024", "Jersey resmi timnas Indonesia musim 2024 berbahan dri-fit", "SKU-JRS-001", 678, 312, 4.7},
-		{shop4, "alat-fitness", "Dumbbell Set Adjustable 2-24kg", "dumbbell-set-adjustable-2-24kg", "Set dumbbell adjustable dengan berat 2 hingga 24kg per sisi", "SKU-DBL-001", 234, 98, 4.6},
-		{shop4, "alat-fitness", "Yoga Mat Premium Anti Slip 6mm", "yoga-mat-premium-anti-slip-6mm", "Matras yoga premium anti slip ketebalan 6mm ramah lingkungan", "SKU-YGM-001", 312, 134, 4.7},
-		{shop4, "suplemen-vitamin", "Whey Protein Isolate Chocolate 1kg", "whey-protein-isolate-chocolate-1kg", "Whey protein isolate rasa coklat dengan 27g protein per serving", "SKU-WPI-001", 445, 189, 4.8},
-		{shop5, "skincare", "Serum Vitamin C Brightening 30ml", "serum-vitamin-c-brightening-30ml", "Serum vitamin C 20% untuk mencerahkan dan meratakan warna kulit", "SKU-SRM-001", 678, 312, 4.9},
-		{shop5, "skincare", "Moisturizer Hyaluronic Acid 50ml", "moisturizer-hyaluronic-acid-50ml", "Pelembab dengan hyaluronic acid untuk kulit lembap sepanjang hari", "SKU-MST-001", 523, 241, 4.8},
-		{shop5, "skincare", "Toner BHA 2% Exfoliating 200ml", "toner-bha-2-exfoliating-200ml", "Toner eksfoliasi dengan BHA 2% untuk kulit berjerawat", "SKU-TNR-001", 389, 167, 4.7},
-		{shop5, "kecantikan", "Sunscreen SPF 50 PA++++ 50ml", "sunscreen-spf50-pa-plus-50ml", "Sunscreen ringan non-greasy dengan perlindungan SPF 50 PA++++", "SKU-SUN-001", 892, 445, 4.9},
-		{shop5, "makeup", "Foundation Cushion Dewy Finish SPF30", "foundation-cushion-dewy-finish-spf30", "Foundation cushion dengan finish dewy dan SPF 30 tahan lama", "SKU-FND-001", 456, 198, 4.6},
-		{shop5, "makeup", "Lip Tint Velvet Matte 5ml", "lip-tint-velvet-matte-5ml", "Lip tint dengan formula velvet matte tahan lama hingga 12 jam", "SKU-LPT-001", 567, 234, 4.7},
-		{shop5, "haircare", "Hair Serum Argan Oil 50ml", "hair-serum-argan-oil-50ml", "Serum rambut dengan argan oil untuk rambut berkilau dan lembut", "SKU-HSR-001", 298, 123, 4.6},
-		{shop5, "haircare", "Shampoo Keratin Treatment 250ml", "shampoo-keratin-treatment-250ml", "Sampo dengan keratin treatment untuk rambut rusak dan bercabang", "SKU-SHP-001", 234, 98, 4.5},
+		// EcoWare Indonesia — zero waste & rumah eco
+		{shop1, nameShop1, "botol-tumbler",       "Botol Minum Stainless Steel Thermos 500ml",  "botol-minum-stainless-thermos-500ml",    "Botol minum double wall stainless steel 304 food grade bebas BPA, menjaga suhu panas 12 jam dan dingin 24 jam, tidak ada rasa logam", "SKU-BTL-001", 312, 134, 4.8},
+		{shop1, nameShop1, "botol-tumbler",       "Tumbler Bambu Premium 350ml",                "tumbler-bambu-premium-350ml",            "Tumbler eco-friendly dari bambu organik bersertifikat dengan lapisan food-grade, ramah lingkungan dan dapat terurai secara alami", "SKU-BTL-002", 198, 87,  4.7},
+		{shop1, nameShop1, "tas-ramah-lingkungan","Tas Belanja Kanvas Organik Large",           "tas-belanja-kanvas-organik-large",       "Tas belanja dari kanvas katun organik bersertifikat GOTS, kuat menampung beban 10kg, dapat digunakan ribuan kali", "SKU-TAS-001", 256, 112, 4.8},
+		{shop1, nameShop1, "tas-ramah-lingkungan","Tas Anyaman Bambu Artisanal",                "tas-anyaman-bambu-artisanal",            "Tas anyaman bambu handmade oleh pengrajin lokal Indonesia, desain unik dan estetik, 100% natural dan biodegradable", "SKU-TAS-002", 178, 76,  4.7},
+		{shop1, nameShop1, "alat-makan-eco",      "Set Sedotan Stainless Steel Isi 6",          "set-sedotan-stainless-steel-isi-6",      "Set 6 sedotan stainless steel food grade 304 dengan sikat pembersih, pouch kanvas, dan gantungan kunci, pengganti sedotan plastik", "SKU-SDT-001", 445, 187, 4.9},
+		{shop1, nameShop1, "alat-makan-eco",      "Set Peralatan Makan Bambu 5pcs",             "set-peralatan-makan-bambu-5pcs",         "Set lengkap peralatan makan dari bambu organik: sendok, garpu, pisau, sumpit, dan sedotan dalam pouch kanvas, bebas plastik", "SKU-PMK-001", 267, 115, 4.7},
+		{shop1, nameShop1, "peralatan-rumah-eco", "Lilin Aromaterapi Soy Wax 150gr",            "lilin-aromaterapi-soy-wax-150gr",        "Lilin aromaterapi dari soy wax alami dengan sumbu kapas organik, aroma campuran lavender dan eucalyptus, tanpa paraben dan partikel mikro", "SKU-LLN-001", 189, 82,  4.8},
+		{shop1, nameShop1, "peralatan-rumah-eco", "Lap Dapur Microfiber Daur Ulang Set 5",      "lap-dapur-microfiber-daur-ulang-set-5",  "Set 5 lap dapur super absorbent dari serat microfiber daur ulang, menggantikan tisu sekali pakai, dapat dicuci 300 kali", "SKU-LAP-001", 134, 58,  4.6},
+		{shop1, nameShop1, "furnitur-bambu",      "Rak Mini Bambu 3 Susun Desktop",             "rak-mini-bambu-3-susun-desktop",         "Rak meja minimalis dari bambu solid organik 3 susun, diproses tanpa bahan kimia berbahaya, tahan serangga secara alami", "SKU-RAK-001", 223, 94,  4.7},
+
+		// Bumi Hijau Fashion — sustainable fashion
+		{shop2, nameShop2, "pakaian-sustainable", "Kaos Katun Organik GOTS Certified Unisex",   "kaos-katun-organik-gots-unisex",         "Kaos unisex bersertifikat GOTS dari 100% katun organik bebas pestisida, pewarna alami aman kulit, nyaman sepanjang hari", "SKU-KOS-001", 334, 143, 4.8},
+		{shop2, nameShop2, "pakaian-sustainable", "Celana Linen Natural Unisex",                "celana-linen-natural-unisex",            "Celana casual dari serat linen alami breathable dan ringan, ramah lingkungan karena produksi linen butuh 20x lebih sedikit air", "SKU-CLN-001", 267, 116, 4.7},
+		{shop2, nameShop2, "pakaian-sustainable", "Jaket Hemp Organik Unisex",                  "jaket-hemp-organik-unisex",              "Jaket dari serat hemp organik bersertifikat, 4x lebih kuat dari katun biasa, tahan lama untuk mengurangi fast fashion", "SKU-JKT-001", 189, 82,  4.6},
+		{shop2, nameShop2, "aksesoris-eco",       "Topi Anyaman Bambu Pantai",                  "topi-anyaman-bambu-pantai",              "Topi pantai stylish dari anyaman bambu organik handmade lokal, memberikan perlindungan UV alami tanpa bahan kimia", "SKU-TOP-001", 156, 67,  4.7},
+		{shop2, nameShop2, "aksesoris-eco",       "Dompet Cork Oak Vegan Leather",              "dompet-cork-oak-vegan-leather",          "Dompet slim dari kulit pohon oak (cork) vegan, ringan, tahan air alami, 100% cruelty-free, biodegradable dalam 3-5 tahun", "SKU-DMP-001", 234, 98,  4.8},
+		{shop2, nameShop2, "aksesoris-eco",       "Kacamata Frame Bambu Handcrafted",           "kacamata-frame-bambu-handcrafted",       "Frame kacamata dari bambu pilihan diukir tangan, ringan hanya 15gr, kuat, dan 100% biodegradable ketika tidak terpakai", "SKU-KCM-001", 145, 62,  4.6},
+
+		// Organik Nusantara — makanan dan pertanian organik
+		{shop3, nameShop3, "makanan-organik",     "Beras Organik Premium Cianjur 1kg",          "beras-organik-premium-cianjur-1kg",      "Beras putih organik bersertifikat SNI dari petani Cianjur, tanpa pestisida dan GMO, dikemas dalam kemasan compostable", "SKU-BRS-001", 421, 178, 4.9},
+		{shop3, nameShop3, "makanan-organik",     "Teh Hijau Organik Single Estate 100gr",      "teh-hijau-organik-single-estate-100gr",  "Teh hijau organik single estate dari perkebunan Jawa Barat bersertifikat, dipetik manual pagi hari, tanpa bahan kimia apapun", "SKU-TEH-001", 312, 134, 4.8},
+		{shop3, nameShop3, "makanan-organik",     "Madu Hutan Kalimantan Raw 250gr",            "madu-hutan-kalimantan-raw-250gr",        "Madu hutan asli Kalimantan raw unprocessed, dipanen secara berkelanjutan oleh komunitas adat tanpa merusak ekosistem hutan", "SKU-MDU-001", 387, 165, 4.9},
+		{shop3, nameShop3, "makanan-organik",     "Granola Oat Organik Homemade 300gr",         "granola-oat-organik-homemade-300gr",     "Granola dari oat organik, kacang mete, biji labu, dan buah kering tanpa pengawet, kemasan paper biodegradable", "SKU-GRN-001", 289, 124, 4.7},
+		{shop3, nameShop3, "makanan-organik",     "Kopi Arabika Organik Flores 250gr",          "kopi-arabika-organik-flores-250gr",      "Kopi arabika single origin organik dari Flores bersertifikat Rainforest Alliance, dipetik manual dan diproses secara tradisional", "SKU-KPI-001", 356, 152, 4.8},
+		{shop3, nameShop3, "pertanian-tanaman",   "Kit Berkebun Hidroponik Pemula Lengkap",     "kit-berkebun-hidroponik-pemula-lengkap", "Kit lengkap berkebun hidroponik indoor: wadah nutrisi, substrat organik, 5 jenis benih sayuran, dan panduan digital", "SKU-HDP-001", 198, 84,  4.7},
+		{shop3, nameShop3, "pertanian-tanaman",   "Pupuk Organik Cair NPK 500ml",               "pupuk-organik-cair-npk-500ml",           "Pupuk cair organik NPK dari fermentasi limbah organik bersertifikat, aman untuk tanaman pangan dan hias tanpa residu kimia", "SKU-PPK-001", 167, 72,  4.6},
+
+		// Pure Nature Beauty — skincare dan perawatan alami
+		{shop4, nameShop4, "skincare-alami",      "Serum Rosehip Organik 30ml",                 "serum-rosehip-organik-30ml",             "Serum wajah dari minyak rosehip organik murni bersertifikat, mencerahkan kulit, memudarkan bekas luka, dan meregenerasi sel kulit", "SKU-SRM-001", 534, 226, 4.9},
+		{shop4, nameShop4, "skincare-alami",      "Pelembab Shea Butter Alami Murni 60ml",      "pelembab-shea-butter-alami-60ml",        "Pelembab dari shea butter organik fair-trade, cocoa butter, dan jojoba oil murni, tanpa bahan sintetis, cocok untuk kulit sensitif", "SKU-PLB-001", 412, 175, 4.8},
+		{shop4, nameShop4, "skincare-alami",      "Toner Rose Water Organik 200ml",             "toner-rose-water-organik-200ml",         "Toner dari air mawar organik murni distilasi uap tanpa alkohol, menenangkan kulit iritasi, dikemas dalam botol kaca reusable", "SKU-TNR-001", 378, 161, 4.8},
+		{shop4, nameShop4, "skincare-alami",      "Sunscreen Mineral SPF50 Natural 50ml",       "sunscreen-mineral-spf50-natural-50ml",   "Sunscreen mineral SPF50 PA++++ dari zinc oxide non-nano alami, reef safe, formula ringan non-greasy, aman untuk kulit sensitif dan bayi", "SKU-SUN-001", 623, 265, 4.9},
+		{shop4, nameShop4, "sabun-alami",         "Sikat Gigi Bambu Charcoal Pack 4",           "sikat-gigi-bambu-charcoal-pack-4",       "Pack 4 sikat gigi bambu organik bersertifikat dengan bulu arang aktif untuk memutihkan gigi, kemasan paper 100% biodegradable", "SKU-SBG-001", 489, 208, 4.9},
+		{shop4, nameShop4, "sabun-alami",         "Sabun Batang Alami Lavender 100gr",          "sabun-batang-alami-lavender-100gr",      "Sabun cold process dari minyak kelapa organik dan lavender essential oil murni, tanpa SLS, paraben, dan pewarna buatan", "SKU-SBN-001", 356, 152, 4.8},
+		{shop4, nameShop4, "haircare-organik",    "Sampo Padat Organik Zero Waste 60gr",        "sampo-padat-organik-zero-waste-60gr",    "Sampo padat zero-waste packaging dari bahan organik bersertifikat, setara 2 botol sampo cair, untuk semua jenis rambut", "SKU-SMP-001", 312, 133, 4.7},
+
+		// Green Tech Solutions — teknologi hijau
+		{shop5, nameShop5, "panel-surya",         "Panel Surya Portable 20W USB Camping",       "panel-surya-portable-20w-usb-camping",   "Panel surya lipat portable 20W efisiensi 23% dengan dual USB-A dan USB-C, ringan 700gr, tahan air IPX4 untuk outdoor", "SKU-PSR-001", 178, 76,  4.7},
+		{shop5, nameShop5, "produk-hemat-energi", "Lampu LED Smart Hemat Energi 9W Set 4",      "lampu-led-smart-hemat-energi-9w-set-4",  "Set 4 lampu LED smart 9W hemat energi 80% dari bohlam biasa, umur 25.000 jam, dapat diredupkan via app, bebas merkuri", "SKU-LMP-001", 234, 98,  4.6},
 	}
 
 	products := make([]databases.Product, len(defs))
@@ -76,6 +91,7 @@ func SeedProducts(ctx context.Context, db *mongo.Database, catIDs map[string]str
 		products[i] = databases.Product{
 			Base:          databases.Base{ID: id, CreatedAt: now, UpdatedAt: now},
 			ShopID:        d.shopID,
+			ShopName:      d.shopName,
 			CategoryID:    catIDs[d.categoryKey],
 			Name:          d.name,
 			Slug:          d.slug,

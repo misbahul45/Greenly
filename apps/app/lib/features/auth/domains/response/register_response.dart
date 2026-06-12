@@ -11,7 +11,7 @@ class RegisterResponse {
 
   factory RegisterResponse.fromJson(Map<String, dynamic> json) {
     return RegisterResponse(
-      id: json['id'] ?? 0,
+      id: json['id']?.toString() ?? '',
       name: json['name'] ?? '',
       email: json['email'] ?? '',
     );

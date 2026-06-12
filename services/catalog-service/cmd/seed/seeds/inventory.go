@@ -20,40 +20,37 @@ func SeedInventories(ctx context.Context, db *mongo.Database, productIDs []strin
 	}
 
 	defs := []invDef{
-		{150, 5, 10, "Gudang Jakarta Barat"},
-		{80, 3, 5, "Gudang Jakarta Selatan"},
-		{60, 2, 5, "Gudang Jakarta Barat"},
-		{45, 1, 5, "Gudang Jakarta Timur"},
-		{30, 2, 5, "Gudang Jakarta Barat"},
-		{200, 12, 15, "Gudang Jakarta Selatan"},
-		{120, 8, 10, "Gudang Jakarta Barat"},
-		{25, 1, 3, "Gudang Jakarta Selatan"},
-		{75, 2, 10, "Gudang Bandung"},
-		{90, 4, 10, "Gudang Bandung"},
-		{55, 3, 5, "Gudang Bandung"},
-		{120, 8, 10, "Gudang Bandung"},
-		{100, 6, 10, "Gudang Bandung"},
-		{65, 4, 5, "Gudang Bandung"},
-		{40, 2, 5, "Gudang Bandung"},
-		{35, 1, 5, "Gudang Bandung"},
-		{50, 0, 5, "Gudang Surabaya"},
-		{300, 15, 20, "Gudang Surabaya"},
-		{180, 10, 15, "Gudang Surabaya"},
-		{250, 12, 20, "Gudang Surabaya"},
-		{150, 8, 10, "Gudang Surabaya"},
-		{60, 4, 5, "Gudang Yogyakarta"},
-		{400, 25, 30, "Gudang Yogyakarta"},
-		{70, 5, 10, "Gudang Yogyakarta"},
-		{500, 30, 40, "Gudang Semarang"},
-		{350, 20, 25, "Gudang Semarang"},
-		{250, 20, 25, "Gudang Semarang"},
-		{320, 18, 25, "Gudang Semarang"},
-		{280, 15, 20, "Gudang Semarang"},
-		{400, 30, 30, "Gudang Semarang"},
-		{380, 22, 30, "Gudang Semarang"},
-		{450, 28, 35, "Gudang Semarang"},
-		{290, 16, 20, "Gudang Semarang"},
-		{310, 19, 25, "Gudang Semarang"},
+		{250, 10, 20, "Gudang Jakarta Selatan"},  // botol stainless
+		{180, 8,  15, "Gudang Jakarta Selatan"},  // tumbler bambu
+		{500, 20, 30, "Gudang Jakarta Barat"},    // tas kanvas
+		{120, 5,  10, "Gudang Jakarta Barat"},    // tas bambu
+		{800, 30, 50, "Gudang Jakarta Selatan"},  // sedotan stainless
+		{350, 15, 25, "Gudang Jakarta Selatan"},  // peralatan makan bambu
+		{200, 8,  15, "Gudang Jakarta Barat"},    // lilin soy wax
+		{450, 18, 30, "Gudang Jakarta Barat"},    // lap microfiber
+		{80,  3,  8,  "Gudang Jakarta Selatan"},  // rak bambu
+		{300, 12, 20, "Gudang Bandung"},           // kaos katun organik
+		{200, 8,  15, "Gudang Bandung"},           // celana linen
+		{100, 4,  10, "Gudang Bandung"},           // jaket hemp
+		{150, 6,  12, "Gudang Bandung"},           // topi bambu
+		{200, 8,  15, "Gudang Bandung"},           // dompet cork
+		{80,  3,  8,  "Gudang Bandung"},           // kacamata bambu
+		{600, 25, 40, "Gudang Surabaya"},          // beras organik
+		{400, 15, 25, "Gudang Surabaya"},          // teh hijau
+		{250, 10, 20, "Gudang Surabaya"},          // madu hutan
+		{350, 14, 25, "Gudang Surabaya"},          // granola
+		{300, 12, 20, "Gudang Surabaya"},          // kopi flores
+		{100, 4,  10, "Gudang Surabaya"},          // kit hidroponik
+		{500, 20, 35, "Gudang Surabaya"},          // pupuk organik
+		{350, 15, 25, "Gudang Semarang"},          // serum rosehip
+		{280, 12, 20, "Gudang Semarang"},          // pelembab shea
+		{420, 18, 30, "Gudang Semarang"},          // toner rose water
+		{500, 22, 35, "Gudang Semarang"},          // sunscreen mineral
+		{600, 25, 40, "Gudang Semarang"},          // sikat gigi bambu
+		{800, 35, 50, "Gudang Semarang"},          // sabun batang
+		{450, 18, 30, "Gudang Semarang"},          // sampo padat
+		{60,  2,  6,  "Gudang Jakarta Barat"},    // panel surya
+		{180, 8,  15, "Gudang Jakarta Barat"},    // lampu LED
 	}
 
 	docs := make([]interface{}, 0, len(productIDs))

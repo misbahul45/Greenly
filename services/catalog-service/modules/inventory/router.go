@@ -9,9 +9,9 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-func InventoryRouter(rg *gin.RouterGroup, db *mongo.Database, coreSvc coreclient.Client, redisCache cache.Cache) {
+func InventoryRouter(rg *gin.RouterGroup, db *mongo.Database, coreSvc coreclient.Client, redisCache cache.Cache, publishers ...InventoryEventPublisher) {
 	repo := NewRepository(db)
-	service := NewService(repo)
+	service := NewService(repo, publishers...)
 	handler := NewHandler(service)
 
 	auth := middleware.JWTAuthMiddleware(coreSvc, redisCache)

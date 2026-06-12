@@ -3,7 +3,12 @@ package inventory
 import (
 	"context"
 	"errors"
+	"log"
 )
+
+type InventoryEventPublisher interface {
+	PublishInventoryUpdated(ctx context.Context, productID string, stock int) error
+}
 
 type Service interface {
 	GetByProductID(ctx context.Context, productID string) (InventoryResponse, error)
@@ -15,12 +20,15 @@ type Service interface {
 
 type service struct {
 	repository Repository
+	publisher  InventoryEventPublisher
 }
 
-func NewService(repository Repository) Service {
-	return &service{
-		repository: repository,
+func NewService(repository Repository, publishers ...InventoryEventPublisher) Service {
+	var pub InventoryEventPublisher
+	if len(publishers) > 0 {
+		pub = publishers[0]
 	}
+	return &service{repository: repository, publisher: pub}
 }
 
 func (s *service) GetByProductID(ctx context.Context, productID string) (InventoryResponse, error) {
@@ -65,23 +73,23 @@ func (s *service) Update(ctx context.Context, productID string, dto UpdateInvent
 		return InventoryResponse{}, err
 	}
 
+	if s.publisher != nil {
+		go func() {
+			if err := s.publisher.PublishInventoryUpdated(context.Background(), productID, updated.Stock); err != nil {
+				log.Printf("[inventory] failed to publish inventory.updated for %s: %v", productID, err)
+			}
+		}()
+	}
+
 	return ToResponse(&updated), nil
 }
 
 func (s *service) ReserveStock(ctx context.Context, productID string, quantity int) error {
-	err := s.repository.ReserveStock(ctx, productID, quantity)
-	if err != nil {
-		return err
-	}
-	return nil
+	return s.repository.ReserveStock(ctx, productID, quantity)
 }
 
 func (s *service) ReleaseStock(ctx context.Context, productID string, quantity int) error {
-	err := s.repository.ReleaseStock(ctx, productID, quantity)
-	if err != nil {
-		return err
-	}
-	return nil
+	return s.repository.ReleaseStock(ctx, productID, quantity)
 }
 
 var ErrInventoryNotFound = errors.New("inventory not found")

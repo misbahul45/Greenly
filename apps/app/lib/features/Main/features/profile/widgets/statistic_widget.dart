@@ -1,5 +1,5 @@
 import 'package:app/core/constants/ui_constants.dart';
-import 'package:app/core/theme/app_theme.dart';
+import 'package:app/shared/widgets/charts/stat_card.dart';
 import 'package:flutter/material.dart';
 
 class StatisticWidget extends StatelessWidget {
@@ -18,67 +18,35 @@ class StatisticWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final items = [
-      _StatItem('Pesanan', ordersCount, Icons.shopping_bag_outlined),
-      _StatItem('Mengikuti', followingCounts, Icons.store_outlined),
-      _StatItem('Ulasan', reviewsCount, Icons.star_outline_rounded),
-      _StatItem('Favorit', favoritesCount, Icons.favorite_outline_rounded),
-    ];
-
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        vertical: UIConstants.paddingM,
-        horizontal: UIConstants.paddingS,
-      ),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(UIConstants.radiusL),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Row(
-        children: items.map((item) {
-          return Expanded(child: _buildItem(item));
-        }).toList(),
-      ),
-    );
-  }
-
-  Widget _buildItem(_StatItem item) {
-    return Column(
+    return GridView.count(
+      crossAxisCount: 2,
+      crossAxisSpacing: UIConstants.spacingM,
+      mainAxisSpacing: UIConstants.spacingM,
+      childAspectRatio: 1.45,
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
       children: [
-        Icon(item.icon, size: 22, color: AppTheme.primaryColor),
-        const SizedBox(height: UIConstants.spacingXS),
-        Text(
-          item.count.toString(),
-          style: const TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w800,
-            color: Colors.black87,
-          ),
+        StatCard(
+          label: 'Pesanan',
+          value: '$ordersCount',
+          icon: Icons.shopping_bag_outlined,
         ),
-        const SizedBox(height: 2),
-        Text(
-          item.label,
-          style: TextStyle(
-            fontSize: UIConstants.fontSizeXS,
-            color: Colors.grey[500],
-          ),
+        StatCard(
+          label: 'Mengikuti',
+          value: '$followingCounts',
+          icon: Icons.storefront_outlined,
+        ),
+        StatCard(
+          label: 'Ulasan',
+          value: '$reviewsCount',
+          icon: Icons.star_outline_rounded,
+        ),
+        StatCard(
+          label: 'Favorit',
+          value: '$favoritesCount',
+          icon: Icons.favorite_outline_rounded,
         ),
       ],
     );
   }
-}
-
-class _StatItem {
-  final String label;
-  final int count;
-  final IconData icon;
-
-  const _StatItem(this.label, this.count, this.icon);
 }

@@ -43,6 +43,8 @@ dependencies:
   shared_preferences: ^2.3.0
   intl: ^0.20.2
   url_launcher: ^6.3.2
+  webview_flutter: ^4.13.0
+  fl_chart: ^0.69.0
 
 dev_dependencies:
   flutter_test:
@@ -66,7 +68,7 @@ flutter:
   # the material Icons class.
   uses-material-design: true
   assets:
-    - .env
+    - .env.example
     - assets/images/
 
   # To add assets to your application, add an assets section, like this:

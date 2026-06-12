@@ -1,211 +1,243 @@
-import { PrismaClient } from '../../generated/prisma/client'
+import {PrismaClient} from "../../generated/prisma/client";
+
+const bannerImage = (fileName: string) => {
+    const baseUrl = process.env.PUBLIC_ASSET_URL ?? "http://localhost:3000";
+    return `${baseUrl}/banners/${fileName}`;
+};
 
 export async function seedBanners(prisma: PrismaClient, promoIds: string[]) {
-  const future = new Date('2026-12-31T23:59:59Z')
-  const past = new Date('2025-01-01T00:00:00Z')
+    const future = new Date("2026-12-31T23:59:59Z");
+    const past = new Date("2025-01-01T00:00:00Z");
 
-  const platformBanners = [
-    {
-      title: 'Harbolnas 12.12 - Diskon Besar-Besaran',
-      description: 'Belanja sekarang dan hemat hingga 25% untuk semua kategori produk',
-      imageUrl: 'https://source.unsplash.com/1600x600/?sale,shopping',
-      promotionId: promoIds[9] ?? null,
-      isActive: true,
-      position: 1,
-      startDate: past,
-      endDate: future,
-      type: 'PROMO' as const,
-    },
-    {
-      title: 'Welcome Offer - Diskon 10% Pembelian Pertama',
-      description: 'Daftar sekarang dan nikmati diskon 10% untuk order pertamamu',
-      imageUrl: 'https://source.unsplash.com/1600x600/?online-shopping,ecommerce',
-      promotionId: promoIds[0] ?? null,
-      isActive: true,
-      position: 2,
-      startDate: past,
-      endDate: future,
-      type: 'HOME' as const,
-    },
-    {
-      title: 'Flash Sale Setiap Hari - Hemat 20%',
-      description: 'Jangan lewatkan flash sale harian dengan diskon hingga 20%',
-      imageUrl: 'https://source.unsplash.com/1600x600/?flash-sale,discount',
-      promotionId: promoIds[2] ?? null,
-      isActive: true,
-      position: 3,
-      startDate: past,
-      endDate: future,
-      type: 'PROMO' as const,
-    },
-    {
-      title: 'Gratis Ongkir Ke Seluruh Indonesia',
-      description: 'Nikmati gratis ongkir untuk setiap pembelian di atas Rp 75.000',
-      imageUrl: 'https://source.unsplash.com/1600x600/?delivery,shipping',
-      promotionId: promoIds[3] ?? null,
-      isActive: true,
-      position: 4,
-      startDate: past,
-      endDate: future,
-      type: 'HOME' as const,
-    },
-    {
-      title: 'Event Ramadan - Promo Spesial Lebaran',
-      description: 'Rayakan lebaran dengan belanja hemat bersama Greenly',
-      imageUrl: 'https://source.unsplash.com/1600x600/?ramadan,mosque',
-      promotionId: promoIds[4] ?? null,
-      isActive: true,
-      position: 5,
-      startDate: past,
-      endDate: future,
-      type: 'EVENT' as const,
-    },
-    {
-      title: 'Cashback Rp 100.000 Transaksi di Atas 500K',
-      description: 'Belanja lebih dari Rp 500.000 dan dapatkan cashback Rp 100.000',
-      imageUrl: 'https://source.unsplash.com/1600x600/?cashback,money',
-      promotionId: promoIds[6] ?? null,
-      isActive: true,
-      position: 6,
-      startDate: past,
-      endDate: future,
-      type: 'PROMO' as const,
-    },
-    {
-      title: 'Weekend Sale - Diskon 5% Setiap Sabtu & Minggu',
-      description: 'Manfaatkan akhir pekan untuk belanja lebih hemat',
-      imageUrl: 'https://source.unsplash.com/1600x600/?weekend,shopping',
-      promotionId: promoIds[7] ?? null,
-      isActive: true,
-      position: 7,
-      startDate: past,
-      endDate: future,
-      type: 'HOME' as const,
-    },
-    {
-      title: 'New User Special - Diskon 30% untuk Pengguna Baru',
-      description: 'Khusus pengguna baru, dapatkan diskon 30% untuk order pertama',
-      imageUrl: 'https://source.unsplash.com/1600x600/?new-user,app',
-      promotionId: promoIds[5] ?? null,
-      isActive: true,
-      position: 8,
-      startDate: past,
-      endDate: future,
-      type: 'HOME' as const,
-    },
-    {
-      title: 'Event Kemerdekaan 17 Agustus',
-      description: 'Rayakan HUT RI dengan promo spesial dari Greenly',
-      imageUrl: 'https://source.unsplash.com/1600x600/?indonesia,flag',
-      promotionId: null,
-      isActive: false,
-      position: 9,
-      startDate: new Date('2025-08-01'),
-      endDate: new Date('2025-08-31'),
-      type: 'EVENT' as const,
-    },
-    {
-      title: 'Hemat Langsung Rp 50.000',
-      description: 'Potongan harga langsung Rp 50.000 untuk pembelian di atas Rp 200.000',
-      imageUrl: 'https://source.unsplash.com/1600x600/?discount,shopping',
-      promotionId: promoIds[1] ?? null,
-      isActive: true,
-      position: 10,
-      startDate: past,
-      endDate: future,
-      type: 'PROMO' as const,
-    },
-  ]
+    const platformBanners = [
+        {
+            title: "Greenly Eco Fest — Hemat Hingga 25% untuk Produk Hijau",
+            description:
+                "Perayaan belanja produk ramah lingkungan: zero waste, organik, sustainable fashion, dan green technology.",
+            imageUrl: bannerImage("greenly-eco-fest.webp"),
+            promotionId: promoIds[9] ?? null,
+            isActive: true,
+            position: 1,
+            startDate: past,
+            endDate: future,
+            type: "PROMO" as const,
+        },
+        {
+            title: "Selamat Datang di Greenly — Mulai Eco Living Hari Ini",
+            description:
+                "Temukan produk eco-friendly pilihan untuk membantu gaya hidup lebih hemat, sehat, dan berkelanjutan.",
+            imageUrl: bannerImage("greenly-welcome.webp"),
+            promotionId: promoIds[0] ?? null,
+            isActive: true,
+            position: 2,
+            startDate: past,
+            endDate: future,
+            type: "HOME" as const,
+        },
+        {
+            title: "Flash Sale Zero Waste — Diskon 20% Produk Pilihan",
+            description:
+                "Belanja tumbler, tas pakai ulang, wadah makanan, dan kebutuhan zero waste lainnya dengan harga spesial.",
+            imageUrl: bannerImage("greenly-zero-waste-sale.webp"),
+            promotionId: promoIds[2] ?? null,
+            isActive: true,
+            position: 3,
+            startDate: past,
+            endDate: future,
+            type: "PROMO" as const,
+        },
+        {
+            title: "Gratis Ongkir untuk Order di Atas Rp 75.000",
+            description:
+                "Belanja produk hijau lebih hemat dengan pengiriman ramah lingkungan untuk pesanan pilihan.",
+            imageUrl: bannerImage("greenly-free-shipping.webp"),
+            promotionId: promoIds[3] ?? null,
+            isActive: true,
+            position: 4,
+            startDate: past,
+            endDate: future,
+            type: "HOME" as const,
+        },
+        {
+            title: "Earth Day Every Day — Pilih Produk yang Lebih Baik",
+            description:
+                "Dukung gaya hidup berkelanjutan dengan produk organik, reusable, recyclable, dan eco-certified.",
+            imageUrl: bannerImage("greenly-earth-day.webp"),
+            promotionId: promoIds[4] ?? null,
+            isActive: true,
+            position: 5,
+            startDate: past,
+            endDate: future,
+            type: "EVENT" as const,
+        },
+        {
+            title: "Cashback Rp 100.000 untuk Transaksi di Atas 500K",
+            description:
+                "Lengkapi kebutuhan eco-living kamu dan dapatkan cashback untuk pembelian produk hijau pilihan.",
+            imageUrl: bannerImage("greenly-cashback.webp"),
+            promotionId: promoIds[6] ?? null,
+            isActive: true,
+            position: 6,
+            startDate: past,
+            endDate: future,
+            type: "PROMO" as const,
+        },
+        {
+            title: "Weekend Eco Sale — Belanja Hijau Setiap Akhir Pekan",
+            description:
+                "Nikmati promo akhir pekan untuk produk organik, sustainable fashion, dan kebutuhan rumah ramah lingkungan.",
+            imageUrl: bannerImage("greenly-weekend-sale.webp"),
+            promotionId: promoIds[7] ?? null,
+            isActive: true,
+            position: 7,
+            startDate: past,
+            endDate: future,
+            type: "HOME" as const,
+        },
+        {
+            title: "Pengguna Baru — Diskon 30% untuk Order Pertama",
+            description:
+                "Mulai perjalanan eco-shopping kamu dengan diskon spesial khusus pengguna baru Greenly.",
+            imageUrl: bannerImage("greenly-new-user.webp"),
+            promotionId: promoIds[5] ?? null,
+            isActive: true,
+            position: 8,
+            startDate: past,
+            endDate: future,
+            type: "HOME" as const,
+        },
+        {
+            title: "Hari Lingkungan Hidup — Promo Spesial 5 Juni",
+            description:
+                "Rayakan Hari Lingkungan Hidup dengan memilih produk yang lebih bertanggung jawab untuk bumi.",
+            imageUrl: bannerImage("greenly-environment-day.webp"),
+            promotionId: null,
+            isActive: true,
+            position: 9,
+            startDate: new Date("2026-06-01T00:00:00Z"),
+            endDate: new Date("2026-06-07T23:59:59Z"),
+            type: "EVENT" as const,
+        },
+        {
+            title: "Potongan Langsung Rp 50.000 untuk Produk Organik",
+            description:
+                "Belanja bahan pangan organik, skincare alami, dan kebutuhan rumah sehat dengan potongan langsung.",
+            imageUrl: bannerImage("greenly-organic-discount.webp"),
+            promotionId: promoIds[1] ?? null,
+            isActive: true,
+            position: 10,
+            startDate: past,
+            endDate: future,
+            type: "PROMO" as const,
+        },
+    ];
 
-  for (const b of platformBanners) {
-    const existing = await prisma.banner.findFirst({ where: { title: b.title, deletedAt: null } })
-    if (existing) continue
+    for (const b of platformBanners) {
+        const existing = await prisma.banner.findFirst({
+            where: {
+                title: b.title,
+                deletedAt: null,
+            },
+        });
 
-    await prisma.banner.create({
-      data: {
-        title: b.title,
-        description: b.description,
-        imageUrl: b.imageUrl,
-        promotionId: b.promotionId,
-        isActive: b.isActive,
-        position: b.position,
-        startDate: b.startDate,
-        endDate: b.endDate,
-        type: b.type,
-      },
-    })
-  }
+        if (existing) continue;
 
-  const shopBanners = [
-    {
-      title: 'Promo Toko Elektronik - Gadget Terbaru 2025',
-      description: 'Temukan gadget terbaru dengan harga terbaik',
-      imageUrl: 'https://source.unsplash.com/1600x600/?electronics,gadget',
-      isActive: true,
-      position: 1,
-      startDate: past,
-      endDate: future,
-      type: 'HOME' as const,
-    },
-    {
-      title: 'Koleksi Fashion Terbaru - Summer 2025',
-      description: 'Update wardrobe kamu dengan koleksi terbaru dari Fashion Store',
-      imageUrl: 'https://source.unsplash.com/1600x600/?fashion,clothing',
-      isActive: true,
-      position: 1,
-      startDate: past,
-      endDate: future,
-      type: 'HOME' as const,
-    },
-    {
-      title: 'Kuliner Nusantara - Cita Rasa Asli Indonesia',
-      description: 'Pesan makanan khas nusantara langsung dari dapur kami',
-      imageUrl: 'https://source.unsplash.com/1600x600/?indonesian-food',
-      isActive: true,
-      position: 1,
-      startDate: past,
-      endDate: future,
-      type: 'HOME' as const,
-    },
-    {
-      title: 'Sport Gear - Perlengkapan Olahraga Lengkap',
-      description: 'Semua kebutuhan olahraga tersedia di sini',
-      imageUrl: 'https://source.unsplash.com/1600x600/?sports,fitness',
-      isActive: true,
-      position: 1,
-      startDate: past,
-      endDate: future,
-      type: 'HOME' as const,
-    },
-    {
-      title: 'Beauty Shop - Skincare Terpercaya',
-      description: 'Produk kecantikan original dan terjamin kualitasnya',
-      imageUrl: 'https://source.unsplash.com/1600x600/?skincare,beauty',
-      isActive: true,
-      position: 1,
-      startDate: past,
-      endDate: future,
-      type: 'HOME' as const,
-    },
-  ]
+        await prisma.banner.create({
+            data: {
+                title: b.title,
+                description: b.description,
+                imageUrl: b.imageUrl,
+                promotionId: b.promotionId,
+                isActive: b.isActive,
+                position: b.position,
+                startDate: b.startDate,
+                endDate: b.endDate,
+                type: b.type,
+            },
+        });
+    }
 
-  for (const b of shopBanners) {
-    const existing = await prisma.banner.findFirst({ where: { title: b.title, deletedAt: null } })
-    if (existing) continue
+    const shopBanners = [
+        {
+            title: "EcoWare Indonesia — Zero Waste Lifestyle Starts Here",
+            description:
+                "Produk reusable untuk hidup minim sampah: tumbler, botol stainless, tas belanja, dan wadah makanan.",
+            imageUrl: bannerImage("shop-ecoware.webp"),
+            isActive: true,
+            position: 1,
+            startDate: past,
+            endDate: future,
+            type: "HOME" as const,
+        },
+        {
+            title: "Bumi Hijau Fashion — Tampil Stylish, Jaga Bumi",
+            description:
+                "Koleksi sustainable fashion dari bahan organik, linen, hemp, dan material rendah dampak lingkungan.",
+            imageUrl: bannerImage("shop-bumi-hijau-fashion.webp"),
+            isActive: true,
+            position: 1,
+            startDate: past,
+            endDate: future,
+            type: "HOME" as const,
+        },
+        {
+            title: "Organik Nusantara — Dari Alam untuk Kesehatan",
+            description:
+                "Produk pangan organik dari petani lokal: sayur, buah, rempah, beras, dan kebutuhan dapur sehat.",
+            imageUrl: bannerImage("shop-organik-nusantara.webp"),
+            isActive: true,
+            position: 1,
+            startDate: past,
+            endDate: future,
+            type: "HOME" as const,
+        },
+        {
+            title: "Pure Nature Beauty — Cantik Alami, Ramah Bumi",
+            description:
+                "Skincare dan personal care berbahan alami, cruelty-free, dan ramah lingkungan.",
+            imageUrl: bannerImage("shop-pure-nature-beauty.webp"),
+            isActive: true,
+            position: 1,
+            startDate: past,
+            endDate: future,
+            type: "HOME" as const,
+        },
+        {
+            title: "Green Tech Solutions — Teknologi untuk Masa Depan",
+            description:
+                "Solusi green technology seperti panel surya portable, lampu hemat energi, dan perangkat outdoor eco-friendly.",
+            imageUrl: bannerImage("shop-green-tech.webp"),
+            isActive: true,
+            position: 1,
+            startDate: past,
+            endDate: future,
+            type: "HOME" as const,
+        },
+    ];
 
-    await prisma.banner.create({
-      data: {
-        title: b.title,
-        description: b.description,
-        imageUrl: b.imageUrl,
-        isActive: b.isActive,
-        position: b.position,
-        startDate: b.startDate,
-        endDate: b.endDate,
-        type: b.type,
-      },
-    })
-  }
+    for (const b of shopBanners) {
+        const existing = await prisma.banner.findFirst({
+            where: {
+                title: b.title,
+                deletedAt: null,
+            },
+        });
 
-  console.log('✅ Banners Seeded Successfully')
+        if (existing) continue;
+
+        await prisma.banner.create({
+            data: {
+                title: b.title,
+                description: b.description,
+                imageUrl: b.imageUrl,
+                isActive: b.isActive,
+                position: b.position,
+                startDate: b.startDate,
+                endDate: b.endDate,
+                type: b.type,
+            },
+        });
+    }
+
+    console.log("✅ Greenly Banners Seeded Successfully");
 }
