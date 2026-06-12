@@ -1,6 +1,6 @@
 import 'package:app/core/router/app_routes.dart';
 import 'package:app/features/Main/features/home/domains/data/product_data.dart';
-import 'package:app/features/Main/features/home/domains/data/promotion_data.dart';
+import 'package:app/features/Main/features/home/domains/data/promotion_data.dart' show PromotionData;
 import 'package:app/features/cart/presentation/bloc/cart_bloc.dart';
 import 'package:app/shared/widgets/product/product_card.dart';
 import 'package:app/shared/widgets/product/product_card_data.dart';

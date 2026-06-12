@@ -8,10 +8,7 @@ class ActiveBannerRespon {
 
   factory ActiveBannerRespon.fromJson(dynamic json) {
     return ActiveBannerRespon(
-      data: JsonMapper.list<BannerData>(
-        json is List ? json : json['data'],
-        BannerData.fromJson,
-      ),
+      data: JsonMapper.list<BannerData>(json, BannerData.fromJson),
     );
   }
 }

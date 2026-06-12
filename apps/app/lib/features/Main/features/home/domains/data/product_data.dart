@@ -1,4 +1,6 @@
-import '../../../../../../shared/widgets/product/product_card_data.dart';
+import 'package:app/core/utils/safe_json.dart';
+import 'package:app/features/Main/features/home/domains/data/promotion_data.dart';
+import 'package:app/shared/widgets/product/product_card_data.dart';
 
 class ProductData {
   final String id;
@@ -60,36 +62,124 @@ class ProductData {
     required this.updatedAt,
   });
 
-  factory ProductData.fromJson(Map<String, dynamic> json) {
+  /// Returns a safe empty/default ProductData.
+  factory ProductData.empty() {
+    final epoch = DateTime.fromMillisecondsSinceEpoch(0);
     return ProductData(
-      id: json['id'] ?? '',
-      shopId: json['shopId'] ?? '',
-      categoryId: json['categoryId'] ?? '',
-      name: json['name'] ?? '',
-      slug: json['slug'] ?? '',
-      description: json['description'] ?? '',
-      sku: json['sku'] ?? '',
-      favoriteCount: json['favoriteCount'] ?? 0,
-      reviewCount: json['reviewCount'] ?? 0,
-      ratingAverage: (json['ratingAverage'] ?? 0).toDouble(),
-      ecoScore: (json['ecoScore'] as num?)?.toDouble() ?? 0,
-      isActive: json['isActive'] ?? false,
-      price: (json['price'] as num?)?.toInt() ?? 0,
-      originalPrice: (json['originalPrice'] as num?)?.toInt() ?? (json['price'] as num?)?.toInt() ?? 0,
-      finalPrice: (json['finalPrice'] as num?)?.toInt() ?? (json['price'] as num?)?.toInt() ?? 0,
-      currency: json['currency'] ?? '',
-      stock: json['stock'] ?? 0,
-      imageUrls: List<String>.from(json['imageUrls'] ?? []),
-      categoryName: json['categoryName'] ?? '',
-      shopName: json['shopName'] ?? '',
-      eco: json['eco'] != null ? EcoData.fromJson(json['eco']) : null,
-      promotion: json['promotion'] != null ? PromotionData.fromJson(json['promotion']) : null,
-      createdAt: json['createdAt'] != null ? DateTime.parse(json['createdAt']) : DateTime.now(),
-      updatedAt: json['updatedAt'] != null ? DateTime.parse(json['updatedAt']) : DateTime.now(),
+      id: '',
+      shopId: '',
+      categoryId: '',
+      name: '',
+      slug: '',
+      description: '',
+      sku: '',
+      favoriteCount: 0,
+      reviewCount: 0,
+      ratingAverage: 0.0,
+      ecoScore: 0.0,
+      isActive: false,
+      price: 0,
+      originalPrice: 0,
+      finalPrice: 0,
+      currency: '',
+      stock: 0,
+      imageUrls: [],
+      categoryName: '',
+      shopName: '',
+      createdAt: epoch,
+      updatedAt: epoch,
     );
   }
 
-  ProductCardData toProductCardData({ProductCardVariant variant = ProductCardVariant.grid}) {
+  factory ProductData.fromJson(Map<String, dynamic> json) {
+    // imageUrls: accept both array field and single-image fields
+    List<String> imageUrls = SafeJson.readStringList(
+      json,
+      ['imageUrls', 'image_urls', 'images'],
+    );
+    if (imageUrls.isEmpty) {
+      final single = SafeJson.readString(
+        json,
+        ['imageUrl', 'image_url', 'image', 'url', 'thumbnail'],
+      );
+      if (single.isNotEmpty) imageUrls = [single];
+    }
+
+    // EcoData — only parse when it's a valid non-empty Map
+    EcoData? eco;
+    final rawEco = json['eco'] ?? json['ecoAttributes'];
+    if (rawEco is Map) {
+      try {
+        final ecoMap = rawEco is Map<String, dynamic>
+            ? rawEco
+            : rawEco.cast<String, dynamic>();
+        if (ecoMap.isNotEmpty) {
+          eco = EcoData.fromJson(ecoMap);
+        }
+      } catch (_) {
+        eco = null;
+      }
+    }
+
+    // PromotionData — only parse when it's a valid non-empty Map
+    PromotionData? promotion;
+    final rawPromotion = json['promotion'];
+    if (rawPromotion is Map) {
+      try {
+        final promoMap = rawPromotion is Map<String, dynamic>
+            ? rawPromotion
+            : rawPromotion.cast<String, dynamic>();
+        if (promoMap.isNotEmpty) {
+          promotion = PromotionData.fromJson(promoMap);
+        }
+      } catch (_) {
+        promotion = null;
+      }
+    }
+
+    final price = SafeJson.readInt(json, ['price']);
+    final originalPrice = SafeJson.readInt(
+      json,
+      ['originalPrice', 'original_price'],
+      fallback: price,
+    );
+    final finalPrice = SafeJson.readInt(
+      json,
+      ['finalPrice', 'final_price'],
+      fallback: price,
+    );
+
+    return ProductData(
+      id: SafeJson.readString(json, ['id']),
+      shopId: SafeJson.readString(json, ['shopId', 'shop_id']),
+      categoryId: SafeJson.readString(json, ['categoryId', 'category_id']),
+      name: SafeJson.readString(json, ['name']),
+      slug: SafeJson.readString(json, ['slug']),
+      description: SafeJson.readString(json, ['description']),
+      sku: SafeJson.readString(json, ['sku']),
+      favoriteCount: SafeJson.readInt(json, ['favoriteCount', 'favorite_count']),
+      reviewCount: SafeJson.readInt(json, ['reviewCount', 'review_count']),
+      ratingAverage: SafeJson.readDouble(json, ['ratingAverage', 'rating_average']),
+      ecoScore: SafeJson.readDouble(json, ['ecoScore', 'eco_score']),
+      isActive: SafeJson.readBool(json, ['isActive', 'is_active'], fallback: true),
+      price: price,
+      originalPrice: originalPrice,
+      finalPrice: finalPrice,
+      currency: SafeJson.readString(json, ['currency']),
+      stock: SafeJson.readInt(json, ['stock']),
+      imageUrls: imageUrls,
+      categoryName: SafeJson.readString(json, ['categoryName', 'category_name']),
+      shopName: SafeJson.readString(json, ['shopName', 'shop_name']),
+      eco: eco,
+      promotion: promotion,
+      createdAt: SafeJson.readDateTime(json, ['createdAt', 'created_at']),
+      updatedAt: SafeJson.readDateTime(json, ['updatedAt', 'updated_at']),
+    );
+  }
+
+  ProductCardData toProductCardData({
+    ProductCardVariant variant = ProductCardVariant.grid,
+  }) {
     return ProductCardData(
       productId: id,
       slug: slug,
@@ -149,56 +239,15 @@ class EcoData {
 
   factory EcoData.fromJson(Map<String, dynamic> json) {
     return EcoData(
-      score: (json['score'] as num?)?.toDouble() ?? 0.0,
-      label: json['label'] ?? '',
-      materialType: json['materialType'] ?? '',
-      materialLabel: json['materialLabel'] ?? '',
-      recyclable: json['recyclable'] ?? false,
-      carbonFootprint: (json['carbonFootprint'] as num?)?.toDouble() ?? 0.0,
-      carbonLabel: json['carbonLabel'] ?? '',
-      badges: List<String>.from(json['badges'] ?? []),
-      reasons: List<String>.from(json['reasons'] ?? []),
-    );
-  }
-}
-
-class PromotionData {
-  final bool hasPromo;
-  final String code;
-  final String title;
-  final String type;
-  final double discountPercent;
-  final double discountAmount;
-  final String label;
-  final String savingLabel;
-  final DateTime? startsAt;
-  final DateTime? endsAt;
-
-  PromotionData({
-    required this.hasPromo,
-    required this.code,
-    required this.title,
-    required this.type,
-    required this.discountPercent,
-    required this.discountAmount,
-    required this.label,
-    required this.savingLabel,
-    this.startsAt,
-    this.endsAt,
-  });
-
-  factory PromotionData.fromJson(Map<String, dynamic> json) {
-    return PromotionData(
-      hasPromo: json['hasPromo'] ?? false,
-      code: json['code'] ?? '',
-      title: json['title'] ?? '',
-      type: json['type'] ?? '',
-      discountPercent: (json['discountPercent'] as num?)?.toDouble() ?? 0.0,
-      discountAmount: (json['discountAmount'] as num?)?.toDouble() ?? 0.0,
-      label: json['label'] ?? '',
-      savingLabel: json['savingLabel'] ?? '',
-      startsAt: json['startsAt'] != null ? DateTime.parse(json['startsAt']) : null,
-      endsAt: json['endsAt'] != null ? DateTime.parse(json['endsAt']) : null,
+      score: SafeJson.readDouble(json, ['score']),
+      label: SafeJson.readString(json, ['label']),
+      materialType: SafeJson.readString(json, ['materialType', 'material_type']),
+      materialLabel: SafeJson.readString(json, ['materialLabel', 'material_label']),
+      recyclable: SafeJson.readBool(json, ['recyclable']),
+      carbonFootprint: SafeJson.readDouble(json, ['carbonFootprint', 'carbon_footprint']),
+      carbonLabel: SafeJson.readString(json, ['carbonLabel', 'carbon_label']),
+      badges: SafeJson.readStringList(json, ['badges']),
+      reasons: SafeJson.readStringList(json, ['reasons']),
     );
   }
 }

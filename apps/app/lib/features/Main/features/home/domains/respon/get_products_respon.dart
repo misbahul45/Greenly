@@ -8,10 +8,7 @@ class GetProductsRespon {
 
   factory GetProductsRespon.fromJson(dynamic json) {
     return GetProductsRespon(
-      data: JsonMapper.list<ProductData>(
-        json is List ? json : json['data'],
-        ProductData.fromJson,
-      ),
+      data: JsonMapper.list<ProductData>(json, ProductData.fromJson),
     );
   }
 }

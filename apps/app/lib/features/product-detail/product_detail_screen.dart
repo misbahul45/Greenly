@@ -27,6 +27,9 @@ import 'package:app/features/product-detail/bloc/similar_products_bloc.dart';
 import 'package:app/features/product-detail/widgets/similar_products_section.dart';
 import 'package:app/shared/widgets/cart_button_widget.dart';
 import 'package:app/shared/widgets/product/product_card_skeleton.dart';
+import 'package:app/features/Main/features/home/domains/data/product_data.dart' show EcoData;
+import 'package:app/features/Main/features/home/domains/data/promotion_data.dart';
+import 'package:app/shared/widgets/product/product_badges_row.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 

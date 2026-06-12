@@ -1,3 +1,4 @@
+import 'package:app/core/utils/safe_json.dart';
 import 'promotion_data.dart';
 
 class BannerData {
@@ -35,27 +36,64 @@ class BannerData {
     this.promotion,
   });
 
-  factory BannerData.fromJson(Map<String, dynamic> json) {
+  /// Returns a safe empty/default BannerData.
+  factory BannerData.empty() {
+    final epoch = DateTime.fromMillisecondsSinceEpoch(0);
     return BannerData(
-      id: json['id'] ?? '',
-      title: json['title'] ?? '',
-      description: json['description'] ?? '',
-      imageUrl: json['imageUrl'] ?? '',
-      link: json['link'] ?? '',
-      promotionId: json['promotionId'],
-      isActive: json['isActive'] ?? false,
-      position: json['position'] ?? 0,
-      startDate: DateTime.parse(json['startDate']),
-      endDate: DateTime.parse(json['endDate']),
-      createdAt: DateTime.parse(json['createdAt']),
-      updatedAt: DateTime.parse(json['updatedAt']),
-      deletedAt: json['deletedAt'] != null
-          ? DateTime.parse(json['deletedAt'])
-          : null,
-      type: json['type'] ?? '',
-      promotion: json['promotion'] != null
-          ? PromotionData.fromJson(json['promotion'])
-          : null,
+      id: '',
+      title: '',
+      description: '',
+      imageUrl: '',
+      link: '',
+      isActive: false,
+      position: 0,
+      startDate: epoch,
+      endDate: epoch,
+      createdAt: epoch,
+      updatedAt: epoch,
+      type: '',
+    );
+  }
+
+  factory BannerData.fromJson(Map<String, dynamic> json) {
+    // imageUrl accepts several possible field names
+    final imageUrl = SafeJson.readString(
+      json,
+      ['imageUrl', 'image_url', 'image', 'url', 'thumbnail'],
+    );
+
+    // promotion — only parse when it's a valid non-empty Map
+    PromotionData? promotion;
+    final rawPromotion = json['promotion'];
+    if (rawPromotion is Map) {
+      try {
+        final promoMap = rawPromotion is Map<String, dynamic>
+            ? rawPromotion
+            : rawPromotion.cast<String, dynamic>();
+        if (promoMap.isNotEmpty) {
+          promotion = PromotionData.fromJson(promoMap);
+        }
+      } catch (_) {
+        promotion = null;
+      }
+    }
+
+    return BannerData(
+      id: SafeJson.readString(json, ['id']),
+      title: SafeJson.readString(json, ['title']),
+      description: SafeJson.readString(json, ['description']),
+      imageUrl: imageUrl,
+      link: SafeJson.readString(json, ['link']),
+      promotionId: json['promotionId'] as String?,
+      isActive: SafeJson.readBool(json, ['isActive']),
+      position: SafeJson.readInt(json, ['position']),
+      startDate: SafeJson.readDateTime(json, ['startDate']),
+      endDate: SafeJson.readDateTime(json, ['endDate']),
+      createdAt: SafeJson.readDateTime(json, ['createdAt']),
+      updatedAt: SafeJson.readDateTime(json, ['updatedAt']),
+      deletedAt: SafeJson.readNullableDateTime(json, ['deletedAt']),
+      type: SafeJson.readString(json, ['type']),
+      promotion: promotion,
     );
   }
 }
