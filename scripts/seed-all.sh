@@ -216,3 +216,5 @@ rm -f "$RESPONSE_FILE"
 log ""
 log "🎉 All seeds completed!"
 log "   ML index rebuild endpoint: $REBUILD_URL"
+
+ubah ke powershell koe

@@ -1,318 +1,208 @@
-# Greenly Full Seed Script - Windows PowerShell 5.1 / PowerShell 7 compatible
-
-param(
-    [ValidateSet("host", "docker")]
-    [string]$Mode = $(if ($env:SEED_MODE) { $env:SEED_MODE } else { "host" }),
-
-    [AllowEmptyString()]
-    [string]$MlUrl = "",
-
-    [switch]$FailOnMlRebuild
-)
-
+#!/usr/bin/env pwsh
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
+
+<#
+Greenly Full Seed Script - PowerShell Version
+
+Usage:
+  pwsh ./scripts/seed-all.ps1
+  pwsh ./scripts/seed-all.ps1 -Mode host
+  pwsh ./scripts/seed-all.ps1 -Mode docker
+  pwsh ./scripts/seed-all.ps1 -MlUrl http://localhost/api/ml
+  pwsh ./scripts/seed-all.ps1 -FailOnMlRebuild
+
+Mode:
+  host   = catalog seed from host using localhost ports, core seed inside Docker
+  docker = catalog seed and core seed both inside Docker containers
+#>
+
+param(
+  [ValidateSet("host", "docker")]
+  [string]$Mode = $(if ($env:SEED_MODE) { $env:SEED_MODE } else { "host" }),
+
+  [string]$MlUrl,
+
+  [switch]$FailOnMlRebuild
+)
 
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $RootDir = Resolve-Path (Join-Path $ScriptDir "..")
 $RootDir = $RootDir.Path
 
 function Log {
-    param([string]$Message)
-    $time = Get-Date -Format "HH:mm:ss"
-    Write-Host "[$time] $Message"
+  param([string]$Message)
+  $time = Get-Date -Format "HH:mm:ss"
+  Write-Host "[$time] $Message"
 }
 
 function Get-EnvValue {
-    param(
-        [Parameter(Mandatory = $true)]
-        [string]$Name,
+  param(
+    [string]$Name,
+    [string]$Default = ""
+  )
 
-        [string]$Default = ""
-    )
+  $value = [Environment]::GetEnvironmentVariable($Name, "Process")
+  if ([string]::IsNullOrWhiteSpace($value)) {
+    return $Default
+  }
 
-    $value = [Environment]::GetEnvironmentVariable($Name, "Process")
-
-    if ([string]::IsNullOrWhiteSpace($value)) {
-        return $Default
-    }
-
-    return $value
+  return $value
 }
 
 function Set-EnvValue {
-    param(
-        [Parameter(Mandatory = $true)]
-        [string]$Name,
+  param(
+    [string]$Name,
+    [string]$Value
+  )
 
-        [AllowEmptyString()]
-        [string]$Value
-    )
-
-    [Environment]::SetEnvironmentVariable($Name, $Value, "Process")
+  [Environment]::SetEnvironmentVariable($Name, $Value, "Process")
 }
 
 function Load-DotEnv {
-    param(
-        [Parameter(Mandatory = $true)]
-        [string]$Path
-    )
+  param([string]$Path)
 
-    if (-not (Test-Path -LiteralPath $Path)) {
-        Log "Root .env not found at $Path - using current shell environment/defaults"
-        return
+  if (-not (Test-Path $Path)) {
+    Log "⚠️  Root .env not found at $Path — using current shell environment/defaults"
+    return
+  }
+
+  Log "Loading root .env: $Path"
+
+  Get-Content $Path | ForEach-Object {
+    $line = $_.Trim()
+
+    if ([string]::IsNullOrWhiteSpace($line)) {
+      return
     }
 
-    Log "Loading root .env: $Path"
-
-    Get-Content -LiteralPath $Path -Encoding UTF8 | ForEach-Object {
-        $line = $_.Trim()
-
-        if ([string]::IsNullOrWhiteSpace($line)) {
-            return
-        }
-
-        if ($line.StartsWith("#")) {
-            return
-        }
-
-        $idx = $line.IndexOf("=")
-
-        if ($idx -lt 1) {
-            return
-        }
-
-        $key = $line.Substring(0, $idx).Trim()
-        $value = $line.Substring($idx + 1).Trim()
-
-        if ([string]::IsNullOrWhiteSpace($key)) {
-            return
-        }
-
-        if ($key.StartsWith("export ")) {
-            $key = $key.Substring(7).Trim()
-        }
-
-        if (
-            ($value.StartsWith('"') -and $value.EndsWith('"')) -or
-            ($value.StartsWith("'") -and $value.EndsWith("'"))
-        ) {
-            if ($value.Length -ge 2) {
-                $value = $value.Substring(1, $value.Length - 2)
-            }
-        }
-
-        Set-EnvValue -Name $key -Value $value
+    if ($line.StartsWith("#")) {
+      return
     }
+
+    if ($line -notmatch "=") {
+      return
+    }
+
+    $parts = $line -split "=", 2
+    $key = $parts[0].Trim()
+    $value = $parts[1].Trim()
+
+    if ([string]::IsNullOrWhiteSpace($key)) {
+      return
+    }
+
+    if (
+      ($value.StartsWith('"') -and $value.EndsWith('"')) -or
+      ($value.StartsWith("'") -and $value.EndsWith("'"))
+    ) {
+      $value = $value.Substring(1, $value.Length - 2)
+    }
+
+    Set-EnvValue -Name $key -Value $value
+  }
 }
 
 function Resolve-ServicePath {
-    param(
-        [Parameter(Mandatory = $true)]
-        [string]$PathValue
-    )
+  param([string]$PathValue)
 
-    if ([System.IO.Path]::IsPathRooted($PathValue)) {
-        return $PathValue
-    }
+  if ([System.IO.Path]::IsPathRooted($PathValue)) {
+    return $PathValue
+  }
 
-    return Join-Path $RootDir $PathValue
+  return Join-Path $RootDir $PathValue
 }
-
-function Assert-CommandExists {
-    param(
-        [Parameter(Mandatory = $true)]
-        [string]$CommandName
-    )
-
-    $command = Get-Command $CommandName -ErrorAction SilentlyContinue
-
-    if (-not $command) {
-        throw "Required command not found: $CommandName"
-    }
-}
-
-function Invoke-ExternalCommand {
-    param(
-        [Parameter(Mandatory = $true)]
-        [string]$FilePath,
-
-        [Parameter(Mandatory = $true)]
-        [string[]]$Arguments
-    )
-
-    & $FilePath @Arguments
-
-    if ($LASTEXITCODE -ne 0) {
-        throw "Command failed with exit code ${LASTEXITCODE}: $FilePath $($Arguments -join ' ')"
-    }
-}
-
-function Invoke-MlRebuild {
-    param(
-        [Parameter(Mandatory = $true)]
-        [string]$Url,
-
-        [Parameter(Mandatory = $true)]
-        [string]$InternalToken
-    )
-
-    $headers = @{
-        "Content-Type"     = "application/json"
-        "X-Internal-Token" = $InternalToken
-    }
-
-    $requestParams = @{
-        Uri             = $Url
-        Method          = "POST"
-        Headers         = $headers
-        UseBasicParsing = $true
-    }
-
-    try {
-        $response = Invoke-WebRequest @requestParams
-
-        return @{
-            StatusCode = [int]$response.StatusCode
-            Body       = [string]$response.Content
-            Error      = $null
-        }
-    } catch {
-        $statusCode = 0
-        $body = $_.Exception.Message
-        $errResponse = $_.Exception.Response
-
-        if ($errResponse) {
-            try {
-                $statusCode = [int]$errResponse.StatusCode
-            } catch {
-                $statusCode = 0
-            }
-
-            try {
-                if ($errResponse.PSObject.Methods.Name -contains "GetResponseStream") {
-                    # Windows PowerShell 5.1 (System.Net.WebException -> HttpWebResponse)
-                    $stream = $errResponse.GetResponseStream()
-
-                    if ($stream) {
-                        $reader = New-Object System.IO.StreamReader($stream)
-                        $body = $reader.ReadToEnd()
-                        $reader.Close()
-                    }
-                } elseif ($errResponse.PSObject.Properties.Name -contains "Content") {
-                    # PowerShell 7+ (HttpResponseException -> HttpResponseMessage)
-                    $body = $errResponse.Content.ReadAsStringAsync().Result
-                }
-            } catch {
-                $body = $_.Exception.Message
-            }
-        }
-
-        return @{
-            StatusCode = $statusCode
-            Body       = $body
-            Error      = $_
-        }
-    }
-}
-
-Assert-CommandExists -CommandName "docker"
 
 $RootEnv = Join-Path $RootDir ".env"
 Load-DotEnv -Path $RootEnv
 
 if ([string]::IsNullOrWhiteSpace($MlUrl)) {
-    $mlEnginePublicUrl = Get-EnvValue -Name "ML_ENGINE_PUBLIC_URL" -Default ""
-    $mlApiUrlDefault = Get-EnvValue -Name "ML_API_URL" -Default "http://localhost/api/ml"
+  $mlEnginePublicUrl = Get-EnvValue "ML_ENGINE_PUBLIC_URL" ""
+  $mlApiUrlDefault = Get-EnvValue "ML_API_URL" "http://localhost/api/ml"
 
-    if (-not [string]::IsNullOrWhiteSpace($mlEnginePublicUrl)) {
-        $MlApiUrl = $mlEnginePublicUrl
-    } else {
-        $MlApiUrl = $mlApiUrlDefault
-    }
+  if (-not [string]::IsNullOrWhiteSpace($mlEnginePublicUrl)) {
+    $MlApiUrl = $mlEnginePublicUrl
+  } else {
+    $MlApiUrl = $mlApiUrlDefault
+  }
 } else {
-    $MlApiUrl = $MlUrl
+  $MlApiUrl = $MlUrl
 }
 
-$MlInternalToken = Get-EnvValue -Name "ML_INTERNAL_TOKEN" -Default "greenly-local-ml-internal-token"
+$MlInternalToken = Get-EnvValue "ML_INTERNAL_TOKEN" "greenly-local-ml-internal-token"
 
 if ($FailOnMlRebuild.IsPresent) {
-    $FailOnMlRebuildValue = "true"
+  $FailOnMlRebuildValue = "true"
 } else {
-    $FailOnMlRebuildValue = Get-EnvValue -Name "FAIL_ON_ML_REBUILD" -Default "false"
+  $FailOnMlRebuildValue = Get-EnvValue "FAIL_ON_ML_REBUILD" "false"
 }
 
-$CatalogDir = Get-EnvValue -Name "CATALOG_DIR" -Default (Join-Path $RootDir "services/catalog-service")
-$CoreDir = Get-EnvValue -Name "CORE_DIR" -Default (Join-Path $RootDir "services/core-service")
+$CatalogDir = Get-EnvValue "CATALOG_DIR" (Join-Path $RootDir "services/catalog-service")
+$CoreDir = Get-EnvValue "CORE_DIR" (Join-Path $RootDir "services/core-service")
 
-$CatalogDir = Resolve-ServicePath -PathValue $CatalogDir
-$CoreDir = Resolve-ServicePath -PathValue $CoreDir
+$CatalogDir = Resolve-ServicePath $CatalogDir
+$CoreDir = Resolve-ServicePath $CoreDir
 
-if (-not (Test-Path -LiteralPath $CatalogDir)) {
-    throw "Catalog service directory not found: $CatalogDir"
+if (-not (Test-Path $CatalogDir)) {
+  throw "Catalog service directory not found: $CatalogDir"
 }
 
-if (-not (Test-Path -LiteralPath $CoreDir)) {
-    throw "Core service directory not found: $CoreDir"
+if (-not (Test-Path $CoreDir)) {
+  throw "Core service directory not found: $CoreDir"
 }
 
 $DockerComposeFile = Join-Path $RootDir "docker-compose.yml"
 
-if (-not (Test-Path -LiteralPath $DockerComposeFile)) {
-    throw "docker-compose.yml not found: $DockerComposeFile"
-}
+Log "🔎 Checking Docker services..."
+docker compose -f $DockerComposeFile ps | Out-Null
 
-Log "Checking Docker services..."
-Invoke-ExternalCommand -FilePath "docker" -Arguments @("compose", "-f", $DockerComposeFile, "ps")
-
-Log "Make sure infra is up:"
-Log "  docker compose up -d mysql mongodb redis rabbitmq traefik core-service catalog-service ml-engine"
+Log "ℹ️  Make sure infra is up:"
+Log "   docker compose up -d mysql mongodb redis rabbitmq traefik core-service catalog-service ml-engine"
 
 if ($Mode -eq "host") {
-    Log "Seed mode: host - catalog seed uses localhost, core seed uses Docker"
+  Log "Seed mode: host — catalog seed uses localhost, core seed uses Docker"
 
-    $MysqlPort = Get-EnvValue -Name "MYSQL_PORT" -Default "3307"
-    $MongodbPort = Get-EnvValue -Name "MONGODB_PORT" -Default "27017"
-    $RedisPort = Get-EnvValue -Name "REDIS_PORT" -Default "6379"
-    $RabbitmqPort = Get-EnvValue -Name "RABBITMQ_PORT" -Default "5672"
+  $MysqlPort = Get-EnvValue "MYSQL_PORT" "3307"
+  $MongodbPort = Get-EnvValue "MONGODB_PORT" "27017"
+  $RedisPort = Get-EnvValue "REDIS_PORT" "6379"
+  $RabbitmqPort = Get-EnvValue "RABBITMQ_PORT" "5672"
 
-    $MysqlUser = Get-EnvValue -Name "MYSQL_USER" -Default "greenly"
-    $MysqlPassword = Get-EnvValue -Name "MYSQL_PASSWORD" -Default "greenly"
-    $MysqlDatabase = Get-EnvValue -Name "MYSQL_DATABASE" -Default "greenly_core"
+  $MysqlUser = Get-EnvValue "MYSQL_USER" "greenly"
+  $MysqlPassword = Get-EnvValue "MYSQL_PASSWORD" "greenly"
+  $MysqlDatabase = Get-EnvValue "MYSQL_DATABASE" "greenly_core"
 
-    $MongoUser = Get-EnvValue -Name "MONGO_INITDB_ROOT_USERNAME" -Default "root"
-    $MongoPassword = Get-EnvValue -Name "MONGO_INITDB_ROOT_PASSWORD" -Default "root"
+  $MongoUser = Get-EnvValue "MONGO_INITDB_ROOT_USERNAME" "root"
+  $MongoPassword = Get-EnvValue "MONGO_INITDB_ROOT_PASSWORD" "root"
 
-    $RabbitUser = Get-EnvValue -Name "RABBITMQ_DEFAULT_USER" -Default "greenly"
-    $RabbitPass = Get-EnvValue -Name "RABBITMQ_DEFAULT_PASS" -Default "greenly"
+  $RabbitUser = Get-EnvValue "RABBITMQ_DEFAULT_USER" "greenly"
+  $RabbitPass = Get-EnvValue "RABBITMQ_DEFAULT_PASS" "greenly"
 
-    Set-EnvValue -Name "DATABASE_HOST" -Value "127.0.0.1"
-    Set-EnvValue -Name "DATABASE_PORT" -Value $MysqlPort
-    Set-EnvValue -Name "DATABASE_CONTAINER_PORT" -Value $MysqlPort
-    Set-EnvValue -Name "DATABASE_URL" -Value "mysql://${MysqlUser}:${MysqlPassword}@127.0.0.1:${MysqlPort}/${MysqlDatabase}"
+  Set-EnvValue "DATABASE_HOST" "127.0.0.1"
+  Set-EnvValue "DATABASE_PORT" $MysqlPort
+  Set-EnvValue "DATABASE_CONTAINER_PORT" $MysqlPort
+  Set-EnvValue "DATABASE_URL" "mysql://${MysqlUser}:${MysqlPassword}@127.0.0.1:${MysqlPort}/${MysqlDatabase}"
 
-    Set-EnvValue -Name "MONGODB_URL" -Value "mongodb://${MongoUser}:${MongoPassword}@127.0.0.1:${MongodbPort}/?authSource=admin"
-    Set-EnvValue -Name "MONGODB_URI" -Value (Get-EnvValue -Name "MONGODB_URL")
+  Set-EnvValue "MONGODB_URL" "mongodb://${MongoUser}:${MongoPassword}@127.0.0.1:${MongodbPort}/?authSource=admin"
+  Set-EnvValue "MONGODB_URI" (Get-EnvValue "MONGODB_URL")
 
-    Set-EnvValue -Name "REDIS_HOST" -Value "127.0.0.1"
-    Set-EnvValue -Name "REDIS_PORT" -Value $RedisPort
-    Set-EnvValue -Name "REDIS_URL" -Value "redis://127.0.0.1:${RedisPort}/0"
+  Set-EnvValue "REDIS_HOST" "127.0.0.1"
+  Set-EnvValue "REDIS_PORT" $RedisPort
+  Set-EnvValue "REDIS_URL" "redis://127.0.0.1:${RedisPort}/0"
 
-    Set-EnvValue -Name "RABBITMQ_HOST" -Value "127.0.0.1"
-    Set-EnvValue -Name "RABBITMQ_PORT" -Value $RabbitmqPort
-    Set-EnvValue -Name "RABBITMQ_URL" -Value "amqp://${RabbitUser}:${RabbitPass}@127.0.0.1:${RabbitmqPort}/"
+  Set-EnvValue "RABBITMQ_HOST" "127.0.0.1"
+  Set-EnvValue "RABBITMQ_PORT" $RabbitmqPort
+  Set-EnvValue "RABBITMQ_URL" "amqp://${RabbitUser}:${RabbitPass}@127.0.0.1:${RabbitmqPort}/"
 
-    $CoreServicePublicUrl = Get-EnvValue -Name "CORE_SERVICE_PUBLIC_URL" -Default "http://localhost/api/core"
-    $CatalogServicePublicUrl = Get-EnvValue -Name "CATALOG_SERVICE_PUBLIC_URL" -Default "http://localhost/api/catalog"
+  $CoreServicePublicUrl = Get-EnvValue "CORE_SERVICE_PUBLIC_URL" "http://localhost/api/core"
+  $CatalogServicePublicUrl = Get-EnvValue "CATALOG_SERVICE_PUBLIC_URL" "http://localhost/api/catalog"
 
-    Set-EnvValue -Name "CORE_SERVICE_URL" -Value $CoreServicePublicUrl
-    Set-EnvValue -Name "CATALOG_SERVICE_URL" -Value $CatalogServicePublicUrl
+  Set-EnvValue "CORE_SERVICE_URL" $CoreServicePublicUrl
+  Set-EnvValue "CATALOG_SERVICE_URL" $CatalogServicePublicUrl
 
-    $mlEnginePublicUrl = Get-EnvValue -Name "ML_ENGINE_PUBLIC_URL" -Default ""
-
-    if (-not [string]::IsNullOrWhiteSpace($mlEnginePublicUrl)) {
-        $MlApiUrl = $mlEnginePublicUrl
-    }
+  $mlEnginePublicUrl = Get-EnvValue "ML_ENGINE_PUBLIC_URL" ""
+  if (-not [string]::IsNullOrWhiteSpace($mlEnginePublicUrl)) {
+    $MlApiUrl = $mlEnginePublicUrl
+  }
 }
 
 Log "Using:"
@@ -324,92 +214,88 @@ Log "  ML_API_URL=$MlApiUrl"
 Log "  ML_INTERNAL_TOKEN is set: $(if (-not [string]::IsNullOrWhiteSpace($MlInternalToken)) { 'yes' } else { 'no' })"
 
 if ($Mode -eq "host") {
-    Log "  Host MONGODB_URL is set: $(if (-not [string]::IsNullOrWhiteSpace((Get-EnvValue -Name 'MONGODB_URL'))) { 'yes' } else { 'no' })"
-    Log "  Host DATABASE_URL is set: $(if (-not [string]::IsNullOrWhiteSpace((Get-EnvValue -Name 'DATABASE_URL'))) { 'yes' } else { 'no' })"
-    Log "  Host RABBITMQ_URL is set: $(if (-not [string]::IsNullOrWhiteSpace((Get-EnvValue -Name 'RABBITMQ_URL'))) { 'yes' } else { 'no' })"
+  Log "  Host MONGODB_URL is set: $(if (-not [string]::IsNullOrWhiteSpace((Get-EnvValue 'MONGODB_URL'))) { 'yes' } else { 'no' })"
+  Log "  Host DATABASE_URL is set: $(if (-not [string]::IsNullOrWhiteSpace((Get-EnvValue 'DATABASE_URL'))) { 'yes' } else { 'no' })"
+  Log "  Host RABBITMQ_URL is set: $(if (-not [string]::IsNullOrWhiteSpace((Get-EnvValue 'RABBITMQ_URL'))) { 'yes' } else { 'no' })"
 } else {
-    Log "  Docker mode uses container environment from docker-compose.yml"
+  Log "  Docker mode uses container environment from docker-compose.yml"
 }
 
-Log "Running core-service migration + seed inside Docker container..."
+# ── 1. Core-service migration + seed inside Docker ────────────────────────────
+Log "🌱 Running core-service migration + seed inside Docker container..."
 
-$coreSeedCommand = 'test -n "$DATABASE_URL" && echo "DATABASE_URL is set"; pnpm prisma migrate deploy; pnpm prisma db seed'
+docker compose -f $DockerComposeFile exec -T core-service sh -lc @'
+test -n "$DATABASE_URL" && echo "DATABASE_URL is set"
+pnpm prisma migrate deploy
+pnpm prisma db seed
+'@
 
-Invoke-ExternalCommand -FilePath "docker" -Arguments @(
-    "compose",
-    "-f",
-    $DockerComposeFile,
-    "exec",
-    "-T",
-    "core-service",
-    "sh",
-    "-lc",
-    $coreSeedCommand
-)
+Log "✅ Core migration + seed complete"
 
-Log "Core migration + seed complete"
-
+# ── 2. Catalog-service seed ───────────────────────────────────────────────────
 if ($Mode -eq "docker") {
-    Log "Running catalog-service seed inside Docker container..."
+  Log "🌱 Running catalog-service seed inside Docker container..."
 
-    $catalogSeedCommand = "go run ./cmd/seed/..."
-
-    Invoke-ExternalCommand -FilePath "docker" -Arguments @(
-        "compose",
-        "-f",
-        $DockerComposeFile,
-        "exec",
-        "-T",
-        "catalog-service",
-        "sh",
-        "-lc",
-        $catalogSeedCommand
-    )
+  docker compose -f $DockerComposeFile exec -T catalog-service sh -lc @'
+go run ./cmd/seed/...
+'@
 } else {
-    Log "Running catalog-service seed from host..."
+  Log "🌱 Running catalog-service seed from host..."
 
-    Assert-CommandExists -CommandName "go"
-
-    Push-Location $CatalogDir
-
-    try {
-        Invoke-ExternalCommand -FilePath "go" -Arguments @("run", "./cmd/seed/...")
-    } finally {
-        Pop-Location
-    }
+  Push-Location $CatalogDir
+  try {
+    go run ./cmd/seed/...
+  } finally {
+    Pop-Location
+  }
 }
 
-Log "Catalog seed complete"
+Log "✅ Catalog seed complete"
 
+# ── 3. ML engine: rebuild FAISS index ─────────────────────────────────────────
 $RebuildUrl = "$($MlApiUrl.TrimEnd('/'))/products/rebuild-index"
 
-Log "Triggering ML engine index rebuild at $RebuildUrl ..."
+Log "🤖 Triggering ML engine index rebuild at $RebuildUrl ..."
 
-$mlResult = Invoke-MlRebuild -Url $RebuildUrl -InternalToken $MlInternalToken
-$httpStatus = [int]$mlResult.StatusCode
-$body = [string]$mlResult.Body
+try {
+  $headers = @{
+    "Content-Type" = "application/json"
+    "X-Internal-Token" = $MlInternalToken
+  }
+
+  $response = Invoke-WebRequest `
+    -Uri $RebuildUrl `
+    -Method POST `
+    -Headers $headers `
+    -UseBasicParsing `
+    -SkipHttpErrorCheck
+
+  $httpStatus = [int]$response.StatusCode
+  $body = $response.Content
+} catch {
+  $httpStatus = 0
+  $body = $_.Exception.Message
+}
 
 if ($httpStatus -in @(200, 201, 202)) {
-    Log "ML index rebuild triggered successfully (HTTP $httpStatus)"
-
-    if (-not [string]::IsNullOrWhiteSpace($body)) {
-        Write-Host $body
-    }
+  Log "✅ ML index rebuild triggered successfully (HTTP $httpStatus)"
+  if ($body) {
+    Write-Host $body
+  }
 } else {
-    Log "ML index rebuild returned HTTP $httpStatus - check if ml-engine is running"
+  Log "⚠️  ML index rebuild returned HTTP $httpStatus — check if ml-engine is running"
+  if ($body) {
+    Write-Host $body
+  }
 
-    if (-not [string]::IsNullOrWhiteSpace($body)) {
-        Write-Host $body
-    }
+  Log "   You can rebuild manually:"
+  Log "   curl -X POST $RebuildUrl -H 'X-Internal-Token: `$ML_INTERNAL_TOKEN'"
 
-    Log "You can rebuild manually:"
-    Log "curl -X POST $RebuildUrl -H 'X-Internal-Token: `$ML_INTERNAL_TOKEN'"
-
-    if ($FailOnMlRebuildValue.ToLowerInvariant() -eq "true") {
-        exit 1
-    }
+  if ($FailOnMlRebuildValue -eq "true") {
+    exit 1
+  }
 }
 
 Log ""
-Log "All seeds completed!"
-Log "ML index rebuild endpoint: $RebuildUrl"
+Log "🎉 All seeds completed!"
+Log "   ML index rebuild endpoint: $RebuildUrl"

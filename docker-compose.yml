@@ -10,6 +10,9 @@ volumes:
   catalog_node_modules:
   ml_venv:
   go_mod_cache:
+  flutter_pub_cache:
+  flutter_gradle_cache:
+  flutter_android_sdk:
 
 services:
   traefik:
@@ -259,5 +262,141 @@ services:
       - "traefik.http.middlewares.catalog-strip.stripprefix.prefixes=/api/catalog"
       - "traefik.http.routers.catalog.middlewares=catalog-strip"
 
+    networks:
+      - greenly_network
+
+  flutter-android-build:
+    profiles:
+      - android
+    build:
+      context: ./apps/app
+      dockerfile: Dockerfile.android
+    working_dir: /app
+    volumes:
+      - ./apps/app:/app
+      - flutter_pub_cache:/root/.pub-cache
+      - flutter_gradle_cache:/root/.gradle
+      - flutter_android_sdk:/opt/android-sdk
+    environment:
+      APP_ENV: ${APP_ENV:-development}
+      API_URL: ${API_URL:-http://localhost/api}
+      ANDROID_HOME: /opt/android-sdk
+      ANDROID_SDK_ROOT: /opt/android-sdk
+      GRADLE_USER_HOME: /root/.gradle
+      PUB_CACHE: /root/.pub-cache
+      JAVA_TOOL_OPTIONS: "-Dfile.encoding=UTF-8"
+    command: >
+      sh -c "
+        flutter pub get &&
+        flutter analyze &&
+        flutter build apk --debug
+          --dart-define=API_URL=\"$${API_URL}\"
+      "
+    develop:
+      watch:
+        - action: sync
+          path: ./apps/app/lib
+          target: /app/lib
+
+        - action: sync
+          path: ./apps/app/assets
+          target: /app/assets
+          ignore:
+            - "**/*.psd"
+            - "**/*.ai"
+
+        - action: sync
+          path: ./apps/app/android
+          target: /app/android
+
+        - action: sync
+          path: ./apps/app/test
+          target: /app/test
+
+        - action: rebuild
+          path: ./apps/app/pubspec.yaml
+
+        - action: rebuild
+          path: ./apps/app/pubspec.lock
+
+        - action: rebuild
+          path: ./apps/app/Dockerfile.android
+    networks:
+      - greenly_network
+
+  flutter-android-dev:
+    profiles:
+      - android
+    build:
+      context: ./apps/app
+      dockerfile: Dockerfile.android
+    working_dir: /app
+    stdin_open: true
+    tty: true
+    volumes:
+      - ./apps/app:/app
+      - flutter_pub_cache:/root/.pub-cache
+      - flutter_gradle_cache:/root/.gradle
+      - flutter_android_sdk:/opt/android-sdk
+    depends_on:
+      - core-service
+      - catalog-service
+      - ml-engine
+    environment:
+      APP_ENV: ${APP_ENV:-development}
+      API_URL: ${API_URL:-http://localhost/api}
+      ADB_DEVICE: ${ADB_DEVICE:-}
+      ANDROID_HOME: /opt/android-sdk
+      ANDROID_SDK_ROOT: /opt/android-sdk
+      GRADLE_USER_HOME: /root/.gradle
+      PUB_CACHE: /root/.pub-cache
+      JAVA_TOOL_OPTIONS: "-Dfile.encoding=UTF-8"
+    command: >
+      sh -c "
+        flutter pub get &&
+        if [ -n \"$${ADB_DEVICE}\" ]; then
+          adb connect \"$${ADB_DEVICE}\" || true;
+          flutter devices;
+          flutter run -d \"$${ADB_DEVICE}\"
+            --dart-define=API_URL=\"$${API_URL}\";
+        else
+          echo 'ADB_DEVICE belum diset.';
+          echo 'Contoh .env:';
+          echo 'API_URL=http://192.168.18.141/api';
+          echo 'ADB_DEVICE=192.168.18.xxx:5555';
+          echo 'Lalu jalankan: docker compose --profile android up --watch flutter-android-dev';
+          exit 1;
+        fi
+      "
+    develop:
+      watch:
+        - action: sync
+          path: ./apps/app/lib
+          target: /app/lib
+
+        - action: sync
+          path: ./apps/app/assets
+          target: /app/assets
+          ignore:
+            - "**/*.psd"
+            - "**/*.ai"
+
+        - action: sync
+          path: ./apps/app/android
+          target: /app/android
+
+        - action: sync
+          path: ./apps/app/test
+          target: /app/test
+
+        - action: sync
+          path: ./apps/app/pubspec.yaml
+          target: /app/pubspec.yaml
+
+        - action: rebuild
+          path: ./apps/app/pubspec.lock
+
+        - action: rebuild
+          path: ./apps/app/Dockerfile.android
     networks:
       - greenly_network
