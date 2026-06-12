@@ -48,6 +48,7 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   Future<void> _loadChat() async {
+    if (!mounted) return;
     setState(() {
       _loading = true;
       _error = null;
@@ -103,7 +104,9 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   String _mapError(int statusCode, String message) {
-    if (statusCode == 500) return 'Server chat sedang bermasalah. Coba lagi nanti.';
+    if (statusCode == 500) {
+      return 'Server chat sedang bermasalah. Coba lagi nanti.';
+    }
     if (statusCode == 401 || statusCode == 403) return 'Silakan login ulang.';
     if (statusCode == 404) return 'Data toko tidak ditemukan.';
     if (statusCode == 400) return 'Data toko tidak valid.';
@@ -149,14 +152,24 @@ class _ChatScreenState extends State<ChatScreen> {
 
   void _subscribeRealtime(String conversationId) {
     _subscription?.cancel();
-    _subscription = _service.streamMessages(conversationId).listen((event) {
-      final message = event.message;
-      if (!mounted || message == null) return;
+    _subscription = _service
+        .streamMessages(conversationId)
+        .listen(
+          (event) {
+            final message = event.message;
+            if (!mounted || message == null) return;
 
-      setState(() {
-        _messages = _uniqueMessages([..._messages, message]);
-      });
-    });
+            setState(() {
+              _messages = _uniqueMessages([..._messages, message]);
+            });
+          },
+          onError: (_) {
+            if (!mounted) return;
+            setState(() {
+              _error = 'Realtime chat terputus. Pesan baru mungkin terlambat.';
+            });
+          },
+        );
   }
 
   List<ChatMessageData> _uniqueMessages(List<ChatMessageData> messages) {
@@ -525,8 +538,11 @@ class _ErrorState extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.chat_bubble_outline_rounded,
-                size: 48, color: Colors.grey[300]),
+            Icon(
+              Icons.chat_bubble_outline_rounded,
+              size: 48,
+              color: Colors.grey[300],
+            ),
             const SizedBox(height: UIConstants.spacingM),
             const Text(
               'Chat toko gagal dimuat',

@@ -3,6 +3,7 @@ import 'package:app/features/Main/features/home/widgets/product_widget.dart';
 import 'package:app/features/products/presentation/bloc/product_list_bloc.dart';
 import 'package:app/features/products/service/product_list_service.dart';
 import 'package:app/shared/widgets/cart_button_widget.dart';
+import 'package:app/shared/widgets/product/adaptive_product_grid_delegate.dart';
 import 'package:app/shared/widgets/product/product_card_skeleton.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -96,12 +97,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
               child: GridView.builder(
                 controller: _scrollController,
                 padding: const EdgeInsets.all(UIConstants.paddingM),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  crossAxisSpacing: UIConstants.spacingM,
-                  mainAxisSpacing: UIConstants.spacingM,
-                  childAspectRatio: 0.55,
-                ),
+                gridDelegate: adaptiveProductGridDelegate(),
                 itemCount: state.data.length + (state.isLoadingMore ? 2 : 0),
                 itemBuilder: (context, i) {
                   if (i >= state.data.length) {

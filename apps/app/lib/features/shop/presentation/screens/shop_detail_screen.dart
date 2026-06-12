@@ -7,6 +7,7 @@ import 'package:app/features/products/service/product_list_service.dart';
 import 'package:app/features/shop/presentation/bloc/shop_detail_bloc.dart';
 import 'package:app/features/shop/service/shop_service.dart';
 import 'package:app/shared/widgets/cart_button_widget.dart';
+import 'package:app/shared/widgets/product/adaptive_product_grid_delegate.dart';
 import 'package:app/shared/widgets/charts/stat_card.dart';
 import 'package:app/shared/widgets/product/product_card_skeleton.dart';
 import 'package:app/shared/widgets/skeleton/shop_skeleton.dart';
@@ -192,12 +193,7 @@ class _ShopDetailScreenState extends State<ShopDetailScreen> {
         return SliverPadding(
           padding: const EdgeInsets.all(UIConstants.paddingM),
           sliver: SliverGrid(
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              crossAxisSpacing: UIConstants.spacingM,
-              mainAxisSpacing: UIConstants.spacingM,
-              childAspectRatio: 0.55,
-            ),
+            gridDelegate: adaptiveProductGridDelegate(),
             delegate: SliverChildBuilderDelegate(
               (context, i) => ProductWidget(product: state.data[i]),
               childCount: state.data.length,

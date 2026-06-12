@@ -3,7 +3,7 @@ name = "ml-engine"
 version = "0.1.0"
 description = "ML service with FastAPI, Celery, RabbitMQ & FAISS"
 readme = "README.md"
-requires-python = ">=3.12"
+requires-python = ">=3.11,<3.13"
 
 dependencies = [
     "fastapi>=0.110.0",
@@ -16,13 +16,20 @@ dependencies = [
     "faiss-cpu>=1.8.0",
     "numpy>=1.26.0",
     "sentence-transformers>=2.7.0,<3.0.0",
-    "torch>=2.7.0",
+
+    # Mac Intel local development
+    "torch==2.2.2; sys_platform == 'darwin' and platform_machine == 'x86_64'",
+
+    # Apple Silicon and Linux can use newer torch
+    "torch>=2.7.0; sys_platform == 'linux'",
+    "torch>=2.7.0; sys_platform == 'darwin' and platform_machine == 'arm64'",
+
     "python-dotenv>=1.0.1"
 ]
 
 [tool.uv.sources]
 torch = [
-    { index = "pytorch-cpu", marker = "platform_system == 'Linux'" },
+    { index = "pytorch-cpu", marker = "sys_platform == 'linux'" }
 ]
 
 [[tool.uv.index]]

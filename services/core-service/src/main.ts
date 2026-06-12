@@ -4,11 +4,14 @@ import { ResponseInterceptor } from './libs/interceptors/respon.interceptor';
 import { GlobalExceptionFilter } from './libs/filters/global-exception.filter';
 import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 import { ConfigService } from '@nestjs/config';
+import { CorrelationIdMiddleware } from './libs/middleware/correlation-id.middleware';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, { rawBody: true });
 
   const configService = app.get(ConfigService);
+
+  app.use(CorrelationIdMiddleware);
 
   const queue = configService.get<string>('rabbitmq.queue') ?? 'greenly_queue';
   const url = configService.get<string>('rabbitmq.url') ?? 'amqp://guest:guest@rabbitmq:5672/';

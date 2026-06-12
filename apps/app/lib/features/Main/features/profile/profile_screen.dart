@@ -61,6 +61,15 @@ class _ProfileView extends StatelessWidget {
                   reviewsCount: stats.reviews,
                   favoritesCount: stats.favorites,
                 ),
+                if (state.error != null) ...[
+                  const SizedBox(height: UIConstants.spacingM),
+                  _ProfileStatsError(
+                    message: state.error!,
+                    onRetry: () => context.read<ProfileBloc>().add(
+                      ProfileStatsRequested(),
+                    ),
+                  ),
+                ],
                 const SizedBox(height: UIConstants.spacingXL),
                 const AddressSectionWidget(),
                 const SizedBox(height: UIConstants.spacingXL),
@@ -72,6 +81,32 @@ class _ProfileView extends StatelessWidget {
               ],
             );
           },
+        ),
+      ),
+    );
+  }
+}
+
+class _ProfileStatsError extends StatelessWidget {
+  final String message;
+  final VoidCallback onRetry;
+
+  const _ProfileStatsError({required this.message, required this.onRetry});
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.orange.withValues(alpha: 0.08),
+      borderRadius: BorderRadius.circular(UIConstants.radiusM),
+      child: Padding(
+        padding: const EdgeInsets.all(UIConstants.paddingM),
+        child: Row(
+          children: [
+            const Icon(Icons.info_outline_rounded, color: Colors.orange),
+            const SizedBox(width: UIConstants.spacingS),
+            Expanded(child: Text(message)),
+            TextButton(onPressed: onRetry, child: const Text('Retry')),
+          ],
         ),
       ),
     );

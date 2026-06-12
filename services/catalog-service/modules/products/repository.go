@@ -25,6 +25,7 @@ type Repository interface {
 	GetInventory(ctx context.Context, productID string) (databases.Inventory, error)
 	GetImages(ctx context.Context, productID string) ([]databases.ProductImage, error)
 	GetEcoAttribute(ctx context.Context, productID string) (databases.EcoAttribute, error)
+	GetActiveDiscount(ctx context.Context, productID string) (databases.ProductDiscount, error)
 	UpdateShopName(ctx context.Context, productID string, shopName string) error
 	UpdatePriceByProductID(ctx context.Context, productID string, update bson.M) error
 	UpdateInventoryStock(ctx context.Context, productID string, stock int) error
@@ -34,22 +35,24 @@ type Repository interface {
 }
 
 type repository struct {
-	productCollection      *mongo.Collection
-	categoryCollection     *mongo.Collection
-	priceCollection        *mongo.Collection
-	inventoryCollection    *mongo.Collection
-	imageCollection        *mongo.Collection
-	ecoAttributeCollection *mongo.Collection
+	productCollection       *mongo.Collection
+	categoryCollection      *mongo.Collection
+	priceCollection         *mongo.Collection
+	inventoryCollection     *mongo.Collection
+	imageCollection         *mongo.Collection
+	ecoAttributeCollection  *mongo.Collection
+	discountCollection      *mongo.Collection
 }
 
 func NewRepository(db *mongo.Database) Repository {
 	return &repository{
-		productCollection:      db.Collection("products"),
-		categoryCollection:     db.Collection("categories"),
-		priceCollection:        db.Collection("prices"),
-		inventoryCollection:    db.Collection("inventories"),
-		imageCollection:        db.Collection("product_images"),
-		ecoAttributeCollection: db.Collection("eco_attributes"),
+		productCollection:       db.Collection("products"),
+		categoryCollection:      db.Collection("categories"),
+		priceCollection:         db.Collection("prices"),
+		inventoryCollection:     db.Collection("inventories"),
+		imageCollection:         db.Collection("product_images"),
+		ecoAttributeCollection:  db.Collection("eco_attributes"),
+		discountCollection:      db.Collection("product_discounts"),
 	}
 }
 
@@ -218,6 +221,20 @@ func (r *repository) GetEcoAttribute(ctx context.Context, productID string) (dat
 	var eco databases.EcoAttribute
 	err := r.ecoAttributeCollection.FindOne(ctx, bson.M{"product_id": productID, "deleted_at": nil}).Decode(&eco)
 	return eco, err
+}
+
+func (r *repository) GetActiveDiscount(ctx context.Context, productID string) (databases.ProductDiscount, error) {
+	var discount databases.ProductDiscount
+	now := time.Now()
+	filter := bson.M{
+		"product_id":  productID,
+		"is_active":  true,
+		"valid_from": bson.M{"$lte": now},
+		"valid_to":   bson.M{"$gte": now},
+		"deleted_at": nil,
+	}
+	err := r.discountCollection.FindOne(ctx, filter, options.FindOne().SetSort(bson.D{{Key: "percentage", Value: -1}})).Decode(&discount)
+	return discount, err
 }
 
 func (r *repository) UpdateShopName(ctx context.Context, productID string, shopName string) error {

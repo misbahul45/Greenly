@@ -4,6 +4,7 @@ import 'package:app/core/theme/app_theme.dart';
 import 'package:app/features/favorite/bloc/favorite_bloc.dart';
 import 'package:app/features/favorite/domain/data/favorite_data.dart';
 import 'package:app/features/favorite/service/favorite_service.dart';
+import 'package:app/shared/widgets/product/adaptive_product_grid_delegate.dart';
 import 'package:app/shared/widgets/product/product_card.dart';
 import 'package:app/shared/widgets/product/product_card_data.dart';
 import 'package:app/shared/widgets/product/product_card_skeleton.dart';
@@ -118,12 +119,7 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
               child: GridView.builder(
                 controller: _scrollController,
                 padding: const EdgeInsets.all(UIConstants.paddingM),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  crossAxisSpacing: UIConstants.spacingM,
-                  mainAxisSpacing: UIConstants.spacingM,
-                  childAspectRatio: 0.55,
-                ),
+                gridDelegate: adaptiveProductGridDelegate(),
                 itemCount:
                     state.favorites.length + (state.isListLoadingMore ? 2 : 0),
                 itemBuilder: (context, i) {
@@ -159,7 +155,9 @@ class _FavoriteProductCard extends StatelessWidget {
         reviewCount: product.reviewCount,
         favoriteCount: product.favoriteCount > 0 ? product.favoriteCount : null,
         stock: product.stock,
-        categoryName: product.categoryName.isNotEmpty ? product.categoryName : null,
+        categoryName: product.categoryName.isNotEmpty
+            ? product.categoryName
+            : null,
         shopName: product.shopName.isNotEmpty ? product.shopName : null,
         isFavorite: true,
       ),

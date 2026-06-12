@@ -509,7 +509,47 @@ func (s *service) enrichProductResponse(ctx context.Context, product databases.P
 	price, err := s.repository.GetActivePrice(ctx, product.ID)
 	if err == nil {
 		response.Price = price.Amount
+		response.OriginalPrice = price.Amount
+		response.FinalPrice = price.Amount
 		response.Currency = price.Currency
+	}
+
+	// Handle Promotion/Discount
+	discount, err := s.repository.GetActiveDiscount(ctx, product.ID)
+	if err == nil {
+		hasPromo := true
+		var discountAmount float64
+		if discount.Percentage > 0 {
+			discountAmount = (discount.Percentage / 100) * response.OriginalPrice
+		} else if discount.FixedAmount > 0 {
+			discountAmount = discount.FixedAmount
+		}
+
+		response.FinalPrice = response.OriginalPrice - discountAmount
+		if response.FinalPrice < 0 {
+			response.FinalPrice = 0
+		}
+
+		label := discount.Name
+		if discount.Percentage > 0 {
+			label = "-" + utils.FormatFloat(discount.Percentage) + "%"
+		}
+
+		response.Promotion = &PromotionSummaryDTO{
+			HasPromo:        hasPromo,
+			Code:            discount.Name, // Using name as code for now
+			Title:           discount.Name,
+			Type:            "PERCENTAGE", // Default to percentage if name doesn't specify
+			DiscountPercent: discount.Percentage,
+			DiscountAmount:  discountAmount,
+			StartsAt:        discount.ValidFrom,
+			EndsAt:          discount.ValidTo,
+			Label:           label,
+			SavingLabel:     "Hemat Rp" + utils.FormatMoney(discountAmount),
+		}
+		if discount.FixedAmount > 0 {
+			response.Promotion.Type = "FIXED"
+		}
 	}
 
 	inventory, err := s.repository.GetInventory(ctx, product.ID)
@@ -527,12 +567,95 @@ func (s *service) enrichProductResponse(ctx context.Context, product databases.P
 		response.CategoryName = category.Name
 	}
 
+	// Handle Eco Attributes
 	eco, err := s.repository.GetEcoAttribute(ctx, product.ID)
 	if err == nil {
 		response.EcoScore = eco.EcoScore
+		
+		materialLabel := getMaterialLabel(eco.MaterialType)
+		carbonLabel := getCarbonLabel(eco.CarbonFootprint)
+		
+		badges := []string{}
+		if materialLabel != "" {
+			badges = append(badges, materialLabel)
+		}
+		if eco.Recyclable {
+			badges = append(badges, "Daur Ulang")
+		}
+		if eco.CarbonFootprint <= 2 {
+			badges = append(badges, "Carbon Rendah")
+		}
+		
+		// Max 3 badges
+		if len(badges) > 3 {
+			badges = badges[:3]
+		}
+		
+		reasons := []string{}
+		if materialLabel != "" {
+			reasons = append(reasons, "Menggunakan bahan " + materialLabel)
+		}
+		if eco.Recyclable {
+			reasons = append(reasons, "Dapat didaur ulang")
+		}
+		if eco.CarbonFootprint <= 2 {
+			reasons = append(reasons, "Carbon footprint rendah")
+		}
+		if strings.Contains(strings.ToLower(product.Description), "reusable") {
+			reasons = append(reasons, "Produk dapat digunakan kembali (reusable)")
+		}
+
+		response.Eco = &EcoSummaryDTO{
+			Score:           eco.EcoScore,
+			Label:           getEcoLabel(eco.EcoScore),
+			MaterialType:    eco.MaterialType,
+			MaterialLabel:   materialLabel,
+			Recyclable:      eco.Recyclable,
+			CarbonFootprint: eco.CarbonFootprint,
+			CarbonLabel:     carbonLabel,
+			Badges:          badges,
+			Reasons:         reasons,
+		}
 	}
 
 	return response
+}
+
+func getMaterialLabel(mType string) string {
+	mapping := map[string]string{
+		"bamboo":         "Bambu",
+		"organic_cotton": "Katun Organik",
+		"cotton":         "Katun",
+		"linen":          "Linen",
+		"hemp":           "Hemp",
+		"recycled":       "Daur Ulang",
+		"paper":          "Kertas",
+		"wood":           "Kayu",
+	}
+	if label, ok := mapping[mType]; ok {
+		return label
+	}
+	return strings.Title(strings.ReplaceAll(mType, "_", " "))
+}
+
+func getCarbonLabel(cf float64) string {
+	if cf <= 2 {
+		return "Carbon Rendah"
+	}
+	if cf <= 5 {
+		return "Carbon Sedang"
+	}
+	return "Carbon Tinggi"
+}
+
+func getEcoLabel(score float64) string {
+	if score >= 80 {
+		return "Eco Friendly"
+	}
+	if score >= 60 {
+		return "Good Choice"
+	}
+	return "Standard"
 }
 
 func generateSlug(name string) string {

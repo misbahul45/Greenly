@@ -110,14 +110,16 @@ class ProductCard extends StatelessWidget {
       );
     }
 
-    if (showDiscountBadge &&
-        data.promotionCode != null &&
-        data.promotionCode!.isNotEmpty) {
-      return ProductDiscountBadge(label: data.promotionCode!);
-    }
-
-    if (showDiscountBadge && data.discountPercent != null) {
-      return ProductDiscountBadge(label: '-${data.discountPercent}%');
+    if (showDiscountBadge) {
+      if (data.promotionLabel != null && data.promotionLabel!.isNotEmpty) {
+        return ProductDiscountBadge(label: data.promotionLabel!);
+      }
+      if (data.promotionCode != null && data.promotionCode!.isNotEmpty) {
+        return ProductDiscountBadge(label: data.promotionCode!);
+      }
+      if (data.discountPercent != null) {
+        return ProductDiscountBadge(label: '-${data.discountPercent}%');
+      }
     }
 
     return null;

@@ -1,52 +1,60 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
-import { PassportStrategy } from '@nestjs/passport';
-import { Strategy, ExtractJwt } from 'passport-jwt';
-import { ConfigService } from '@nestjs/config';
-import { AuthRepository } from '../auth.repository';
-import { UserStatus } from '../../../../generated/prisma/enums';
-import { AppError } from '../../../libs/errors/app.error';
-import { Request } from 'express';
+import {Injectable} from "@nestjs/common";
+import {PassportStrategy} from "@nestjs/passport";
+import {Strategy, ExtractJwt, StrategyOptionsWithRequest} from "passport-jwt";
+import {ConfigService} from "@nestjs/config";
+import {AuthRepository} from "../auth.repository";
+import {UserStatus} from "../../../../generated/prisma/enums";
+import {AppError} from "../../../libs/errors/app.error";
+import {Request} from "express";
 
 @Injectable()
-export class JwtAccessStrategy extends PassportStrategy(Strategy, 'jwt-access') {
-  constructor(
-    private config: ConfigService,
-    private repo: AuthRepository,
-  ) {
-    super({
-      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-      secretOrKey: config.get<string>('jwt.access.key') ?? 'default-secret',
-      ignoreExpiration: false,
-      passReqToCallback: true,
-    });
-  }
+export class JwtAccessStrategy extends PassportStrategy(
+    Strategy,
+    "jwt-access"
+) {
+    constructor(
+        private readonly config: ConfigService,
+        private readonly repo: AuthRepository
+    ) {
+        const options: StrategyOptionsWithRequest = {
+            jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+            secretOrKey: config.getOrThrow<string>("jwt.access.key"),
+            ignoreExpiration: false,
+            passReqToCallback: true,
+        };
 
-  async validate(req: Request,payload: any) {
-    const accessToken = req.get('Authorization')?.replace('Bearer', '').trim();
-
-    console.log('JwtAccessStrategy: validate called with payload:', payload); 
-    
-    if(!accessToken){
-      throw new AppError('Unauthorized', 401)
+        super(options);
     }
 
-    const user = await this.repo.checkUserById(payload.sub);
+    async validate(req: Request, payload: any) {
+        const accessToken = req
+            .get("Authorization")
+            ?.replace(/^Bearer\s+/i, "")
+            .trim();
 
-    if (!user) throw new AppError('User not found', 400);
+        if (!accessToken) {
+            throw new AppError("Unauthorized", 401);
+        }
 
-    if (user.status !== UserStatus.ACTIVE) {
-      throw new AppError('User inactive', 400);
+        const user = await this.repo.checkUserById(payload.sub);
+
+        if (!user) {
+            throw new AppError("User not found", 400);
+        }
+
+        if (user.status !== UserStatus.ACTIVE) {
+            throw new AppError("User inactive", 400);
+        }
+
+        if (user.deletedAt) {
+            throw new AppError("User deleted", 400);
+        }
+
+        return {
+            sub: user.id,
+            email: user.email,
+            roles: payload.roles,
+            accessToken,
+        };
     }
-
-    if (user.deletedAt){
-        throw new AppError('User deleted', 400)
-    }
-    
-    return {
-      sub: user.id,
-      email: user.email,
-      roles: payload.roles,
-      accessToken
-    };
-  }
 }

@@ -1,6 +1,7 @@
 import 'package:app/core/constants/ui_constants.dart';
 import 'package:app/core/theme/app_theme.dart';
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 class PaymentWebViewScreen extends StatefulWidget {
@@ -18,13 +19,23 @@ class PaymentWebViewScreen extends StatefulWidget {
 }
 
 class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
-  late final WebViewController _controller;
+  WebViewController? _controller;
   int _progress = 0;
   bool _handledRedirect = false;
+  String? _error;
+  late final Uri? _paymentUri;
 
   @override
   void initState() {
     super.initState();
+    _paymentUri = Uri.tryParse(widget.paymentUrl);
+    final paymentUri = _paymentUri;
+    if (paymentUri == null ||
+        !(paymentUri.scheme == 'http' || paymentUri.scheme == 'https')) {
+      _error = 'Link pembayaran tidak valid.';
+      return;
+    }
+
     _controller = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
       ..setNavigationDelegate(
@@ -40,9 +51,16 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
             }
             return NavigationDecision.navigate;
           },
+          onWebResourceError: (error) {
+            if (!mounted) return;
+            setState(() {
+              _error = 'Gagal memuat halaman pembayaran. Coba lagi.';
+            });
+          },
         ),
-      )
-      ..loadRequest(Uri.parse(widget.paymentUrl));
+      );
+
+    _controller?.loadRequest(paymentUri);
   }
 
   String? _detectRedirect(String url) {
@@ -110,6 +128,22 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
     }
   }
 
+  Future<void> _retry() async {
+    final uri = _paymentUri;
+    if (uri == null) return;
+    setState(() {
+      _error = null;
+      _progress = 0;
+    });
+    await _controller?.loadRequest(uri);
+  }
+
+  Future<void> _openExternal() async {
+    final uri = _paymentUri;
+    if (uri == null) return;
+    await launchUrl(uri, mode: LaunchMode.externalApplication);
+  }
+
   @override
   Widget build(BuildContext context) {
     return PopScope(
@@ -159,7 +193,77 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
                 textAlign: TextAlign.center,
               ),
             ),
-            Expanded(child: WebViewWidget(controller: _controller)),
+            Expanded(
+              child: _error == null
+                  ? WebViewWidget(controller: _controller!)
+                  : _PaymentErrorView(
+                      message: _error!,
+                      canRetry: _paymentUri != null,
+                      onRetry: _retry,
+                      onOpenExternal: _openExternal,
+                      onClose: () => Navigator.pop(context, false),
+                    ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _PaymentErrorView extends StatelessWidget {
+  final String message;
+  final bool canRetry;
+  final VoidCallback onRetry;
+  final VoidCallback onOpenExternal;
+  final VoidCallback onClose;
+
+  const _PaymentErrorView({
+    required this.message,
+    required this.canRetry,
+    required this.onRetry,
+    required this.onOpenExternal,
+    required this.onClose,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(UIConstants.paddingL),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.payment_rounded, size: 52, color: Colors.grey[300]),
+            const SizedBox(height: UIConstants.spacingM),
+            const Text(
+              'Pembayaran Tidak Bisa Dimuat',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: UIConstants.fontSizeL,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            const SizedBox(height: UIConstants.spacingS),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.grey[600]),
+            ),
+            const SizedBox(height: UIConstants.spacingL),
+            if (canRetry)
+              ElevatedButton.icon(
+                onPressed: onRetry,
+                icon: const Icon(Icons.refresh_rounded),
+                label: const Text('Coba Lagi'),
+              ),
+            if (canRetry)
+              TextButton.icon(
+                onPressed: onOpenExternal,
+                icon: const Icon(Icons.open_in_new_rounded),
+                label: const Text('Buka di Browser'),
+              ),
+            TextButton(onPressed: onClose, child: const Text('Tutup')),
           ],
         ),
       ),

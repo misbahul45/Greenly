@@ -43,6 +43,13 @@ func main() {
 	db := client.Database("catalog")
 	coreSvc := coreclient.NewClient(coreServiceURL)
 
+	if err := databases.CreateCategoryIndexes(db.Collection("categories")); err != nil {
+		log.Fatalf("Failed to create category indexes: %v", err)
+	}
+	if err := databases.CreateProductIndexes(db.Collection("products")); err != nil {
+		log.Fatalf("Failed to create product indexes: %v", err)
+	}
+
 	redisCache, err := cache.NewCache()
 	if err != nil {
 		log.Fatalf("Failed to initialize cache: %v", err)

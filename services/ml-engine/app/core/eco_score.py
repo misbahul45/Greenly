@@ -1,7 +1,7 @@
 from app.schemas import EcoScoreRequest, EcoScoreResponse
 
 
-GOOD_MATERIALS = {"bamboo", "cotton", "recycled", "organic", "wood", "paper", "kain", "bambu", "organik"}
+GOOD_MATERIALS = {"bamboo", "cotton", "recycled", "organic", "wood", "paper", "kain", "bambu", "organik", "organic_cotton", "linen", "hemp"}
 GOOD_WORDS = {"reusable", "organik", "ramah lingkungan", "daur ulang", "bisa digunakan berulang"}
 
 

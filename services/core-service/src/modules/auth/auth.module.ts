@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
-import { ConfigService, ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { StringValue } from 'ms';
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
@@ -14,20 +14,34 @@ import { JwtAccessStrategy } from './strategies/jwt.access.strategy';
 import { UserResendTokenPublisher } from './publisher/user_resend_token.publisher';
 import { PassportModule } from '@nestjs/passport';
 
+function validateJwtSecrets(config: ConfigService) {
+  const accessKey = config.get<string>('jwt.access.key');
+  const refreshKey = config.get<string>('jwt.refresh.key');
+  if (!accessKey || accessKey.length < 32) {
+    throw new Error('JWT access secret key must be configured and at least 32 characters');
+  }
+  if (!refreshKey || refreshKey.length < 32) {
+    throw new Error('JWT refresh secret key must be configured and at least 32 characters');
+  }
+}
+
 @Module({
   imports: [
-    ConfigModule, 
+    ConfigModule,
     PassportModule,
     JwtModule.registerAsync({
       inject: [ConfigService],
-      useFactory: (config: ConfigService) => ({
-        secret:
-          config.get<string>('jwt.access.key') ?? 'default-secret',
-        signOptions: {
-          expiresIn: config.get<string>('jwt.access.duration') as unknown as StringValue
-        },
-      }),
-    })
+      useFactory: (config: ConfigService) => {
+        validateJwtSecrets(config);
+        const accessTokenExpires = config.get<string>('jwt.access.duration');
+        return {
+          secret: config.get<string>('jwt.access.key'),
+          signOptions: {
+            expiresIn: (accessTokenExpires || '30d') as unknown as StringValue,
+          },
+        };
+      },
+    }),
   ],
 
   controllers: [AuthController, EmailConsume],

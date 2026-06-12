@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+import threading
 from pathlib import Path
 
 import numpy as np
@@ -23,6 +24,7 @@ class VectorStore:
         self.embeddings: np.ndarray | None = None
         self.products: list[ProductIndexItem] = []
         self.dimension = 384
+        self._lock = threading.RLock()
         self.load()
 
     @property
@@ -32,6 +34,10 @@ class VectorStore:
     @property
     def count(self) -> int:
         return len(self.products)
+
+    @property
+    def lock(self) -> threading.RLock:
+        return self._lock
 
     def load(self) -> None:
         if self.meta_path.exists():
@@ -187,10 +193,14 @@ def _passes_filters(product: ProductIndexItem, filters: SearchFilters | None) ->
 def _to_search_result(product: ProductIndexItem, score: float) -> SearchResult:
     image_url = product.image_urls[0] if product.image_urls else None
     reason = "Cocok dengan pencarian kamu"
-    if product.eco_score is not None and product.eco_score >= 75:
-        reason = "Cocok karena memiliki skor eco tinggi"
+    if product.eco_score is not None and product.eco_score >= 80:
+        reason = "Cocok karena merupakan produk ramah lingkungan (Skor " + str(int(product.eco_score)) + ")"
+    elif product.eco_label:
+        reason = f"Produk dengan kategori {product.eco_label}"
     elif product.rating_average is not None and product.rating_average >= 4.5:
-        reason = "Produk punya rating bagus"
+        reason = "Produk populer dengan rating tinggi"
+    elif product.has_promo:
+        reason = f"Sedang promo {product.promotion_label or ''}"
 
     return SearchResult(
         id=product.id,
@@ -199,10 +209,31 @@ def _to_search_result(product: ProductIndexItem, score: float) -> SearchResult:
         name=product.name,
         slug=product.slug,
         price=product.price,
+        original_price=product.original_price,
+        final_price=product.final_price,
         currency=product.currency,
         image_url=image_url,
         image_urls=product.image_urls,
+        
+        # Eco
         eco_score=product.eco_score,
+        eco_label=product.eco_label,
+        material_type=product.material_type,
+        material_label=product.material_label,
+        recyclable=product.recyclable,
+        carbon_footprint=product.carbon_footprint,
+        carbon_label=product.carbon_label,
+        eco_badges=product.eco_badges,
+        eco_reasons=product.eco_reasons,
+        
+        # Promo
+        has_promo=product.has_promo,
+        promotion_code=product.promotion_code,
+        promotion_label=product.promotion_label,
+        discount_percent=product.discount_percent,
+        discount_amount=product.discount_amount,
+        saving_label=product.saving_label,
+        
         rating_average=product.rating_average,
         review_count=product.review_count,
         favorite_count=product.favorite_count,

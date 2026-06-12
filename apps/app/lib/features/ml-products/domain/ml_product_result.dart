@@ -7,10 +7,31 @@ class MlProductResult extends Equatable {
   final String name;
   final String? slug;
   final double? price;
+  final double? originalPrice;
+  final double? finalPrice;
   final String? currency;
   final String? imageUrl;
   final List<String> imageUrls;
+  
+  // Eco
   final double? ecoScore;
+  final String? ecoLabel;
+  final String? materialType;
+  final String? materialLabel;
+  final bool? recyclable;
+  final double? carbonFootprint;
+  final String? carbonLabel;
+  final List<String> ecoBadges;
+  final List<String> ecoReasons;
+  
+  // Promo
+  final bool hasPromo;
+  final String? promotionCode;
+  final String? promotionLabel;
+  final double? discountPercent;
+  final double? discountAmount;
+  final String? savingLabel;
+
   final double? ratingAverage;
   final int? reviewCount;
   final int? favoriteCount;
@@ -26,10 +47,26 @@ class MlProductResult extends Equatable {
     required this.name,
     this.slug,
     this.price,
+    this.originalPrice,
+    this.finalPrice,
     this.currency,
     this.imageUrl,
     this.imageUrls = const [],
     this.ecoScore,
+    this.ecoLabel,
+    this.materialType,
+    this.materialLabel,
+    this.recyclable,
+    this.carbonFootprint,
+    this.carbonLabel,
+    this.ecoBadges = const [],
+    this.ecoReasons = const [],
+    this.hasPromo = false,
+    this.promotionCode,
+    this.promotionLabel,
+    this.discountPercent,
+    this.discountAmount,
+    this.savingLabel,
     this.ratingAverage,
     this.reviewCount,
     this.favoriteCount,
@@ -58,10 +95,31 @@ class MlProductResult extends Equatable {
       name: json['name'] as String? ?? '',
       slug: json['slug'] as String?,
       price: _d(json['price']),
+      originalPrice: _d(json['original_price'] ?? json['originalPrice']),
+      finalPrice: _d(json['final_price'] ?? json['finalPrice']),
       currency: json['currency'] as String?,
       imageUrl: imageUrl,
       imageUrls: imageUrls,
+      
+      // Eco
       ecoScore: _d(json['eco_score'] ?? json['ecoScore']),
+      ecoLabel: json['eco_label'] as String? ?? json['ecoLabel'] as String?,
+      materialType: json['material_type'] as String? ?? json['materialType'] as String?,
+      materialLabel: json['material_label'] as String? ?? json['materialLabel'] as String?,
+      recyclable: json['recyclable'] as bool?,
+      carbonFootprint: _d(json['carbon_footprint'] ?? json['carbonFootprint']),
+      carbonLabel: json['carbon_label'] as String? ?? json['carbonLabel'] as String?,
+      ecoBadges: List<String>.from(json['eco_badges'] ?? json['ecoBadges'] ?? []),
+      ecoReasons: List<String>.from(json['eco_reasons'] ?? json['ecoReasons'] ?? []),
+      
+      // Promo
+      hasPromo: json['has_promo'] as bool? ?? json['hasPromo'] as bool? ?? false,
+      promotionCode: json['promotion_code'] as String? ?? json['promotionCode'] as String?,
+      promotionLabel: json['promotion_label'] as String? ?? json['promotionLabel'] as String?,
+      discountPercent: _d(json['discount_percent'] ?? json['discountPercent']),
+      discountAmount: _d(json['discount_amount'] ?? json['discountAmount']),
+      savingLabel: json['saving_label'] as String? ?? json['savingLabel'] as String?,
+      
       ratingAverage: _d(json['rating_average'] ?? json['ratingAverage']),
       reviewCount: _i(json['review_count'] ?? json['reviewCount']),
       favoriteCount: _i(json['favorite_count'] ?? json['favoriteCount']),

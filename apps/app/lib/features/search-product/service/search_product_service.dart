@@ -39,11 +39,28 @@ class SearchProductService {
 
     final catalogResp = await ApiClient.get<List<SearchProductResult>>(
       '${ENV.api}/catalog/products/search',
-      query: {'q': query, 'page': 1, 'limit': limit},
+      query: buildCatalogFallbackQuery(
+        query: query,
+        limit: limit,
+        filters: filters,
+      ),
       fromJsonT: _parseCatalogResults,
     );
 
     return SearchResultPair(catalogResp.data ?? [], fromFallback: true);
+  }
+
+  static Map<String, dynamic> buildCatalogFallbackQuery({
+    required String query,
+    required int limit,
+    SearchProductFilter? filters,
+  }) {
+    return {
+      'q': query,
+      'page': 1,
+      'limit': limit,
+      if (filters != null && !filters.isEmpty) ...filters.toJson(),
+    };
   }
 
   static List<SearchProductResult> _parseMlResults(dynamic json) {

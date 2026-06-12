@@ -130,7 +130,6 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     Emitter<AuthState> emit,
   ) async {
     emit(AuthLoading());
-    AuthStorage.clear();
     final token = await AuthStorage.getAccessToken();
     final refreshToken = await AuthStorage.getRefreshToken();
     final user = await AuthStorage.getUser();
@@ -142,6 +141,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         ),
       );
     } else {
+      await AuthStorage.clear();
       emit(AuthUnauthenticated());
     }
   }
@@ -199,8 +199,9 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
     if (response.isSuccess) {
       emit(AuthChangePasswordSuccess());
+    } else {
+      emit(AuthError(response.message));
     }
-    
   }
 
   Future<void> _onRefreshUser(

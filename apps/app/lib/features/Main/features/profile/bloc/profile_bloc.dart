@@ -17,8 +17,14 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
     ProfileStatsRequested event,
     Emitter<ProfileState> emit,
   ) async {
-    emit(state.copyWith(isLoading: true));
-    final stats = await _service.getStats();
-    emit(state.copyWith(isLoading: false, stats: stats));
+    emit(state.copyWith(isLoading: true, error: null));
+    final result = await _service.getStats();
+    emit(
+      state.copyWith(
+        isLoading: false,
+        stats: result.stats,
+        error: result.error,
+      ),
+    );
   }
 }

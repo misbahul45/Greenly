@@ -1,0 +1,208 @@
+7931869704bd70d0b9c1bb93b7e87e2b
+"use strict";
+
+/* istanbul ignore next */
+function cov_2ia8vms1xr() {
+  var path = "/Users/misbahulmuttaqin/code/Greenly/services/core-service/src/libs/errors/app.error.ts";
+  var hash = "5d278fbfa81097e509d27550d15c8a0829cb776f";
+  var global = new Function("return this")();
+  var gcv = "__coverage__";
+  var coverageData = {
+    path: "/Users/misbahulmuttaqin/code/Greenly/services/core-service/src/libs/errors/app.error.ts",
+    statementMap: {
+      "0": {
+        start: {
+          line: 2,
+          column: 0
+        },
+        end: {
+          line: 2,
+          column: 62
+        }
+      },
+      "1": {
+        start: {
+          line: 3,
+          column: 0
+        },
+        end: {
+          line: 3,
+          column: 26
+        }
+      },
+      "2": {
+        start: {
+          line: 9,
+          column: 8
+        },
+        end: {
+          line: 9,
+          column: 23
+        }
+      },
+      "3": {
+        start: {
+          line: 10,
+          column: 8
+        },
+        end: {
+          line: 10,
+          column: 31
+        }
+      },
+      "4": {
+        start: {
+          line: 11,
+          column: 8
+        },
+        end: {
+          line: 11,
+          column: 37
+        }
+      },
+      "5": {
+        start: {
+          line: 12,
+          column: 8
+        },
+        end: {
+          line: 12,
+          column: 29
+        }
+      },
+      "6": {
+        start: {
+          line: 15,
+          column: 0
+        },
+        end: {
+          line: 15,
+          column: 28
+        }
+      }
+    },
+    fnMap: {
+      "0": {
+        name: "(anonymous_0)",
+        decl: {
+          start: {
+            line: 8,
+            column: 4
+          },
+          end: {
+            line: 8,
+            column: 5
+          }
+        },
+        loc: {
+          start: {
+            line: 8,
+            column: 51
+          },
+          end: {
+            line: 13,
+            column: 5
+          }
+        },
+        line: 8
+      }
+    },
+    branchMap: {
+      "0": {
+        loc: {
+          start: {
+            line: 8,
+            column: 25
+          },
+          end: {
+            line: 8,
+            column: 41
+          }
+        },
+        type: "default-arg",
+        locations: [{
+          start: {
+            line: 8,
+            column: 38
+          },
+          end: {
+            line: 8,
+            column: 41
+          }
+        }],
+        line: 8
+      }
+    },
+    s: {
+      "0": 0,
+      "1": 0,
+      "2": 0,
+      "3": 0,
+      "4": 0,
+      "5": 0,
+      "6": 0
+    },
+    f: {
+      "0": 0
+    },
+    b: {
+      "0": [0]
+    },
+    inputSourceMap: {
+      file: "/Users/misbahulmuttaqin/code/Greenly/services/core-service/src/libs/errors/app.error.ts",
+      mappings: ";;;AAAA,MAAa,QAAS,SAAQ,KAAK;IAExB;IACA;IACA;IAHT,YACS,OAAe,EACf,aAAqB,GAAG,EACxB,MAAgB;QAEvB,KAAK,CAAC,OAAO,CAAC,CAAC;QAJR,YAAO,GAAP,OAAO,CAAQ;QACf,eAAU,GAAV,UAAU,CAAc;QACxB,WAAM,GAAN,MAAM,CAAU;IAGzB,CAAC;CACF;AARD,4BAQC",
+      names: [],
+      sources: ["/Users/misbahulmuttaqin/code/Greenly/services/core-service/src/libs/errors/app.error.ts"],
+      sourcesContent: ["export class AppError extends Error {\n  constructor(\n    public message: string,\n    public statusCode: number = 500,\n    public errors?: unknown\n  ) {\n    super(message);\n  }\n}\n"],
+      version: 3
+    },
+    _coverageSchema: "1a1c01bbd47fc00a2c39e90264f33305004495a9",
+    hash: "5d278fbfa81097e509d27550d15c8a0829cb776f"
+  };
+  var coverage = global[gcv] || (global[gcv] = {});
+  if (!coverage[path] || coverage[path].hash !== hash) {
+    coverage[path] = coverageData;
+  }
+  var actualCoverage = coverage[path];
+  {
+    // @ts-ignore
+    cov_2ia8vms1xr = function () {
+      return actualCoverage;
+    };
+  }
+  return actualCoverage;
+}
+cov_2ia8vms1xr();
+cov_2ia8vms1xr().s[0]++;
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+/* istanbul ignore next */
+cov_2ia8vms1xr().s[1]++;
+exports.AppError = void 0;
+class AppError extends Error {
+  message;
+  statusCode;
+  errors;
+  constructor(message, statusCode =
+  /* istanbul ignore next */
+  (cov_2ia8vms1xr().b[0][0]++, 500), errors) {
+    /* istanbul ignore next */
+    cov_2ia8vms1xr().f[0]++;
+    cov_2ia8vms1xr().s[2]++;
+    super(message);
+    /* istanbul ignore next */
+    cov_2ia8vms1xr().s[3]++;
+    this.message = message;
+    /* istanbul ignore next */
+    cov_2ia8vms1xr().s[4]++;
+    this.statusCode = statusCode;
+    /* istanbul ignore next */
+    cov_2ia8vms1xr().s[5]++;
+    this.errors = errors;
+  }
+}
+/* istanbul ignore next */
+cov_2ia8vms1xr().s[6]++;
+exports.AppError = AppError;
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJuYW1lcyI6WyJBcHBFcnJvciIsIkVycm9yIiwibWVzc2FnZSIsInN0YXR1c0NvZGUiLCJlcnJvcnMiLCJjb25zdHJ1Y3RvciIsImNvdl8yaWE4dm1zMXhyIiwiYiIsImYiLCJzIiwiZXhwb3J0cyJdLCJzb3VyY2VzIjpbIi9Vc2Vycy9taXNiYWh1bG11dHRhcWluL2NvZGUvR3JlZW5seS9zZXJ2aWNlcy9jb3JlLXNlcnZpY2Uvc3JjL2xpYnMvZXJyb3JzL2FwcC5lcnJvci50cyJdLCJzb3VyY2VzQ29udGVudCI6WyJleHBvcnQgY2xhc3MgQXBwRXJyb3IgZXh0ZW5kcyBFcnJvciB7XG4gIGNvbnN0cnVjdG9yKFxuICAgIHB1YmxpYyBtZXNzYWdlOiBzdHJpbmcsXG4gICAgcHVibGljIHN0YXR1c0NvZGU6IG51bWJlciA9IDUwMCxcbiAgICBwdWJsaWMgZXJyb3JzPzogdW5rbm93blxuICApIHtcbiAgICBzdXBlcihtZXNzYWdlKTtcbiAgfVxufVxuIl0sIm1hcHBpbmdzIjoiOzs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7O0FBQUEsTUFBYUEsUUFBUyxTQUFRQyxLQUFLO0VBRXhCQyxPQUFBO0VBQ0FDLFVBQUE7RUFDQUMsTUFBQTtFQUhUQyxZQUNTSCxPQUFlLEVBQ2ZDLFVBQUE7RUFBQTtFQUFBLENBQUFHLGNBQUEsR0FBQUMsQ0FBQSxVQUFxQixHQUFHLEdBQ3hCSCxNQUFnQjtJQUFBO0lBQUFFLGNBQUEsR0FBQUUsQ0FBQTtJQUFBRixjQUFBLEdBQUFHLENBQUE7SUFFdkIsS0FBSyxDQUFDUCxPQUFPLENBQUM7SUFBQztJQUFBSSxjQUFBLEdBQUFHLENBQUE7SUFKUixLQUFBUCxPQUFPLEdBQVBBLE9BQU87SUFBUTtJQUFBSSxjQUFBLEdBQUFHLENBQUE7SUFDZixLQUFBTixVQUFVLEdBQVZBLFVBQVU7SUFBYztJQUFBRyxjQUFBLEdBQUFHLENBQUE7SUFDeEIsS0FBQUwsTUFBTSxHQUFOQSxNQUFNO0VBR2Y7O0FBQ0Q7QUFBQUUsY0FBQSxHQUFBRyxDQUFBO0FBUkRDLE9BQUEsQ0FBQVYsUUFBQSxHQUFBQSxRQUFBIiwiaWdub3JlTGlzdCI6W119

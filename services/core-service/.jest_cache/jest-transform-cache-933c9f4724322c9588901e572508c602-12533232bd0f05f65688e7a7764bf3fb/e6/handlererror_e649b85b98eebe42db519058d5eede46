@@ -1,0 +1,231 @@
+d7efc8f7de43a005a74271543d315c34
+"use strict";
+
+/* istanbul ignore next */
+function cov_2jh3mdes1u() {
+  var path = "/Users/misbahulmuttaqin/code/Greenly/services/core-service/src/libs/errors/handler.error.ts";
+  var hash = "215d9de58d1098c291abaa1062278d2e606073d2";
+  var global = new Function("return this")();
+  var gcv = "__coverage__";
+  var coverageData = {
+    path: "/Users/misbahulmuttaqin/code/Greenly/services/core-service/src/libs/errors/handler.error.ts",
+    statementMap: {
+      "0": {
+        start: {
+          line: 2,
+          column: 0
+        },
+        end: {
+          line: 2,
+          column: 62
+        }
+      },
+      "1": {
+        start: {
+          line: 3,
+          column: 0
+        },
+        end: {
+          line: 3,
+          column: 31
+        }
+      },
+      "2": {
+        start: {
+          line: 4,
+          column: 20
+        },
+        end: {
+          line: 4,
+          column: 42
+        }
+      },
+      "3": {
+        start: {
+          line: 6,
+          column: 4
+        },
+        end: {
+          line: 14,
+          column: 5
+        }
+      },
+      "4": {
+        start: {
+          line: 7,
+          column: 8
+        },
+        end: {
+          line: 7,
+          column: 26
+        }
+      },
+      "5": {
+        start: {
+          line: 10,
+          column: 8
+        },
+        end: {
+          line: 12,
+          column: 9
+        }
+      },
+      "6": {
+        start: {
+          line: 11,
+          column: 12
+        },
+        end: {
+          line: 11,
+          column: 24
+        }
+      },
+      "7": {
+        start: {
+          line: 13,
+          column: 8
+        },
+        end: {
+          line: 13,
+          column: 76
+        }
+      }
+    },
+    fnMap: {
+      "0": {
+        name: "ErrorHandler",
+        decl: {
+          start: {
+            line: 5,
+            column: 15
+          },
+          end: {
+            line: 5,
+            column: 27
+          }
+        },
+        loc: {
+          start: {
+            line: 5,
+            column: 32
+          },
+          end: {
+            line: 15,
+            column: 1
+          }
+        },
+        line: 5
+      }
+    },
+    branchMap: {
+      "0": {
+        loc: {
+          start: {
+            line: 10,
+            column: 8
+          },
+          end: {
+            line: 12,
+            column: 9
+          }
+        },
+        type: "if",
+        locations: [{
+          start: {
+            line: 10,
+            column: 8
+          },
+          end: {
+            line: 12,
+            column: 9
+          }
+        }, {
+          start: {
+            line: undefined,
+            column: undefined
+          },
+          end: {
+            line: undefined,
+            column: undefined
+          }
+        }],
+        line: 10
+      }
+    },
+    s: {
+      "0": 0,
+      "1": 0,
+      "2": 0,
+      "3": 0,
+      "4": 0,
+      "5": 0,
+      "6": 0,
+      "7": 0
+    },
+    f: {
+      "0": 0
+    },
+    b: {
+      "0": [0, 0]
+    },
+    inputSourceMap: {
+      file: "/Users/misbahulmuttaqin/code/Greenly/services/core-service/src/libs/errors/handler.error.ts",
+      mappings: ";;AAEA,+BAeC;AAjBD,2CAAuC;AAExB,KAAK,UAAU,YAAY,CACxC,EAAoB;IAEpB,IAAI,CAAC;QACH,OAAO,MAAM,EAAE,EAAE,CAAC;IACpB,CAAC;IAAC,OAAO,KAAK,EAAE,CAAC;QACf,IAAI,KAAK,YAAY,oBAAQ,EAAE,CAAC;YAC9B,MAAM,KAAK,CAAC;QACd,CAAC;QACD,MAAM,IAAI,oBAAQ,CAChB,uBAAuB,EACvB,GAAG,EACH,KAAK,CACN,CAAC;IACJ,CAAC;AACH,CAAC",
+      names: [],
+      sources: ["/Users/misbahulmuttaqin/code/Greenly/services/core-service/src/libs/errors/handler.error.ts"],
+      sourcesContent: ["import { AppError } from './app.error';\n\nexport default async function ErrorHandler<T>(\n  fn: () => Promise<T>\n): Promise<T> {\n  try {\n    return await fn();\n  } catch (error) {\n    if (error instanceof AppError) {\n      throw error;\n    }\n    throw new AppError(\n      'Internal server error',\n      500,\n      false\n    );\n  }\n}"],
+      version: 3
+    },
+    _coverageSchema: "1a1c01bbd47fc00a2c39e90264f33305004495a9",
+    hash: "215d9de58d1098c291abaa1062278d2e606073d2"
+  };
+  var coverage = global[gcv] || (global[gcv] = {});
+  if (!coverage[path] || coverage[path].hash !== hash) {
+    coverage[path] = coverageData;
+  }
+  var actualCoverage = coverage[path];
+  {
+    // @ts-ignore
+    cov_2jh3mdes1u = function () {
+      return actualCoverage;
+    };
+  }
+  return actualCoverage;
+}
+cov_2jh3mdes1u();
+cov_2jh3mdes1u().s[0]++;
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+/* istanbul ignore next */
+cov_2jh3mdes1u().s[1]++;
+exports.default = ErrorHandler;
+const app_error_1 =
+/* istanbul ignore next */
+(cov_2jh3mdes1u().s[2]++, require("./app.error"));
+async function ErrorHandler(fn) {
+  /* istanbul ignore next */
+  cov_2jh3mdes1u().f[0]++;
+  cov_2jh3mdes1u().s[3]++;
+  try {
+    /* istanbul ignore next */
+    cov_2jh3mdes1u().s[4]++;
+    return await fn();
+  } catch (error) {
+    /* istanbul ignore next */
+    cov_2jh3mdes1u().s[5]++;
+    if (error instanceof app_error_1.AppError) {
+      /* istanbul ignore next */
+      cov_2jh3mdes1u().b[0][0]++;
+      cov_2jh3mdes1u().s[6]++;
+      throw error;
+    } else
+    /* istanbul ignore next */
+    {
+      cov_2jh3mdes1u().b[0][1]++;
+    }
+    cov_2jh3mdes1u().s[7]++;
+    throw new app_error_1.AppError('Internal server error', 500, false);
+  }
+}
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJuYW1lcyI6WyJleHBvcnRzIiwiZGVmYXVsdCIsIkVycm9ySGFuZGxlciIsImFwcF9lcnJvcl8xIiwiY292XzJqaDNtZGVzMXUiLCJzIiwicmVxdWlyZSIsImZuIiwiZiIsImVycm9yIiwiQXBwRXJyb3IiLCJiIl0sInNvdXJjZXMiOlsiL1VzZXJzL21pc2JhaHVsbXV0dGFxaW4vY29kZS9HcmVlbmx5L3NlcnZpY2VzL2NvcmUtc2VydmljZS9zcmMvbGlicy9lcnJvcnMvaGFuZGxlci5lcnJvci50cyJdLCJzb3VyY2VzQ29udGVudCI6WyJpbXBvcnQgeyBBcHBFcnJvciB9IGZyb20gJy4vYXBwLmVycm9yJztcblxuZXhwb3J0IGRlZmF1bHQgYXN5bmMgZnVuY3Rpb24gRXJyb3JIYW5kbGVyPFQ+KFxuICBmbjogKCkgPT4gUHJvbWlzZTxUPlxuKTogUHJvbWlzZTxUPiB7XG4gIHRyeSB7XG4gICAgcmV0dXJuIGF3YWl0IGZuKCk7XG4gIH0gY2F0Y2ggKGVycm9yKSB7XG4gICAgaWYgKGVycm9yIGluc3RhbmNlb2YgQXBwRXJyb3IpIHtcbiAgICAgIHRocm93IGVycm9yO1xuICAgIH1cbiAgICB0aHJvdyBuZXcgQXBwRXJyb3IoXG4gICAgICAnSW50ZXJuYWwgc2VydmVyIGVycm9yJyxcbiAgICAgIDUwMCxcbiAgICAgIGZhbHNlXG4gICAgKTtcbiAgfVxufSJdLCJtYXBwaW5ncyI6Ijs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7QUFFQUEsT0FBQSxDQUFBQyxPQUFBLEdBQUFDLFlBQUE7QUFGQSxNQUFBQyxXQUFBO0FBQUE7QUFBQSxDQUFBQyxjQUFBLEdBQUFDLENBQUEsT0FBQUMsT0FBQTtBQUVlLGVBQWVKLFlBQVlBLENBQ3hDSyxFQUFvQjtFQUFBO0VBQUFILGNBQUEsR0FBQUksQ0FBQTtFQUFBSixjQUFBLEdBQUFDLENBQUE7RUFFcEIsSUFBSTtJQUFBO0lBQUFELGNBQUEsR0FBQUMsQ0FBQTtJQUNGLE9BQU8sTUFBTUUsRUFBRSxFQUFFO0VBQ25CLENBQUMsQ0FBQyxPQUFPRSxLQUFLLEVBQUU7SUFBQTtJQUFBTCxjQUFBLEdBQUFDLENBQUE7SUFDZCxJQUFJSSxLQUFLLFlBQVlOLFdBQUEsQ0FBQU8sUUFBUSxFQUFFO01BQUE7TUFBQU4sY0FBQSxHQUFBTyxDQUFBO01BQUFQLGNBQUEsR0FBQUMsQ0FBQTtNQUM3QixNQUFNSSxLQUFLO0lBQ2IsQ0FBQztJQUFBO0lBQUE7TUFBQUwsY0FBQSxHQUFBTyxDQUFBO0lBQUE7SUFBQVAsY0FBQSxHQUFBQyxDQUFBO0lBQ0QsTUFBTSxJQUFJRixXQUFBLENBQUFPLFFBQVEsQ0FDaEIsdUJBQXVCLEVBQ3ZCLEdBQUcsRUFDSCxLQUFLLENBQ047RUFDSDtBQUNGIiwiaWdub3JlTGlzdCI6W119

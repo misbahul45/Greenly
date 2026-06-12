@@ -333,31 +333,39 @@ class ApiClient {
     Map<String, dynamic>? query,
     T Function(dynamic json)? fromJsonT,
   }) async* {
-    final headers = await _buildHeaders();
-    headers["Accept"] = "text/event-stream";
-    headers["Cache-Control"] = "no-cache";
+    final uri = buildUri(url, query);
 
-    final req = http.Request("GET", buildUri(url, query));
-    req.headers.addAll(headers);
+    try {
+      final headers = await _buildHeaders();
+      headers["Accept"] = "text/event-stream";
+      headers["Cache-Control"] = "no-cache";
 
-    final streamed = await req.send();
+      final req = http.Request("GET", uri);
+      req.headers.addAll(headers);
 
-    if (streamed.statusCode < 200 || streamed.statusCode >= 300) {
-      return;
-    }
+      final streamed = await req.send().timeout(_timeout);
 
-    await for (final line in streamed.stream
-        .transform(utf8.decoder)
-        .transform(const LineSplitter())) {
-      if (!line.startsWith("data:")) continue;
+      if (streamed.statusCode < 200 || streamed.statusCode >= 300) {
+        throw HttpException(
+          'Realtime connection failed (HTTP ${streamed.statusCode})',
+          uri: uri,
+        );
+      }
 
-      final raw = line.substring(5).trim();
-      if (raw.isEmpty) continue;
+      await for (final line
+          in streamed.stream
+              .transform(utf8.decoder)
+              .transform(const LineSplitter())) {
+        if (!line.startsWith("data:")) continue;
 
-      try {
+        final raw = line.substring(5).trim();
+        if (raw.isEmpty) continue;
+
         final decoded = jsonDecode(raw);
         yield fromJsonT == null ? decoded as T : fromJsonT(decoded);
-      } catch (_) {}
+      }
+    } on TimeoutException {
+      throw TimeoutException('Realtime connection timeout', _timeout);
     }
   }
 }

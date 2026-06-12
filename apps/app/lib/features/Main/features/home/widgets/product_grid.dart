@@ -1,6 +1,7 @@
 import 'package:app/core/constants/ui_constants.dart';
 import 'package:app/features/Main/features/home/bloc/home_state.dart';
 import 'package:app/features/Main/features/home/widgets/product_widget.dart';
+import 'package:app/shared/widgets/product/adaptive_product_grid_delegate.dart';
 import 'package:app/shared/widgets/product/product_card_skeleton.dart';
 import 'package:flutter/material.dart';
 
@@ -36,12 +37,7 @@ class ProductGrid extends StatelessWidget {
       physics: physics,
       padding: padding,
       itemCount: state.data.length + (state.isLoadingMore ? 2 : 0),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        crossAxisSpacing: UIConstants.spacingM,
-        mainAxisSpacing: UIConstants.spacingM,
-        childAspectRatio: 0.55,
-      ),
+      gridDelegate: adaptiveProductGridDelegate(),
       itemBuilder: (context, index) {
         if (index >= state.data.length) {
           return const ProductCardSkeletonTile();

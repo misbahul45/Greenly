@@ -583,6 +583,7 @@ apps/
         win32_window.h
       .gitignore
       CMakeLists.txt
+    .env.example
     .gitignore
     .metadata
     analysis_options.yaml
@@ -724,6 +725,7 @@ apps/
       styles.css
     .cta.json
     .cursorrules
+    .env.example
     .gitignore
     components.json
     package.json
@@ -731,13 +733,10 @@ apps/
     README.md
     tsconfig.json
     vite.config.ts
-docs/
-  plan.md
 infra/
   traefik/
     dynamic.yml
     traefik.yml
-  $null
   docker
   messagging.md
   package.json
@@ -870,6 +869,7 @@ services/
       id.go
       response_util.go
     .air.toml
+    .env.example
     .gitignore
     Dockerfile.dev
     go.mod
@@ -1272,6 +1272,7 @@ services/
       app.e2e-spec.ts
       jest-e2e.json
     .dockerignore
+    .env.example
     .gitignore
     .prettierrc
     Dockerfile.dev
@@ -1318,12 +1319,14 @@ services/
       config.py
       deps.py
       schemas.py
+    .env.example
     .gitignore
     .python-version
     Dockerfile.dev
     main.py
     pyproject.toml
     README.md
+.env.example
 .gitignore
 docker-compose.yml
 README.md
@@ -17878,6 +17881,18 @@ foreach(ffi_plugin ${FLUTTER_FFI_PLUGIN_LIST})
 endforeach(ffi_plugin)
 </file>
 
+<file path="apps/app/.env.example">
+# Greenly Flutter app environment.
+# This app uses flutter_dotenv and loads .env as a Flutter asset.
+# Copy this file to apps/app/.env before running.
+#
+# Android emulator: use http://10.0.2.2/api
+# iOS simulator: http://localhost/api usually works.
+# Physical device: use http://<your-machine-lan-ip>/api
+
+API_URL=http://10.0.2.2/api
+</file>
+
 <file path="apps/app/.gitignore">
 # Miscellaneous
 *.class
@@ -21136,6 +21151,25 @@ code {
     @apply bg-background text-foreground;
   }
 }
+</file>
+
+<file path="apps/web/.env.example">
+# Greenly web app local environment.
+# TanStack Start runs on Vite; server code reads process.env.
+# Do not use these values in production.
+
+NODE_ENV=development
+PORT=3000
+
+# API_URL points at the core API for auth/session requests.
+API_URL=http://localhost/api/core
+
+# API_BASE_URL/VITE_API_BASE_URL point at the Traefik API root used by dashboard modules.
+API_BASE_URL=http://localhost/api
+VITE_API_BASE_URL=http://localhost/api
+
+# Required by @tanstack/react-start session cookies. Use at least 32 characters.
+SESSION_SECRET=change-me-at-least-32-characters
 </file>
 
 <file path="apps/web/package.json">
@@ -53458,6 +53492,27 @@ class ApiResponse(BaseModel):
     metaData: dict[str, Any] | None = None
 </file>
 
+<file path="services/ml-engine/.env.example">
+# Greenly ml-engine local environment.
+# Do not use these values in production.
+
+APP_ENV=development
+ML_PORT=8000
+
+MODEL_NAME=sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2
+CATALOG_SERVICE_URL=http://localhost/api/catalog
+CORE_SERVICE_URL=http://localhost/api/core
+
+RABBITMQ_URL=amqp://greenly:change-me@localhost:5672/
+REDIS_URL=redis://localhost:6379/0
+
+FAISS_INDEX_PATH=app/storage/indexes/products.faiss
+PRODUCT_META_PATH=app/storage/indexes/products_meta.json
+
+# Set to true for lightweight local smoke tests without loading sentence-transformers.
+ML_USE_HASH_EMBEDDINGS=false
+</file>
+
 <file path="services/ml-engine/Dockerfile.dev">
 FROM python:3.12-slim
 
@@ -53558,12 +53613,6 @@ torch = [
 name = "pytorch-cpu"
 url = "https://download.pytorch.org/whl/cpu"
 explicit = true
-</file>
-
-<file path=".gitignore">
-.env
-.env.*
-!.env.example
 </file>
 
 <file path="README.md">
@@ -90778,10 +90827,6 @@ allowBuilds:
   esbuild: true
 </file>
 
-<file path="docs/plan.md">
-
-</file>
-
 <file path="services/catalog-service/cmd/seed/seeds/product_variant.go">
 package seeds
 
@@ -98326,6 +98371,24 @@ def rebuild_index_task():
     return asyncio.run(_run())
 </file>
 
+<file path=".gitignore">
+# Environment files
+.env
+.env.local
+.env.development
+.env.production
+.env.test
+**/.env
+**/.env.local
+**/.env.development
+**/.env.production
+**/.env.test
+
+# Keep examples
+!.env.example
+!**/.env.example
+</file>
+
 <file path="apps/app/lib/core/config/app_bar_config.dart">
 class AppBarConfig {
   final String title;
@@ -103062,10 +103125,6 @@ function AdminLayout() {
 }
 </file>
 
-<file path="infra/$null">
-Error response from daemon: No such container: infra-core-service-1
-</file>
-
 <file path="infra/docker">
 
 </file>
@@ -107402,226 +107461,6 @@ def _to_search_result(product: ProductIndexItem, score: float) -> SearchResult:
         favorite_count=product.favorite_count,
         reason=reason,
     )
-</file>
-
-<file path="docker-compose.yml">
-networks:
-  greenly_network:
-    name: greenly_network
-
-volumes:
-  mysql_data:
-  mongo_data:
-  redis_data:
-  core_node_modules:
-  catalog_node_modules:
-  ml_venv:
-  go_mod_cache:
-
-services:
-  traefik:
-    image: traefik:v2.11
-    command:
-      - "--api.insecure=true"
-      - "--providers.docker=true"
-      - "--providers.docker.exposedbydefault=false"
-      - "--providers.docker.network=greenly_network"
-      - "--entrypoints.web.address=:80"
-    ports:
-      - "80:80"
-      - "8080:8080"
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-    networks:
-      - greenly_network
-
-  mysql:
-    image: mysql:8.0
-    restart: always
-    environment:
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: greenly_core
-      MYSQL_USER: greenly
-      MYSQL_PASSWORD: greenly
-    ports:
-      - "3307:3306"
-    volumes:
-      - mysql_data:/var/lib/mysql
-    networks:
-      - greenly_network
-
-  mongodb:
-    image: mongo:7
-    restart: always
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: root
-      MONGO_INITDB_ROOT_PASSWORD: root
-    ports:
-      - "27017:27017"
-    volumes:
-      - mongo_data:/data/db
-    networks:
-      - greenly_network
-
-  redis:
-    image: redis:7
-    restart: always
-    ports:
-      - "6379:6379"
-    volumes:
-      - redis_data:/data
-    networks:
-      - greenly_network
-
-  rabbitmq:
-    image: rabbitmq:3-management
-    container_name: greenly_rabbitmq
-    restart: always
-    ports:
-      - "5672:5672"
-      - "15672:15672"
-    networks:
-      - greenly_network
-
-  core-service:
-    build:
-      context: ./services/core-service
-      dockerfile: Dockerfile.dev
-    volumes:
-    - core_node_modules:/app/node_modules
-
-    depends_on:
-      - mysql
-      - redis
-      - rabbitmq
-
-    environment:
-      DATABASE_HOST: mysql
-      DATABASE_PORT: 3306
-      DATABASE_USER: greenly
-      DATABASE_PASSWORD: greenly
-      DATABASE_NAME: greenly_core
-      REDIS_HOST: redis
-      REDIS_PORT: 6379
-      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672/
-      ML_ENGINE_URL: http://ml-engine:8000
-      JWT_ACCESS_SECRET_KEY: greenly-dev-access-secret
-      JWT_REFRESH_SECRET_KEY: greenly-dev-refresh-secret
-      JWT_ACCESS_EXPIRES: 30d
-      JWT_REFRESH_EXPIRES: 30d
-      API_URL: http://localhost/api/core
-      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
-      STRIPE_PUBLISHABLE_KEY: ${STRIPE_PUBLISHABLE_KEY:-}
-      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
-      STRIPE_SUCCESS_URL: ${STRIPE_SUCCESS_URL:-http://localhost/payment-success?session_id={CHECKOUT_SESSION_ID}}
-      STRIPE_CANCEL_URL: ${STRIPE_CANCEL_URL:-http://localhost/payment-cancel?session_id={CHECKOUT_SESSION_ID}}
-      STRIPE_CURRENCY: ${STRIPE_CURRENCY:-idr}
-      STRIPE_CHECKOUT_EXPIRES_HOURS: ${STRIPE_CHECKOUT_EXPIRES_HOURS:-24}
-
-    develop:
-      watch:
-        - action: sync
-          path: ./services/core-service
-          target: /app
-          ignore:
-            - node_modules/
-            - dist/
-
-        - action: rebuild
-          path: ./services/core-service/package.json
-
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.core.rule=PathPrefix(`/api/core`)"
-      - "traefik.http.routers.core.entrypoints=web"
-      - "traefik.http.services.core.loadbalancer.server.port=3000"
-      - "traefik.http.middlewares.core-strip.stripprefix.prefixes=/api/core"
-      - "traefik.http.routers.core.middlewares=core-strip"
-
-    networks:
-      - greenly_network
-
-  ml-engine:
-    build:
-      context: ./services/ml-engine
-      dockerfile: Dockerfile.dev
-
-    volumes:
-      - ./services/ml-engine:/app
-      - ml_venv:/app/.venv
-
-    depends_on:
-      - catalog-service
-      - redis
-      - rabbitmq
-
-    environment:
-      ML_PORT: 8000
-      MODEL_NAME: sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2
-      CATALOG_SERVICE_URL: http://catalog-service:8081
-      CORE_SERVICE_URL: http://core-service:3000
-      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672/
-      REDIS_URL: redis://redis:6379/0
-      FAISS_INDEX_PATH: /app/app/storage/indexes/products.faiss
-      PRODUCT_META_PATH: /app/app/storage/indexes/products_meta.json
-
-    develop:
-      watch:
-        - action: sync
-          path: ./services/ml-engine
-          target: /app
-
-        - action: rebuild
-          path: ./services/ml-engine/pyproject.toml
-
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.ml.rule=PathPrefix(`/api/ml`)"
-      - "traefik.http.routers.ml.entrypoints=web"
-      - "traefik.http.services.ml.loadbalancer.server.port=8000"
-      - "traefik.http.middlewares.ml-strip.stripprefix.prefixes=/api/ml"
-      - "traefik.http.routers.ml.middlewares=ml-strip"
-
-    networks:
-      - greenly_network
-
-  catalog-service:
-    build:
-      context: ./services/catalog-service
-      dockerfile: Dockerfile.dev
-
-    depends_on:
-      - rabbitmq
-      - mongodb
-      - redis
-    environment:
-      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672/
-      MONGODB_URI: mongodb://root:root@mongodb:27017/?authSource=admin
-      MONGODB_URL: mongodb://root:root@mongodb:27017/?authSource=admin
-      CORE_SERVICE_URL: http://core-service:3000
-      REDIS_HOST: redis
-      REDIS_PORT: 6379
-      JWT_ACCESS_SECRET_KEY: greenly-dev-access-secret
-
-    develop:
-      watch:
-        - action: sync
-          path: ./services/catalog-service
-          target: /app
-
-        - action: rebuild
-          path: ./services/catalog-service/go.mod
-
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.catalog.rule=PathPrefix(`/api/catalog`)"
-      - "traefik.http.routers.catalog.entrypoints=web"
-      - "traefik.http.services.catalog.loadbalancer.server.port=8081"
-      - "traefik.http.middlewares.catalog-strip.stripprefix.prefixes=/api/catalog"
-      - "traefik.http.routers.catalog.middlewares=catalog-strip"
-
-    networks:
-      - greenly_network
 </file>
 
 <file path="apps/app/lib/features/auth/presentation/bloc/auth_storage.dart">
@@ -112030,6 +111869,168 @@ export class MemberRepository {
 }
 </file>
 
+<file path="services/core-service/src/modules/shops/order/order.service.ts">
+import { Injectable } from '@nestjs/common';
+import { OrderQueryDTO } from './order.dto';
+import { OrderRepository } from './order.repository';
+import { ShopNotFoundError, InvalidStateTransitionError } from '../../../libs/errors/domain.error';
+import { ShopOrderPublisher } from '../publisher/shop.order.publisher';
+import { DatabaseService } from '../../../libs/database/database.service';
+import * as crypto from 'crypto';
+import { AppError } from '../../../libs/errors/app.error';
+
+const STATUS_TRANSITIONS: Record<string, string[]> = {
+  PENDING: ['PAID', 'CANCELLED'],
+  PAID: ['PROCESSING', 'CANCELLED'],
+  PROCESSING: ['SHIPPED', 'CANCELLED'],
+  SHIPPED: ['COMPLETED', 'CANCELLED'],
+  COMPLETED: [], 
+  CANCELLED: [], 
+};
+
+@Injectable()
+export class OrderService {
+  constructor(
+    private readonly repo: OrderRepository,
+    private readonly publisher: ShopOrderPublisher,
+    private readonly db: DatabaseService,
+  ) {}
+
+  async findAll(shopId: string, query: OrderQueryDTO) {
+    const { page, limit, status, createdFrom, createdTo, sortBy, sortOrder, search } = query;
+    const skip = (page - 1) * limit;
+
+    const [orders, total] = await Promise.all([
+      this.repo.findMany({
+        shopId, skip, take: limit, status, createdFrom, createdTo, sortBy, sortOrder, search
+      }),
+      this.repo.count({
+        shopId, status, createdFrom, createdTo, search
+      }),
+    ]);
+
+    return {
+      data: orders,
+      meta: {
+        total,
+        page,
+        limit,
+        lastPage: Math.ceil(total / limit),
+      },
+      message: 'Orders fetched successfully',
+    };
+  }
+
+  async findOne(shopId: string, orderId: string) {
+    const order = await this.repo.findOne(shopId, orderId);
+    if (!order) throw new AppError('Order not found', 404);
+
+    return {
+      data: order,
+      message: 'Order fetched successfully',
+    };
+  }
+
+  async updateOrderStatus(shopId: string, orderId: string, newStatus: string) {
+    return this.db.$transaction(async (tx) => {
+      const order = await tx.order.findUnique({
+        where: { id: orderId },
+        include: { payment: true, items: true },
+      });
+      
+      if (!order || order.shopId !== shopId) {
+        throw new AppError('Order not found', 404);
+      }
+
+      const validNext = STATUS_TRANSITIONS[order.status];
+      if (!validNext || !validNext.includes(newStatus)) {
+        throw new InvalidStateTransitionError(order.status, newStatus);
+      }
+
+      let updatedOrder;
+
+      // Completion Logic with Ledger Update
+      if (newStatus === 'COMPLETED') {
+         updatedOrder = await tx.order.update({
+           where: { id: orderId },
+           data: { status: 'COMPLETED' }
+         });
+
+         if (order.payment) {
+           await tx.shopLedger.create({
+             data: {
+               shopId: order.shopId,
+               type: 'CREDIT',
+               amount: order.payment.netAmount,
+               reference: `order_completed:${orderId}`,
+               description: `Revenue from order ${orderId}`,
+             }
+           });
+
+           await tx.shop.update({
+             where: { id: order.shopId },
+             data: { balance: { increment: order.payment.netAmount } }
+           });
+         }
+      } else {
+         updatedOrder = await tx.order.update({
+           where: { id: orderId },
+           data: { status: newStatus as any }
+         });
+      }
+
+      await this.publisher.publishShopOrderStatusChanged({
+        orderId,
+        shopId,
+        previousStatus: order.status,
+        newStatus,
+        timestamp: new Date().toISOString(),
+        correlationId: crypto.randomUUID(),
+      });
+
+      return {
+        data: updatedOrder,
+        message: `Order status updated to ${newStatus}`,
+      };
+    }, {
+       timeout: 10000,
+       isolationLevel: 'ReadCommitted',
+    });
+  }
+
+  async updateRefund(shopId: string, orderId: string, refundId: string) {
+    return this.db.$transaction(async (tx) => {
+      const order = await tx.order.findFirst({
+        where: { id: orderId, shopId },
+      });
+      if (!order) throw new AppError('Order not found', 404);
+
+      if (order.status !== 'PAID' && order.status !== 'PROCESSING') {
+         throw new AppError('Refund can only be approved for PAID or PROCESSING orders', 400);
+      }
+
+      const updatedRefund = await tx.refund.update({
+        where: { id: refundId },
+        data: { status: 'APPROVED' },
+      });
+
+      await this.publisher.publishRefundProcessed({
+        refundId,
+        orderId,
+        amount: updatedRefund.amount.toString(),
+        status: 'APPROVED',
+        timestamp: new Date().toISOString(),
+      });
+
+      return {
+        data: updatedRefund,
+        message: 'Refund approved successfully',
+      };
+    });
+  }
+}
+</file>
+
 <file path="services/core-service/src/modules/shops/shops.module.ts">
 import { Module } from '@nestjs/common';
 import { RouterModule } from '@nestjs/core';
@@ -112392,6 +112393,246 @@ export interface ShopWithOwner {
     "typescript-eslint": "^8.20.0"
   }
 }
+</file>
+
+<file path="docker-compose.yml">
+networks:
+  greenly_network:
+    name: ${COMPOSE_PROJECT_NAME:-greenly}_network
+
+volumes:
+  mysql_data:
+  mongo_data:
+  redis_data:
+  core_node_modules:
+  catalog_node_modules:
+  ml_venv:
+  go_mod_cache:
+
+services:
+  traefik:
+    image: traefik:v2.11
+    command:
+      - "--api.insecure=${TRAEFIK_API_INSECURE:-true}"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--providers.docker.network=${COMPOSE_PROJECT_NAME:-greenly}_network"
+      - "--entrypoints.web.address=:${HTTP_PORT:-80}"
+    ports:
+      - "${HTTP_PORT:-80}:${HTTP_PORT:-80}"
+      - "${TRAEFIK_DASHBOARD_PORT:-8080}:8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - greenly_network
+
+  mysql:
+    image: mysql:8.0
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    ports:
+      - "${MYSQL_PORT:-3307}:${MYSQL_CONTAINER_PORT:-3306}"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - greenly_network
+
+  mongodb:
+    image: mongo:7
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
+    ports:
+      - "${MONGODB_PORT:-27017}:${MONGODB_CONTAINER_PORT:-27017}"
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - greenly_network
+
+  redis:
+    image: redis:7
+    restart: always
+    ports:
+      - "${REDIS_PORT:-6379}:${REDIS_CONTAINER_PORT:-6379}"
+    volumes:
+      - redis_data:/data
+    networks:
+      - greenly_network
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: ${RABBITMQ_CONTAINER_NAME:-greenly_rabbitmq}
+    restart: always
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
+    ports:
+      - "${RABBITMQ_PORT:-5672}:${RABBITMQ_CONTAINER_PORT:-5672}"
+      - "${RABBITMQ_MANAGEMENT_PORT:-15672}:${RABBITMQ_MANAGEMENT_CONTAINER_PORT:-15672}"
+    networks:
+      - greenly_network
+
+  core-service:
+    build:
+      context: ./services/core-service
+      dockerfile: Dockerfile.dev
+    volumes:
+    - core_node_modules:/app/node_modules
+
+    depends_on:
+      - mysql
+      - redis
+      - rabbitmq
+
+    environment:
+      NODE_ENV: ${NODE_ENV:-development}
+      PORT: ${CORE_SERVICE_PORT:-3000}
+      DATABASE_URL: ${DATABASE_URL}
+      DATABASE_HOST: ${DATABASE_HOST}
+      DATABASE_PORT: ${DATABASE_CONTAINER_PORT:-3306}
+      DATABASE_USER: ${MYSQL_USER}
+      DATABASE_PASSWORD: ${MYSQL_PASSWORD}
+      DATABASE_NAME: ${MYSQL_DATABASE}
+      REDIS_HOST: ${REDIS_HOST}
+      REDIS_PORT: ${REDIS_CONTAINER_PORT:-6379}
+      REDIS_URL: ${REDIS_URL}
+      RABBITMQ_URL: ${RABBITMQ_URL}
+      RABBITMQ_QUEUE: ${CORE_RABBITMQ_QUEUE:-greenly_queue}
+      RABBITMQ_NO_ACK: ${RABBITMQ_NO_ACK:-false}
+      ML_ENGINE_URL: ${ML_ENGINE_INTERNAL_URL}
+      JWT_ACCESS_SECRET_KEY: ${JWT_ACCESS_SECRET_KEY}
+      JWT_REFRESH_SECRET_KEY: ${JWT_REFRESH_SECRET_KEY}
+      JWT_ACCESS_EXPIRES: ${JWT_ACCESS_EXPIRES:-30d}
+      JWT_REFRESH_EXPIRES: ${JWT_REFRESH_EXPIRES:-30d}
+      EMAIL_JS_SERVICE_ID: ${EMAIL_JS_SERVICE_ID:-}
+      EMAIL_JS_PUBLIC_ID: ${EMAIL_JS_PUBLIC_ID:-}
+      EMAIL_JS_PRIVATE_KEY: ${EMAIL_JS_PRIVATE_KEY:-}
+      EMAIL_JS_VERIFY_EMAIL_TEMPLATE_ID: ${EMAIL_JS_VERIFY_EMAIL_TEMPLATE_ID:-}
+      API_URL: ${CORE_SERVICE_PUBLIC_URL}
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
+      STRIPE_PUBLISHABLE_KEY: ${STRIPE_PUBLISHABLE_KEY:-}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
+      STRIPE_SUCCESS_URL: ${STRIPE_SUCCESS_URL}
+      STRIPE_CANCEL_URL: ${STRIPE_CANCEL_URL}
+      STRIPE_CURRENCY: ${STRIPE_CURRENCY:-idr}
+      STRIPE_CHECKOUT_EXPIRES_HOURS: ${STRIPE_CHECKOUT_EXPIRES_HOURS:-24}
+
+    develop:
+      watch:
+        - action: sync
+          path: ./services/core-service
+          target: /app
+          ignore:
+            - node_modules/
+            - dist/
+
+        - action: rebuild
+          path: ./services/core-service/package.json
+
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.core.rule=PathPrefix(`/api/core`)"
+      - "traefik.http.routers.core.entrypoints=web"
+      - "traefik.http.services.core.loadbalancer.server.port=3000"
+      - "traefik.http.middlewares.core-strip.stripprefix.prefixes=/api/core"
+      - "traefik.http.routers.core.middlewares=core-strip"
+
+    networks:
+      - greenly_network
+
+  ml-engine:
+    build:
+      context: ./services/ml-engine
+      dockerfile: Dockerfile.dev
+
+    volumes:
+      - ./services/ml-engine:/app
+      - ml_venv:/app/.venv
+
+    depends_on:
+      - catalog-service
+      - redis
+      - rabbitmq
+
+    environment:
+      APP_ENV: ${APP_ENV:-development}
+      ML_PORT: ${ML_ENGINE_PORT:-8000}
+      MODEL_NAME: ${ML_MODEL_NAME}
+      CATALOG_SERVICE_URL: ${CATALOG_SERVICE_INTERNAL_URL}
+      CORE_SERVICE_URL: ${CORE_SERVICE_INTERNAL_URL}
+      RABBITMQ_URL: ${RABBITMQ_URL}
+      REDIS_URL: ${REDIS_URL}
+      FAISS_INDEX_PATH: ${FAISS_INDEX_PATH}
+      PRODUCT_META_PATH: ${PRODUCT_META_PATH}
+      ML_USE_HASH_EMBEDDINGS: ${ML_USE_HASH_EMBEDDINGS:-false}
+
+    develop:
+      watch:
+        - action: sync
+          path: ./services/ml-engine
+          target: /app
+
+        - action: rebuild
+          path: ./services/ml-engine/pyproject.toml
+
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.ml.rule=PathPrefix(`/api/ml`)"
+      - "traefik.http.routers.ml.entrypoints=web"
+      - "traefik.http.services.ml.loadbalancer.server.port=8000"
+      - "traefik.http.middlewares.ml-strip.stripprefix.prefixes=/api/ml"
+      - "traefik.http.routers.ml.middlewares=ml-strip"
+
+    networks:
+      - greenly_network
+
+  catalog-service:
+    build:
+      context: ./services/catalog-service
+      dockerfile: Dockerfile.dev
+
+    depends_on:
+      - rabbitmq
+      - mongodb
+      - redis
+    environment:
+      APP_ENV: ${APP_ENV:-development}
+      GIN_MODE: ${GIN_MODE:-debug}
+      PORT: ${CATALOG_SERVICE_PORT:-8081}
+      RABBITMQ_URL: ${RABBITMQ_URL}
+      RABBITMQ_NO_ACK: ${RABBITMQ_NO_ACK:-false}
+      MONGODB_URI: ${MONGODB_URL}
+      MONGODB_URL: ${MONGODB_URL}
+      CORE_SERVICE_URL: ${CORE_SERVICE_INTERNAL_URL}
+      REDIS_HOST: ${REDIS_HOST}
+      REDIS_PORT: ${REDIS_CONTAINER_PORT:-6379}
+      JWT_ACCESS_SECRET_KEY: ${JWT_ACCESS_SECRET_KEY}
+      IMAGEKIT_PRIVATE_KEY: ${IMAGEKIT_PRIVATE_KEY:-}
+
+    develop:
+      watch:
+        - action: sync
+          path: ./services/catalog-service
+          target: /app
+
+        - action: rebuild
+          path: ./services/catalog-service/go.mod
+
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.catalog.rule=PathPrefix(`/api/catalog`)"
+      - "traefik.http.routers.catalog.entrypoints=web"
+      - "traefik.http.services.catalog.loadbalancer.server.port=8081"
+      - "traefik.http.middlewares.catalog-strip.stripprefix.prefixes=/api/catalog"
+      - "traefik.http.routers.catalog.middlewares=catalog-strip"
+
+    networks:
+      - greenly_network
 </file>
 
 <file path="apps/app/lib/features/auth/presentation/bloc/auth_event.dart">
@@ -115546,168 +115787,6 @@ export class ApplicationService {
       data: null,
       message: 'Successfully deleted application',
     };
-  }
-}
-</file>
-
-<file path="services/core-service/src/modules/shops/order/order.service.ts">
-import { Injectable } from '@nestjs/common';
-import { OrderQueryDTO } from './order.dto';
-import { OrderRepository } from './order.repository';
-import { ShopNotFoundError, InvalidStateTransitionError } from '../../../libs/errors/domain.error';
-import { ShopOrderPublisher } from '../publisher/shop.order.publisher';
-import { DatabaseService } from '../../../libs/database/database.service';
-import * as crypto from 'crypto';
-import { AppError } from '../../../libs/errors/app.error';
-
-const STATUS_TRANSITIONS: Record<string, string[]> = {
-  PENDING: ['PAID', 'CANCELLED'],
-  PAID: ['PROCESSING', 'CANCELLED'],
-  PROCESSING: ['SHIPPED', 'CANCELLED'],
-  SHIPPED: ['COMPLETED', 'CANCELLED'],
-  COMPLETED: [], 
-  CANCELLED: [], 
-};
-
-@Injectable()
-export class OrderService {
-  constructor(
-    private readonly repo: OrderRepository,
-    private readonly publisher: ShopOrderPublisher,
-    private readonly db: DatabaseService,
-  ) {}
-
-  async findAll(shopId: string, query: OrderQueryDTO) {
-    const { page, limit, status, createdFrom, createdTo, sortBy, sortOrder, search } = query;
-    const skip = (page - 1) * limit;
-
-    const [orders, total] = await Promise.all([
-      this.repo.findMany({
-        shopId, skip, take: limit, status, createdFrom, createdTo, sortBy, sortOrder, search
-      }),
-      this.repo.count({
-        shopId, status, createdFrom, createdTo, search
-      }),
-    ]);
-
-    return {
-      data: orders,
-      meta: {
-        total,
-        page,
-        limit,
-        lastPage: Math.ceil(total / limit),
-      },
-      message: 'Orders fetched successfully',
-    };
-  }
-
-  async findOne(shopId: string, orderId: string) {
-    const order = await this.repo.findOne(shopId, orderId);
-    if (!order) throw new AppError('Order not found', 404);
-
-    return {
-      data: order,
-      message: 'Order fetched successfully',
-    };
-  }
-
-  async updateOrderStatus(shopId: string, orderId: string, newStatus: string) {
-    return this.db.$transaction(async (tx) => {
-      const order = await tx.order.findUnique({
-        where: { id: orderId },
-        include: { payment: true, items: true },
-      });
-      
-      if (!order || order.shopId !== shopId) {
-        throw new AppError('Order not found', 404);
-      }
-
-      const validNext = STATUS_TRANSITIONS[order.status];
-      if (!validNext || !validNext.includes(newStatus)) {
-        throw new InvalidStateTransitionError(order.status, newStatus);
-      }
-
-      let updatedOrder;
-
-      // Completion Logic with Ledger Update
-      if (newStatus === 'COMPLETED') {
-         updatedOrder = await tx.order.update({
-           where: { id: orderId },
-           data: { status: 'COMPLETED' }
-         });
-
-         if (order.payment) {
-           await tx.shopLedger.create({
-             data: {
-               shopId: order.shopId,
-               type: 'CREDIT',
-               amount: order.payment.netAmount,
-               reference: `order_completed:${orderId}`,
-               description: `Revenue from order ${orderId}`,
-             }
-           });
-
-           await tx.shop.update({
-             where: { id: order.shopId },
-             data: { balance: { increment: order.payment.netAmount } }
-           });
-         }
-      } else {
-         updatedOrder = await tx.order.update({
-           where: { id: orderId },
-           data: { status: newStatus as any }
-         });
-      }
-
-      await this.publisher.publishShopOrderStatusChanged({
-        orderId,
-        shopId,
-        previousStatus: order.status,
-        newStatus,
-        timestamp: new Date().toISOString(),
-        correlationId: crypto.randomUUID(),
-      });
-
-      return {
-        data: updatedOrder,
-        message: `Order status updated to ${newStatus}`,
-      };
-    }, {
-       timeout: 10000,
-       isolationLevel: 'ReadCommitted',
-    });
-  }
-
-  async updateRefund(shopId: string, orderId: string, refundId: string) {
-    return this.db.$transaction(async (tx) => {
-      const order = await tx.order.findFirst({
-        where: { id: orderId, shopId },
-      });
-      if (!order) throw new AppError('Order not found', 404);
-
-      if (order.status !== 'PAID' && order.status !== 'PROCESSING') {
-         throw new AppError('Refund can only be approved for PAID or PROCESSING orders', 400);
-      }
-
-      const updatedRefund = await tx.refund.update({
-        where: { id: refundId },
-        data: { status: 'APPROVED' },
-      });
-
-      await this.publisher.publishRefundProcessed({
-        refundId,
-        orderId,
-        amount: updatedRefund.amount.toString(),
-        status: 'APPROVED',
-        timestamp: new Date().toISOString(),
-      });
-
-      return {
-        data: updatedRefund,
-        message: 'Refund approved successfully',
-      };
-    });
   }
 }
 </file>

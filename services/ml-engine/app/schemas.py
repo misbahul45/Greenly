@@ -14,16 +14,34 @@ class ProductIndexItem(BaseModel):
     description: str | None = None
     sku: str | None = None
     price: float | None = None
+    original_price: float | None = None
+    final_price: float | None = None
     currency: str | None = None
     stock: int | None = None
     image_urls: list[str] = Field(default_factory=list)
     rating_average: float | None = None
     review_count: int | None = None
     favorite_count: int | None = None
+    
+    # Eco Attributes
     eco_score: float | None = None
+    eco_label: str | None = None
     material_type: str | None = None
+    material_label: str | None = None
     recyclable: bool | None = None
     carbon_footprint: float | None = None
+    carbon_label: str | None = None
+    eco_badges: list[str] = Field(default_factory=list)
+    eco_reasons: list[str] = Field(default_factory=list)
+    
+    # Promotion
+    has_promo: bool = False
+    promotion_code: str | None = None
+    promotion_label: str | None = None
+    discount_percent: float | None = None
+    discount_amount: float | None = None
+    saving_label: str | None = None
+    
     created_at: str | None = None
     updated_at: str | None = None
 
@@ -48,10 +66,31 @@ class SearchResult(BaseModel):
     name: str
     slug: str | None = None
     price: float | None = None
+    original_price: float | None = None
+    final_price: float | None = None
     currency: str | None = None
     image_url: str | None = None
     image_urls: list[str]
+    
+    # Eco
     eco_score: float | None = None
+    eco_label: str | None = None
+    material_type: str | None = None
+    material_label: str | None = None
+    recyclable: bool | None = None
+    carbon_footprint: float | None = None
+    carbon_label: str | None = None
+    eco_badges: list[str] = Field(default_factory=list)
+    eco_reasons: list[str] = Field(default_factory=list)
+    
+    # Promo
+    has_promo: bool = False
+    promotion_code: str | None = None
+    promotion_label: str | None = None
+    discount_percent: float | None = None
+    discount_amount: float | None = None
+    saving_label: str | None = None
+    
     rating_average: float | None = None
     review_count: int | None = None
     favorite_count: int | None = None

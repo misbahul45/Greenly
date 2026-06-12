@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"time"
 )
@@ -82,7 +81,7 @@ func (c *client) GetShop(ctx context.Context, shopID string) (*Shop, error) {
 }
 
 func (c *client) ValidateShopMembership(ctx context.Context, shopID, userID string) (*ShopMembership, error) {
-	url := fmt.Sprintf("%s/v1/shops/%s/members/%s", c.baseURL, shopID, userID)
+	url := fmt.Sprintf("%s/shops/%s/members/%s", c.baseURL, shopID, userID)
 	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
 	if err != nil {
 		return nil, err
@@ -113,8 +112,6 @@ func (c *client) ValidateShopMembership(ctx context.Context, shopID, userID stri
 func (c *client) GetMe(ctx context.Context, token string) (*User, error) {
 	url := fmt.Sprintf("%s/auth/me", c.baseURL)
 
-	log.Printf(">>> Verifying user | token: %s | url: %s\n", token, url)
-
 	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
 	if err != nil {
 		return nil, err
@@ -130,9 +127,6 @@ func (c *client) GetMe(ctx context.Context, token string) (*User, error) {
 
 	body, _ := io.ReadAll(resp.Body)
 
-	log.Printf(">>> STATUS: %d\n", resp.StatusCode)
-	log.Printf(">>> BODY: %s\n", string(body))
-
 	if resp.StatusCode == http.StatusUnauthorized {
 		return nil, fmt.Errorf("unauthorized: %s", string(body))
 	}
@@ -141,10 +135,12 @@ func (c *client) GetMe(ctx context.Context, token string) (*User, error) {
 		return nil, fmt.Errorf("failed: %d | %s", resp.StatusCode, string(body))
 	}
 
-	var user User
-	if err := json.Unmarshal(body, &user); err != nil {
+	var envelope struct {
+		Data *User `json:"data"`
+	}
+	if err := json.Unmarshal(body, &envelope); err != nil {
 		return nil, err
 	}
 
-	return &user, nil
+	return envelope.Data, nil
 }

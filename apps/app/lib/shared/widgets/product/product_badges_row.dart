@@ -7,6 +7,7 @@ class ProductBadgesRow extends StatelessWidget {
   final double? ecoScore;
   final int? stock;
   final bool showEcoBadge;
+  final List<String>? ecoBadges;
   final bool showStock;
   final bool compact;
 
@@ -15,6 +16,7 @@ class ProductBadgesRow extends StatelessWidget {
     this.ecoScore,
     this.stock,
     this.showEcoBadge = true,
+    this.ecoBadges,
     this.showStock = false,
     this.compact = true,
   });
@@ -24,6 +26,12 @@ class ProductBadgesRow extends StatelessWidget {
     final badges = <Widget>[
       if (showEcoBadge && ecoScore != null)
         EcoScoreBadge(score: ecoScore!, compact: compact),
+      if (ecoBadges != null && ecoBadges!.isNotEmpty)
+        ...ecoBadges!.take(compact ? 2 : 5).map((label) => _Badge(
+              label: label,
+              color: AppTheme.primaryColor,
+              backgroundColor: AppTheme.primaryColor.withValues(alpha: 0.05),
+            )),
       if (showStock && stock != null && stock! <= 0)
         const _Badge(label: 'Habis', color: Color(0xFF757575)),
       if (showStock && stock != null && stock! > 0 && stock! <= 5)
@@ -36,6 +44,32 @@ class ProductBadgesRow extends StatelessWidget {
       spacing: UIConstants.spacingXS,
       runSpacing: UIConstants.spacingXS,
       children: badges,
+    );
+  }
+}
+
+class EcoAttributeChips extends StatelessWidget {
+  final List<String> badges;
+  final bool compact;
+
+  const EcoAttributeChips({
+    super.key,
+    required this.badges,
+    this.compact = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    if (badges.isEmpty) return const SizedBox.shrink();
+
+    return Wrap(
+      spacing: UIConstants.spacingXS,
+      runSpacing: UIConstants.spacingXS,
+      children: badges.take(compact ? 2 : 10).map((label) => _Badge(
+            label: label,
+            color: AppTheme.primaryColor,
+            backgroundColor: AppTheme.primaryColor.withValues(alpha: 0.08),
+          )).toList(),
     );
   }
 }

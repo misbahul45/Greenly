@@ -1,46 +1,61 @@
-import { Injectable } from '@nestjs/common'
-import { PassportStrategy } from '@nestjs/passport'
-import { Strategy, ExtractJwt } from 'passport-jwt'
-import { ConfigService } from '@nestjs/config'
-import { AuthRepository } from '../auth.repository'
-import { Request } from 'express'
-import { AppError } from '../../../libs/errors/app.error'
+import {Injectable} from "@nestjs/common";
+import {PassportStrategy} from "@nestjs/passport";
+import {Strategy, ExtractJwt, StrategyOptionsWithRequest} from "passport-jwt";
+import {ConfigService} from "@nestjs/config";
+import {AuthRepository} from "../auth.repository";
+import {Request} from "express";
+import {AppError} from "../../../libs/errors/app.error";
 
 @Injectable()
-export class JwtRefreshStrategy extends PassportStrategy(Strategy, 'jwt-refresh') {
-  constructor(
-    private config: ConfigService,
-    private repo: AuthRepository,
-  ) {
-    super({
-      jwtFromRequest: ExtractJwt.fromExtractors([
-        (req: Request) => req.headers['x-refresh-token'] as string
-      ]),
-      secretOrKey: config.get<string>('jwt.refresh.key') ?? 'default-refresh-secret',
-      ignoreExpiration: false,
-      passReqToCallback: true,
-    })
-  }
+export class JwtRefreshStrategy extends PassportStrategy(
+    Strategy,
+    "jwt-refresh"
+) {
+    constructor(
+        private readonly config: ConfigService,
+        private readonly repo: AuthRepository
+    ) {
+        super({
+            jwtFromRequest: ExtractJwt.fromExtractors([
+                (req: Request): string | null => {
+                    const token = req.headers["x-refresh-token"];
 
-  async validate(req: Request, payload: any) {
-    const refreshToken = req.headers['x-refresh-token'] as string
+                    if (Array.isArray(token)) {
+                        return token[0] ?? null;
+                    }
 
-    if (!refreshToken) {
-      throw new AppError('Refresh token missing', 401)
+                    return token ?? null;
+                },
+            ]),
+            secretOrKey: config.getOrThrow<string>("jwt.refresh.key"),
+            ignoreExpiration: false,
+            passReqToCallback: true,
+        } satisfies StrategyOptionsWithRequest);
     }
 
-    const user = await this.repo.checkUserById(payload.sub)
+    async validate(req: Request, payload: any) {
+        const rawRefreshToken = req.headers["x-refresh-token"];
 
-    if (!user) {
-      throw new AppError('Unauthorized', 401)
-    }
+        const refreshToken = Array.isArray(rawRefreshToken)
+            ? rawRefreshToken[0]
+            : rawRefreshToken;
 
-    return {
-      sub: user.id,
-      email: user.email,
-      roles: payload.roles,
-      refreshToken,
-      status: user.status,
+        if (!refreshToken) {
+            throw new AppError("Refresh token missing", 401);
+        }
+
+        const user = await this.repo.checkUserById(payload.sub);
+
+        if (!user) {
+            throw new AppError("Unauthorized", 401);
+        }
+
+        return {
+            sub: user.id,
+            email: user.email,
+            roles: payload.roles,
+            refreshToken,
+            status: user.status,
+        };
     }
-  }
 }

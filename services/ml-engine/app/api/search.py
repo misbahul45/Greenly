@@ -1,4 +1,6 @@
-from fastapi import APIRouter, Body, Request
+import os
+
+from fastapi import APIRouter, Body, HTTPException, Request, Depends
 
 from app.clients.catalog_client import CatalogClient
 from app.deps import get_embedding_service, get_vector_store
@@ -7,12 +9,20 @@ from app.schemas import ProductIndexItem, SearchRequest
 router = APIRouter()
 
 
-@router.post("/products/index")
+async def _require_internal(request: Request) -> None:
+    token = request.headers.get("x-internal-token")
+    expected = os.getenv("ML_INTERNAL_TOKEN")
+    if not expected or token != expected:
+        raise HTTPException(status_code=403, detail="Forbidden")
+
+
+@router.post("/products/index", dependencies=[Depends(_require_internal)])
 async def index_products(request: Request, products: list[ProductIndexItem] = Body(...)):
     embedder = get_embedding_service()
     embeddings = embedder.embed_products(products)
     store = get_vector_store()
-    store.rebuild(products, embeddings)
+    with store.lock:
+        store.rebuild(products, embeddings)
     return {
         "status": "success",
         "statusCode": 200,
@@ -22,12 +32,13 @@ async def index_products(request: Request, products: list[ProductIndexItem] = Bo
     }
 
 
-@router.post("/products/upsert")
+@router.post("/products/upsert", dependencies=[Depends(_require_internal)])
 async def upsert_product(request: Request, product: ProductIndexItem):
     embedder = get_embedding_service()
     embedding = embedder.embed_products([product])[0]
     store = get_vector_store()
-    store.upsert(product, embedding)
+    with store.lock:
+        store.upsert(product, embedding)
     return {
         "status": "success",
         "statusCode": 200,
@@ -37,10 +48,11 @@ async def upsert_product(request: Request, product: ProductIndexItem):
     }
 
 
-@router.delete("/products/{product_id}")
+@router.delete("/products/{product_id}", dependencies=[Depends(_require_internal)])
 async def delete_product(request: Request, product_id: str):
     store = get_vector_store()
-    deleted = store.delete(product_id)
+    with store.lock:
+        deleted = store.delete(product_id)
     return {
         "status": "success",
         "statusCode": 200,
@@ -50,13 +62,14 @@ async def delete_product(request: Request, product_id: str):
     }
 
 
-@router.post("/products/rebuild-index")
+@router.post("/products/rebuild-index", dependencies=[Depends(_require_internal)])
 async def rebuild_index(request: Request):
     products = await CatalogClient().fetch_products()
     embedder = get_embedding_service()
     embeddings = embedder.embed_products(products)
     store = get_vector_store()
-    store.rebuild(products, embeddings)
+    with store.lock:
+        store.rebuild(products, embeddings)
     return {
         "status": "success",
         "statusCode": 200,
@@ -71,7 +84,8 @@ async def search(request: Request, payload: SearchRequest):
     embedder = get_embedding_service()
     query_vector = embedder.embed_query(payload.query)
     store = get_vector_store()
-    results = store.search(query_vector, payload.limit, payload.filters)
+    with store.lock:
+        results = store.search(query_vector, payload.limit, payload.filters)
     message = "success" if results else "Index empty or no products matched"
     return {
         "status": "success",

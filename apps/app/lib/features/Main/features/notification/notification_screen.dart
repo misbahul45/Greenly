@@ -27,12 +27,14 @@ class _NotificationScreenState extends State<NotificationScreen> {
   }
 
   Future<void> _loadNotifications() async {
+    if (!mounted) return;
     setState(() {
       _loading = true;
       _error = null;
     });
 
     final response = await _service.getNotifications();
+    if (!mounted) return;
 
     setState(() {
       _loading = false;
@@ -47,27 +49,38 @@ class _NotificationScreenState extends State<NotificationScreen> {
   Future<void> _markAsRead(NotificationData item) async {
     if (item.isRead) return;
     await _service.markAsRead(item.id);
+    if (!mounted) return;
     await _loadNotifications();
   }
 
   Future<void> _markAllAsRead() async {
     await _service.markAllAsRead();
+    if (!mounted) return;
     await _loadNotifications();
   }
 
   void _subscribeRealtime() {
     _subscription?.cancel();
-    _subscription = _service.streamNotifications().listen((event) {
-      final notification = event.notification;
-      if (!mounted || notification == null) return;
+    _subscription = _service.streamNotifications().listen(
+      (event) {
+        final notification = event.notification;
+        if (!mounted || notification == null) return;
 
-      setState(() {
-        _items = [
-          notification,
-          ..._items.where((item) => item.id != notification.id),
-        ];
-      });
-    });
+        setState(() {
+          _items = [
+            notification,
+            ..._items.where((item) => item.id != notification.id),
+          ];
+        });
+      },
+      onError: (_) {
+        if (!mounted) return;
+        setState(() {
+          _error =
+              'Realtime notifikasi gagal tersambung. Tarik untuk memuat ulang.';
+        });
+      },
+    );
   }
 
   @override
@@ -86,7 +99,17 @@ class _NotificationScreenState extends State<NotificationScreen> {
       return Center(
         child: Padding(
           padding: const EdgeInsets.all(UIConstants.paddingL),
-          child: Text(_error!, textAlign: TextAlign.center),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(_error!, textAlign: TextAlign.center),
+              const SizedBox(height: UIConstants.spacingM),
+              ElevatedButton(
+                onPressed: _loadNotifications,
+                child: const Text('Coba Lagi'),
+              ),
+            ],
+          ),
         ),
       );
     }

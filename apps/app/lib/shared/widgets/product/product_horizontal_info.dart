@@ -71,6 +71,7 @@ class ProductHorizontalInfo extends StatelessWidget {
         const SizedBox(height: UIConstants.spacingXS),
         ProductBadgesRow(
           ecoScore: data.ecoScore,
+          ecoBadges: data.ecoBadges,
           stock: data.stock,
           showEcoBadge: showEcoBadge,
           showStock: showStock,

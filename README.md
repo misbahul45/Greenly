@@ -696,7 +696,12 @@ Service akan tersedia di:
 
 ```bash
 # Rebuild FAISS index dari catalog
-curl -X POST http://localhost/api/ml/products/rebuild-index
+set -a
+source .env
+set +a
+
+curl -X POST http://localhost/api/ml/products/rebuild-index \
+  -H "X-Internal-Token: $ML_INTERNAL_TOKEN"
 
 # Verifikasi index
 curl http://localhost/api/ml/health
@@ -745,6 +750,7 @@ flutter run
 | `REDIS_URL` | redis://redis:6379/0 | Redis URL |
 | `FAISS_INDEX_PATH` | /app/app/storage/indexes/products.faiss | Path FAISS index |
 | `PRODUCT_META_PATH` | /app/app/storage/indexes/products_meta.json | Path metadata |
+| `ML_INTERNAL_TOKEN` | — | Token internal untuk endpoint mutasi index ML |
 | `ML_PORT` | 8000 | HTTP port |
 
 ### mobile app (`apps/app/.env`)
@@ -895,7 +901,12 @@ Saat load dari disk, dimension FAISS index dibandingkan dengan dimension dari me
 Produk baru akan otomatis di-index via event `product.created` dari catalog-service ke RabbitMQ. Untuk force rebuild:
 
 ```bash
-curl -X POST http://localhost/api/ml/products/rebuild-index
+set -a
+source .env
+set +a
+
+curl -X POST http://localhost/api/ml/products/rebuild-index \
+  -H "X-Internal-Token: $ML_INTERNAL_TOKEN"
 ```
 
 ### Run flutter analyze

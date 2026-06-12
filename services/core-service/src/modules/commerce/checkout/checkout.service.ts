@@ -54,9 +54,13 @@ export class CheckoutService {
             throw new BadRequestException("Shipping address is required");
         }
 
-        const snapshots = this.buildSnapshots(dto, selectedItems);
+const snapshots = this.buildSnapshots(dto, selectedItems);
+const itemsPayload = snapshots.map((item) => ({
+  productId: item.productId,
+  quantity: item.quantity,
+}));
 
-        const promo = dto.promoCode
+const promo = dto.promoCode
             ? await this.db.promotion.findFirst({
                   where: {
                       code: dto.promoCode,
@@ -185,6 +189,7 @@ export class CheckoutService {
             shopId: dto.shopId,
             totalAmount: totalAmount.toString(),
             timestamp: new Date().toISOString(),
+            items: itemsPayload,
         });
 
         return {

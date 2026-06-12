@@ -95,8 +95,10 @@ def _image_urls(item: dict) -> list[str]:
 
 
 def normalize_product(item: dict) -> ProductIndexItem:
-    eco = item.get("ecoAttribute") or item.get("eco_attribute") or {}
+    eco = item.get("eco") or item.get("ecoAttribute") or item.get("eco_attribute") or {}
+    promo = item.get("promotion") or item.get("promotion_info") or {}
     rating = item.get("rating") or item.get("productRating") or item.get("product_rating") or {}
+    
     return ProductIndexItem(
         id=str(_get_id(item)),
         shop_id=item.get("shopId") or item.get("shop_id"),
@@ -106,16 +108,34 @@ def normalize_product(item: dict) -> ProductIndexItem:
         description=item.get("description"),
         sku=item.get("sku"),
         price=_to_float(item.get("price") or item.get("finalPrice") or item.get("final_price")),
+        original_price=_to_float(item.get("originalPrice") or item.get("original_price") or item.get("price")),
+        final_price=_to_float(item.get("finalPrice") or item.get("final_price") or item.get("price")),
         currency=item.get("currency"),
         stock=_to_int(item.get("stock")),
         image_urls=_image_urls(item),
         rating_average=_to_float(item.get("ratingAverage") or item.get("rating_average") or rating.get("average")),
         review_count=_to_int(item.get("reviewCount") or item.get("review_count") or rating.get("reviewCount")),
         favorite_count=_to_int(item.get("favoriteCount") or item.get("favorite_count")),
-        eco_score=_to_float(item.get("ecoScore") or item.get("eco_score") or eco.get("ecoScore") or eco.get("eco_score")),
+        
+        # Eco Attributes
+        eco_score=_to_float(item.get("ecoScore") or item.get("eco_score") or eco.get("score") or eco.get("ecoScore")),
+        eco_label=eco.get("label") or eco.get("ecoLabel"),
         material_type=item.get("materialType") or item.get("material_type") or eco.get("materialType") or eco.get("material_type"),
+        material_label=eco.get("materialLabel") or eco.get("material_label"),
         recyclable=item.get("recyclable") if item.get("recyclable") is not None else eco.get("recyclable"),
-        carbon_footprint=_to_float(item.get("carbonFootprint") or item.get("carbon_footprint") or eco.get("carbonFootprint") or eco.get("carbon_footprint")),
+        carbon_footprint=_to_float(item.get("carbonFootprint") or item.get("carbon_footprint") or eco.get("carbonFootprint") or eco.get("carbon_footprint") or eco.get("carbonFootprint")),
+        carbon_label=eco.get("carbonLabel") or eco.get("carbon_label"),
+        eco_badges=eco.get("badges") or eco.get("eco_badges") or [],
+        eco_reasons=eco.get("reasons") or eco.get("eco_reasons") or [],
+        
+        # Promotion
+        has_promo=promo.get("hasPromo") or promo.get("has_promo") or False,
+        promotion_code=promo.get("code") or promo.get("promotion_code"),
+        promotion_label=promo.get("label") or promo.get("promotion_label"),
+        discount_percent=_to_float(promo.get("discountPercent") or promo.get("discount_percent")),
+        discount_amount=_to_float(promo.get("discountAmount") or promo.get("discount_amount")),
+        saving_label=promo.get("savingLabel") or promo.get("saving_label"),
+        
         created_at=item.get("createdAt") or item.get("created_at"),
         updated_at=item.get("updatedAt") or item.get("updated_at"),
     )

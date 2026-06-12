@@ -10,11 +10,10 @@ import { AnalyticsModule } from './analytics/analytics.module';
 import { AdminModule } from './admin/admin.module';
 import { EventsModule } from './events/events.module';
 import { BannerModule } from './banner/banner.module';
-import { CartModule } from './cart/cart.module';
 import { HealthModule } from './health/health.module';
 import { ChatModule } from './chat/chat.module';
 
 @Module({
-  imports: [AuthModule, IdentityModule, ShopsModule, CommerceModule, FinanceModule, PromotionModule, NotificationModule, AnalyticsModule, AdminModule, EventsModule, BannerModule, CartModule, HealthModule, ChatModule],
+  imports: [AuthModule, IdentityModule, ShopsModule, CommerceModule, FinanceModule, PromotionModule, NotificationModule, AnalyticsModule, AdminModule, EventsModule, BannerModule, HealthModule, ChatModule],
 })
 export class ModulesModule {}

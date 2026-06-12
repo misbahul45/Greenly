@@ -458,9 +458,11 @@ lib/
       charts/
         mini_bar_chart.dart
         progress_stat.dart
+        rating_distribution_chart.dart
         stat_card_skeleton.dart
         stat_card.dart
       product/
+        adaptive_product_grid_delegate.dart
         product_badges_row.dart
         product_card_data.dart
         product_card_skeleton.dart
@@ -546,6 +548,10 @@ macos/
     RunnerTests.swift
   .gitignore
 test/
+  auth_bloc_test.dart
+  cart_bloc_test.dart
+  payment_webview_screen_test.dart
+  search_product_service_test.dart
   widget_test.dart
 web/
   icons/
@@ -578,6 +584,7 @@ windows/
     win32_window.h
   .gitignore
   CMakeLists.txt
+.env.example
 .gitignore
 .metadata
 analysis_options.yaml
@@ -585,6 +592,7 @@ devtools_options.yaml
 pubspec.lock
 pubspec.yaml
 README.md
+report.md
 </directory_structure>
 
 <files>
@@ -2090,7 +2098,11 @@ const List<AppBarConfig> mainAppBarConfigs = [
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class ENV {
-  static String get api => dotenv.env['API_URL'] ?? '';
+  static String get api {
+    const dartDefineApi = String.fromEnvironment('API_URL');
+    if (dartDefineApi.isNotEmpty) return dartDefineApi;
+    return dotenv.env['API_URL'] ?? '';
+  }
 }
 </file>
 
@@ -2293,7 +2305,10 @@ class RouterGenerate {
         return _page(const MainScreen());
 
       case AppRoutes.productDetail:
-        final slug = settings.arguments as String;
+        final slug = _stringArg(settings.arguments);
+        if (slug == null || slug.isEmpty) {
+          return _errorPage('Data produk tidak tersedia');
+        }
         return _page(ProductDetailScreen(slug: slug));
 
       case AppRoutes.searchProduct:
@@ -2303,7 +2318,10 @@ class RouterGenerate {
         return _page(const OrderListScreen());
 
       case AppRoutes.orderDetail:
-        final orderId = settings.arguments as String;
+        final orderId = _stringArg(settings.arguments);
+        if (orderId == null || orderId.isEmpty) {
+          return _errorPage('Data pesanan tidak tersedia');
+        }
         return _page(OrderDetailScreen(orderId: orderId));
 
       case AppRoutes.paymentWebview:
@@ -2329,9 +2347,17 @@ class RouterGenerate {
 
       case AppRoutes.shopDetail:
         final args = (settings.arguments as Map?) ?? const {};
+        final shopId = args['shopId']?.toString() ?? '';
+        if (shopId.isEmpty) {
+          return _page(
+            const Scaffold(
+              body: Center(child: Text('Data toko tidak tersedia')),
+            ),
+          );
+        }
         return _page(
           ShopDetailScreen(
-            shopId: args['shopId'] as String? ?? '',
+            shopId: shopId,
             initiallyFollowing: args['following'] as bool? ?? false,
           ),
         );
@@ -2343,18 +2369,20 @@ class RouterGenerate {
         final args = (settings.arguments as Map?) ?? const {};
         return _page(
           ProductListScreen(
-            categoryId: args['categoryId'] as String?,
-            title: args['categoryName'] as String? ?? 'Produk',
+            categoryId: args['categoryId']?.toString(),
+            title: args['categoryName']?.toString() ?? 'Produk',
           ),
         );
 
       case AppRoutes.reviews:
-        final args = settings.arguments as Map<String, dynamic>;
+        final args = (settings.arguments as Map?) ?? const {};
+        final productId = args['productId']?.toString() ?? '';
+        final productName = args['productName']?.toString() ?? '';
+        if (productId.isEmpty || productName.isEmpty) {
+          return _errorPage('Data ulasan tidak tersedia');
+        }
         return _page(
-          ReviewsScreen(
-            productId: args['productId'] as String,
-            productName: args['productName'] as String,
-          ),
+          ReviewsScreen(productId: productId, productName: productName),
         );
 
       default:
@@ -2366,6 +2394,25 @@ class RouterGenerate {
 
   static MaterialPageRoute _page(Widget child) {
     return MaterialPageRoute(builder: (_) => child);
+  }
+
+  static MaterialPageRoute _errorPage(String message) {
+    return _page(
+      Scaffold(
+        appBar: AppBar(title: const Text('Halaman Tidak Tersedia')),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Text(message, textAlign: TextAlign.center),
+          ),
+        ),
+      ),
+    );
+  }
+
+  static String? _stringArg(Object? value) {
+    if (value is String) return value;
+    return null;
   }
 }
 </file>
@@ -2595,11 +2642,26 @@ class ApiClient {
     try {
       decodedBody = res.body.isNotEmpty ? jsonDecode(res.body) : {};
     } catch (_) {
+      final sc = res.statusCode;
+      final String msg;
+      if (sc == 502 || sc == 503) {
+        msg = 'Server sedang tidak tersedia. Pastikan layanan backend berjalan.';
+      } else if (sc == 504) {
+        msg = 'Gateway timeout. Server terlalu lama merespons.';
+      } else if (sc >= 500) {
+        msg = 'Server mengalami gangguan (HTTP $sc). Coba lagi nanti.';
+      } else if (sc == 404) {
+        msg = 'Endpoint tidak ditemukan (HTTP $sc).';
+      } else if (sc == 0) {
+        msg = 'Tidak dapat terhubung ke server.';
+      } else {
+        msg = 'Respons tidak valid dari server (HTTP $sc).';
+      }
       return ApiResponse<T>(
         status: "error",
-        statusCode: res.statusCode,
+        statusCode: sc,
         path: url,
-        message: "Invalid JSON response",
+        message: msg,
         timestamp: DateTime.now().toIso8601String(),
       );
     }
@@ -2797,31 +2859,39 @@ class ApiClient {
     Map<String, dynamic>? query,
     T Function(dynamic json)? fromJsonT,
   }) async* {
-    final headers = await _buildHeaders();
-    headers["Accept"] = "text/event-stream";
-    headers["Cache-Control"] = "no-cache";
+    final uri = buildUri(url, query);
 
-    final req = http.Request("GET", buildUri(url, query));
-    req.headers.addAll(headers);
+    try {
+      final headers = await _buildHeaders();
+      headers["Accept"] = "text/event-stream";
+      headers["Cache-Control"] = "no-cache";
 
-    final streamed = await req.send();
+      final req = http.Request("GET", uri);
+      req.headers.addAll(headers);
 
-    if (streamed.statusCode < 200 || streamed.statusCode >= 300) {
-      return;
-    }
+      final streamed = await req.send().timeout(_timeout);
 
-    await for (final line in streamed.stream
-        .transform(utf8.decoder)
-        .transform(const LineSplitter())) {
-      if (!line.startsWith("data:")) continue;
+      if (streamed.statusCode < 200 || streamed.statusCode >= 300) {
+        throw HttpException(
+          'Realtime connection failed (HTTP ${streamed.statusCode})',
+          uri: uri,
+        );
+      }
 
-      final raw = line.substring(5).trim();
-      if (raw.isEmpty) continue;
+      await for (final line
+          in streamed.stream
+              .transform(utf8.decoder)
+              .transform(const LineSplitter())) {
+        if (!line.startsWith("data:")) continue;
 
-      try {
+        final raw = line.substring(5).trim();
+        if (raw.isEmpty) continue;
+
         final decoded = jsonDecode(raw);
         yield fromJsonT == null ? decoded as T : fromJsonT(decoded);
-      } catch (_) {}
+      }
+    } on TimeoutException {
+      throw TimeoutException('Realtime connection timeout', _timeout);
     }
   }
 }
@@ -3143,7 +3213,7 @@ class RegisterResponse {
 
   factory RegisterResponse.fromJson(Map<String, dynamic> json) {
     return RegisterResponse(
-      id: json['id'] ?? 0,
+      id: json['id']?.toString() ?? '',
       name: json['name'] ?? '',
       email: json['email'] ?? '',
     );
@@ -3177,11 +3247,11 @@ class VerifyPasswordResponse {
       userId: json['userId'] ?? '',
       tokenHash: json['tokenHash'] ?? '',
       type: json['type'] ?? '',
-      expiresAt: DateTime.parse(json['expiresAt']),
+      expiresAt: DateTime.tryParse(json['expiresAt']?.toString() ?? '') ?? DateTime.now(),
       usedAt: json['usedAt'] != null
-          ? DateTime.parse(json['usedAt'])
+          ? DateTime.tryParse(json['usedAt'].toString())
           : null,
-      createdAt: DateTime.parse(json['createdAt']),
+      createdAt: DateTime.tryParse(json['createdAt']?.toString() ?? '') ?? DateTime.now(),
     );
   }
 }
@@ -3338,7 +3408,6 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     Emitter<AuthState> emit,
   ) async {
     emit(AuthLoading());
-    AuthStorage.clear();
     final token = await AuthStorage.getAccessToken();
     final refreshToken = await AuthStorage.getRefreshToken();
     final user = await AuthStorage.getUser();
@@ -3350,6 +3419,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         ),
       );
     } else {
+      await AuthStorage.clear();
       emit(AuthUnauthenticated());
     }
   }
@@ -3407,8 +3477,9 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
     if (response.isSuccess) {
       emit(AuthChangePasswordSuccess());
+    } else {
+      emit(AuthError(response.message));
     }
-    
   }
 
   Future<void> _onRefreshUser(
@@ -6024,6 +6095,10 @@ class CartItemData {
   final int? productPrice;
   final String? shopId;
   final String? shopName;
+  final String? slug;
+  final int? stock;
+  final double? rating;
+  final String? categoryName;
 
   const CartItemData({
     required this.id,
@@ -6035,6 +6110,10 @@ class CartItemData {
     this.productPrice,
     this.shopId,
     this.shopName,
+    this.slug,
+    this.stock,
+    this.rating,
+    this.categoryName,
   });
 
   factory CartItemData.fromJson(Map<String, dynamic> json) {
@@ -6055,6 +6134,10 @@ class CartItemData {
     int? quantity,
     String? shopId,
     String? shopName,
+    String? slug,
+    int? stock,
+    double? rating,
+    String? categoryName,
   }) {
     return CartItemData(
       id: id,
@@ -6066,6 +6149,10 @@ class CartItemData {
       productPrice: productPrice ?? this.productPrice,
       shopId: shopId ?? this.shopId,
       shopName: shopName ?? this.shopName,
+      slug: slug ?? this.slug,
+      stock: stock ?? this.stock,
+      rating: rating ?? this.rating,
+      categoryName: categoryName ?? this.categoryName,
     );
   }
 }
@@ -6212,31 +6299,40 @@ class CartBloc extends Bloc<CartEvent, CartState> {
     emit(
       state.copyWith(
         removingProductIds: {...state.removingProductIds, event.productId},
+        error: null,
       ),
     );
-    await _service.removeItem(productId: event.productId);
+    final res = await _service.removeItem(productId: event.productId);
     final updated = Set<String>.from(state.removingProductIds)
       ..remove(event.productId);
-    emit(state.copyWith(removingProductIds: updated));
-    add(CartLoadRequested());
+    if (res.isSuccess) {
+      emit(state.copyWith(removingProductIds: updated));
+      add(CartLoadRequested());
+    } else {
+      emit(state.copyWith(removingProductIds: updated, error: res.message));
+    }
   }
 
   Future<void> _onClear(
     CartClearRequested event,
     Emitter<CartState> emit,
   ) async {
-    emit(state.copyWith(isLoading: true));
-    await _service.clearCart();
-    emit(
-      state.copyWith(
-        isLoading: false,
-        cart: CartData(
-          userId: state.cart?.userId ?? '',
-          items: [],
-          totalItems: 0,
+    emit(state.copyWith(isLoading: true, error: null));
+    final res = await _service.clearCart();
+    if (res.isSuccess) {
+      emit(
+        state.copyWith(
+          isLoading: false,
+          cart: CartData(
+            userId: state.cart?.userId ?? '',
+            items: [],
+            totalItems: 0,
+          ),
         ),
-      ),
-    );
+      );
+    } else {
+      emit(state.copyWith(isLoading: false, error: res.message));
+    }
   }
 }
 </file>
@@ -7147,6 +7243,11 @@ class CartService {
             productImageUrl: images.isNotEmpty ? images.first.toString() : null,
             productPrice: _parsePrice(p['price']),
             shopId: p['shopId']?.toString(),
+            shopName: p['shopName']?.toString(),
+            slug: p['slug']?.toString(),
+            stock: (p['stock'] as num?)?.toInt(),
+            rating: (p['ratingAverage'] as num?)?.toDouble(),
+            categoryName: p['categoryName']?.toString(),
           );
         }
       } catch (_) {}
@@ -7154,7 +7255,10 @@ class CartService {
     });
 
     final withProduct = await Future.wait(futures);
-    return _attachShopNames(withProduct);
+    final needsShopLookup = withProduct.any(
+      (item) => item.shopId != null && (item.shopName == null || item.shopName!.isEmpty),
+    );
+    return needsShopLookup ? _attachShopNames(withProduct) : withProduct;
   }
 
   Future<List<CartItemData>> _attachShopNames(
@@ -7585,6 +7689,7 @@ class FavoriteBloc extends Bloc<FavoriteEvent, FavoriteState> {
         favorites: result.items,
         listPage: result.page,
         listHasReachedMax: !result.hasMore,
+        totalFavorites: result.total,
       ),
     );
   }
@@ -7652,6 +7757,7 @@ class FavoriteState extends Equatable {
   final bool isListLoadingMore;
   final int listPage;
   final bool listHasReachedMax;
+  final int totalFavorites;
 
   const FavoriteState({
     this.productId,
@@ -7664,6 +7770,7 @@ class FavoriteState extends Equatable {
     this.isListLoadingMore = false,
     this.listPage = 1,
     this.listHasReachedMax = false,
+    this.totalFavorites = 0,
   });
 
   FavoriteState copyWith({
@@ -7677,6 +7784,7 @@ class FavoriteState extends Equatable {
     bool? isListLoadingMore,
     int? listPage,
     bool? listHasReachedMax,
+    int? totalFavorites,
   }) {
     return FavoriteState(
       productId: productId ?? this.productId,
@@ -7689,6 +7797,7 @@ class FavoriteState extends Equatable {
       isListLoadingMore: isListLoadingMore ?? this.isListLoadingMore,
       listPage: listPage ?? this.listPage,
       listHasReachedMax: listHasReachedMax ?? this.listHasReachedMax,
+      totalFavorites: totalFavorites ?? this.totalFavorites,
     );
   }
 
@@ -7704,6 +7813,7 @@ class FavoriteState extends Equatable {
     isListLoadingMore,
     listPage,
     listHasReachedMax,
+    totalFavorites,
   ];
 }
 </file>
@@ -7743,6 +7853,17 @@ class FavoriteItemData {
   final String productId;
   final String shopId;
   final DateTime createdAt;
+  final String name;
+  final String slug;
+  final String imageUrl;
+  final int price;
+  final String currency;
+  final int stock;
+  final String categoryName;
+  final String shopName;
+  final double ratingAverage;
+  final int reviewCount;
+  final int favoriteCount;
 
   const FavoriteItemData({
     required this.id,
@@ -7750,15 +7871,38 @@ class FavoriteItemData {
     required this.productId,
     required this.shopId,
     required this.createdAt,
+    this.name = '',
+    this.slug = '',
+    this.imageUrl = '',
+    this.price = 0,
+    this.currency = 'IDR',
+    this.stock = 0,
+    this.categoryName = '',
+    this.shopName = '',
+    this.ratingAverage = 0,
+    this.reviewCount = 0,
+    this.favoriteCount = 0,
   });
 
   factory FavoriteItemData.fromJson(Map<String, dynamic> json) {
+    final product = json['product'] as Map<String, dynamic>? ?? {};
     return FavoriteItemData(
-      id: json['id'] ?? '',
-      userId: json['userId'] ?? '',
-      productId: json['productId'] ?? '',
-      shopId: json['shopId'] ?? '',
-      createdAt: DateTime.tryParse(json['createdAt'] ?? '') ?? DateTime.now(),
+      id: json['id']?.toString() ?? '',
+      userId: json['userId']?.toString() ?? '',
+      productId: json['productId']?.toString() ?? '',
+      shopId: json['shopId']?.toString() ?? '',
+      createdAt: DateTime.tryParse(json['createdAt']?.toString() ?? '') ?? DateTime.now(),
+      name: product['name']?.toString() ?? '',
+      slug: product['slug']?.toString() ?? '',
+      imageUrl: product['imageUrl']?.toString() ?? '',
+      price: (product['price'] as num?)?.toInt() ?? 0,
+      currency: product['currency']?.toString() ?? 'IDR',
+      stock: (product['stock'] as num?)?.toInt() ?? 0,
+      categoryName: product['categoryName']?.toString() ?? '',
+      shopName: product['shopName']?.toString() ?? '',
+      ratingAverage: (product['ratingAverage'] as num?)?.toDouble() ?? 0,
+      reviewCount: (product['reviewCount'] as num?)?.toInt() ?? 0,
+      favoriteCount: (product['favoriteCount'] as num?)?.toInt() ?? 0,
     );
   }
 }
@@ -7771,7 +7915,7 @@ class FavoriteListData {
   factory FavoriteListData.fromJson(Map<String, dynamic> json) {
     return FavoriteListData(
       favorites: (json['favorites'] as List<dynamic>? ?? [])
-          .map((e) => FavoriteItemData.fromJson(e))
+          .map((e) => FavoriteItemData.fromJson(e as Map<String, dynamic>))
           .toList(),
     );
   }
@@ -7789,6 +7933,9 @@ class FavoriteProductData {
   final double ratingAverage;
   final int reviewCount;
   final int stock;
+  final String categoryName;
+  final String shopName;
+  final int favoriteCount;
 
   const FavoriteProductData({
     required this.favoriteId,
@@ -7802,6 +7949,9 @@ class FavoriteProductData {
     required this.ratingAverage,
     required this.reviewCount,
     required this.stock,
+    this.categoryName = '',
+    this.shopName = '',
+    this.favoriteCount = 0,
   });
 }
 </file>
@@ -7814,7 +7964,6 @@ import 'package:app/features/favorite/domain/data/favorite_data.dart';
 
 class FavoriteService {
   static String get _base => '${ENV.api}/catalog/favorites';
-  static String get _catalogBase => '${ENV.api}/catalog';
 
   Future<ApiResponse<ToggleFavoriteData>> toggle({
     required String productId,
@@ -7832,63 +7981,40 @@ class FavoriteService {
       fromJsonT: (json) => CheckFavoriteData.fromJson(json),
     );
   }
-  Future<({List<FavoriteProductData> items, bool hasMore, int page})>
+  Future<({List<FavoriteProductData> items, bool hasMore, int page, int total})>
   getUserFavorites({int page = 1, int limit = 20}) async {
     final res = await ApiClient.get(
       '$_base?page=$page&limit=$limit',
-      fromJsonT: (json) => FavoriteListData.fromJson(json),
+      fromJsonT: (json) => FavoriteListData.fromJson(json as Map<String, dynamic>),
     );
 
     if (!res.isSuccess || res.data == null) {
-      return (items: <FavoriteProductData>[], hasMore: false, page: page);
+      return (items: <FavoriteProductData>[], hasMore: false, page: page, total: 0);
     }
 
-    final items = res.data!.favorites;
+    final favItems = res.data!.favorites;
     final lastPage = res.metaData?.lastPage ?? 1;
+    final total = res.metaData?.total ?? favItems.length;
     final hasMore = page < lastPage;
 
-    final enriched = await Future.wait(
-      items.map((fav) async {
-        try {
-          final pRes = await ApiClient.get<Map<String, dynamic>>(
-            '$_catalogBase/products/${fav.productId}',
-            fromJsonT: (json) => json as Map<String, dynamic>,
-          );
-          if (pRes.isSuccess && pRes.data != null) {
-            final p = pRes.data!;
-            final images = (p['imageUrls'] as List<dynamic>? ?? []);
-            return FavoriteProductData(
-              favoriteId: fav.id,
-              productId: fav.productId,
-              shopId: fav.shopId,
-              name: p['name']?.toString() ?? '',
-              slug: p['slug']?.toString() ?? '',
-              imageUrl: images.isNotEmpty ? images.first.toString() : '',
-              price: p['price'] is int ? p['price'] as int : 0,
-              currency: p['currency']?.toString() ?? 'IDR',
-              ratingAverage: (p['ratingAverage'] as num?)?.toDouble() ?? 0,
-              reviewCount: p['reviewCount'] as int? ?? 0,
-              stock: p['stock'] as int? ?? 0,
-            );
-          }
-        } catch (_) {}
-        return FavoriteProductData(
-          favoriteId: fav.id,
-          productId: fav.productId,
-          shopId: fav.shopId,
-          name: '',
-          slug: '',
-          imageUrl: '',
-          price: 0,
-          currency: 'IDR',
-          ratingAverage: 0,
-          reviewCount: 0,
-          stock: 0,
-        );
-      }),
-    );
+    final items = favItems.map((fav) => FavoriteProductData(
+      favoriteId: fav.id,
+      productId: fav.productId,
+      shopId: fav.shopId,
+      name: fav.name,
+      slug: fav.slug,
+      imageUrl: fav.imageUrl,
+      price: fav.price,
+      currency: fav.currency,
+      ratingAverage: fav.ratingAverage,
+      reviewCount: fav.reviewCount,
+      stock: fav.stock,
+      categoryName: fav.categoryName,
+      shopName: fav.shopName,
+      favoriteCount: fav.favoriteCount,
+    )).toList();
 
-    return (items: enriched, hasMore: hasMore, page: page);
+    return (items: items, hasMore: hasMore, page: page, total: total);
   }
 }
 </file>
@@ -7900,6 +8026,7 @@ import 'package:app/core/theme/app_theme.dart';
 import 'package:app/features/favorite/bloc/favorite_bloc.dart';
 import 'package:app/features/favorite/domain/data/favorite_data.dart';
 import 'package:app/features/favorite/service/favorite_service.dart';
+import 'package:app/shared/widgets/product/adaptive_product_grid_delegate.dart';
 import 'package:app/shared/widgets/product/product_card.dart';
 import 'package:app/shared/widgets/product/product_card_data.dart';
 import 'package:app/shared/widgets/product/product_card_skeleton.dart';
@@ -7954,9 +8081,42 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
             onPressed: () => Navigator.pop(context),
           ),
           centerTitle: true,
-          title: const Text(
-            'Favorit Saya',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+          title: BlocBuilder<FavoriteBloc, FavoriteState>(
+            buildWhen: (p, c) =>
+                p.totalFavorites != c.totalFavorites ||
+                p.isListLoading != c.isListLoading,
+            builder: (context, state) {
+              return Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    'Favorit Saya',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                  ),
+                  if (!state.isListLoading && state.totalFavorites > 0) ...[
+                    const SizedBox(width: 6),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppTheme.primaryColor,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        '${state.totalFavorites}',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
+              );
+            },
           ),
         ),
         body: BlocBuilder<FavoriteBloc, FavoriteState>(
@@ -7981,12 +8141,7 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
               child: GridView.builder(
                 controller: _scrollController,
                 padding: const EdgeInsets.all(UIConstants.paddingM),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  crossAxisSpacing: UIConstants.spacingM,
-                  mainAxisSpacing: UIConstants.spacingM,
-                  childAspectRatio: 0.55,
-                ),
+                gridDelegate: adaptiveProductGridDelegate(),
                 itemCount:
                     state.favorites.length + (state.isListLoadingMore ? 2 : 0),
                 itemBuilder: (context, i) {
@@ -8020,7 +8175,12 @@ class _FavoriteProductCard extends StatelessWidget {
         price: product.price,
         rating: product.ratingAverage > 0 ? product.ratingAverage : null,
         reviewCount: product.reviewCount,
+        favoriteCount: product.favoriteCount > 0 ? product.favoriteCount : null,
         stock: product.stock,
+        categoryName: product.categoryName.isNotEmpty
+            ? product.categoryName
+            : null,
+        shopName: product.shopName.isNotEmpty ? product.shopName : null,
         isFavorite: true,
       ),
       showFavoriteButton: true,
@@ -8126,10 +8286,18 @@ class _ChatListScreenState extends State<ChatListScreen> {
   Future<List<ChatConversationData>> _loadConversations() async {
     final response = await _service.getAllShopConversations();
     if (!response.isSuccess) {
-      _error = response.message;
+      if (mounted) {
+        setState(() {
+          _error = response.message;
+        });
+      }
       return [];
     }
-    _error = null;
+    if (mounted) {
+      setState(() {
+        _error = null;
+      });
+    }
     return response.data ?? [];
   }
 
@@ -8160,12 +8328,13 @@ class _ChatListScreenState extends State<ChatListScreen> {
           return const ChatListSkeleton();
         }
 
+        if (_error != null) {
+          return _ChatErrorState(error: _error!, onRetry: _refresh);
+        }
+
         final conversations = snapshot.data ?? [];
         if (conversations.isEmpty) {
-          return _EmptyChatList(
-            message: _error ?? 'Belum ada percakapan toko',
-            onRetry: _refresh,
-          );
+          return _ChatEmptyState(onRetry: _refresh);
         }
 
         return RefreshIndicator(
@@ -8270,11 +8439,55 @@ class _ConversationTile extends StatelessWidget {
   }
 }
 
-class _EmptyChatList extends StatelessWidget {
-  final String message;
+class _ChatErrorState extends StatelessWidget {
+  final String error;
   final Future<void> Function() onRetry;
 
-  const _EmptyChatList({required this.message, required this.onRetry});
+  const _ChatErrorState({required this.error, required this.onRetry});
+
+  @override
+  Widget build(BuildContext context) {
+    final String message;
+    if (error.toLowerCase().contains('server') ||
+        error.toLowerCase().contains('500')) {
+      message = 'Server chat sedang bermasalah. Coba lagi nanti.';
+    } else if (error.toLowerCase().contains('unauthorized') ||
+        error.toLowerCase().contains('401')) {
+      message = 'Silakan login ulang.';
+    } else {
+      message = 'Gagal memuat daftar chat.';
+    }
+
+    return RefreshIndicator(
+      onRefresh: onRetry,
+      child: ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        children: [
+          SizedBox(height: MediaQuery.of(context).size.height * 0.22),
+          Icon(Icons.cloud_off_rounded, size: 48, color: Colors.grey[300]),
+          const SizedBox(height: UIConstants.spacingM),
+          Text(
+            message,
+            textAlign: TextAlign.center,
+            style: TextStyle(color: Colors.grey[600]),
+          ),
+          const SizedBox(height: UIConstants.spacingM),
+          Center(
+            child: ElevatedButton(
+              onPressed: onRetry,
+              child: const Text('Coba Lagi'),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ChatEmptyState extends StatelessWidget {
+  final Future<void> Function() onRetry;
+
+  const _ChatEmptyState({required this.onRetry});
 
   @override
   Widget build(BuildContext context) {
@@ -8283,7 +8496,7 @@ class _EmptyChatList extends StatelessWidget {
       child: ListView(
         physics: const AlwaysScrollableScrollPhysics(),
         children: [
-          SizedBox(height: MediaQuery.of(context).size.height * 0.22),
+          SizedBox(height: MediaQuery.of(context).size.height * 0.2),
           Icon(
             Icons.chat_bubble_outline_rounded,
             size: 48,
@@ -8291,9 +8504,22 @@ class _EmptyChatList extends StatelessWidget {
           ),
           const SizedBox(height: UIConstants.spacingM),
           Text(
-            message,
+            'Belum ada chat toko',
             textAlign: TextAlign.center,
-            style: TextStyle(color: Colors.grey[600]),
+            style: TextStyle(
+              color: Colors.grey[700],
+              fontSize: UIConstants.fontSizeL,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: UIConstants.spacingS),
+          Text(
+            'Mulai chat dari halaman detail produk atau toko.',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: Colors.grey[500],
+              fontSize: UIConstants.fontSizeS,
+            ),
           ),
         ],
       ),
@@ -8353,6 +8579,7 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   Future<void> _loadChat() async {
+    if (!mounted) return;
     setState(() {
       _loading = true;
       _error = null;
@@ -8372,12 +8599,12 @@ class _ChatScreenState extends State<ChatScreen> {
         productId: widget.productId,
         productName: widget.productName,
       );
-      if (created.isSuccess) {
+      if (created.isSuccess && created.data != null) {
         conversation = created.data;
       } else if (mounted) {
         setState(() {
           _loading = false;
-          _error = created.message;
+          _error = _mapError(created.statusCode, created.message);
         });
         return;
       }
@@ -8387,7 +8614,7 @@ class _ChatScreenState extends State<ChatScreen> {
       if (!mounted) return;
       setState(() {
         _loading = false;
-        _error = conversations.message;
+        _error = _mapError(conversations.statusCode, conversations.message);
       });
       return;
     }
@@ -8399,10 +8626,24 @@ class _ChatScreenState extends State<ChatScreen> {
       _conversationId = conversation!.id;
       _messages = _uniqueMessages(messages.data ?? []);
       _loading = false;
-      _error = messages.isSuccess ? null : messages.message;
+      _error = messages.isSuccess
+          ? null
+          : _mapError(messages.statusCode, messages.message);
     });
 
     _subscribeRealtime(conversation.id);
+  }
+
+  String _mapError(int statusCode, String message) {
+    if (statusCode == 500) {
+      return 'Server chat sedang bermasalah. Coba lagi nanti.';
+    }
+    if (statusCode == 401 || statusCode == 403) return 'Silakan login ulang.';
+    if (statusCode == 404) return 'Data toko tidak ditemukan.';
+    if (statusCode == 400) return 'Data toko tidak valid.';
+    if (statusCode == 408) return 'Koneksi lambat. Periksa internet Anda.';
+    if (message.isNotEmpty) return message;
+    return 'Terjadi kesalahan. Coba lagi.';
   }
 
   Future<void> _sendMessage() async {
@@ -8442,14 +8683,24 @@ class _ChatScreenState extends State<ChatScreen> {
 
   void _subscribeRealtime(String conversationId) {
     _subscription?.cancel();
-    _subscription = _service.streamMessages(conversationId).listen((event) {
-      final message = event.message;
-      if (!mounted || message == null) return;
+    _subscription = _service
+        .streamMessages(conversationId)
+        .listen(
+          (event) {
+            final message = event.message;
+            if (!mounted || message == null) return;
 
-      setState(() {
-        _messages = _uniqueMessages([..._messages, message]);
-      });
-    });
+            setState(() {
+              _messages = _uniqueMessages([..._messages, message]);
+            });
+          },
+          onError: (_) {
+            if (!mounted) return;
+            setState(() {
+              _error = 'Realtime chat terputus. Pesan baru mungkin terlambat.';
+            });
+          },
+        );
   }
 
   List<ChatMessageData> _uniqueMessages(List<ChatMessageData> messages) {
@@ -8818,13 +9069,36 @@ class _ErrorState extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            Icon(
+              Icons.chat_bubble_outline_rounded,
+              size: 48,
+              color: Colors.grey[300],
+            ),
+            const SizedBox(height: UIConstants.spacingM),
+            const Text(
+              'Chat toko gagal dimuat',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontWeight: FontWeight.w700,
+                fontSize: UIConstants.fontSizeL,
+              ),
+            ),
+            const SizedBox(height: UIConstants.spacingS),
             Text(
               message,
               textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.grey[700]),
+              style: TextStyle(
+                color: Colors.grey[600],
+                fontSize: UIConstants.fontSizeM,
+              ),
             ),
-            const SizedBox(height: UIConstants.spacingM),
+            const SizedBox(height: UIConstants.spacingL),
             ElevatedButton(onPressed: onRetry, child: const Text('Coba Lagi')),
+            const SizedBox(height: UIConstants.spacingS),
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Kembali'),
+            ),
           ],
         ),
       ),
@@ -9654,6 +9928,7 @@ class ProductData {
   final int favoriteCount;
   final int reviewCount;
   final double ratingAverage;
+  final double ecoScore;
 
   final bool isActive;
 
@@ -9664,6 +9939,7 @@ class ProductData {
   final List<String> imageUrls;
 
   final String categoryName;
+  final String shopName;
 
   final DateTime createdAt;
   final DateTime updatedAt;
@@ -9679,12 +9955,14 @@ class ProductData {
     required this.favoriteCount,
     required this.reviewCount,
     required this.ratingAverage,
+    required this.ecoScore,
     required this.isActive,
     required this.price,
     required this.currency,
     required this.stock,
     required this.imageUrls,
     required this.categoryName,
+    required this.shopName,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -9701,12 +9979,14 @@ class ProductData {
       favoriteCount: json['favoriteCount'] ?? 0,
       reviewCount: json['reviewCount'] ?? 0,
       ratingAverage: (json['ratingAverage'] ?? 0).toDouble(),
+      ecoScore: (json['ecoScore'] as num?)?.toDouble() ?? 0,
       isActive: json['isActive'] ?? false,
       price: json['price'] ?? 0,
       currency: json['currency'] ?? '',
       stock: json['stock'] ?? 0,
       imageUrls: List<String>.from(json['imageUrls'] ?? []),
       categoryName: json['categoryName'] ?? '',
+      shopName: json['shopName'] ?? '',
       createdAt: DateTime.parse(json['createdAt']),
       updatedAt: DateTime.parse(json['updatedAt']),
     );
@@ -9862,6 +10142,7 @@ class ProductSkeleton extends StatelessWidget {
 
 <file path="lib/features/Main/features/home/widgets/banner_widget.dart">
 import 'dart:async';
+
 import 'package:app/core/theme/app_theme.dart';
 import 'package:app/features/Main/features/home/bloc/home_bloc.dart';
 import 'package:app/features/Main/features/home/bloc/home_state.dart';
@@ -9877,46 +10158,82 @@ class BannerWidget extends StatefulWidget {
 }
 
 class _BannerWidgetState extends State<BannerWidget> {
-  late PageController _controller;
+  late final PageController _controller;
+
   Timer? _timer;
+
   int _currentPage = 0;
+  int _lastItemCount = 0;
+
   static const int _multiplier = 1000;
 
   @override
   void initState() {
     super.initState();
-    _controller = PageController(viewportFraction: 0.92, initialPage: 0);
+    _controller = PageController(viewportFraction: 0.9);
   }
 
-  void _startAutoScroll(int itemCount) {
+  void _setupCarousel(int itemCount) {
+    if (!mounted || itemCount <= 0) return;
+
+    if (_lastItemCount == itemCount && _timer != null) return;
+
+    _lastItemCount = itemCount;
     _timer?.cancel();
-    _timer = Timer.periodic(const Duration(seconds: 3), (_) {
-      if (!_controller.hasClients) return;
-      final next = _controller.page!.round() + 1;
-      _controller.animateToPage(
-        next,
-        duration: const Duration(milliseconds: 400),
-        curve: Curves.easeInOut,
-      );
+
+    final initialPage = itemCount * (_multiplier ~/ 2);
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !_controller.hasClients) return;
+
+      final currentPage = _controller.page?.round() ?? 0;
+
+      if (currentPage == 0 && itemCount > 1) {
+        _controller.jumpToPage(initialPage);
+      }
+
+      if (itemCount > 1) {
+        _startAutoScroll();
+      }
     });
   }
 
-  void _goNext(int itemCount) {
-    final next = _controller.page!.round() + 1;
+  void _startAutoScroll() {
+    _timer?.cancel();
+
+    _timer = Timer.periodic(const Duration(seconds: 4), (_) {
+      if (!mounted || !_controller.hasClients) return;
+
+      final current = _controller.page?.round() ?? _controller.initialPage;
+      _animateToPage(current + 1);
+    });
+  }
+
+  void _animateToPage(int page) {
+    if (!_controller.hasClients) return;
+
     _controller.animateToPage(
-      next,
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeInOut,
+      page,
+      duration: const Duration(milliseconds: 420),
+      curve: Curves.easeOutCubic,
     );
   }
 
+  void _goNext() {
+    final current = _controller.page?.round() ?? _controller.initialPage;
+    _animateToPage(current + 1);
+    _restartAutoScrollAfterManualAction();
+  }
+
   void _goPrev() {
-    final prev = _controller.page!.round() - 1;
-    _controller.animateToPage(
-      prev,
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeInOut,
-    );
+    final current = _controller.page?.round() ?? _controller.initialPage;
+    _animateToPage(current - 1);
+    _restartAutoScrollAfterManualAction();
+  }
+
+  void _restartAutoScrollAfterManualAction() {
+    if (_lastItemCount <= 1) return;
+    _startAutoScroll();
   }
 
   @override
@@ -9937,177 +10254,382 @@ class _BannerWidgetState extends State<BannerWidget> {
           return const BannerSkeleton();
         }
 
-        if (bannerState.data.isEmpty) {
-          return const SizedBox();
+        final items = bannerState.data;
+
+        if (items.isEmpty) {
+          _timer?.cancel();
+          _lastItemCount = 0;
+          return const SizedBox.shrink();
         }
 
-        final items = bannerState.data;
         final itemCount = items.length;
-        final virtualCount = itemCount * _multiplier;
-        final initialPage = itemCount * (_multiplier ~/ 2);
+        final virtualCount = itemCount == 1 ? 1 : itemCount * _multiplier;
 
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (_controller.hasClients && _controller.page == 0) {
-            _controller.jumpToPage(initialPage);
-          }
-          _startAutoScroll(itemCount);
-        });
+        _setupCarousel(itemCount);
 
-        return Stack(
-          alignment: Alignment.center,
-          children: [
-            SizedBox(
-              height: 200,
-              child: PageView.builder(
-                controller: _controller,
-                physics: const PageScrollPhysics(),
-                itemCount: virtualCount,
-                onPageChanged: (index) {
-                  setState(() {
-                    _currentPage = index % itemCount;
-                  });
-                },
-                itemBuilder: (context, index) {
-                  final item = items[index % itemCount];
+        return LayoutBuilder(
+          builder: (context, constraints) {
+            final width = constraints.maxWidth;
 
-                  return Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 6),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(16),
-                      color: AppTheme.primaryColor,
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppTheme.primaryColor.withValues(alpha: 0.1),
-                          blurRadius: 10,
-                          offset: const Offset(0, 6),
-                        ),
-                      ],
+            final isTiny = width < 340;
+            final isMobile = width < 600;
+            final isTablet = width >= 600 && width < 900;
+
+            final height = isTiny
+                ? 158.0
+                : isMobile
+                    ? 178.0
+                    : isTablet
+                        ? 220.0
+                        : 260.0;
+
+            final horizontalMargin = isMobile ? 7.0 : 10.0;
+            final borderRadius = isMobile ? 18.0 : 24.0;
+            final showArrows = itemCount > 1 && width >= 390;
+
+            return SizedBox(
+              height: height + 18,
+              width: double.infinity,
+              child: Stack(
+                clipBehavior: Clip.none,
+                alignment: Alignment.center,
+                children: [
+                  Positioned.fill(
+                    top: 4,
+                    bottom: 14,
+                    child: PageView.builder(
+                      controller: _controller,
+                      physics: itemCount > 1
+                          ? const PageScrollPhysics()
+                          : const NeverScrollableScrollPhysics(),
+                      itemCount: virtualCount,
+                      onPageChanged: (index) {
+                        if (!mounted) return;
+
+                        setState(() {
+                          _currentPage = index % itemCount;
+                        });
+                      },
+                      itemBuilder: (context, index) {
+                        final item = items[index % itemCount];
+
+                        return AnimatedBuilder(
+                          animation: _controller,
+                          builder: (context, child) {
+                            double scale = 1;
+                            double translateY = 0;
+
+                            if (_controller.hasClients && _controller.position.haveDimensions) {
+                              final page = _controller.page ?? _controller.initialPage.toDouble();
+                              final distance = (page - index).abs();
+
+                              scale = (1 - (distance * 0.055)).clamp(0.92, 1.0).toDouble();
+
+                              translateY = (distance * 8).clamp(0.0, 8.0).toDouble();
+                            }
+
+                            return Transform.translate(
+                              offset: Offset(0, translateY),
+                              child: Transform.scale(
+                                scale: scale,
+                                child: child,
+                              ),
+                            );
+                          },
+                          child: _FloatingBannerCard(
+                            imageUrl: item.imageUrl,
+                            title: item.title,
+                            description: item.description,
+                            isMobile: isMobile,
+                            horizontalMargin: horizontalMargin,
+                            borderRadius: borderRadius,
+                          ),
+                        );
+                      },
                     ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(14),
-                      child: Stack(
-                        fit: StackFit.expand,
-                        children: [
-                          Image.network(
-                            item.imageUrl,
-                            fit: BoxFit.cover,
-                            errorBuilder: (_, _, _) => Container(
-                              color: AppTheme.tertiaryColor,
-                              child: const Icon(
-                                Icons.image_not_supported,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ),
-                          Container(
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                begin: Alignment.bottomCenter,
-                                end: Alignment.topCenter,
-                                colors: [
-                                  AppTheme.primaryColor.withValues(alpha: 0.7),
-                                  Colors.transparent,
-                                ],
-                              ),
-                            ),
-                          ),
-                          Positioned(
-                            left: 16,
-                            bottom: 16,
-                            right: 16,
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  item.title,
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  item.description,
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(
-                                    color: Colors.white70,
-                                    fontSize: 13,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
+                  ),
+                  if (showArrows) ...[
+                    Positioned(
+                      left: 4,
+                      child: _BannerArrowButton(
+                        icon: Icons.chevron_left_rounded,
+                        onTap: _goPrev,
                       ),
                     ),
-                  );
-                },
-              ),
-            ),
-            Positioned(
-              left: 0,
-              child: GestureDetector(
-                onTap: _goPrev,
-                child: Container(
-                  margin: const EdgeInsets.only(left: 4),
-                  padding: const EdgeInsets.all(6),
-                  decoration: BoxDecoration(
-                    color: AppTheme.primaryColor.withValues(alpha: 0.5),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.chevron_left,
-                    color: Colors.white,
-                    size: 20,
-                  ),
-                ),
-              ),
-            ),
-            Positioned(
-              right: 0,
-              child: GestureDetector(
-                onTap: () => _goNext(itemCount),
-                child: Container(
-                  margin: const EdgeInsets.only(right: 4),
-                  padding: const EdgeInsets.all(6),
-                  decoration: BoxDecoration(
-                    color: AppTheme.primaryColor.withValues(alpha: 0.5),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.chevron_right,
-                    color: Colors.white,
-                    size: 20,
-                  ),
-                ),
-              ),
-            ),
-            Positioned(
-              bottom: 8,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: List.generate(itemCount, (index) {
-                  final isActive = index == _currentPage;
-                  return AnimatedContainer(
-                    duration: const Duration(milliseconds: 300),
-                    margin: const EdgeInsets.symmetric(horizontal: 3),
-                    width: isActive ? 16 : 6,
-                    height: 6,
-                    decoration: BoxDecoration(
-                      color: isActive
-                          ? Colors.white
-                          : AppTheme.tertiaryColor.withValues(alpha: 0.7),
-                      borderRadius: BorderRadius.circular(3),
+                    Positioned(
+                      right: 4,
+                      child: _BannerArrowButton(
+                        icon: Icons.chevron_right_rounded,
+                        onTap: _goNext,
+                      ),
                     ),
-                  );
-                }),
+                  ],
+                  if (itemCount > 1)
+                    Positioned(
+                      bottom: 4,
+                      child: _BannerIndicator(
+                        itemCount: itemCount,
+                        currentPage: _currentPage,
+                      ),
+                    ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+}
+
+class _FloatingBannerCard extends StatelessWidget {
+  const _FloatingBannerCard({
+    required this.imageUrl,
+    required this.title,
+    required this.description,
+    required this.isMobile,
+    required this.horizontalMargin,
+    required this.borderRadius,
+  });
+
+  final String imageUrl;
+  final String title;
+  final String description;
+  final bool isMobile;
+  final double horizontalMargin;
+  final double borderRadius;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: EdgeInsets.symmetric(horizontal: horizontalMargin),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(borderRadius),
+        color: AppTheme.primaryColor,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.12),
+            blurRadius: 22,
+            spreadRadius: -4,
+            offset: const Offset(0, 14),
+          ),
+          BoxShadow(
+            color: AppTheme.primaryColor.withValues(alpha: 0.16),
+            blurRadius: 26,
+            spreadRadius: -10,
+            offset: const Offset(0, 18),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(borderRadius),
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            Image.network(
+              imageUrl,
+              fit: BoxFit.cover,
+              loadingBuilder: (context, child, loadingProgress) {
+                if (loadingProgress == null) return child;
+
+                return Container(
+                  color: AppTheme.primaryColor.withValues(alpha: 0.08),
+                  child: const Center(
+                    child: SizedBox(
+                      width: 22,
+                      height: 22,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                  ),
+                );
+              },
+              errorBuilder: (_, _, _) {
+                return Container(
+                  color: AppTheme.tertiaryColor,
+                  child: const Center(
+                    child: Icon(
+                      Icons.image_not_supported_outlined,
+                      color: Colors.white,
+                      size: 34,
+                    ),
+                  ),
+                );
+              },
+            ),
+            DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.bottomCenter,
+                  end: Alignment.topCenter,
+                  colors: [
+                    Colors.black.withValues(alpha: 0.72),
+                    Colors.black.withValues(alpha: 0.22),
+                    Colors.transparent,
+                  ],
+                  stops: const [0, 0.52, 1],
+                ),
+              ),
+            ),
+            Positioned(
+              left: isMobile ? 14 : 20,
+              right: isMobile ? 14 : 20,
+              bottom: isMobile ? 28 : 34,
+              child: _BannerTextContent(
+                title: title,
+                description: description,
+                isMobile: isMobile,
               ),
             ),
           ],
-        );
-      },
+        ),
+      ),
+    );
+  }
+}
+
+class _BannerTextContent extends StatelessWidget {
+  const _BannerTextContent({
+    required this.title,
+    required this.description,
+    required this.isMobile,
+  });
+
+  final String title;
+  final String description;
+  final bool isMobile;
+
+  @override
+  Widget build(BuildContext context) {
+    return ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 520),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            maxLines: isMobile ? 1 : 2,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: isMobile ? 14 : 17,
+              height: 1.15,
+              fontWeight: FontWeight.w700,
+              letterSpacing: -0.1,
+            ),
+          ),
+          const SizedBox(height: 5),
+          Text(
+            description,
+            maxLines: isMobile ? 2 : 3,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.82),
+              fontSize: isMobile ? 11.5 : 13,
+              height: 1.35,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _BannerArrowButton extends StatelessWidget {
+  const _BannerArrowButton({
+    required this.icon,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      shape: const CircleBorder(),
+      child: InkWell(
+        onTap: onTap,
+        customBorder: const CircleBorder(),
+        child: Container(
+          width: 34,
+          height: 34,
+          decoration: BoxDecoration(
+            color: Colors.black.withValues(alpha: 0.32),
+            shape: BoxShape.circle,
+            border: Border.all(
+              color: Colors.white.withValues(alpha: 0.28),
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.18),
+                blurRadius: 14,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
+          child: Icon(
+            icon,
+            color: Colors.white,
+            size: 24,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _BannerIndicator extends StatelessWidget {
+  const _BannerIndicator({
+    required this.itemCount,
+    required this.currentPage,
+  });
+
+  final int itemCount;
+  final int currentPage;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: 8,
+        vertical: 5,
+      ),
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.24),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(
+          color: Colors.white.withValues(alpha: 0.16),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.12),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: List.generate(itemCount, (index) {
+          final isActive = index == currentPage;
+
+          return AnimatedContainer(
+            duration: const Duration(milliseconds: 280),
+            curve: Curves.easeOutCubic,
+            margin: const EdgeInsets.symmetric(horizontal: 3),
+            width: isActive ? 18 : 6,
+            height: 6,
+            decoration: BoxDecoration(
+              color: isActive
+                  ? Colors.white
+                  : Colors.white.withValues(alpha: 0.45),
+              borderRadius: BorderRadius.circular(99),
+            ),
+          );
+        }),
+      ),
     );
   }
 }
@@ -10317,6 +10839,7 @@ class HomeSearchEntryCard extends StatelessWidget {
 import 'package:app/core/constants/ui_constants.dart';
 import 'package:app/features/Main/features/home/bloc/home_state.dart';
 import 'package:app/features/Main/features/home/widgets/product_widget.dart';
+import 'package:app/shared/widgets/product/adaptive_product_grid_delegate.dart';
 import 'package:app/shared/widgets/product/product_card_skeleton.dart';
 import 'package:flutter/material.dart';
 
@@ -10352,12 +10875,7 @@ class ProductGrid extends StatelessWidget {
       physics: physics,
       padding: padding,
       itemCount: state.data.length + (state.isLoadingMore ? 2 : 0),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        crossAxisSpacing: UIConstants.spacingM,
-        mainAxisSpacing: UIConstants.spacingM,
-        childAspectRatio: 0.55,
-      ),
+      gridDelegate: adaptiveProductGridDelegate(),
       itemBuilder: (context, index) {
         if (index >= state.data.length) {
           return const ProductCardSkeletonTile();
@@ -10736,6 +11254,8 @@ class ProductWidget extends StatelessWidget {
           favoriteCount: product.favoriteCount,
           stock: product.stock,
           categoryName: product.categoryName,
+          shopName: product.shopName.isNotEmpty ? product.shopName : null,
+          ecoScore: product.ecoScore > 0 ? product.ecoScore : null,
           promotionCode: promotion?.code,
           isLoading: state.isAdding(product.id),
         );
@@ -10821,8 +11341,7 @@ import 'package:app/features/Main/features/home/widgets/banner_widget.dart';
 import 'package:app/features/Main/features/home/widgets/categories_widget.dart';
 import 'package:app/features/Main/features/home/widgets/products_widget.dart';
 import 'package:app/features/ml-products/widgets/ml_recommendation_section.dart';
-import 'package:app/shared/widgets/charts/mini_bar_chart.dart';
-import 'package:app/shared/widgets/charts/stat_card.dart';
+import 'package:app/shared/widgets/charts/rating_distribution_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -10839,6 +11358,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
+
     context.read<HomeBloc>().add(GetActiveBannersRequested());
     context.read<HomeBloc>().add(GetCategoriesRequested());
     context.read<HomeBloc>().add(GetFeaturedProductsRequested());
@@ -10849,15 +11369,26 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _onScroll() {
     if (!_scrollController.hasClients) return;
+
     final position = _scrollController.position;
     if (position.pixels >= position.maxScrollExtent - 300) {
       context.read<HomeBloc>().add(LoadMoreProductsRequested());
     }
   }
 
+  Future<void> _onRefresh() async {
+    context.read<HomeBloc>().add(GetActiveBannersRequested());
+    context.read<HomeBloc>().add(GetCategoriesRequested());
+    context.read<HomeBloc>().add(GetFeaturedProductsRequested());
+    context.read<HomeMlBloc>().add(HomeMlRefreshed());
+  }
+
   @override
   void dispose() {
-    _scrollController.dispose();
+    _scrollController
+      ..removeListener(_onScroll)
+      ..dispose();
+
     super.dispose();
   }
 
@@ -10865,48 +11396,52 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return SafeArea(
       child: RefreshIndicator(
-        onRefresh: () async {
-          context.read<HomeBloc>().add(GetActiveBannersRequested());
-          context.read<HomeBloc>().add(GetCategoriesRequested());
-          context.read<HomeBloc>().add(GetFeaturedProductsRequested());
-          context.read<HomeMlBloc>().add(HomeMlRefreshed());
-        },
+        onRefresh: _onRefresh,
         child: SingleChildScrollView(
           controller: _scrollController,
           physics: const AlwaysScrollableScrollPhysics(),
           padding: const EdgeInsets.all(UIConstants.paddingS),
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: UIConstants.spacingS),
               const BannerWidget(),
               const SizedBox(height: UIConstants.spacingS),
+              const _HomeInsightSection(),
+              const SizedBox(height: UIConstants.spacingS),
               const CategoriesWidget(),
               const SizedBox(height: UIConstants.spacingS),
               BlocBuilder<HomeMlBloc, HomeMlState>(
-                buildWhen: (p, c) => p.homeRecs != c.homeRecs,
-                builder: (context, state) => MlRecommendationSection(
-                  title: 'Rekomendasi Untuk Kamu',
-                  products: state.homeRecs.data,
-                  isLoading: state.homeRecs.isLoading,
-                  error: state.homeRecs.error,
-                  onRetry: () =>
-                      context.read<HomeMlBloc>().add(HomeMlRefreshed()),
-                ),
+                buildWhen: (previous, current) =>
+                    previous.homeRecs != current.homeRecs,
+                builder: (context, state) {
+                  return MlRecommendationSection(
+                    title: 'Rekomendasi Untuk Kamu',
+                    products: state.homeRecs.data,
+                    isLoading: state.homeRecs.isLoading,
+                    error: state.homeRecs.error,
+                    onRetry: () {
+                      context.read<HomeMlBloc>().add(HomeMlRefreshed());
+                    },
+                  );
+                },
               ),
               const SizedBox(height: UIConstants.spacingXS),
               BlocBuilder<HomeMlBloc, HomeMlState>(
-                buildWhen: (p, c) => p.ecoRecs != c.ecoRecs,
-                builder: (context, state) => MlRecommendationSection(
-                  title: 'Eco Picks',
-                  products: state.ecoRecs.data,
-                  isLoading: state.ecoRecs.isLoading,
-                  error: state.ecoRecs.error,
-                  onRetry: () =>
-                      context.read<HomeMlBloc>().add(HomeMlRefreshed()),
-                ),
+                buildWhen: (previous, current) =>
+                    previous.ecoRecs != current.ecoRecs,
+                builder: (context, state) {
+                  return MlRecommendationSection(
+                    title: 'Eco Picks',
+                    products: state.ecoRecs.data,
+                    isLoading: state.ecoRecs.isLoading,
+                    error: state.ecoRecs.error,
+                    onRetry: () {
+                      context.read<HomeMlBloc>().add(HomeMlRefreshed());
+                    },
+                  );
+                },
               ),
-              const SizedBox(height: UIConstants.spacingS),
-              const _HomeInsightSection(),
               const SizedBox(height: UIConstants.spacingS),
               const ProductsWidget(),
             ],
@@ -10923,113 +11458,123 @@ class _HomeInsightSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<HomeBloc, HomeState>(
-      buildWhen: (p, c) => p.product != c.product,
+      buildWhen: (previous, current) => previous.product != current.product,
       builder: (context, homeState) {
         return BlocBuilder<HomeMlBloc, HomeMlState>(
-          buildWhen: (p, c) =>
-              p.ecoRecs != c.ecoRecs || p.homeRecs != c.homeRecs,
+          buildWhen: (previous, current) =>
+              previous.ecoRecs != current.ecoRecs ||
+              previous.homeRecs != current.homeRecs,
           builder: (context, mlState) {
             final products = homeState.product.data;
             final mlProducts = [
               ...mlState.homeRecs.data,
               ...mlState.ecoRecs.data,
             ];
+
             if (products.isEmpty && mlProducts.isEmpty) {
               return const SizedBox.shrink();
             }
 
             final avgPrice = products.isEmpty
                 ? 0
-                : products.fold<int>(0, (sum, p) => sum + p.price) ~/
-                      products.length;
+                : products.fold<int>(0, (sum, product) {
+                      return sum + product.price;
+                    }) ~/
+                    products.length;
+
             final ecoScores = mlProducts
-                .map((p) => p.ecoScore)
+                .map((product) => product.ecoScore)
                 .whereType<double>()
                 .toList();
+
             final avgEco = ecoScores.isEmpty
                 ? null
                 : ecoScores.reduce((a, b) => a + b) / ecoScores.length;
-            final ratingBars = _ratingDistribution(products);
+
+            final ratingCounts = _ratingDistribution(products);
+            final hasRatings = ratingCounts.any((value) => value > 0);
 
             return Container(
-              margin: const EdgeInsets.symmetric(
-                horizontal: UIConstants.paddingM,
-              ),
-              padding: const EdgeInsets.all(UIConstants.paddingM),
+              width: double.infinity,
+              clipBehavior: Clip.antiAlias,
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(UIConstants.radiusL),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.05),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
+                    color: Colors.black.withValues(alpha: 0.06),
+                    blurRadius: 10,
+                    offset: const Offset(0, 3),
                   ),
                 ],
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Greenly Insight',
-                    style: TextStyle(
-                      fontSize: UIConstants.fontSizeL,
-                      fontWeight: FontWeight.w800,
+                  _buildHeader(),
+                  Padding(
+                    padding: const EdgeInsets.all(UIConstants.paddingM),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _ResponsiveStatsGrid(
+                          children: [
+                            _buildStat(
+                              '${products.length}',
+                              'Produk tampil',
+                              Icons.inventory_2_outlined,
+                              const Color(0xFF1565C0),
+                            ),
+                            _buildStat(
+                              avgPrice > 0
+                                  ? CurrencyHelper.formatRupiah(avgPrice)
+                                  : '-',
+                              'Rata-rata harga',
+                              Icons.payments_outlined,
+                              const Color(0xFF6A1B9A),
+                            ),
+                            _buildStat(
+                              '${mlState.ecoRecs.data.length}',
+                              'Eco picks',
+                              Icons.eco_outlined,
+                              AppTheme.primaryColor,
+                            ),
+                            _buildStat(
+                              avgEco != null
+                                  ? avgEco.toStringAsFixed(1)
+                                  : '-',
+                              'Avg eco score',
+                              Icons.energy_savings_leaf_outlined,
+                              const Color(0xFFE65100),
+                            ),
+                          ],
+                        ),
+                        if (hasRatings) ...[
+                          const SizedBox(height: UIConstants.spacingL),
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.star_outline_rounded,
+                                size: 15,
+                                color: Colors.grey[600],
+                              ),
+                              const SizedBox(width: 5),
+                              Text(
+                                'Distribusi Rating Produk',
+                                style: TextStyle(
+                                  fontSize: UIConstants.fontSizeS,
+                                  color: Colors.grey[700],
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: UIConstants.spacingS),
+                          RatingDistributionChart(counts: ratingCounts),
+                        ],
+                      ],
                     ),
                   ),
-                  const SizedBox(height: UIConstants.spacingM),
-                  GridView.count(
-                    crossAxisCount: 2,
-                    crossAxisSpacing: UIConstants.spacingS,
-                    mainAxisSpacing: UIConstants.spacingS,
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    childAspectRatio: 1.55,
-                    children: [
-                      StatCard(
-                        label: 'Produk tampil',
-                        value: '${products.length}',
-                        icon: Icons.inventory_2_outlined,
-                        compact: true,
-                      ),
-                      if (avgPrice > 0)
-                        StatCard(
-                          label: 'Rata-rata harga',
-                          value: CurrencyHelper.formatRupiah(avgPrice),
-                          icon: Icons.payments_outlined,
-                          compact: true,
-                        ),
-                      StatCard(
-                        label: 'Eco picks',
-                        value: '${mlState.ecoRecs.data.length}',
-                        icon: Icons.eco_outlined,
-                        compact: true,
-                      ),
-                      if (avgEco != null)
-                        StatCard(
-                          label: 'Avg eco score',
-                          value: avgEco.toStringAsFixed(1),
-                          icon: Icons.energy_savings_leaf_outlined,
-                          compact: true,
-                        ),
-                    ],
-                  ),
-                  if (ratingBars.any((value) => value > 0)) ...[
-                    const SizedBox(height: UIConstants.spacingM),
-                    Text(
-                      'Distribusi rating produk',
-                      style: TextStyle(
-                        fontSize: UIConstants.fontSizeXS,
-                        color: Colors.grey[600],
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    const SizedBox(height: UIConstants.spacingS),
-                    MiniBarChart(
-                      values: ratingBars,
-                      color: AppTheme.primaryColor,
-                    ),
-                  ],
                 ],
               ),
             );
@@ -11039,14 +11584,159 @@ class _HomeInsightSection extends StatelessWidget {
     );
   }
 
+  Widget _buildHeader() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(
+        horizontal: UIConstants.paddingM,
+        vertical: UIConstants.spacingM,
+      ),
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          colors: [AppTheme.primaryColor, Color(0xFF388E3C)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.2),
+              borderRadius: BorderRadius.circular(UIConstants.radiusS),
+            ),
+            child: const Icon(
+              Icons.insights_outlined,
+              color: Colors.white,
+              size: 18,
+            ),
+          ),
+          const SizedBox(width: UIConstants.spacingM),
+          const Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Greenly Insight',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: UIConstants.fontSizeL,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                Text(
+                  'Statistik produk terkini',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: Colors.white70,
+                    fontSize: UIConstants.fontSizeXS,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStat(String value, String label, IconData icon, Color color) {
+    return Container(
+      constraints: const BoxConstraints(minHeight: 92),
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(UIConstants.radiusM),
+        border: Border.all(color: color.withValues(alpha: 0.2)),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, color: color, size: 18),
+          const SizedBox(height: UIConstants.spacingS),
+          Flexible(
+            child: Text(
+              value,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                fontSize: UIConstants.fontSizeM,
+                fontWeight: FontWeight.w800,
+                color: Colors.black87,
+              ),
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: UIConstants.fontSizeXS,
+              color: Colors.grey[500],
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   List<double> _ratingDistribution(List<ProductData> products) {
     final counts = List<double>.filled(5, 0);
+
     for (final product in products) {
       if (product.ratingAverage <= 0) continue;
+
       final index = product.ratingAverage.round().clamp(1, 5) - 1;
       counts[index] += 1;
     }
+
     return counts;
+  }
+}
+
+class _ResponsiveStatsGrid extends StatelessWidget {
+  const _ResponsiveStatsGrid({
+    required this.children,
+  });
+
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = constraints.maxWidth;
+
+        final crossAxisCount = width >= 720
+            ? 4
+            : width >= 320
+                ? 2
+                : 1;
+
+        final childAspectRatio = crossAxisCount == 1
+            ? 3.2
+            : crossAxisCount == 2
+                ? 1.55
+                : 1.35;
+
+        return GridView.count(
+          crossAxisCount: crossAxisCount,
+          crossAxisSpacing: UIConstants.spacingS,
+          mainAxisSpacing: UIConstants.spacingS,
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          childAspectRatio: childAspectRatio,
+          children: children,
+        );
+      },
+    );
   }
 }
 </file>
@@ -11122,12 +11812,14 @@ class _NotificationScreenState extends State<NotificationScreen> {
   }
 
   Future<void> _loadNotifications() async {
+    if (!mounted) return;
     setState(() {
       _loading = true;
       _error = null;
     });
 
     final response = await _service.getNotifications();
+    if (!mounted) return;
 
     setState(() {
       _loading = false;
@@ -11142,27 +11834,38 @@ class _NotificationScreenState extends State<NotificationScreen> {
   Future<void> _markAsRead(NotificationData item) async {
     if (item.isRead) return;
     await _service.markAsRead(item.id);
+    if (!mounted) return;
     await _loadNotifications();
   }
 
   Future<void> _markAllAsRead() async {
     await _service.markAllAsRead();
+    if (!mounted) return;
     await _loadNotifications();
   }
 
   void _subscribeRealtime() {
     _subscription?.cancel();
-    _subscription = _service.streamNotifications().listen((event) {
-      final notification = event.notification;
-      if (!mounted || notification == null) return;
+    _subscription = _service.streamNotifications().listen(
+      (event) {
+        final notification = event.notification;
+        if (!mounted || notification == null) return;
 
-      setState(() {
-        _items = [
-          notification,
-          ..._items.where((item) => item.id != notification.id),
-        ];
-      });
-    });
+        setState(() {
+          _items = [
+            notification,
+            ..._items.where((item) => item.id != notification.id),
+          ];
+        });
+      },
+      onError: (_) {
+        if (!mounted) return;
+        setState(() {
+          _error =
+              'Realtime notifikasi gagal tersambung. Tarik untuk memuat ulang.';
+        });
+      },
+    );
   }
 
   @override
@@ -11181,7 +11884,17 @@ class _NotificationScreenState extends State<NotificationScreen> {
       return Center(
         child: Padding(
           padding: const EdgeInsets.all(UIConstants.paddingL),
-          child: Text(_error!, textAlign: TextAlign.center),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(_error!, textAlign: TextAlign.center),
+              const SizedBox(height: UIConstants.spacingM),
+              ElevatedButton(
+                onPressed: _loadNotifications,
+                child: const Text('Coba Lagi'),
+              ),
+            ],
+          ),
         ),
       );
     }
@@ -11390,9 +12103,15 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
     ProfileStatsRequested event,
     Emitter<ProfileState> emit,
   ) async {
-    emit(state.copyWith(isLoading: true));
-    final stats = await _service.getStats();
-    emit(state.copyWith(isLoading: false, stats: stats));
+    emit(state.copyWith(isLoading: true, error: null));
+    final result = await _service.getStats();
+    emit(
+      state.copyWith(
+        isLoading: false,
+        stats: result.stats,
+        error: result.error,
+      ),
+    );
   }
 }
 </file>
@@ -11415,24 +12134,28 @@ part of 'profile_bloc.dart';
 class ProfileState extends Equatable {
   final ProfileStatsData stats;
   final bool isLoading;
+  final String? error;
 
   const ProfileState({
     this.stats = const ProfileStatsData(),
     this.isLoading = false,
+    this.error,
   });
 
   ProfileState copyWith({
     ProfileStatsData? stats,
     bool? isLoading,
+    String? error,
   }) {
     return ProfileState(
       stats: stats ?? this.stats,
       isLoading: isLoading ?? this.isLoading,
+      error: error,
     );
   }
 
   @override
-  List<Object?> get props => [stats, isLoading];
+  List<Object?> get props => [stats, isLoading, error];
 }
 </file>
 
@@ -12467,53 +13190,56 @@ class MyActionWidget extends StatelessWidget {
               color: Colors.white,
               borderRadius: BorderRadius.circular(UIConstants.radiusL),
             ),
-            child: Column(
-              children: items.map((item) {
-                return Column(
-                  children: [
-                    ListTile(
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: UIConstants.paddingM,
-                        vertical: UIConstants.spacingS,
-                      ),
-                      leading: Container(
-                        padding: const EdgeInsets.all(UIConstants.paddingS),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF5F5F5),
-                          borderRadius: BorderRadius.circular(UIConstants.radiusS),
+            child: Material(
+              type: MaterialType.transparency,
+              child: Column(
+                children: items.map((item) {
+                  return Column(
+                    children: [
+                      ListTile(
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: UIConstants.paddingM,
+                          vertical: UIConstants.spacingS,
                         ),
-                        child: Icon(
-                          item.icon,
-                          size: UIConstants.iconSizeL,
-                          color: item.isDanger ? Colors.red : AppTheme.primaryColor,
+                        leading: Container(
+                          padding: const EdgeInsets.all(UIConstants.paddingS),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF5F5F5),
+                            borderRadius: BorderRadius.circular(UIConstants.radiusS),
+                          ),
+                          child: Icon(
+                            item.icon,
+                            size: UIConstants.iconSizeL,
+                            color: item.isDanger ? Colors.red : AppTheme.primaryColor,
+                          ),
                         ),
-                      ),
-                      title: Text(
-                        item.title,
-                        style: TextStyle(
-                          fontSize: UIConstants.fontSizeL,
-                          fontWeight: FontWeight.w600,
-                          color: item.isDanger ? Colors.red : const Color(0xFF1A1A2E),
+                        title: Text(
+                          item.title,
+                          style: TextStyle(
+                            fontSize: UIConstants.fontSizeL,
+                            fontWeight: FontWeight.w600,
+                            color: item.isDanger ? Colors.red : const Color(0xFF1A1A2E),
+                          ),
                         ),
-                      ),
-                      subtitle: Text(
-                        item.subtitle,
-                        style: const TextStyle(
-                          fontSize: UIConstants.fontSizeXS,
-                          color: Colors.grey,
+                        subtitle: Text(
+                          item.subtitle,
+                          style: const TextStyle(
+                            fontSize: UIConstants.fontSizeXS,
+                            color: Colors.grey,
+                          ),
                         ),
+                        trailing: const Icon(Icons.chevron_right, color: Colors.grey),
+                        onTap: item.onTap,
                       ),
-                      trailing: const Icon(Icons.chevron_right, color: Colors.grey),
-                      onTap: item.onTap,
-                    ),
-                    const Divider(
-                      height: 1,
-                      thickness: 1,
-                      color: Color(0xFFF0F0F0),
-                    ),
-                  ],
-                );
-              }).toList(),
+                      const Divider(
+                        height: 1,
+                        thickness: 1,
+                        color: Color(0xFFF0F0F0),
+                      ),
+                    ],
+                  );
+                }).toList(),
+              ),
             ),
           ),
         ],
@@ -12597,60 +13323,67 @@ class MyActivitiesWidget extends StatelessWidget {
       children: [
         const SectionTitleWidget(title: 'Aktivitas Saya'),
         const SizedBox(height: UIConstants.spacingS),
-        Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(UIConstants.radiusL),
+          Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(UIConstants.radiusL),
+            ),
+            child: Material(
+              type: MaterialType.transparency,
+              child: Column(
+                children: items.map((item) {
+                  return Column(
+                    children: [
+                      ListTile(
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: UIConstants.paddingM,
+                          vertical: UIConstants.spacingS,
+                        ),
+                        leading: Container(
+                          padding: const EdgeInsets.all(UIConstants.paddingS),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF5F5F5),
+                            borderRadius:
+                                BorderRadius.circular(UIConstants.radiusS),
+                          ),
+                          child: Icon(
+                            item.icon,
+                            size: UIConstants.iconSizeL,
+                            color: AppTheme.primaryColor,
+                          ),
+                        ),
+                        title: Text(
+                          item.title,
+                          style: const TextStyle(
+                            fontSize: UIConstants.fontSizeL,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF1A1A2E),
+                          ),
+                        ),
+                        subtitle: Text(
+                          item.subtitle,
+                          style: const TextStyle(
+                            fontSize: UIConstants.fontSizeXS,
+                            color: Colors.grey,
+                          ),
+                        ),
+                        trailing: const Icon(
+                          Icons.chevron_right,
+                          color: Colors.grey,
+                        ),
+                        onTap: item.onTap,
+                      ),
+                      const Divider(
+                        height: 1,
+                        thickness: 1,
+                        color: Color(0xFFF0F0F0),
+                      ),
+                    ],
+                  );
+                }).toList(),
+              ),
+            ),
           ),
-          child: Column(
-            children: items.map((item) {
-              return Column(
-                children: [
-                  ListTile(
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: UIConstants.paddingM,
-                      vertical: UIConstants.spacingS,
-                    ),
-                    leading: Container(
-                      padding: const EdgeInsets.all(UIConstants.paddingS),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF5F5F5),
-                        borderRadius:
-                            BorderRadius.circular(UIConstants.radiusS),
-                      ),
-                      child: Icon(
-                        item.icon,
-                        size: UIConstants.iconSizeL,
-                        color: AppTheme.primaryColor,
-                      ),
-                    ),
-                    title: Text(
-                      item.title,
-                      style: const TextStyle(
-                        fontSize: UIConstants.fontSizeL,
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFF1A1A2E),
-                      ),
-                    ),
-                    subtitle: Text(
-                      item.subtitle,
-                      style: const TextStyle(
-                        fontSize: UIConstants.fontSizeXS,
-                        color: Colors.grey,
-                      ),
-                    ),
-                    trailing: const Icon(
-                      Icons.chevron_right,
-                      color: Colors.grey,
-                    ),
-                    onTap: item.onTap,
-                  ),
-                  const Divider(height: 1, thickness: 1, color: Color(0xFFF0F0F0)),
-                ],
-              );
-            }).toList(),
-          ),
-        ),
       ],
     );
   }
@@ -13044,6 +13777,15 @@ class _ProfileView extends StatelessWidget {
                   reviewsCount: stats.reviews,
                   favoritesCount: stats.favorites,
                 ),
+                if (state.error != null) ...[
+                  const SizedBox(height: UIConstants.spacingM),
+                  _ProfileStatsError(
+                    message: state.error!,
+                    onRetry: () => context.read<ProfileBloc>().add(
+                      ProfileStatsRequested(),
+                    ),
+                  ),
+                ],
                 const SizedBox(height: UIConstants.spacingXL),
                 const AddressSectionWidget(),
                 const SizedBox(height: UIConstants.spacingXL),
@@ -13060,6 +13802,32 @@ class _ProfileView extends StatelessWidget {
     );
   }
 }
+
+class _ProfileStatsError extends StatelessWidget {
+  final String message;
+  final VoidCallback onRetry;
+
+  const _ProfileStatsError({required this.message, required this.onRetry});
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.orange.withValues(alpha: 0.08),
+      borderRadius: BorderRadius.circular(UIConstants.radiusM),
+      child: Padding(
+        padding: const EdgeInsets.all(UIConstants.paddingM),
+        child: Row(
+          children: [
+            const Icon(Icons.info_outline_rounded, color: Colors.orange),
+            const SizedBox(width: UIConstants.spacingS),
+            Expanded(child: Text(message)),
+            TextButton(onPressed: onRetry, child: const Text('Retry')),
+          ],
+        ),
+      ),
+    );
+  }
+}
 </file>
 
 <file path="lib/features/Main/features/profile/profile_service.dart">
@@ -13071,26 +13839,36 @@ class ProfileService {
   static String get _coreBase => '${ENV.api}/core';
   static String get _catalogBase => '${ENV.api}/catalog';
 
-  Future<ProfileStatsData> getStats() async {
+  Future<ProfileStatsResult> getStats() async {
     final results = await Future.wait([
       _orderAndFollowing(),
       _totalOf('$_catalogBase/favorites'),
       _totalOf('$_catalogBase/reviews/mine'),
     ]);
 
-    final orderFollowing = results[0] as ({int orders, int following});
-    final favorites = results[1] as int;
-    final reviews = results[2] as int;
+    final orderFollowing = results[0] as ({int orders, int following})?;
+    final favorites = results[1] as int?;
+    final reviews = results[2] as int?;
+    final failures = [
+      if (orderFollowing == null) 'pesanan/following',
+      if (favorites == null) 'favorit',
+      if (reviews == null) 'ulasan',
+    ];
 
-    return ProfileStatsData(
-      orders: orderFollowing.orders,
-      following: orderFollowing.following,
-      reviews: reviews,
-      favorites: favorites,
+    return ProfileStatsResult(
+      stats: ProfileStatsData(
+        orders: orderFollowing?.orders ?? 0,
+        following: orderFollowing?.following ?? 0,
+        reviews: reviews ?? 0,
+        favorites: favorites ?? 0,
+      ),
+      error: failures.isEmpty
+          ? null
+          : 'Sebagian statistik gagal dimuat: ${failures.join(', ')}.',
     );
   }
 
-  Future<({int orders, int following})> _orderAndFollowing() async {
+  Future<({int orders, int following})?> _orderAndFollowing() async {
     try {
       final res = await ApiClient.get<Map<String, dynamic>>(
         '$_coreBase/auth/me',
@@ -13104,10 +13882,10 @@ class ProfileService {
         );
       }
     } catch (_) {}
-    return (orders: 0, following: 0);
+    return null;
   }
 
-  Future<int> _totalOf(String url) async {
+  Future<int?> _totalOf(String url) async {
     try {
       final res = await ApiClient.get(
         url,
@@ -13115,9 +13893,8 @@ class ProfileService {
         fromJsonT: (json) => json,
       );
       return res.metaData?.total ?? 0;
-    } catch (_) {
-      return 0;
-    }
+    } catch (_) {}
+    return null;
   }
 
   int _toInt(dynamic value) {
@@ -13125,6 +13902,13 @@ class ProfileService {
     if (value is num) return value.toInt();
     return int.tryParse('$value') ?? 0;
   }
+}
+
+class ProfileStatsResult {
+  final ProfileStatsData stats;
+  final String? error;
+
+  const ProfileStatsResult({required this.stats, this.error});
 }
 </file>
 
@@ -13239,7 +14023,7 @@ class MainAppBar extends StatelessWidget implements PreferredSizeWidget {
       if (config.showSetting)
         IconButton(
           onPressed: () {
-            Navigator.pushNamed(context, AppRoutes.settings);
+            Navigator.pushNamed(context, AppRoutes.editProfile);
           },
           icon: const Icon(Icons.settings_outlined),
           color: AppTheme.primaryColor,
@@ -13365,6 +14149,9 @@ class MlProductResult extends Equatable {
   final double? ratingAverage;
   final int? reviewCount;
   final int? favoriteCount;
+  final int? stock;
+  final String? categoryName;
+  final String? shopName;
   final String reason;
 
   const MlProductResult({
@@ -13381,6 +14168,9 @@ class MlProductResult extends Equatable {
     this.ratingAverage,
     this.reviewCount,
     this.favoriteCount,
+    this.stock,
+    this.categoryName,
+    this.shopName,
     required this.reason,
   });
 
@@ -13410,6 +14200,9 @@ class MlProductResult extends Equatable {
       ratingAverage: _d(json['rating_average'] ?? json['ratingAverage']),
       reviewCount: _i(json['review_count'] ?? json['reviewCount']),
       favoriteCount: _i(json['favorite_count'] ?? json['favoriteCount']),
+      stock: _i(json['stock']),
+      categoryName: json['category_name'] as String? ?? json['categoryName'] as String?,
+      shopName: json['shop_name'] as String? ?? json['shopName'] as String?,
       reason: json['reason'] as String? ?? '',
     );
   }
@@ -13625,6 +14418,9 @@ class MlProductCard extends StatelessWidget {
         rating: product.ratingAverage,
         reviewCount: product.reviewCount,
         favoriteCount: product.favoriteCount,
+        stock: product.stock,
+        categoryName: product.categoryName,
+        shopName: product.shopName,
         semanticReason: product.reason,
         variant: ProductCardVariant.compact,
       ),
@@ -16364,6 +17160,7 @@ class _ErrorView extends StatelessWidget {
 import 'package:app/core/constants/ui_constants.dart';
 import 'package:app/core/theme/app_theme.dart';
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 class PaymentWebViewScreen extends StatefulWidget {
@@ -16381,13 +17178,23 @@ class PaymentWebViewScreen extends StatefulWidget {
 }
 
 class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
-  late final WebViewController _controller;
+  WebViewController? _controller;
   int _progress = 0;
   bool _handledRedirect = false;
+  String? _error;
+  late final Uri? _paymentUri;
 
   @override
   void initState() {
     super.initState();
+    _paymentUri = Uri.tryParse(widget.paymentUrl);
+    final paymentUri = _paymentUri;
+    if (paymentUri == null ||
+        !(paymentUri.scheme == 'http' || paymentUri.scheme == 'https')) {
+      _error = 'Link pembayaran tidak valid.';
+      return;
+    }
+
     _controller = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
       ..setNavigationDelegate(
@@ -16403,9 +17210,16 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
             }
             return NavigationDecision.navigate;
           },
+          onWebResourceError: (error) {
+            if (!mounted) return;
+            setState(() {
+              _error = 'Gagal memuat halaman pembayaran. Coba lagi.';
+            });
+          },
         ),
-      )
-      ..loadRequest(Uri.parse(widget.paymentUrl));
+      );
+
+    _controller?.loadRequest(paymentUri);
   }
 
   String? _detectRedirect(String url) {
@@ -16473,6 +17287,22 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
     }
   }
 
+  Future<void> _retry() async {
+    final uri = _paymentUri;
+    if (uri == null) return;
+    setState(() {
+      _error = null;
+      _progress = 0;
+    });
+    await _controller?.loadRequest(uri);
+  }
+
+  Future<void> _openExternal() async {
+    final uri = _paymentUri;
+    if (uri == null) return;
+    await launchUrl(uri, mode: LaunchMode.externalApplication);
+  }
+
   @override
   Widget build(BuildContext context) {
     return PopScope(
@@ -16522,7 +17352,77 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
                 textAlign: TextAlign.center,
               ),
             ),
-            Expanded(child: WebViewWidget(controller: _controller)),
+            Expanded(
+              child: _error == null
+                  ? WebViewWidget(controller: _controller!)
+                  : _PaymentErrorView(
+                      message: _error!,
+                      canRetry: _paymentUri != null,
+                      onRetry: _retry,
+                      onOpenExternal: _openExternal,
+                      onClose: () => Navigator.pop(context, false),
+                    ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _PaymentErrorView extends StatelessWidget {
+  final String message;
+  final bool canRetry;
+  final VoidCallback onRetry;
+  final VoidCallback onOpenExternal;
+  final VoidCallback onClose;
+
+  const _PaymentErrorView({
+    required this.message,
+    required this.canRetry,
+    required this.onRetry,
+    required this.onOpenExternal,
+    required this.onClose,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(UIConstants.paddingL),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.payment_rounded, size: 52, color: Colors.grey[300]),
+            const SizedBox(height: UIConstants.spacingM),
+            const Text(
+              'Pembayaran Tidak Bisa Dimuat',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: UIConstants.fontSizeL,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            const SizedBox(height: UIConstants.spacingS),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.grey[600]),
+            ),
+            const SizedBox(height: UIConstants.spacingL),
+            if (canRetry)
+              ElevatedButton.icon(
+                onPressed: onRetry,
+                icon: const Icon(Icons.refresh_rounded),
+                label: const Text('Coba Lagi'),
+              ),
+            if (canRetry)
+              TextButton.icon(
+                onPressed: onOpenExternal,
+                icon: const Icon(Icons.open_in_new_rounded),
+                label: const Text('Buka di Browser'),
+              ),
+            TextButton(onPressed: onClose, child: const Text('Tutup')),
           ],
         ),
       ),
@@ -16969,6 +17869,7 @@ class SimilarProductsState {
 class DetailProductData {
   final String id;
   final String shopId;
+  final String shopName;
   final String categoryId;
   final String name;
   final String slug;
@@ -16989,6 +17890,7 @@ class DetailProductData {
   DetailProductData({
     required this.id,
     required this.shopId,
+    required this.shopName,
     required this.categoryId,
     required this.name,
     required this.slug,
@@ -17009,24 +17911,37 @@ class DetailProductData {
 
   factory DetailProductData.fromJson(Map<String, dynamic> json) {
     return DetailProductData(
-      id: json['id'],
-      shopId: json['shopId'],
-      categoryId: json['categoryId'],
-      name: json['name'],
-      slug: json['slug'],
-      description: json['description'],
-      sku: json['sku'],
-      favoriteCount: json['favoriteCount'],
-      reviewCount: json['reviewCount'],
-      ratingAverage: (json['ratingAverage'] as num).toDouble(),
-      isActive: json['isActive'],
-      price: json['price'],
-      currency: json['currency'],
-      stock: json['stock'],
-      imageUrls: List<String>.from(json['imageUrls']),
-      categoryName: json['categoryName'],
-      createdAt: DateTime.parse(json['createdAt']),
-      updatedAt: DateTime.parse(json['updatedAt']),
+      id: json['id']?.toString() ?? '',
+      shopId: json['shopId']?.toString() ?? '',
+      shopName: json['shopName']?.toString() ?? '',
+      categoryId: json['categoryId']?.toString() ?? '',
+      name: json['name']?.toString() ?? '',
+      slug: json['slug']?.toString() ?? '',
+      description: json['description']?.toString() ?? '',
+      sku: json['sku']?.toString() ?? '',
+      favoriteCount: json['favoriteCount'] is int
+          ? json['favoriteCount'] as int
+          : int.tryParse('${json['favoriteCount']}') ?? 0,
+      reviewCount: json['reviewCount'] is int
+          ? json['reviewCount'] as int
+          : int.tryParse('${json['reviewCount']}') ?? 0,
+      ratingAverage: (json['ratingAverage'] as num?)?.toDouble() ?? 0.0,
+      isActive: json['isActive'] as bool? ?? false,
+      price: json['price'] is int
+          ? json['price'] as int
+          : int.tryParse('${json['price']}') ?? 0,
+      currency: json['currency']?.toString() ?? 'IDR',
+      stock: json['stock'] is int
+          ? json['stock'] as int
+          : int.tryParse('${json['stock']}') ?? 0,
+      imageUrls: json['imageUrls'] is List
+          ? List<String>.from(json['imageUrls'] as List)
+          : const [],
+      categoryName: json['categoryName']?.toString() ?? '',
+      createdAt: DateTime.tryParse(json['createdAt']?.toString() ?? '') ??
+          DateTime.now(),
+      updatedAt: DateTime.tryParse(json['updatedAt']?.toString() ?? '') ??
+          DateTime.now(),
     );
   }
 
@@ -17034,6 +17949,7 @@ class DetailProductData {
     return {
       'id': id,
       'shopId': shopId,
+      'shopName': shopName,
       'categoryId': categoryId,
       'name': name,
       'slug': slug,
@@ -17948,6 +18864,7 @@ import 'package:flutter/material.dart';
 
 class ShopInfoWidget extends StatefulWidget {
   final String shopId;
+  final String? shopName;
   final String? categoryName;
   final String? productId;
   final String? productName;
@@ -17957,6 +18874,7 @@ class ShopInfoWidget extends StatefulWidget {
   const ShopInfoWidget({
     super.key,
     required this.shopId,
+    this.shopName,
     this.categoryName,
     this.productId,
     this.productName,
@@ -17985,25 +18903,25 @@ class _ShopInfoWidgetState extends State<ShopInfoWidget> {
 
   void _openShop(ShopData? shop) {
     if (widget.shopId.isEmpty) return;
-
     Navigator.pushNamed(
       context,
       AppRoutes.shopDetail,
       arguments: {
         'shopId': widget.shopId,
         if (shop != null) 'shopName': shop.name,
+        if (shop == null && widget.shopName != null) 'shopName': widget.shopName,
       },
     );
   }
 
-  void _openChat(ShopData shop) {
+  void _openChat(String name, String? avatarUrl) {
     Navigator.pushNamed(
       context,
       AppRoutes.chat,
       arguments: {
-        'shopId': shop.id,
-        'shopName': shop.name,
-        'shopAvatarUrl': shop.avatarUrl,
+        'shopId': widget.shopId,
+        'shopName': name,
+        'shopAvatarUrl': avatarUrl,
         'productId': widget.productId,
         'productName': widget.productName,
         'productImageUrl': widget.productImageUrl,
@@ -18019,9 +18937,16 @@ class _ShopInfoWidgetState extends State<ShopInfoWidget> {
       builder: (context, snapshot) {
         final shop = snapshot.data;
         final isLoading = snapshot.connectionState == ConnectionState.waiting;
-        final title =
+
+        final displayName =
             shop?.name ??
-            (isLoading ? 'Memuat toko' : widget.categoryName ?? 'Toko');
+            widget.shopName ??
+            (isLoading ? 'Memuat toko...' : widget.categoryName ?? 'Toko');
+
+        final canChat =
+            !isLoading &&
+            widget.shopId.isNotEmpty &&
+            displayName.isNotEmpty;
 
         return Container(
           padding: const EdgeInsets.all(UIConstants.paddingM),
@@ -18046,7 +18971,7 @@ class _ShopInfoWidgetState extends State<ShopInfoWidget> {
                       ),
                     ),
                     Text(
-                      title,
+                      displayName,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
@@ -18060,12 +18985,15 @@ class _ShopInfoWidgetState extends State<ShopInfoWidget> {
               const SizedBox(width: UIConstants.spacingS),
               IconButton.outlined(
                 tooltip: 'Chat Toko',
-                onPressed: shop == null ? null : () => _openChat(shop),
+                onPressed: canChat
+                    ? () => _openChat(displayName, shop?.avatarUrl)
+                    : null,
                 icon: const Icon(Icons.chat_bubble_outline_rounded),
               ),
               const SizedBox(width: UIConstants.spacingXS),
               TextButton(
-                onPressed: widget.shopId.isEmpty ? null : () => _openShop(shop),
+                onPressed:
+                    widget.shopId.isEmpty ? null : () => _openShop(shop),
                 child: const Text('Kunjungi'),
               ),
             ],
@@ -18094,7 +19022,10 @@ class _ShopAvatar extends StatelessWidget {
     return CircleAvatar(
       radius: 24,
       backgroundColor: AppTheme.primaryColor.withValues(alpha: 0.1),
-      child: const Icon(Icons.storefront_rounded, color: AppTheme.primaryColor),
+      child: const Icon(
+        Icons.storefront_rounded,
+        color: AppTheme.primaryColor,
+      ),
     );
   }
 }
@@ -18243,7 +19174,10 @@ class StockBadgeWidget extends StatelessWidget {
 </file>
 
 <file path="lib/features/product-detail/product_detail_screen.dart">
+import 'dart:async';
+
 import 'package:app/core/constants/ui_constants.dart';
+import 'package:app/core/router/app_routes.dart';
 import 'package:app/core/theme/app_theme.dart';
 import 'package:app/features/product-detail/bloc/product_detail_bloc.dart';
 import 'package:app/features/product-detail/bloc/product_detail_event.dart';
@@ -18358,11 +19292,13 @@ class _ProductDetailView extends StatelessWidget {
         backgroundColor: Colors.white,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
-          onPressed: () => Navigator.pushNamedAndRemoveUntil(
-            context,
-            '/main',
-            (route) => false,
-          ),
+          onPressed: () {
+            if (Navigator.canPop(context)) {
+              Navigator.pop(context);
+              return;
+            }
+            Navigator.pushReplacementNamed(context, AppRoutes.main);
+          },
         ),
         centerTitle: true,
         title: const Text(
@@ -18530,6 +19466,9 @@ class _ProductDetailView extends StatelessWidget {
                     padding: const EdgeInsets.all(UIConstants.paddingM),
                     child: ShopInfoWidget(
                       shopId: product.shopId,
+                      shopName: product.shopName.isNotEmpty
+                          ? product.shopName
+                          : null,
                       categoryName: product.categoryName,
                       productId: product.id,
                       productName: product.name,
@@ -18620,15 +19559,7 @@ class _ProductDetailView extends StatelessWidget {
                     ),
                     child: IconButton(
                       onPressed: () {
-                        context.read<CartBloc>().add(
-                          CartAddItemRequested(productId: product.id),
-                        );
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Ditambahkan ke keranjang'),
-                            duration: Duration(seconds: 1),
-                          ),
-                        );
+                        _addToCart(context, product.id);
                       },
                       icon: const Icon(
                         Icons.shopping_cart_outlined,
@@ -18641,14 +19572,11 @@ class _ProductDetailView extends StatelessWidget {
                     child: SizedBox(
                       height: UIConstants.buttonHeight,
                       child: ElevatedButton(
-                        onPressed: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Beli sekarang'),
-                              duration: Duration(seconds: 1),
-                            ),
-                          );
-                        },
+                        onPressed: () => _addToCart(
+                          context,
+                          product.id,
+                          openCartOnSuccess: true,
+                        ),
                         child: const Text(
                           'Beli Sekarang',
                           style: TextStyle(
@@ -18666,6 +19594,46 @@ class _ProductDetailView extends StatelessWidget {
         },
       ),
     );
+  }
+
+  Future<void> _addToCart(
+    BuildContext context,
+    String productId, {
+    bool openCartOnSuccess = false,
+  }) async {
+    final cartBloc = context.read<CartBloc>();
+    final messenger = ScaffoldMessenger.of(context);
+    final navigator = Navigator.of(context);
+
+    cartBloc.add(CartAddItemRequested(productId: productId));
+
+    final state = await cartBloc.stream
+        .firstWhere((state) => !state.isAdding(productId))
+        .timeout(const Duration(seconds: 12), onTimeout: () => cartBloc.state);
+
+    if (!context.mounted) return;
+
+    if (state.error != null) {
+      messenger.showSnackBar(
+        SnackBar(content: Text(state.error!), backgroundColor: Colors.red),
+      );
+      return;
+    }
+
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text(
+          openCartOnSuccess
+              ? 'Produk ditambahkan. Lanjutkan checkout dari keranjang.'
+              : 'Ditambahkan ke keranjang',
+        ),
+        duration: const Duration(seconds: 1),
+      ),
+    );
+
+    if (openCartOnSuccess) {
+      await navigator.pushNamed(AppRoutes.cart);
+    }
   }
 }
 
@@ -19176,6 +20144,7 @@ import 'package:app/features/Main/features/home/widgets/product_widget.dart';
 import 'package:app/features/products/presentation/bloc/product_list_bloc.dart';
 import 'package:app/features/products/service/product_list_service.dart';
 import 'package:app/shared/widgets/cart_button_widget.dart';
+import 'package:app/shared/widgets/product/adaptive_product_grid_delegate.dart';
 import 'package:app/shared/widgets/product/product_card_skeleton.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -19269,12 +20238,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
               child: GridView.builder(
                 controller: _scrollController,
                 padding: const EdgeInsets.all(UIConstants.paddingM),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  crossAxisSpacing: UIConstants.spacingM,
-                  mainAxisSpacing: UIConstants.spacingM,
-                  childAspectRatio: 0.55,
-                ),
+                gridDelegate: adaptiveProductGridDelegate(),
                 itemCount: state.data.length + (state.isLoadingMore ? 2 : 0),
                 itemBuilder: (context, i) {
                   if (i >= state.data.length) {
@@ -20145,6 +21109,13 @@ class SearchProductResult extends Equatable {
   final double? ecoScore;
   final String? reason;
   final bool fromFallback;
+  final double? rating;
+  final int? reviewCount;
+  final int? stock;
+  final int? favoriteCount;
+  final bool isFavorite;
+  final String? categoryName;
+  final String? shopName;
 
   const SearchProductResult({
     required this.id,
@@ -20156,18 +21127,44 @@ class SearchProductResult extends Equatable {
     this.ecoScore,
     this.reason,
     this.fromFallback = false,
+    this.rating,
+    this.reviewCount,
+    this.stock,
+    this.favoriteCount,
+    this.isFavorite = false,
+    this.categoryName,
+    this.shopName,
   });
 
   factory SearchProductResult.fromMl(Map<String, dynamic> json) {
+    final rawUrls = json['image_urls'] ?? json['imageUrls'];
+    final imageUrls =
+        rawUrls is List ? rawUrls.whereType<String>().toList() : <String>[];
+    final imageUrl =
+        json['image_url']?.toString() ??
+        json['imageUrl']?.toString() ??
+        (imageUrls.isNotEmpty ? imageUrls.first : null);
+
     return SearchProductResult(
       id: json['product_id']?.toString() ?? json['id']?.toString() ?? '',
       name: json['name']?.toString() ?? '',
       slug: json['slug']?.toString(),
       price: (json['price'] as num?)?.toDouble(),
       currency: json['currency']?.toString(),
-      imageUrl: json['image_url']?.toString(),
+      imageUrl: imageUrl,
       ecoScore: (json['eco_score'] as num?)?.toDouble(),
       reason: json['reason']?.toString(),
+      rating: (json['rating_average'] as num?)?.toDouble() ??
+          (json['ratingAverage'] as num?)?.toDouble(),
+      reviewCount: (json['review_count'] as num?)?.toInt() ??
+          (json['reviewCount'] as num?)?.toInt(),
+      favoriteCount: (json['favorite_count'] as num?)?.toInt() ??
+          (json['favoriteCount'] as num?)?.toInt(),
+      stock: (json['stock'] as num?)?.toInt(),
+      categoryName: json['category_name']?.toString() ??
+          json['categoryName']?.toString(),
+      shopName:
+          json['shop_name']?.toString() ?? json['shopName']?.toString(),
     );
   }
 
@@ -20184,11 +21181,34 @@ class SearchProductResult extends Equatable {
           : null,
       reason: json['description']?.toString(),
       fromFallback: true,
+      rating: (json['ratingAverage'] as num?)?.toDouble(),
+      reviewCount: (json['reviewCount'] as num?)?.toInt(),
+      favoriteCount: (json['favoriteCount'] as num?)?.toInt(),
+      stock: (json['stock'] as num?)?.toInt(),
+      categoryName: json['categoryName']?.toString(),
+      shopName: json['shopName']?.toString(),
     );
   }
 
   @override
-  List<Object?> get props => [id, name, slug, price, currency, imageUrl, ecoScore, reason, fromFallback];
+  List<Object?> get props => [
+    id,
+    name,
+    slug,
+    price,
+    currency,
+    imageUrl,
+    ecoScore,
+    reason,
+    fromFallback,
+    rating,
+    reviewCount,
+    stock,
+    favoriteCount,
+    isFavorite,
+    categoryName,
+    shopName,
+  ];
 }
 </file>
 
@@ -20297,11 +21317,28 @@ class SearchProductService {
 
     final catalogResp = await ApiClient.get<List<SearchProductResult>>(
       '${ENV.api}/catalog/products/search',
-      query: {'q': query, 'page': 1, 'limit': limit},
+      query: buildCatalogFallbackQuery(
+        query: query,
+        limit: limit,
+        filters: filters,
+      ),
       fromJsonT: _parseCatalogResults,
     );
 
     return SearchResultPair(catalogResp.data ?? [], fromFallback: true);
+  }
+
+  static Map<String, dynamic> buildCatalogFallbackQuery({
+    required String query,
+    required int limit,
+    SearchProductFilter? filters,
+  }) {
+    return {
+      'q': query,
+      'page': 1,
+      'limit': limit,
+      if (filters != null && !filters.isEmpty) ...filters.toJson(),
+    };
   }
 
   static List<SearchProductResult> _parseMlResults(dynamic json) {
@@ -20714,6 +21751,13 @@ class SearchResultCard extends StatelessWidget {
         ecoScore: result.ecoScore,
         semanticReason: result.reason,
         fromFallback: result.fromFallback,
+        rating: result.rating,
+        reviewCount: result.reviewCount,
+        favoriteCount: result.favoriteCount,
+        stock: result.stock,
+        categoryName: result.categoryName,
+        shopName: result.shopName,
+        isFavorite: result.isFavorite,
         variant: ProductCardVariant.horizontal,
       ),
       onTap: onTap,
@@ -21710,6 +22754,7 @@ import 'package:app/features/products/service/product_list_service.dart';
 import 'package:app/features/shop/presentation/bloc/shop_detail_bloc.dart';
 import 'package:app/features/shop/service/shop_service.dart';
 import 'package:app/shared/widgets/cart_button_widget.dart';
+import 'package:app/shared/widgets/product/adaptive_product_grid_delegate.dart';
 import 'package:app/shared/widgets/charts/stat_card.dart';
 import 'package:app/shared/widgets/product/product_card_skeleton.dart';
 import 'package:app/shared/widgets/skeleton/shop_skeleton.dart';
@@ -21793,13 +22838,15 @@ class _ShopDetailScreenState extends State<ShopDetailScreen> {
           ],
         ),
         body: BlocConsumer<ShopDetailBloc, ShopDetailState>(
-          listenWhen: (p, c) => c.error != null && p.error != c.error,
+          listenWhen: (p, c) =>
+              c.error != null && p.error != c.error && c.shop != null,
           listener: (context, state) {
             if (state.error != null) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text(state.error!),
-                  backgroundColor: Colors.red,
+                  content: Text(_friendlyShopError(state.error)),
+                  backgroundColor: Colors.red.shade700,
+                  behavior: SnackBarBehavior.floating,
                 ),
               );
             }
@@ -21810,28 +22857,12 @@ class _ShopDetailScreenState extends State<ShopDetailScreen> {
             }
 
             if (shopState.shop == null) {
-              return Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(UIConstants.paddingL),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        shopState.error ?? 'Toko tidak ditemukan',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(color: Colors.grey[600]),
-                      ),
-                      const SizedBox(height: UIConstants.spacingM),
-                      ElevatedButton(
-                        onPressed: () => context.read<ShopDetailBloc>().add(
-                          ShopDetailRequested(
-                            widget.shopId,
-                            initiallyFollowing: widget.initiallyFollowing,
-                          ),
-                        ),
-                        child: const Text('Coba Lagi'),
-                      ),
-                    ],
+              return _ShopErrorState(
+                message: _friendlyShopError(shopState.error),
+                onRetry: () => context.read<ShopDetailBloc>().add(
+                  ShopDetailRequested(
+                    widget.shopId,
+                    initiallyFollowing: widget.initiallyFollowing,
                   ),
                 ),
               );
@@ -21867,6 +22898,24 @@ class _ShopDetailScreenState extends State<ShopDetailScreen> {
     );
   }
 
+  String _friendlyShopError(String? raw) {
+    if (raw == null) return 'Toko tidak ditemukan.';
+    final lower = raw.toLowerCase();
+    if (lower.contains('validation')) {
+      return 'Data toko tidak valid. Silakan kembali dan buka toko dari produk yang tersedia.';
+    }
+    if (lower.contains('not found') || lower.contains('404')) {
+      return 'Toko tidak ditemukan.';
+    }
+    if (lower.contains('server') || lower.contains('500')) {
+      return 'Server sedang bermasalah. Coba lagi nanti.';
+    }
+    if (lower.contains('unauthorized') || lower.contains('401')) {
+      return 'Silakan login ulang.';
+    }
+    return raw;
+  }
+
   Widget _buildProductSliver() {
     return BlocBuilder<ProductListBloc, ProductListState>(
       builder: (context, state) {
@@ -21891,12 +22940,7 @@ class _ShopDetailScreenState extends State<ShopDetailScreen> {
         return SliverPadding(
           padding: const EdgeInsets.all(UIConstants.paddingM),
           sliver: SliverGrid(
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              crossAxisSpacing: UIConstants.spacingM,
-              mainAxisSpacing: UIConstants.spacingM,
-              childAspectRatio: 0.55,
-            ),
+            gridDelegate: adaptiveProductGridDelegate(),
             delegate: SliverChildBuilderDelegate(
               (context, i) => ProductWidget(product: state.data[i]),
               childCount: state.data.length,
@@ -22046,6 +23090,53 @@ class _ShopHeader extends StatelessWidget {
             ],
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _ShopErrorState extends StatelessWidget {
+  final String message;
+  final VoidCallback onRetry;
+
+  const _ShopErrorState({required this.message, required this.onRetry});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(UIConstants.paddingL),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.storefront_rounded, size: 56, color: Colors.grey[300]),
+            const SizedBox(height: UIConstants.spacingM),
+            const Text(
+              'Toko gagal dimuat',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontWeight: FontWeight.w700,
+                fontSize: UIConstants.fontSizeL,
+              ),
+            ),
+            const SizedBox(height: UIConstants.spacingS),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: Colors.grey[600],
+                fontSize: UIConstants.fontSizeM,
+              ),
+            ),
+            const SizedBox(height: UIConstants.spacingL),
+            ElevatedButton(onPressed: onRetry, child: const Text('Coba Lagi')),
+            const SizedBox(height: UIConstants.spacingS),
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Kembali'),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -22267,14 +23358,16 @@ class UserModel {
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
+    final profile = json['profile'];
+    final fullName = profile is Map ? profile['fullName']?.toString() : null;
     return UserModel(
-      id: json['id'] ?? '',
-      name: json['profile']?['fullName'] ?? '',
-      email: json['email'] ?? '',
-      status: json['status'] ?? '',
+      id: json['id']?.toString() ?? '',
+      name: fullName ?? json['name']?.toString() ?? '',
+      email: json['email']?.toString() ?? '',
+      status: json['status']?.toString() ?? '',
       roles: List<String>.from(json['roles'] ?? []),
       shops: (json['shop'] as List<dynamic>? ?? [])
-          .map((shop) => ShopModel.fromJson(shop))
+          .map((shop) => ShopModel.fromJson(shop as Map<String, dynamic>))
           .toList(),
     );
   }
@@ -22762,6 +23855,169 @@ class ProgressStat extends StatelessWidget {
 }
 </file>
 
+<file path="lib/shared/widgets/charts/rating_distribution_chart.dart">
+import 'package:app/core/theme/app_theme.dart';
+import 'package:fl_chart/fl_chart.dart';
+import 'package:flutter/material.dart';
+
+class RatingDistributionChart extends StatelessWidget {
+  final List<double> counts;
+
+  const RatingDistributionChart({super.key, required this.counts});
+
+  @override
+  Widget build(BuildContext context) {
+    final maxCount = counts.isEmpty
+        ? 0.0
+        : counts.reduce((a, b) => a > b ? a : b);
+    if (maxCount == 0) return const SizedBox.shrink();
+
+    final yInterval = maxCount <= 5 ? 1.0 : (maxCount / 5).ceilToDouble();
+
+    return SizedBox(
+      height: 170,
+      child: BarChart(
+        BarChartData(
+          alignment: BarChartAlignment.spaceAround,
+          maxY: maxCount + yInterval,
+          barTouchData: BarTouchData(
+            enabled: true,
+            touchTooltipData: BarTouchTooltipData(
+              getTooltipColor: (_) =>
+                  AppTheme.primaryColor.withValues(alpha: 0.9),
+              tooltipRoundedRadius: 8,
+              getTooltipItem: (group, groupIndex, rod, rodIndex) {
+                return BarTooltipItem(
+                  '${rod.toY.toInt()} produk',
+                  const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 11,
+                  ),
+                );
+              },
+            ),
+          ),
+          titlesData: FlTitlesData(
+            bottomTitles: AxisTitles(
+              axisNameWidget: Padding(
+                padding: const EdgeInsets.only(top: 6),
+                child: Text(
+                  'Bintang',
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: Colors.grey[500],
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+              axisNameSize: 22,
+              sideTitles: SideTitles(
+                showTitles: true,
+                reservedSize: 24,
+                getTitlesWidget: (value, meta) {
+                  const labels = ['1★', '2★', '3★', '4★', '5★'];
+                  final idx = value.toInt();
+                  if (idx < 0 || idx >= labels.length) {
+                    return const SizedBox.shrink();
+                  }
+                  return Padding(
+                    padding: const EdgeInsets.only(top: 4),
+                    child: Text(
+                      labels[idx],
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.grey[600],
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+            leftTitles: AxisTitles(
+              axisNameWidget: Padding(
+                padding: const EdgeInsets.only(right: 4),
+                child: Text(
+                  'Jml',
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: Colors.grey[500],
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+              axisNameSize: 24,
+              sideTitles: SideTitles(
+                showTitles: true,
+                interval: yInterval,
+                reservedSize: 28,
+                getTitlesWidget: (value, meta) {
+                  if (value == meta.max) return const SizedBox.shrink();
+                  return Text(
+                    value.toInt().toString(),
+                    style: TextStyle(fontSize: 10, color: Colors.grey[500]),
+                  );
+                },
+              ),
+            ),
+            rightTitles: const AxisTitles(
+              sideTitles: SideTitles(showTitles: false),
+            ),
+            topTitles: const AxisTitles(
+              sideTitles: SideTitles(showTitles: false),
+            ),
+          ),
+          gridData: FlGridData(
+            show: true,
+            drawVerticalLine: false,
+            horizontalInterval: yInterval,
+            getDrawingHorizontalLine: (_) => FlLine(
+              color: Colors.grey.shade100,
+              strokeWidth: 1,
+            ),
+          ),
+          borderData: FlBorderData(
+            show: true,
+            border: Border(
+              bottom: BorderSide(color: Colors.grey.shade200),
+              left: BorderSide(color: Colors.grey.shade200),
+            ),
+          ),
+          barGroups: List.generate(5, (i) {
+            final count = i < counts.length ? counts[i] : 0.0;
+            final isHighest = count == maxCount && count > 0;
+            return BarChartGroupData(
+              x: i,
+              barRods: [
+                BarChartRodData(
+                  toY: count,
+                  gradient: LinearGradient(
+                    begin: Alignment.bottomCenter,
+                    end: Alignment.topCenter,
+                    colors: isHighest
+                        ? [AppTheme.primaryColor, AppTheme.secondaryColor]
+                        : [
+                            AppTheme.tertiaryColor,
+                            AppTheme.tertiaryColor.withValues(alpha: 0.5),
+                          ],
+                  ),
+                  width: 32,
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(6),
+                    topRight: Radius.circular(6),
+                  ),
+                ),
+              ],
+            );
+          }),
+        ),
+      ),
+    );
+  }
+}
+</file>
+
 <file path="lib/shared/widgets/charts/stat_card_skeleton.dart">
 import 'package:app/core/constants/ui_constants.dart';
 import 'package:app/shared/widgets/skeleton/app_skeleton_box.dart';
@@ -22899,6 +24155,23 @@ class StatCard extends StatelessWidget {
       ),
     );
   }
+}
+</file>
+
+<file path="lib/shared/widgets/product/adaptive_product_grid_delegate.dart">
+import 'package:app/core/constants/ui_constants.dart';
+import 'package:flutter/material.dart';
+
+SliverGridDelegate adaptiveProductGridDelegate({
+  double maxCrossAxisExtent = 230,
+  double childAspectRatio = 0.55,
+}) {
+  return SliverGridDelegateWithMaxCrossAxisExtent(
+    maxCrossAxisExtent: maxCrossAxisExtent,
+    crossAxisSpacing: UIConstants.spacingM,
+    mainAxisSpacing: UIConstants.spacingM,
+    childAspectRatio: childAspectRatio,
+  );
 }
 </file>
 
@@ -25568,7 +26841,7 @@ import 'package:intl/date_symbol_data_local.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await dotenv.load(fileName: '.env');
+  await _loadEnv();
   await initializeDateFormatting('id_ID', null);
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
@@ -25577,6 +26850,14 @@ Future<void> main() async {
     ),
   );
   runApp(const MyApp());
+}
+
+Future<void> _loadEnv() async {
+  try {
+    await dotenv.load(fileName: '.env');
+  } catch (_) {
+    await dotenv.load(fileName: '.env.example');
+  }
 }
 
 class MyApp extends StatelessWidget {
@@ -27581,36 +28862,249 @@ class RunnerTests: XCTestCase {
 **/xcuserdata/
 </file>
 
-<file path="test/widget_test.dart">
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
+<file path="test/auth_bloc_test.dart">
+import 'dart:convert';
 
+import 'package:app/features/auth/auth_service.dart';
+import 'package:app/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:app/features/auth/presentation/bloc/auth_event.dart';
+import 'package:app/features/auth/presentation/bloc/auth_state.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:flutter_test/flutter_test.dart';
+
+void main() {
+  group('AuthBloc', () {
+    test('auth check preserves existing stored session', () async {
+      FlutterSecureStorage.setMockInitialValues({
+        'access_token': 'access-token',
+        'refresh_token': 'refresh-token',
+        'user_data': jsonEncode({
+          'id': 'user-1',
+          'name': 'User One',
+          'email': 'user@example.com',
+          'status': 'ACTIVE',
+          'roles': ['CUSTOMER'],
+        }),
+      });
+
+      final bloc = AuthBloc(AuthService());
+      addTearDown(bloc.close);
+
+      bloc.add(AuthCheckRequested());
+
+      await expectLater(
+        bloc.stream,
+        emitsInOrder([
+          isA<AuthLoading>(),
+          isA<AuthAuthenticated>()
+              .having((state) => state.user.id, 'user id', 'user-1')
+              .having(
+                (state) => state.tokens.accessToken,
+                'access token',
+                'access-token',
+              ),
+        ]),
+      );
+    });
+  });
+}
+</file>
+
+<file path="test/cart_bloc_test.dart">
+import 'package:app/core/utils/api_response.dart';
+import 'package:app/features/cart/domain/data/cart_item_data.dart';
+import 'package:app/features/cart/presentation/bloc/cart_bloc.dart';
+import 'package:app/features/cart/service/cart_service.dart';
+import 'package:flutter_test/flutter_test.dart';
+
+void main() {
+  group('CartBloc', () {
+    test('remove failure preserves cart and emits error', () async {
+      final cart = CartData(
+        userId: 'user-1',
+        totalItems: 1,
+        items: [
+          CartItemData(
+            id: 'item-1',
+            productId: 'product-1',
+            quantity: 1,
+            createdAt: DateTime(2026),
+          ),
+        ],
+      );
+      final bloc = CartBloc(_FakeCartService(cart: cart, removeSuccess: false));
+      addTearDown(bloc.close);
+
+      bloc.add(CartLoadRequested());
+      await expectLater(
+        bloc.stream,
+        emitsThrough(predicate<CartState>((state) => state.cart == cart)),
+      );
+
+      bloc.add(const CartRemoveItemRequested(productId: 'product-1'));
+      await expectLater(
+        bloc.stream,
+        emitsThrough(
+          predicate<CartState>(
+            (state) =>
+                state.error == 'remove failed' && state.cart?.items.length == 1,
+          ),
+        ),
+      );
+    });
+  });
+}
+
+class _FakeCartService implements CartService {
+  _FakeCartService({required this.cart, required this.removeSuccess});
+
+  final CartData cart;
+  final bool removeSuccess;
+
+  @override
+  Future<ApiResponse<CartData>> getCart() async {
+    return ApiResponse<CartData>(
+      status: 'success',
+      statusCode: 200,
+      path: '/cart',
+      message: 'ok',
+      timestamp: DateTime(2026).toIso8601String(),
+      data: cart,
+    );
+  }
+
+  @override
+  Future<ApiResponse<CartData>> addItem({
+    required String productId,
+    int quantity = 1,
+  }) async {
+    return getCart();
+  }
+
+  @override
+  Future<ApiResponse<CartData>> updateItem({
+    required String productId,
+    required int quantity,
+  }) async {
+    return getCart();
+  }
+
+  @override
+  Future<ApiResponse<dynamic>> removeItem({required String productId}) async {
+    return ApiResponse<dynamic>(
+      status: removeSuccess ? 'success' : 'error',
+      statusCode: removeSuccess ? 200 : 500,
+      path: '/cart/items/$productId',
+      message: removeSuccess ? 'ok' : 'remove failed',
+      timestamp: DateTime(2026).toIso8601String(),
+    );
+  }
+
+  @override
+  Future<ApiResponse<dynamic>> clearCart() async {
+    return ApiResponse<dynamic>(
+      status: 'success',
+      statusCode: 200,
+      path: '/cart',
+      message: 'ok',
+      timestamp: DateTime(2026).toIso8601String(),
+    );
+  }
+}
+</file>
+
+<file path="test/payment_webview_screen_test.dart">
+import 'package:app/features/order/presentation/screens/payment_webview_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:app/main.dart';
+void main() {
+  testWidgets('payment webview shows error for invalid URL', (tester) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: PaymentWebViewScreen(paymentUrl: 'not-a-url', orderId: 'order-1'),
+      ),
+    );
+
+    expect(find.text('Pembayaran Tidak Bisa Dimuat'), findsOneWidget);
+    expect(find.text('Link pembayaran tidak valid.'), findsOneWidget);
+    expect(find.text('Tutup'), findsOneWidget);
+  });
+}
+</file>
+
+<file path="test/search_product_service_test.dart">
+import 'package:app/features/search-product/domain/dto/search_product_filter.dart';
+import 'package:app/features/search-product/service/search_product_service.dart';
+import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  group('SearchProductService', () {
+    test('catalog fallback query includes active filters', () {
+      final query = SearchProductService.buildCatalogFallbackQuery(
+        query: 'tas',
+        limit: 20,
+        filters: const SearchProductFilter(
+          categoryId: 'cat-1',
+          minPrice: 10000,
+          maxPrice: 50000,
+          minEcoScore: 70,
+        ),
+      );
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
-
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
-
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+      expect(query['q'], 'tas');
+      expect(query['page'], 1);
+      expect(query['limit'], 20);
+      expect(query['category_id'], 'cat-1');
+      expect(query['min_price'], 10000);
+      expect(query['max_price'], 50000);
+      expect(query['min_eco_score'], 70);
+    });
   });
+}
+</file>
+
+<file path="test/widget_test.dart">
+import 'package:app/core/router/app_routes.dart';
+import 'package:app/core/router/router_generate.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+
+void main() {
+  testWidgets('router shows fallback for invalid product detail args', (
+    tester,
+  ) async {
+    await tester.pumpWidget(_routeHarness(AppRoutes.productDetail));
+
+    expect(find.text('Data produk tidak tersedia'), findsOneWidget);
+  });
+
+  testWidgets('router shows fallback for invalid order detail args', (
+    tester,
+  ) async {
+    await tester.pumpWidget(_routeHarness(AppRoutes.orderDetail));
+
+    expect(find.text('Data pesanan tidak tersedia'), findsOneWidget);
+  });
+
+  testWidgets('router shows fallback for invalid review args', (tester) async {
+    await tester.pumpWidget(_routeHarness(AppRoutes.reviews));
+
+    expect(find.text('Data ulasan tidak tersedia'), findsOneWidget);
+  });
+}
+
+Widget _routeHarness(String routeName) {
+  return MaterialApp(
+    home: Builder(
+      builder: (context) {
+        final route =
+            RouterGenerate.generateRoute(RouteSettings(name: routeName))
+                as MaterialPageRoute<dynamic>;
+        return route.builder(context);
+      },
+    ),
+  );
 }
 </file>
 
@@ -28847,6 +30341,18 @@ install(FILES "${AOT_LIBRARY}" DESTINATION "${INSTALL_BUNDLE_DATA_DIR}"
   COMPONENT Runtime)
 </file>
 
+<file path=".env.example">
+# Greenly Flutter app environment.
+# This app uses flutter_dotenv and loads .env as a Flutter asset.
+# Copy this file to apps/app/.env before running.
+#
+# Android emulator: use http://10.0.2.2/api
+# iOS simulator: http://localhost/api usually works.
+# Physical device: use http://<your-machine-lan-ip>/api
+
+API_URL=http://10.0.2.2/api
+</file>
+
 <file path=".gitignore">
 # Miscellaneous
 *.class
@@ -29092,6 +30598,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "7.0.1"
+  fl_chart:
+    dependency: "direct main"
+    description:
+      name: fl_chart
+      sha256: "74959b99b92b9eebeed1a4049426fd67c4abc3c5a0f4d12e2877097d6a11ae08"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.69.2"
   flutter:
     dependency: "direct main"
     description: flutter
@@ -29708,6 +31222,7 @@ dependencies:
   intl: ^0.20.2
   url_launcher: ^6.3.2
   webview_flutter: ^4.13.0
+  fl_chart: ^0.69.0
 
 dev_dependencies:
   flutter_test:
@@ -29731,7 +31246,7 @@ flutter:
   # the material Icons class.
   uses-material-design: true
   assets:
-    - .env
+    - .env.example
     - assets/images/
 
   # To add assets to your application, add an assets section, like this:
@@ -29783,6 +31298,185 @@ A few resources to get you started if this is your first Flutter project:
 For help getting started with Flutter development, view the
 [online documentation](https://docs.flutter.dev/), which offers tutorials,
 samples, guidance on mobile development, and a full API reference.
+</file>
+
+<file path="report.md">
+# Mobile Flutter UI Audit Report
+
+## 1. Executive Summary
+
+Audit hanya mencakup `apps/app`. Mobile app sudah punya pondasi cukup baik: feature folder, `flutter_bloc`, API client terpusat, skeleton widget, beberapa empty/error state, dan flow utama auth, home, search, product, cart, checkout, order, chat, profile sudah sebagian besar tersambung API.
+
+Risiko terbesar:
+
+1. Auth state bug: `AuthCheckRequested` menghapus storage sebelum membaca token.
+2. Route argument crash risk pada beberapa route utama.
+3. Product detail punya tombol "Beli Sekarang" yang belum connect flow checkout.
+4. Search fallback catalog tidak menerapkan filter.
+5. Cart remove/clear mengabaikan error backend.
+6. `.env` wajib asset tapi file tidak ada, sehingga `flutter analyze` dan `flutter test` gagal.
+7. Test mobile masih template counter dan tidak relevan.
+
+## 2. Mobile App Structure
+
+| Path | Fungsi | Status | Catatan |
+|---|---|---:|---|
+| `apps/app/lib/main.dart` | Entry point, DI global, BlocProvider | Partial | Global providers hanya sebagian service/bloc |
+| `apps/app/lib/core/router` | Named routing manual | Risk | Beberapa cast argumen langsung |
+| `apps/app/lib/core/theme` | Theme dasar | Partial | Belum ada full design token typography/button/card state |
+| `apps/app/lib/core/utils/api_client.dart` | HTTP, refresh token, stream | Partial | Stream error diam-diam, parser SSE swallow error |
+| `apps/app/lib/features` | Feature modules | Partial | Konsisten sebagian, ada `Main`, `product-detail`, `ml-products`, typo `respon` |
+| `apps/app/lib/shared/widgets` | Shared UI | Good | Skeleton/product/category cukup reusable |
+| `apps/app/test` | Test | Weak | Hanya template counter |
+
+## 3. Flutter Stack
+
+Flutter: 3.44.1 stable. Dart: 3.12.1. Package utama: `flutter_bloc`, `http`, `flutter_dotenv`, `flutter_secure_storage`, `shared_preferences`, `intl`, `url_launcher`, `webview_flutter`, `fl_chart`. Routing memakai `MaterialApp` + `onGenerateRoute`, bukan declarative routing. API client manual berbasis `http.Request`. Theme utama ada di `AppTheme.lightTheme`.
+
+## 4. UI Architecture Review
+
+Struktur feature-based sudah ada, tetapi belum konsisten. Beberapa screen terlalu besar: `cart_screen.dart` 750 baris, `chat_screen.dart` 560 baris, `product_detail_screen.dart` 484 baris, `search_product_screen.dart` 430 baris, `home_screen.dart` 411 baris. Logic API masih muncul langsung di UI pada `ChatScreen`, `NotificationScreen`, `EditProfileScreen`, `AddressSectionWidget`, dan checkout bottom sheet. Shared widget sudah baik untuk product/category/skeleton, tetapi empty/error/retry widget belum distandarkan.
+
+## 5. Navigation Findings
+
+| File/path | Problem | Impact | Severity | Recommendation |
+|---|---|---|---:|---|
+| `core/router/router_generate.dart:97` | `settings.arguments as String` untuk product detail | Crash jika argumen null/wrong type | High | Guard argument seperti payment/shop |
+| `core/router/router_generate.dart:107` | `settings.arguments as String` untuk order detail | Crash route order | High | Validate `orderId` |
+| `core/router/router_generate.dart:161` | `settings.arguments as Map<String,dynamic>` untuk reviews | Crash jika argumen tidak lengkap | High | Safe map parsing |
+| `core/router/app_routes.dart` | `notifications`, `settings` tidak ada case router | Route action/deep link bisa Page Not Found | Medium | Tambah route atau hapus constant jika tidak dipakai |
+| `product-detail/product_detail_screen.dart:116` | Back memaksa ke `/main` dan clear stack | UX rusak dari search/favorite/order | Medium | Pakai `Navigator.pop` bila bisa pop |
+
+## 6. Screen-by-Screen Findings
+
+| Screen | File/path | Problem | Impact | Severity | Recommendation |
+|---|---|---|---|---:|---|
+| Splash | `onboarding/.../splash_screen.dart` | Auth check langsung token, tidak validasi refresh/user | Token stale tetap masuk main | Medium | Dispatch auth check yang benar |
+| Login | `auth/.../login_screen.dart` | Error verify email dideteksi via string message | Fragile terhadap perubahan backend | Medium | Pakai status/code khusus |
+| Register | `auth/.../register_screen.dart` | API langsung dari screen, bukan Bloc | State flow auth tidak konsisten | Medium | Pindahkan ke AuthBloc bertahap |
+| Verify Email | `auth/.../verify_email_screen.dart` | Route args email/type tidak dipakai oleh form | Resend butuh input ulang | Medium | Prefill email dari args/state |
+| Forgot Password | `auth/.../forgot_password_screen.dart` | Navigasi raw string | Mudah typo/broken route | Low | Pakai `AuthRoutes` |
+| Change Password | `auth/.../bloc/auth_bloc.dart:200` | Gagal API tidak emit error | UI bisa stuck loading/token state hilang | High | Emit `AuthError` |
+| Home | `Main/features/home/home_screen.dart` | Semua fetch dipicu init, global error dipakai lintas section | Error category/product bisa salah tampil | Medium | State error per section |
+| Product Grid | `home/widgets/product_grid.dart` | Fixed 2 kolom aspect 0.55 | Tablet/narrow layout buruk | Medium | Adaptive max cross-axis extent |
+| Search | `search-product/service/search_product_service.dart:40` | Fallback tidak pakai filter | UI filter menipu user | High | Kirim query filter ke catalog |
+| Product Detail | `product-detail/product_detail_screen.dart:402` | "Beli Sekarang" hanya snackbar | Main commerce flow belum jalan | High | Connect add-to-cart + checkout sheet |
+| Shop Detail | `shop/.../shop_detail_screen.dart` | Product grid fixed 2 kolom, no loading more footer | UX pagination kurang jelas | Medium | Adaptive sliver grid + footer |
+| Cart | `cart/presentation/screens/cart_screen.dart` | Checkout logic besar di UI | Sulit test dan rawan regression | Medium | Extract checkout controller/bloc small |
+| Cart Bloc | `cart/presentation/bloc/cart_bloc.dart:77` | Remove item ignore error | UI/server bisa diverge | High | Check response, emit error, reload only on success |
+| Order List | `order/.../order_list_screen.dart` | Pull refresh async tidak menunggu state selesai | Refresh indicator bisa selesai terlalu cepat | Low | Await bloc completion pattern |
+| Order Detail | `order/.../order_detail_screen.dart` | Product rows tanpa image/status timeline | UX detail minim | Low | Tambah timeline bertahap |
+| Payment WebView | `order/.../payment_webview_screen.dart` | Tidak handle `onWebResourceError` | Blank/freeze saat WebView gagal | High | Tambah error state + retry/open external |
+| Notification | `notification_screen.dart:35` | `setState` setelah await tanpa `mounted` | Potensi setState after dispose | High | Guard `if (!mounted) return` |
+| Chat List | `chat_list_screen.dart` | FutureBuilder + setState `_error` bercampur | State sulit diprediksi | Medium | Bloc/Cubit atau Future state object |
+| Chat | `chat_screen.dart` | API + realtime + optimistic UI dalam screen besar | Sulit test, race risk | Medium | Extract ChatCubit |
+| Profile | `profile_service.dart:41` | Error stats ditelan jadi 0 | UI menyamarkan API failure | Medium | Return error/partial state |
+| Edit Profile | `edit_profile_screen.dart` | Avatar URL manual, bukan upload/picker | UX update foto lemah | Low | Tambah picker/upload setelah API siap |
+
+## 7. Responsive Layout Findings
+
+Hardcoded/fixed-grid risk ditemukan di `ProductGrid`, `ProductListScreen`, `ShopDetailScreen`, `FavoriteScreen`, `CategoryGrid`. Banyak form sudah memakai `SingleChildScrollView` dan `SafeArea`, bagus untuk keyboard. Bottom sheet checkout sudah memakai `viewInsets.bottom`, bagus. Risiko utama: product grid fixed 2 column, chat bubble max width `0.78` memakai full screen width, OTP field fixed width 50 per digit berpotensi sempit di small screen.
+
+## 8. Design System Findings
+
+Theme dasar ada, tetapi banyak screen masih langsung memakai `Colors.white`, `Colors.grey`, `Colors.red`, fontSize literal, radius literal. `UIConstants` membantu spacing, tapi belum ada semantic tokens untuk success/warning/error/surface, text styles, button variants, empty/error widgets. Dark mode belum ditemukan di repository. Skeleton sudah cukup konsisten.
+
+## 9. API to UI Mapping Findings
+
+| File/path | Problem | Impact | Severity | Recommendation |
+|---|---|---|---:|---|
+| `pubspec.yaml:71` | `.env` asset wajib tapi file tidak ada | Analyze/test/build asset gagal | High | Commit safe `.env` dev atau ubah loading strategy |
+| `api_client.dart:345` | SSE status non-2xx hanya `return` | Chat/notif realtime gagal tanpa error UI | Medium | Yield error/result atau callback error |
+| `search_product_service.dart:38` | ML error ditelan | User tidak tahu fallback dipakai | Low | Expose fallback banner/chip |
+| `ReviewData.fromJson` | Direct `DateTime.parse`, direct field cast | Crash jika response null/format beda | Medium | Defensive parser + unit test |
+| `CartService._enrichItems` | N request produk per cart item | Slow cart besar | Medium | Backend include product snapshot atau batch endpoint |
+
+## 10. State Management Findings
+
+BLoC dipakai pada auth/home/cart/order/search/shop/favorite/profile. Masalah utama: event dipanggil dari builder pada `product_detail_screen.dart:203`, optimistic follow reset follower count ke `shop.followerCount` bukan current state pada failure, favorite list langsung request ulang setelah toggle tanpa menunggu toggle selesai, dan beberapa screen state masih manual `setState` untuk API async.
+
+## 11. Performance Findings
+
+Grid besar memakai `GridView.builder`, itu baik. Risiko: cart enrichment per item, `IndexedStack` menyimpan Home/Notification/Chat/Profile aktif sekaligus (`MainScreen:31`) sehingga notification/chat stream bisa tetap hidup ketika tab tidak aktif, product detail membuat bloc HomeBloc baru untuk related product dan bisa fetch list tambahan, image network belum pakai cache package khusus, chat list/messages limit 50 tanpa pagination UI.
+
+## 12. Accessibility and UX Findings
+
+Tap target mostly cukup karena `IconButton`/buttons. Masalah UX: snackbar dipakai untuk aksi penting tanpa state permanen, `Beli Sekarang` dummy, Payment WebView tanpa error/retry, empty state beberapa tidak punya CTA, error state notification hanya text tanpa retry, profile stats error menjadi angka 0, form OTP tidak prefill email, destructive clear cart sudah ada confirmation.
+
+## 13. Mobile Testing Gap
+
+| Area | Current test evidence | Missing test | Suggested test file | Priority |
+|---|---|---|---|---:|
+| App smoke | `test/widget_test.dart` counter template | Splash/auth routing smoke | `test/app_smoke_test.dart` | P0 |
+| Routing args | Belum ada | Null/wrong args product/order/reviews | `test/router_generate_test.dart` | P0 |
+| Auth | Belum ada | login, verify, forgot, change error | `test/features/auth/auth_bloc_test.dart` | P0 |
+| Search | Belum ada | filter fallback query mapping | `test/features/search/search_product_service_test.dart` | P0 |
+| Cart | Belum ada | remove error, checkout validation | `test/features/cart/cart_bloc_test.dart` | P0 |
+| Payment | Belum ada | redirect/error/close behavior | `test/features/order/payment_webview_test.dart` | P1 |
+| Product detail | Belum ada | loading/error/empty/favorite/add cart | `test/features/product/product_detail_test.dart` | P1 |
+| Chat/Notification | Belum ada | realtime error/list empty/send fail | `test/features/chat/chat_screen_test.dart` | P1 |
+| Integration | Belum ditemukan di repository | auth-search-cart-checkout-order | `integration_test/mobile_core_flow_test.dart` | P1 |
+
+## 14. Top 20 Mobile UI Bugs/Risks
+
+1. Title: `.env` missing breaks analyze/test/build asset. File: `pubspec.yaml:71`. Severity: High. Proposed fix: provide dev env or non-asset fallback. Acceptance criteria: `flutter analyze` and `flutter test` run. Test required: smoke/analyze.
+2. Title: Product detail route can crash. File: `router_generate.dart:97`. Severity: High. Proposed fix: safe argument parsing. Acceptance criteria: invalid args show friendly screen. Test required: route arg test.
+3. Title: Order detail route can crash. File: `router_generate.dart:107`. Severity: High. Proposed fix: safe parsing. Acceptance criteria: invalid order id does not crash. Test required: route arg test.
+4. Title: Reviews route can crash. File: `router_generate.dart:161`. Severity: High. Proposed fix: validate map keys. Acceptance criteria: missing keys show fallback UI. Test required: route arg test.
+5. Title: Auth check clears session. File: `auth_bloc.dart:133`. Severity: High. Proposed fix: remove `AuthStorage.clear()`. Acceptance criteria: stored token/user remains authenticated. Test required: auth bloc test.
+6. Title: Change password failure not emitted. File: `auth_bloc.dart:200`. Severity: High. Proposed fix: emit `AuthError`. Acceptance criteria: API failure shows error and exits loading. Test required: auth bloc test.
+7. Title: Search fallback ignores filters. File: `search_product_service.dart:40`. Severity: High. Proposed fix: map filters to catalog query. Acceptance criteria: fallback sends category/price/eco filter. Test required: service test.
+8. Title: Buy Now dummy. File: `product_detail_screen.dart:402`. Severity: High. Proposed fix: connect add-to-cart + checkout path. Acceptance criteria: tap opens actual checkout/cart flow. Test required: widget/integration test.
+9. Title: Cart remove ignores backend error. File: `cart_bloc.dart:77`. Severity: High. Proposed fix: inspect response. Acceptance criteria: failed remove preserves item and shows error. Test required: cart bloc test.
+10. Title: Notification setState after dispose risk. File: `notification_screen.dart:35`. Severity: High. Proposed fix: mounted guard. Acceptance criteria: no setState after dispose. Test required: widget async test.
+11. Title: Payment WebView no load error UI. File: `payment_webview_screen.dart`. Severity: High. Proposed fix: `onWebResourceError`. Acceptance criteria: web error shows retry/close state. Test required: widget test.
+12. Title: Product back clears stack. File: `product_detail_screen.dart:116`. Severity: Medium. Proposed fix: normal pop. Acceptance criteria: user returns to source screen. Test required: navigation test.
+13. Title: Event dispatched in build. File: `product_detail_screen.dart:203`. Severity: Medium. Proposed fix: trigger after product loaded listener/init. Acceptance criteria: no duplicate favorite check on rebuild. Test required: widget/bloc interaction test.
+14. Title: Profile stats hide API failures. File: `profile_service.dart:41`. Severity: Medium. Proposed fix: partial error state. Acceptance criteria: API failure visible. Test required: service/bloc test.
+15. Title: SSE errors silent. File: `api_client.dart:345`. Severity: Medium. Proposed fix: expose stream errors. Acceptance criteria: realtime failure can be shown/retried. Test required: api client stream test.
+16. Title: Fixed 2-column product grids. File: multiple product grid screens. Severity: Medium. Proposed fix: adaptive grid. Acceptance criteria: small/large widths render without awkward sizing. Test required: responsive widget test.
+17. Title: Cart enrichment N+1. File: `cart_service.dart:48`. Severity: Medium. Proposed fix: batch/include snapshot. Acceptance criteria: cart load avoids per-item serial UI pain. Test required: service test.
+18. Title: Favorite toggle list reload race. File: `favorite_screen.dart:174`. Severity: Medium. Proposed fix: await/listen success then reload. Acceptance criteria: removed favorite updates predictably. Test required: bloc/widget test.
+19. Title: Chat screen too stateful. File: `chat_screen.dart`. Severity: Medium. Proposed fix: ChatCubit. Acceptance criteria: loading/error/send/realtime state covered by tests. Test required: cubit/widget test.
+20. Title: Test file invalid template. File: `test/widget_test.dart:14`. Severity: Medium. Proposed fix: replace with real app tests. Acceptance criteria: no counter assumptions. Test required: flutter test.
+
+## 15. First 10 Safe PR Plan
+
+| PR | Title | Goal | Files likely touched | Risk | Tests | Rollback |
+|---:|---|---|---|---:|---|---|
+| 1 | Fix mobile env/test bootstrap | Make analyze/test runnable | `pubspec.yaml`, `.env.example`, test setup | Low | analyze/test | revert env handling |
+| 2 | Safe route arguments | Prevent navigation crashes | `router_generate.dart` | Low | router tests | revert route guards |
+| 3 | Auth state fixes | Fix session/check/change error | `auth_bloc.dart` | Medium | auth bloc tests | revert auth bloc patch |
+| 4 | Payment WebView error state | Avoid blank payment screen | `payment_webview_screen.dart` | Medium | widget test | revert screen only |
+| 5 | Cart mutation error handling | Keep cart UI/server consistent | `cart_bloc.dart` | Medium | cart bloc tests | revert bloc patch |
+| 6 | Search filter fallback | Correct filtered search | `search_product_service.dart` | Medium | service unit test | revert query map |
+| 7 | Product detail CTA/back | Fix Buy Now/back UX | `product_detail_screen.dart` | Medium | widget test | revert screen patch |
+| 8 | Notification mounted/retry | Remove dispose risk + retry | `notification_screen.dart` | Low | widget test | revert screen patch |
+| 9 | Adaptive product grids | Reduce overflow/tablet issues | grid widgets/screens | Medium | golden/widget small widths | revert grid delegate |
+| 10 | Shared empty/error widgets | Consistency without rewrite | `shared/widgets`, selected screens | Low | widget tests | revert shared widgets |
+
+## 16. Quick Wins
+
+- Gunakan `AuthRoutes`/`AppRoutes` menggantikan raw string.
+- Tambahkan `mounted` guard di notification.
+- Tambahkan route fallback safe screen untuk product/order/reviews.
+- Hapus counter test template.
+- Tambahkan retry button di notification error.
+- Tambahkan `onWebResourceError` di WebView.
+
+## 17. Clarifying Questions
+
+1. Apakah mobile app memang harus menyertakan `.env` lokal sebagai asset, atau lebih baik memakai `--dart-define`/flavor config?
+2. Untuk "Beli Sekarang", flow yang diinginkan langsung checkout current product atau add to cart lalu buka cart?
+3. Apakah search catalog endpoint mendukung filter `categoryId`, `minPrice`, `maxPrice`, `minEcoScore`?
+4. Apakah payment success/cancel URL sudah distandarkan dari backend?
+5. Apakah chat/notification realtime wajib tetap aktif saat tab tidak terlihat?
+
+## 18. Final Recommendation
+
+Urutan paling aman: PR 1 sampai PR 3 dulu karena memulihkan verifikasi dan mencegah crash/session bug. Setelah itu PR 4 sampai PR 7 untuk flow commerce utama: payment, cart, search, product detail. Baru lanjut PR 8 sampai PR 10 untuk UX consistency, responsive grid, dan shared state widgets.
+
+Saya belum mengubah kode aplikasi. Mau saya mulai dari PR mobile UI P0 nomor berapa?
 </file>
 
 </files>

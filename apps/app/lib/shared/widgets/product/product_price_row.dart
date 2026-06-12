@@ -19,10 +19,7 @@ class ProductPriceRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final hasDiscount =
-        originalPrice != null &&
-        originalPrice! > price &&
-        discountPercent != null;
+    final hasDiscount = originalPrice != null && originalPrice! > price;
 
     return Wrap(
       spacing: UIConstants.spacingXS,

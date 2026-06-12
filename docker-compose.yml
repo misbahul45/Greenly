@@ -171,6 +171,7 @@ services:
       REDIS_URL: ${REDIS_URL}
       FAISS_INDEX_PATH: ${FAISS_INDEX_PATH}
       PRODUCT_META_PATH: ${PRODUCT_META_PATH}
+      ML_INTERNAL_TOKEN: ${ML_INTERNAL_TOKEN:-greenly-local-ml-internal-token}
       ML_USE_HASH_EMBEDDINGS: ${ML_USE_HASH_EMBEDDINGS:-false}
 
     develop:
@@ -190,6 +191,31 @@ services:
       - "traefik.http.middlewares.ml-strip.stripprefix.prefixes=/api/ml"
       - "traefik.http.routers.ml.middlewares=ml-strip"
 
+    networks:
+      - greenly_network
+
+  ml-worker:
+    build:
+      context: ./services/ml-engine
+      dockerfile: Dockerfile.dev
+    volumes:
+      - ./services/ml-engine:/app
+      - ml_venv:/app/.venv
+    depends_on:
+      - rabbitmq
+      - redis
+    environment:
+      APP_ENV: ${APP_ENV:-development}
+      RABBITMQ_URL: ${RABBITMQ_URL}
+      REDIS_URL: ${REDIS_URL}
+      MODEL_NAME: ${ML_MODEL_NAME}
+      CATALOG_SERVICE_URL: ${CATALOG_SERVICE_INTERNAL_URL}
+      CORE_SERVICE_URL: ${CORE_SERVICE_INTERNAL_URL}
+      FAISS_INDEX_PATH: ${FAISS_INDEX_PATH}
+      PRODUCT_META_PATH: ${PRODUCT_META_PATH}
+      ML_INTERNAL_TOKEN: ${ML_INTERNAL_TOKEN:-greenly-local-ml-internal-token}
+      ML_USE_HASH_EMBEDDINGS: ${ML_USE_HASH_EMBEDDINGS:-false}
+    command: uv run celery -A app.workers.celery_app worker --loglevel=info --concurrency=2
     networks:
       - greenly_network
 

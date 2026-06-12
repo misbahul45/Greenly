@@ -94,7 +94,10 @@ class RouterGenerate {
         return _page(const MainScreen());
 
       case AppRoutes.productDetail:
-        final slug = settings.arguments as String;
+        final slug = _stringArg(settings.arguments);
+        if (slug == null || slug.isEmpty) {
+          return _errorPage('Data produk tidak tersedia');
+        }
         return _page(ProductDetailScreen(slug: slug));
 
       case AppRoutes.searchProduct:
@@ -104,7 +107,10 @@ class RouterGenerate {
         return _page(const OrderListScreen());
 
       case AppRoutes.orderDetail:
-        final orderId = settings.arguments as String;
+        final orderId = _stringArg(settings.arguments);
+        if (orderId == null || orderId.isEmpty) {
+          return _errorPage('Data pesanan tidak tersedia');
+        }
         return _page(OrderDetailScreen(orderId: orderId));
 
       case AppRoutes.paymentWebview:
@@ -152,18 +158,20 @@ class RouterGenerate {
         final args = (settings.arguments as Map?) ?? const {};
         return _page(
           ProductListScreen(
-            categoryId: args['categoryId'] as String?,
-            title: args['categoryName'] as String? ?? 'Produk',
+            categoryId: args['categoryId']?.toString(),
+            title: args['categoryName']?.toString() ?? 'Produk',
           ),
         );
 
       case AppRoutes.reviews:
-        final args = settings.arguments as Map<String, dynamic>;
+        final args = (settings.arguments as Map?) ?? const {};
+        final productId = args['productId']?.toString() ?? '';
+        final productName = args['productName']?.toString() ?? '';
+        if (productId.isEmpty || productName.isEmpty) {
+          return _errorPage('Data ulasan tidak tersedia');
+        }
         return _page(
-          ReviewsScreen(
-            productId: args['productId'] as String,
-            productName: args['productName'] as String,
-          ),
+          ReviewsScreen(productId: productId, productName: productName),
         );
 
       default:
@@ -175,5 +183,24 @@ class RouterGenerate {
 
   static MaterialPageRoute _page(Widget child) {
     return MaterialPageRoute(builder: (_) => child);
+  }
+
+  static MaterialPageRoute _errorPage(String message) {
+    return _page(
+      Scaffold(
+        appBar: AppBar(title: const Text('Halaman Tidak Tersedia')),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Text(message, textAlign: TextAlign.center),
+          ),
+        ),
+      ),
+    );
+  }
+
+  static String? _stringArg(Object? value) {
+    if (value is String) return value;
+    return null;
   }
 }

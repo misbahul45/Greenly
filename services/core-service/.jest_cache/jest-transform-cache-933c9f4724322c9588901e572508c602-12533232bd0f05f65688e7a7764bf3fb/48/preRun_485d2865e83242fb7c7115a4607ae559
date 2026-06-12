@@ -1,0 +1,8 @@
+f9619ff26aef937d1c4b6f6272b9fe80
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+require("reflect-metadata");
+const dotenv_1 = require("dotenv");
+// Load environment variables for tests
+(0, dotenv_1.config)({ path: '.env.test' });
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJmaWxlIjoiL1VzZXJzL21pc2JhaHVsbXV0dGFxaW4vY29kZS9HcmVlbmx5L3NlcnZpY2VzL2NvcmUtc2VydmljZS9zcmMvdGVzdGluZy9wcmVSdW4udHMiLCJtYXBwaW5ncyI6Ijs7QUFBQSw0QkFBMEI7QUFDMUIsbUNBQWdDO0FBQ2hDLHVDQUF1QztBQUN2QyxJQUFBLGVBQU0sRUFBQyxFQUFFLElBQUksRUFBRSxXQUFXLEVBQUUsQ0FBQyxDQUFDIiwibmFtZXMiOltdLCJzb3VyY2VzIjpbIi9Vc2Vycy9taXNiYWh1bG11dHRhcWluL2NvZGUvR3JlZW5seS9zZXJ2aWNlcy9jb3JlLXNlcnZpY2Uvc3JjL3Rlc3RpbmcvcHJlUnVuLnRzIl0sInNvdXJjZXNDb250ZW50IjpbImltcG9ydCAncmVmbGVjdC1tZXRhZGF0YSc7XG5pbXBvcnQgeyBjb25maWcgfSBmcm9tICdkb3RlbnYnO1xuLy8gTG9hZCBlbnZpcm9ubWVudCB2YXJpYWJsZXMgZm9yIHRlc3RzXG5jb25maWcoeyBwYXRoOiAnLmVudi50ZXN0JyB9KTtcbiJdLCJ2ZXJzaW9uIjozfQ==

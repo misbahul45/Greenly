@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:app/core/constants/ui_constants.dart';
+import 'package:app/core/router/app_routes.dart';
 import 'package:app/core/theme/app_theme.dart';
 import 'package:app/features/product-detail/bloc/product_detail_bloc.dart';
 import 'package:app/features/product-detail/bloc/product_detail_event.dart';
@@ -113,11 +116,13 @@ class _ProductDetailView extends StatelessWidget {
         backgroundColor: Colors.white,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
-          onPressed: () => Navigator.pushNamedAndRemoveUntil(
-            context,
-            '/main',
-            (route) => false,
-          ),
+          onPressed: () {
+            if (Navigator.canPop(context)) {
+              Navigator.pop(context);
+              return;
+            }
+            Navigator.pushReplacementNamed(context, AppRoutes.main);
+          },
         ),
         centerTitle: true,
         title: const Text(
@@ -265,9 +270,15 @@ class _ProductDetailView extends StatelessWidget {
                         ),
                         const SizedBox(height: UIConstants.spacingM),
                         PriceDisplayWidget(
-                          price: product.price,
+                          price: product.finalPrice > 0 ? product.finalPrice : product.price,
+                          originalPrice: product.originalPrice > product.finalPrice ? product.originalPrice : null,
+                          discountPercent: product.promotion?.discountPercent.toInt(),
                           currency: product.currency,
                         ),
+                        if (product.promotion != null && product.promotion!.hasPromo) ...[
+                          const SizedBox(height: UIConstants.spacingM),
+                          _PromoSection(promotion: product.promotion!),
+                        ],
                         const SizedBox(height: UIConstants.spacingS),
                         StockBadgeWidget(stock: product.stock),
                         const SizedBox(height: UIConstants.spacingM),
@@ -280,6 +291,10 @@ class _ProductDetailView extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: UIConstants.spacingS),
+                  if (product.eco != null) ...[
+                    _SustainabilitySection(eco: product.eco!),
+                    const SizedBox(height: UIConstants.spacingS),
+                  ],
                   Container(
                     color: Colors.white,
                     padding: const EdgeInsets.all(UIConstants.paddingM),
@@ -378,15 +393,7 @@ class _ProductDetailView extends StatelessWidget {
                     ),
                     child: IconButton(
                       onPressed: () {
-                        context.read<CartBloc>().add(
-                          CartAddItemRequested(productId: product.id),
-                        );
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Ditambahkan ke keranjang'),
-                            duration: Duration(seconds: 1),
-                          ),
-                        );
+                        _addToCart(context, product.id);
                       },
                       icon: const Icon(
                         Icons.shopping_cart_outlined,
@@ -399,14 +406,11 @@ class _ProductDetailView extends StatelessWidget {
                     child: SizedBox(
                       height: UIConstants.buttonHeight,
                       child: ElevatedButton(
-                        onPressed: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Beli sekarang'),
-                              duration: Duration(seconds: 1),
-                            ),
-                          );
-                        },
+                        onPressed: () => _addToCart(
+                          context,
+                          product.id,
+                          openCartOnSuccess: true,
+                        ),
                         child: const Text(
                           'Beli Sekarang',
                           style: TextStyle(
@@ -422,6 +426,231 @@ class _ProductDetailView extends StatelessWidget {
             ),
           );
         },
+      ),
+    );
+  }
+
+  Future<void> _addToCart(
+    BuildContext context,
+    String productId, {
+    bool openCartOnSuccess = false,
+  }) async {
+    final cartBloc = context.read<CartBloc>();
+    final messenger = ScaffoldMessenger.of(context);
+    final navigator = Navigator.of(context);
+
+    cartBloc.add(CartAddItemRequested(productId: productId));
+
+    final state = await cartBloc.stream
+        .firstWhere((state) => !state.isAdding(productId))
+        .timeout(const Duration(seconds: 12), onTimeout: () => cartBloc.state);
+
+    if (!context.mounted) return;
+
+    if (state.error != null) {
+      messenger.showSnackBar(
+        SnackBar(content: Text(state.error!), backgroundColor: Colors.red),
+      );
+      return;
+    }
+
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text(
+          openCartOnSuccess
+              ? 'Produk ditambahkan. Lanjutkan checkout dari keranjang.'
+              : 'Ditambahkan ke keranjang',
+        ),
+        duration: const Duration(seconds: 1),
+      ),
+    );
+
+    if (openCartOnSuccess) {
+      await navigator.pushNamed(AppRoutes.cart);
+    }
+  }
+}
+
+class _PromoSection extends StatelessWidget {
+  final PromotionData promotion;
+
+  const _PromoSection({required this.promotion});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(UIConstants.paddingM),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFF3E0),
+        borderRadius: BorderRadius.circular(UIConstants.radiusM),
+        border: Border.all(color: Colors.orange.withValues(alpha: 0.3)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.local_offer_rounded, color: Colors.orange, size: 20),
+              const SizedBox(width: 8),
+              Text(
+                promotion.label,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w800,
+                  color: Colors.orange,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  promotion.title,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.black87,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            promotion.savingLabel,
+            style: const TextStyle(
+              fontSize: 12,
+              color: Colors.black54,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          if (promotion.code.isNotEmpty) ...[
+            const SizedBox(height: 4),
+            Text(
+              'Kode: ${promotion.code}',
+              style: TextStyle(
+                fontSize: 12,
+                color: Colors.orange.shade800,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _SustainabilitySection extends StatelessWidget {
+  final EcoData eco;
+
+  const _SustainabilitySection({required this.eco});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      color: Colors.white,
+      padding: const EdgeInsets.all(UIConstants.paddingM),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Kenapa produk ini ramah lingkungan?',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.black87,
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: AppTheme.primaryColor.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  'Eco ${eco.score.toInt()}',
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w800,
+                    color: AppTheme.primaryColor,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: UIConstants.spacingM),
+          EcoAttributeChips(badges: eco.badges, compact: false),
+          const SizedBox(height: UIConstants.spacingM),
+          ...eco.reasons.map((reason) => Padding(
+                padding: const EdgeInsets.only(bottom: 8.0),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Icon(Icons.check_circle_rounded,
+                        color: AppTheme.primaryColor, size: 16),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        reason,
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.grey[700],
+                          height: 1.4,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              )),
+          const SizedBox(height: UIConstants.spacingS),
+          Row(
+            children: [
+              _InfoChip(label: 'Bahan: ${eco.materialLabel}', icon: Icons.grass_rounded),
+              const SizedBox(width: 8),
+              _InfoChip(
+                label: 'Carbon: ${eco.carbonLabel}',
+                icon: Icons.co2_rounded,
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _InfoChip extends StatelessWidget {
+  final String label;
+  final IconData icon;
+
+  const _InfoChip({required this.label, required this.icon});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: Colors.grey[100],
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: Colors.grey[600]),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 11,
+              color: Colors.grey[700],
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
       ),
     );
   }
