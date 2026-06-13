@@ -6,5 +6,6 @@ export const COMMERCE_ROUTING_KEYS = {
   ORDER_STATUS_CHANGED: 'order.status.changed',
   PAYMENT_COMPLETED: 'payment.completed',
   PAYMENT_FAILED: 'payment.failed',
+  PAYMENT_REFUNDED: 'payment.refunded',
   REFUND_PROCESSED: 'refund.processed',
 } as const;

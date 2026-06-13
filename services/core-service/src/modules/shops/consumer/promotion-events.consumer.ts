@@ -19,7 +19,6 @@ const PromotionActivatedEventSchema = z.object({
 export class PromotionEventsConsumer {
   private readonly logger = new Logger(PromotionEventsConsumer.name);
 
-  @EventPattern('promotion.activated')
   async handlePromotionActivated(@Payload() raw: unknown) {
     try {
       const data = PromotionActivatedEventSchema.parse(raw);

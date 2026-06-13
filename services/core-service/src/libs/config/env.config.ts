@@ -2,7 +2,15 @@ export default () => ({
     rabbitmq: {
         url: process.env.RABBITMQ_URL || "amqp://guest:guest@localhost:5672/",
         queue: process.env.RABBITMQ_QUEUE || "default_queue",
+        exchange: process.env.RABBITMQ_EXCHANGE || "greenly_events",
+        coreQueue: process.env.RABBITMQ_CORE_QUEUE || "greenly_core_events",
         noAck: process.env.RABBITMQ_NO_ACK === "true",
+    },
+
+    outbox: {
+        enabled: process.env.OUTBOX_PUBLISHER_ENABLED !== "false",
+        intervalMs: parseInt(process.env.OUTBOX_PUBLISH_INTERVAL_MS || "5000", 10),
+        batchSize: parseInt(process.env.OUTBOX_BATCH_SIZE || "50", 10),
     },
 
     redis: {
@@ -48,6 +56,10 @@ export default () => ({
             process.env.STRIPE_CHECKOUT_EXPIRES_HOURS || "24",
             10
         ),
+    },
+
+    catalog: {
+        url: process.env.CATALOG_SERVICE_URL || "http://catalog-service:8081",
     },
 
     API_URL: process.env.API_URL,

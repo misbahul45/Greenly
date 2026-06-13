@@ -533,3 +533,25 @@ model ChatMessage {
   @@index([senderId])
   @@map("chat_messages")
 }
+
+model OutboxEvent {
+  id            String    @id @default(uuid())
+  eventType     String
+  routingKey    String
+  aggregateType String?
+  aggregateId   String?
+  payload       Json
+  status        String    @default("PENDING")
+  attempts      Int       @default(0)
+  maxAttempts   Int       @default(10)
+  lastError     String?   @db.Text
+  nextRetryAt   DateTime?
+  publishedAt   DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([status, nextRetryAt])
+  @@index([eventType])
+  @@index([aggregateId])
+  @@map("outbox_events")
+}

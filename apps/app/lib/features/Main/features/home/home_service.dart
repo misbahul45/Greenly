@@ -6,8 +6,8 @@ import 'package:app/features/Main/features/home/domains/respon/get_categories_re
 import 'package:app/features/Main/features/home/domains/respon/get_products_respon.dart';
 
 class HomeService {
-  static String get _baseUrlCore => "${ENV.api}/core";
-  static String get _baseUrlCatalog => "${ENV.api}/catalog";
+  static String get _baseUrlCore => ENV.coreApiUrl;
+  static String get _baseUrlCatalog => ENV.catalogApiUrl;
 
   Future<ApiResponse<ActiveBannerRespon>> getActiveBanners() async {
     return await ApiClient.get(

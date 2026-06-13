@@ -27,7 +27,7 @@ class SearchProductService {
       );
 
       final mlResp = await ApiClient.post<List<SearchProductResult>>(
-        '${ENV.api}/ml/search',
+        '${ENV.mlApiUrl}/search',
         request.toJson(),
         fromJsonT: _parseMlResults,
       );
@@ -38,7 +38,7 @@ class SearchProductService {
     } catch (_) {}
 
     final catalogResp = await ApiClient.get<List<SearchProductResult>>(
-      '${ENV.api}/catalog/products/search',
+      '${ENV.catalogApiUrl}/products/search',
       query: buildCatalogFallbackQuery(
         query: query,
         limit: limit,

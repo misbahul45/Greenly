@@ -102,12 +102,12 @@ func NewConsumer() (Consumer, error) {
 	}
 
 	return &consumer{
-		conn:          conn,
-		channel:       ch,
-		handlers:      make(map[string]EventHandler),
-		noAck:         !manualAck,
-		requeueLimit:  requeueLimit,
-		requeueDelay:  requeueDelay,
+		conn:         conn,
+		channel:      ch,
+		handlers:     make(map[string]EventHandler),
+		noAck:        !manualAck,
+		requeueLimit: requeueLimit,
+		requeueDelay: requeueDelay,
 	}, nil
 }
 
@@ -125,7 +125,6 @@ func (c *consumer) Start(ctx context.Context) error {
 		"order.created",
 		"order.cancelled",
 		"promotion.created",
-		"promotion.activated",
 		"promotion.expired",
 		"shop.approved",
 	}
@@ -241,17 +240,20 @@ func (c *consumer) Stop() error {
 }
 
 type OrderCreatedEvent struct {
-	OrderID    string `json:"orderId"`
-	UserID     string `json:"userId"`
-	ShopID     string `json:"shopId"`
-	ProductID  string `json:"productId"`
-	Quantity   int    `json:"quantity"`
-	TotalAmount string `json:"totalAmount"`
-	Timestamp  string `json:"timestamp"`
-	Items      []struct {
-		ProductID string `json:"productId"`
-		Quantity  int    `json:"quantity"`
-	} `json:"items"`
+	EventID     string             `json:"eventId"`
+	OrderID     string             `json:"orderId"`
+	UserID      string             `json:"userId"`
+	ShopID      string             `json:"shopId"`
+	ProductID   string             `json:"productId"`
+	Quantity    int                `json:"quantity"`
+	TotalAmount string             `json:"totalAmount"`
+	Timestamp   string             `json:"timestamp"`
+	Items       []OrderCreatedItem `json:"items"`
+}
+
+type OrderCreatedItem struct {
+	ProductID string `json:"productId"`
+	Quantity  int    `json:"quantity"`
 }
 
 type OrderCancelledEvent struct {
@@ -264,25 +266,25 @@ type OrderCancelledEvent struct {
 }
 
 type PromotionCreatedEvent struct {
-	PromotionID      string   `json:"promotionId"`
-	Code             string   `json:"code"`
-	Type             string   `json:"type"`
-	DiscountVal      float64  `json:"discountVal"`
+	PromotionID        string   `json:"promotionId"`
+	Code               string   `json:"code"`
+	Type               string   `json:"type"`
+	DiscountVal        float64  `json:"discountVal"`
 	EligibleProductIDs []string `json:"eligibleProductIds"`
-	StartDate        string   `json:"startDate"`
-	EndDate          string   `json:"endDate"`
-	Timestamp       string   `json:"timestamp"`
+	StartDate          string   `json:"startDate"`
+	EndDate            string   `json:"endDate"`
+	Timestamp          string   `json:"timestamp"`
 }
 
 type PromotionActivatedEvent struct {
-	PromotionID      string   `json:"promotionId"`
-	Code             string   `json:"code"`
-	Type             string   `json:"type"`
-	DiscountVal      float64  `json:"discountVal"`
+	PromotionID        string   `json:"promotionId"`
+	Code               string   `json:"code"`
+	Type               string   `json:"type"`
+	DiscountVal        float64  `json:"discountVal"`
 	EligibleProductIDs []string `json:"eligibleProductIds"`
-	StartDate        string   `json:"startDate"`
-	EndDate          string   `json:"endDate"`
-	Timestamp       string   `json:"timestamp"`
+	StartDate          string   `json:"startDate"`
+	EndDate            string   `json:"endDate"`
+	Timestamp          string   `json:"timestamp"`
 }
 
 type PromotionExpiredEvent struct {
@@ -292,16 +294,16 @@ type PromotionExpiredEvent struct {
 }
 
 type ShopApprovedEvent struct {
-	ShopID   string `json:"shopId"`
-	ShopName string `json:"shopName"`
+	ShopID     string `json:"shopId"`
+	ShopName   string `json:"shopName"`
 	ApprovedBy string `json:"approvedBy"`
-	Timestamp string `json:"timestamp"`
+	Timestamp  string `json:"timestamp"`
 }
 
 type PaymentCompletedEvent struct {
 	PaymentID string `json:"paymentId"`
 	OrderID   string `json:"orderId"`
-	Amount   string `json:"amount"`
-	Method   string `json:"method"`
+	Amount    string `json:"amount"`
+	Method    string `json:"method"`
 	Timestamp string `json:"timestamp"`
 }

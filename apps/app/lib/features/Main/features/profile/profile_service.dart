@@ -3,8 +3,8 @@ import 'package:app/core/utils/api_client.dart';
 import 'package:app/features/Main/features/profile/domain/data/profile_stats_data.dart';
 
 class ProfileService {
-  static String get _coreBase => '${ENV.api}/core';
-  static String get _catalogBase => '${ENV.api}/catalog';
+  static String get _coreBase => ENV.coreApiUrl;
+  static String get _catalogBase => ENV.catalogApiUrl;
 
   Future<ProfileStatsResult> getStats() async {
     final results = await Future.wait([

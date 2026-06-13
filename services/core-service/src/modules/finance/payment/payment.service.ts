@@ -6,7 +6,6 @@ import {
 import {DatabaseService} from "../../../libs/database/database.service";
 import {PaymentRepository} from "./payment.repository";
 import {
-    PaymentCompletedPublisher,
     PaymentFailedPublisher,
 } from "./publishers/payment-publishers";
 import {
@@ -16,15 +15,17 @@ import {
 } from "./payment.dto";
 import {StripeService} from "./stripe.service";
 import type {Request} from "express";
+import {OutboxService} from "../../../infrastructure/outbox/outbox.service";
+import {FINANCE_EVENTS} from "../shared/constants/finance-events.constants";
 
 @Injectable()
 export class PaymentService {
     constructor(
         private readonly db: DatabaseService,
         private readonly paymentRepo: PaymentRepository,
-        private readonly completedPublisher: PaymentCompletedPublisher,
         private readonly failedPublisher: PaymentFailedPublisher,
-        private readonly stripeService: StripeService
+        private readonly stripeService: StripeService,
+        private readonly outbox: OutboxService
     ) {}
 
     async getPayments(query: ListPaymentsQueryDto, shopId?: string) {
@@ -77,6 +78,11 @@ export class PaymentService {
 
             if (isSuccess && p.order) {
                 await this.creditSuccessfulPayment(tx, p);
+                await this.createPaymentCompletedOutbox(
+                    tx,
+                    p,
+                    p.transactionId
+                );
             }
 
             if (dto.status === "EXPIRED" && p.order) {
@@ -89,9 +95,7 @@ export class PaymentService {
             return p;
         });
 
-        if (isSuccess) {
-            await this.publishCompleted(updated, updated.transactionId);
-        } else {
+        if (!isSuccess) {
             await this.failedPublisher.publish({
                 paymentId: updated.id,
                 orderId: updated.orderId,
@@ -291,6 +295,11 @@ export class PaymentService {
             });
 
             await this.creditSuccessfulPayment(tx, current);
+            await this.createPaymentCompletedOutbox(
+                tx,
+                current,
+                checkoutSessionId || paymentIntentId || payload.id
+            );
 
             const cart = await tx.cart.findUnique({
                 where: {userId: current.order.userId},
@@ -311,8 +320,6 @@ export class PaymentService {
 
             return current;
         });
-
-        await this.publishCompleted(updated, updated.transactionId);
 
         return {
             data: {
@@ -434,6 +441,34 @@ export class PaymentService {
                 data: {status: "CANCELLED"},
             });
 
+            const refund = await tx.refund.create({
+                data: {
+                    paymentId: current.id,
+                    amount: this.toNumber(charge.amount_refunded ?? charge.amount ?? current.grossAmount),
+                    reason: charge.refunds?.data?.[0]?.reason ?? "Stripe charge refunded",
+                    status: "COMPLETED",
+                },
+            });
+
+            await this.outbox.createEvent(tx, {
+                eventType: FINANCE_EVENTS.PAYMENT_REFUNDED,
+                routingKey: FINANCE_EVENTS.PAYMENT_REFUNDED,
+                aggregateType: "payment",
+                aggregateId: current.id,
+                payload: {
+                    paymentId: current.id,
+                    orderId: current.orderId,
+                    shopId: current.order.shopId,
+                    userId: current.order.userId,
+                    refundId: refund.id,
+                    amount: this.toNumber(refund.amount),
+                    reason: refund.reason,
+                    refundedAt: new Date().toISOString(),
+                    source: "core-service",
+                    version: "1.0",
+                },
+            });
+
             return current;
         });
 
@@ -508,20 +543,31 @@ export class PaymentService {
         }
     }
 
-    private async publishCompleted(
+    private async createPaymentCompletedOutbox(
+        tx: any,
         payment: any,
         transactionId?: string | null
     ) {
-        await this.completedPublisher.publish({
+        await this.outbox.createEvent(tx, {
+            eventType: FINANCE_EVENTS.PAYMENT_COMPLETED,
+            routingKey: FINANCE_EVENTS.PAYMENT_COMPLETED,
+            aggregateType: "payment",
+            aggregateId: payment.id,
+            payload: {
             paymentId: payment.id,
             orderId: payment.orderId,
             shopId: payment.order.shopId,
+            userId: payment.order.userId,
+            grossAmount: this.toNumber(payment.grossAmount),
+            gatewayFee: this.toNumber(payment.gatewayFee),
+            marketplaceFee: this.toNumber(payment.marketplaceFee),
             netAmount: this.toNumber(payment.netAmount),
-            fees: {
-                gateway: payment.gatewayFee,
-                marketplace: payment.marketplaceFee,
+            method: payment.method,
+            transactionId: transactionId ?? payment.transactionId,
+            paidAt: (payment.paidAt ?? new Date()).toISOString(),
+            source: "core-service",
+            version: "1.0",
             },
-            transactionId,
         });
     }
 

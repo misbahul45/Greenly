@@ -4,7 +4,6 @@ import { OrderService } from './order.service';
 import { OrderRepository } from './order.repository';
 import { OrderCreatedPublisher } from './publishers/order-created.publisher';
 import { OrderStatusChangedPublisher } from './publishers/order-status-changed.publisher';
-import { PaymentCompletedPublisher, PaymentFailedPublisher } from './publishers/payment.publisher';
 import { RefundProcessedPublisher } from './publishers/refund-processed.publisher';
 
 @Module({
@@ -14,8 +13,6 @@ import { RefundProcessedPublisher } from './publishers/refund-processed.publishe
     OrderRepository,
     OrderCreatedPublisher,
     OrderStatusChangedPublisher,
-    PaymentCompletedPublisher,
-    PaymentFailedPublisher,
     RefundProcessedPublisher,
   ],
   exports: [OrderCreatedPublisher, OrderService],

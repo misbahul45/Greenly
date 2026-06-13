@@ -72,7 +72,9 @@ class CatalogEventConsumer:
 
     async def handle_event(self, routing_key: str, body: dict[str, Any]) -> None:
         try:
-            data = body.get("data") if isinstance(body.get("data"), dict) else body
+            data = body.get("payload") if isinstance(body.get("payload"), dict) else None
+            if data is None:
+                data = body.get("data") if isinstance(body.get("data"), dict) else body
             product_id = (
                 data.get("product_id")
                 or data.get("productId")

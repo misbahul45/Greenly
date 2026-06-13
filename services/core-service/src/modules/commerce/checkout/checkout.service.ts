@@ -2,13 +2,16 @@ import {
     Injectable,
     NotFoundException,
     BadRequestException,
+    Logger,
 } from "@nestjs/common";
 import {DatabaseService} from "../../../libs/database/database.service";
 import {CartRepository} from "../cart/cart.repository";
 import {CheckoutDto} from "./checkout.dto";
 import {CheckoutInitiatedPublisher} from "./checkout-initiated.publisher";
-import {OrderCreatedPublisher} from "../order/publishers/order-created.publisher";
 import {StripeService} from "../../finance/payment/stripe.service";
+import {COMMERCE_ROUTING_KEYS} from "../shared/constants/routing-keys.constant";
+import {OutboxService} from "../../../infrastructure/outbox/outbox.service";
+import {CatalogClientService} from "./catalog-client.service";
 
 type CheckoutItemSnapshot = {
     productId: string;
@@ -19,12 +22,15 @@ type CheckoutItemSnapshot = {
 
 @Injectable()
 export class CheckoutService {
+    private readonly logger = new Logger(CheckoutService.name);
+
     constructor(
         private readonly db: DatabaseService,
         private readonly cartRepo: CartRepository,
         private readonly checkoutInitiatedPublisher: CheckoutInitiatedPublisher,
-        private readonly orderCreatedPublisher: OrderCreatedPublisher,
-        private readonly stripeService: StripeService
+        private readonly stripeService: StripeService,
+        private readonly catalogClient: CatalogClientService,
+        private readonly outbox: OutboxService
     ) {}
 
     async checkout(userId: string, dto: CheckoutDto) {
@@ -54,11 +60,11 @@ export class CheckoutService {
             throw new BadRequestException("Shipping address is required");
         }
 
-const snapshots = this.buildSnapshots(dto, selectedItems);
-const itemsPayload = snapshots.map((item) => ({
-  productId: item.productId,
-  quantity: item.quantity,
-}));
+        const snapshots = await this.buildSnapshots(dto, selectedItems);
+        const itemsPayload = snapshots.map((item) => ({
+            productId: item.productId,
+            quantity: item.quantity,
+        }));
 
 const promo = dto.promoCode
             ? await this.db.promotion.findFirst({
@@ -131,6 +137,23 @@ const promo = dto.promoCode
                 },
             });
 
+            await this.outbox.createEvent(tx, {
+                eventType: COMMERCE_ROUTING_KEYS.ORDER_CREATED,
+                routingKey: COMMERCE_ROUTING_KEYS.ORDER_CREATED,
+                aggregateType: "order",
+                aggregateId: newOrder.id,
+                payload: {
+                    orderId: newOrder.id,
+                    userId,
+                    shopId: dto.shopId,
+                    totalAmount,
+                    items: itemsPayload,
+                    source: "core-service",
+                    version: "1.0",
+                    timestamp: new Date().toISOString(),
+                },
+            });
+
             return {order: newOrder, payment: newPayment};
         });
 
@@ -176,21 +199,20 @@ const promo = dto.promoCode
             },
         });
 
-        await this.checkoutInitiatedPublisher.publish({
-            userId,
-            orderId: order.id,
-            totalAmount: totalAmount.toString(),
-            timestamp: new Date().toISOString(),
-        });
-
-        await this.orderCreatedPublisher.publish({
-            orderId: order.id,
-            userId,
-            shopId: dto.shopId,
-            totalAmount: totalAmount.toString(),
-            timestamp: new Date().toISOString(),
-            items: itemsPayload,
-        });
+        try {
+            await this.checkoutInitiatedPublisher.publish({
+                userId,
+                orderId: order.id,
+                totalAmount: totalAmount.toString(),
+                timestamp: new Date().toISOString(),
+            });
+        } catch (error) {
+            this.logger.warn(
+                `checkout.initiated publish failed for order ${order.id}: ${
+                    error instanceof Error ? error.message : String(error)
+                }`
+            );
+        }
 
         return {
             data: {
@@ -209,32 +231,44 @@ const promo = dto.promoCode
         };
     }
 
-    private buildSnapshots(
+    private async buildSnapshots(
         dto: CheckoutDto,
         selectedItems: any[]
-    ): CheckoutItemSnapshot[] {
-        const snapshotByProductId = new Map(
-            (dto.items ?? []).map((item) => [item.productId, item])
+    ): Promise<CheckoutItemSnapshot[]> {
+        const catalogProducts = await this.catalogClient.resolveProducts(
+            selectedItems.map((item) => item.productId)
         );
 
         return selectedItems.map((cartItem) => {
-            const snapshot = snapshotByProductId.get(cartItem.productId);
-            if (!snapshot) {
+            const product = catalogProducts.get(cartItem.productId);
+            if (!product) {
                 throw new BadRequestException(
-                    `Missing checkout snapshot for ${cartItem.productId}`
+                    `Product ${cartItem.productId} is not available`
                 );
             }
 
-            if (snapshot.price <= 0) {
+            if (product.shopId !== dto.shopId) {
                 throw new BadRequestException(
-                    `Invalid price for ${cartItem.productId}`
+                    `Product ${cartItem.productId} does not belong to shop ${dto.shopId}`
+                );
+            }
+
+            if (!product.isActive) {
+                throw new BadRequestException(
+                    `Product ${cartItem.productId} is inactive`
+                );
+            }
+
+            if (product.stock < cartItem.quantity) {
+                throw new BadRequestException(
+                    `Insufficient stock for ${cartItem.productId}`
                 );
             }
 
             return {
                 productId: cartItem.productId,
-                productName: snapshot.productName,
-                price: Math.round(snapshot.price),
+                productName: product.name,
+                price: product.price,
                 quantity: cartItem.quantity,
             };
         });

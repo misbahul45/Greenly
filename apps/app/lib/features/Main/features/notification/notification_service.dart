@@ -3,7 +3,7 @@ import 'package:app/core/utils/api_client.dart';
 import 'package:app/core/utils/api_response.dart';
 
 class NotificationService {
-  static String get _base => '${ENV.api}/core/notifications';
+  static String get _base => '${ENV.coreApiUrl}/notifications';
 
   Future<ApiResponse<List<NotificationData>>> getNotifications({
     int page = 1,
@@ -45,10 +45,7 @@ class NotificationRealtimeEvent {
   final String type;
   final NotificationData? notification;
 
-  NotificationRealtimeEvent({
-    required this.type,
-    this.notification,
-  });
+  NotificationRealtimeEvent({required this.type, this.notification});
 
   factory NotificationRealtimeEvent.fromJson(Map<String, dynamic> json) {
     final notification = json['notification'];
@@ -83,7 +80,8 @@ class NotificationData {
       title: json['title']?.toString() ?? '',
       message: json['message']?.toString() ?? '',
       isRead: json['isRead'] == true,
-      createdAt: DateTime.tryParse(json['createdAt']?.toString() ?? '') ??
+      createdAt:
+          DateTime.tryParse(json['createdAt']?.toString() ?? '') ??
           DateTime.now(),
     );
   }

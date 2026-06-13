@@ -1,0 +1,7 @@
+.dart_tool
+build
+.pub-cache
+.gradle
+.idea
+.vscode
+.DS_Store

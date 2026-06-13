@@ -49,7 +49,6 @@ func NewRabbitMQ(
 	consumer.RegisterHandler("order.created", handlers.HandleOrderCreated)
 	consumer.RegisterHandler("order.cancelled", handlers.HandleOrderCancelled)
 	consumer.RegisterHandler("promotion.created", handlers.HandlePromotionCreated)
-	consumer.RegisterHandler("promotion.activated", handlers.HandlePromotionActivated)
 	consumer.RegisterHandler("promotion.expired", handlers.HandlePromotionExpired)
 	consumer.RegisterHandler("shop.approved", handlers.HandleShopApproved)
 
@@ -101,22 +100,60 @@ func NewEventHandlers(
 }
 
 func (h *EventHandlers) HandleOrderCreated(ctx context.Context, data json.RawMessage) error {
-	var event OrderCreatedEvent
-	if err := json.Unmarshal(data, &event); err != nil {
+	event, err := decodeOrderCreatedEvent(data)
+	if err != nil {
 		log.Printf("Failed to unmarshal order.created: %v", err)
 		return err
 	}
 
-	if event.ProductID != "" && event.Quantity > 0 {
-		err := h.inventoryService.ReserveStock(ctx, event.ProductID, event.Quantity)
+	items := event.Items
+	if len(items) == 0 && event.ProductID != "" && event.Quantity > 0 {
+		items = []OrderCreatedItem{{ProductID: event.ProductID, Quantity: event.Quantity}}
+	}
+
+	if len(items) == 0 {
+		log.Printf("Invalid order.created payload for order %s: no items", event.OrderID)
+		return nil
+	}
+
+	// TODO: persist event.EventID/orderID in a processed_events collection to make
+	// stock reservation idempotent across RabbitMQ redeliveries.
+	for _, item := range items {
+		if item.ProductID == "" || item.Quantity <= 0 {
+			log.Printf("Skipping invalid order.created item for order %s: productId=%q quantity=%d", event.OrderID, item.ProductID, item.Quantity)
+			continue
+		}
+
+		err := h.inventoryService.ReserveStock(ctx, item.ProductID, item.Quantity)
 		if err != nil {
 			log.Printf("Failed to reserve stock for order %s: %v", event.OrderID, err)
 			return err
 		}
-		log.Printf("Reserved %d stock for product %s (order: %s)", event.Quantity, event.ProductID, event.OrderID)
+		log.Printf("Reserved %d stock for product %s (order: %s)", item.Quantity, item.ProductID, event.OrderID)
 	}
 
 	return nil
+}
+
+func decodeOrderCreatedEvent(data json.RawMessage) (OrderCreatedEvent, error) {
+	var envelope struct {
+		EventID string          `json:"eventId"`
+		Payload json.RawMessage `json:"payload"`
+	}
+	if err := json.Unmarshal(data, &envelope); err == nil && len(envelope.Payload) > 0 {
+		var event OrderCreatedEvent
+		if err := json.Unmarshal(envelope.Payload, &event); err != nil {
+			return OrderCreatedEvent{}, err
+		}
+		event.EventID = envelope.EventID
+		return event, nil
+	}
+
+	var event OrderCreatedEvent
+	if err := json.Unmarshal(data, &event); err != nil {
+		return OrderCreatedEvent{}, err
+	}
+	return event, nil
 }
 
 func (h *EventHandlers) HandleOrderCancelled(ctx context.Context, data json.RawMessage) error {

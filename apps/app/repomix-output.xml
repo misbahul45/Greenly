@@ -848,6 +848,10 @@ tasks.register<Delete>("clean") {
 <file path="android/gradle.properties">
 org.gradle.jvmargs=-Xmx8G -XX:MaxMetaspaceSize=4G -XX:ReservedCodeCacheSize=512m -XX:+HeapDumpOnOutOfMemoryError
 android.useAndroidX=true
+# This builtInKotlin flag was added automatically by Flutter migrator
+android.builtInKotlin=false
+# This newDsl flag was added automatically by Flutter migrator
+android.newDsl=false
 </file>
 
 <file path="android/settings.gradle.kts">
@@ -9916,6 +9920,8 @@ class CategoryData {
 </file>
 
 <file path="lib/features/Main/features/home/domains/data/product_data.dart">
+import '../../../../../../shared/widgets/product/product_card_data.dart';
+
 class ProductData {
   final String id;
   final String shopId;
@@ -9933,6 +9939,8 @@ class ProductData {
   final bool isActive;
 
   final int price;
+  final int originalPrice;
+  final int finalPrice;
   final String currency;
   final int stock;
 
@@ -9940,6 +9948,9 @@ class ProductData {
 
   final String categoryName;
   final String shopName;
+
+  final EcoData? eco;
+  final PromotionData? promotion;
 
   final DateTime createdAt;
   final DateTime updatedAt;
@@ -9958,11 +9969,15 @@ class ProductData {
     required this.ecoScore,
     required this.isActive,
     required this.price,
+    required this.originalPrice,
+    required this.finalPrice,
     required this.currency,
     required this.stock,
     required this.imageUrls,
     required this.categoryName,
     required this.shopName,
+    this.eco,
+    this.promotion,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -9981,14 +9996,131 @@ class ProductData {
       ratingAverage: (json['ratingAverage'] ?? 0).toDouble(),
       ecoScore: (json['ecoScore'] as num?)?.toDouble() ?? 0,
       isActive: json['isActive'] ?? false,
-      price: json['price'] ?? 0,
+      price: (json['price'] as num?)?.toInt() ?? 0,
+      originalPrice: (json['originalPrice'] as num?)?.toInt() ?? (json['price'] as num?)?.toInt() ?? 0,
+      finalPrice: (json['finalPrice'] as num?)?.toInt() ?? (json['price'] as num?)?.toInt() ?? 0,
       currency: json['currency'] ?? '',
       stock: json['stock'] ?? 0,
       imageUrls: List<String>.from(json['imageUrls'] ?? []),
       categoryName: json['categoryName'] ?? '',
       shopName: json['shopName'] ?? '',
-      createdAt: DateTime.parse(json['createdAt']),
-      updatedAt: DateTime.parse(json['updatedAt']),
+      eco: json['eco'] != null ? EcoData.fromJson(json['eco']) : null,
+      promotion: json['promotion'] != null ? PromotionData.fromJson(json['promotion']) : null,
+      createdAt: json['createdAt'] != null ? DateTime.parse(json['createdAt']) : DateTime.now(),
+      updatedAt: json['updatedAt'] != null ? DateTime.parse(json['updatedAt']) : DateTime.now(),
+    );
+  }
+
+  ProductCardData toProductCardData({ProductCardVariant variant = ProductCardVariant.grid}) {
+    return ProductCardData(
+      productId: id,
+      slug: slug,
+      name: name,
+      imageUrl: imageUrls.isNotEmpty ? imageUrls.first : null,
+      price: finalPrice > 0 ? finalPrice : price,
+      originalPrice: originalPrice > finalPrice ? originalPrice : null,
+      finalPrice: finalPrice,
+      discountPercent: promotion?.discountPercent.toInt(),
+      discountAmount: promotion?.discountAmount.toInt(),
+      savingLabel: promotion?.savingLabel,
+      rating: ratingAverage,
+      reviewCount: reviewCount,
+      favoriteCount: favoriteCount,
+      stock: stock,
+      ecoScore: ecoScore > 0 ? ecoScore : eco?.score,
+      ecoLabel: eco?.label,
+      materialType: eco?.materialType,
+      materialLabel: eco?.materialLabel,
+      recyclable: eco?.recyclable,
+      carbonFootprint: eco?.carbonFootprint,
+      carbonLabel: eco?.carbonLabel,
+      ecoBadges: eco?.badges,
+      ecoReasons: eco?.reasons,
+      shopName: shopName,
+      categoryName: categoryName,
+      hasPromo: promotion?.hasPromo ?? false,
+      promotionCode: promotion?.code,
+      promotionLabel: promotion?.label,
+      variant: variant,
+    );
+  }
+}
+
+class EcoData {
+  final double score;
+  final String label;
+  final String materialType;
+  final String materialLabel;
+  final bool recyclable;
+  final double carbonFootprint;
+  final String carbonLabel;
+  final List<String> badges;
+  final List<String> reasons;
+
+  EcoData({
+    required this.score,
+    required this.label,
+    required this.materialType,
+    required this.materialLabel,
+    required this.recyclable,
+    required this.carbonFootprint,
+    required this.carbonLabel,
+    required this.badges,
+    required this.reasons,
+  });
+
+  factory EcoData.fromJson(Map<String, dynamic> json) {
+    return EcoData(
+      score: (json['score'] as num?)?.toDouble() ?? 0.0,
+      label: json['label'] ?? '',
+      materialType: json['materialType'] ?? '',
+      materialLabel: json['materialLabel'] ?? '',
+      recyclable: json['recyclable'] ?? false,
+      carbonFootprint: (json['carbonFootprint'] as num?)?.toDouble() ?? 0.0,
+      carbonLabel: json['carbonLabel'] ?? '',
+      badges: List<String>.from(json['badges'] ?? []),
+      reasons: List<String>.from(json['reasons'] ?? []),
+    );
+  }
+}
+
+class PromotionData {
+  final bool hasPromo;
+  final String code;
+  final String title;
+  final String type;
+  final double discountPercent;
+  final double discountAmount;
+  final String label;
+  final String savingLabel;
+  final DateTime? startsAt;
+  final DateTime? endsAt;
+
+  PromotionData({
+    required this.hasPromo,
+    required this.code,
+    required this.title,
+    required this.type,
+    required this.discountPercent,
+    required this.discountAmount,
+    required this.label,
+    required this.savingLabel,
+    this.startsAt,
+    this.endsAt,
+  });
+
+  factory PromotionData.fromJson(Map<String, dynamic> json) {
+    return PromotionData(
+      hasPromo: json['hasPromo'] ?? false,
+      code: json['code'] ?? '',
+      title: json['title'] ?? '',
+      type: json['type'] ?? '',
+      discountPercent: (json['discountPercent'] as num?)?.toDouble() ?? 0.0,
+      discountAmount: (json['discountAmount'] as num?)?.toDouble() ?? 0.0,
+      label: json['label'] ?? '',
+      savingLabel: json['savingLabel'] ?? '',
+      startsAt: json['startsAt'] != null ? DateTime.parse(json['startsAt']) : null,
+      endsAt: json['endsAt'] != null ? DateTime.parse(json['endsAt']) : null,
     );
   }
 }
@@ -14142,10 +14274,31 @@ class MlProductResult extends Equatable {
   final String name;
   final String? slug;
   final double? price;
+  final double? originalPrice;
+  final double? finalPrice;
   final String? currency;
   final String? imageUrl;
   final List<String> imageUrls;
+  
+  // Eco
   final double? ecoScore;
+  final String? ecoLabel;
+  final String? materialType;
+  final String? materialLabel;
+  final bool? recyclable;
+  final double? carbonFootprint;
+  final String? carbonLabel;
+  final List<String> ecoBadges;
+  final List<String> ecoReasons;
+  
+  // Promo
+  final bool hasPromo;
+  final String? promotionCode;
+  final String? promotionLabel;
+  final double? discountPercent;
+  final double? discountAmount;
+  final String? savingLabel;
+
   final double? ratingAverage;
   final int? reviewCount;
   final int? favoriteCount;
@@ -14161,10 +14314,26 @@ class MlProductResult extends Equatable {
     required this.name,
     this.slug,
     this.price,
+    this.originalPrice,
+    this.finalPrice,
     this.currency,
     this.imageUrl,
     this.imageUrls = const [],
     this.ecoScore,
+    this.ecoLabel,
+    this.materialType,
+    this.materialLabel,
+    this.recyclable,
+    this.carbonFootprint,
+    this.carbonLabel,
+    this.ecoBadges = const [],
+    this.ecoReasons = const [],
+    this.hasPromo = false,
+    this.promotionCode,
+    this.promotionLabel,
+    this.discountPercent,
+    this.discountAmount,
+    this.savingLabel,
     this.ratingAverage,
     this.reviewCount,
     this.favoriteCount,
@@ -14193,10 +14362,31 @@ class MlProductResult extends Equatable {
       name: json['name'] as String? ?? '',
       slug: json['slug'] as String?,
       price: _d(json['price']),
+      originalPrice: _d(json['original_price'] ?? json['originalPrice']),
+      finalPrice: _d(json['final_price'] ?? json['finalPrice']),
       currency: json['currency'] as String?,
       imageUrl: imageUrl,
       imageUrls: imageUrls,
+      
+      // Eco
       ecoScore: _d(json['eco_score'] ?? json['ecoScore']),
+      ecoLabel: json['eco_label'] as String? ?? json['ecoLabel'] as String?,
+      materialType: json['material_type'] as String? ?? json['materialType'] as String?,
+      materialLabel: json['material_label'] as String? ?? json['materialLabel'] as String?,
+      recyclable: json['recyclable'] as bool?,
+      carbonFootprint: _d(json['carbon_footprint'] ?? json['carbonFootprint']),
+      carbonLabel: json['carbon_label'] as String? ?? json['carbonLabel'] as String?,
+      ecoBadges: List<String>.from(json['eco_badges'] ?? json['ecoBadges'] ?? []),
+      ecoReasons: List<String>.from(json['eco_reasons'] ?? json['ecoReasons'] ?? []),
+      
+      // Promo
+      hasPromo: json['has_promo'] as bool? ?? json['hasPromo'] as bool? ?? false,
+      promotionCode: json['promotion_code'] as String? ?? json['promotionCode'] as String?,
+      promotionLabel: json['promotion_label'] as String? ?? json['promotionLabel'] as String?,
+      discountPercent: _d(json['discount_percent'] ?? json['discountPercent']),
+      discountAmount: _d(json['discount_amount'] ?? json['discountAmount']),
+      savingLabel: json['saving_label'] as String? ?? json['savingLabel'] as String?,
+      
       ratingAverage: _d(json['rating_average'] ?? json['ratingAverage']),
       reviewCount: _i(json['review_count'] ?? json['reviewCount']),
       favoriteCount: _i(json['favorite_count'] ?? json['favoriteCount']),
@@ -17866,6 +18056,8 @@ class SimilarProductsState {
 </file>
 
 <file path="lib/features/product-detail/domains/data/detail_product_data.dart">
+import '../../../Main/features/home/domains/data/product_data.dart';
+
 class DetailProductData {
   final String id;
   final String shopId;
@@ -17880,10 +18072,16 @@ class DetailProductData {
   final double ratingAverage;
   final bool isActive;
   final int price;
+  final int originalPrice;
+  final int finalPrice;
   final String currency;
   final int stock;
   final List<String> imageUrls;
   final String categoryName;
+  
+  final EcoData? eco;
+  final PromotionData? promotion;
+  
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -17901,10 +18099,14 @@ class DetailProductData {
     required this.ratingAverage,
     required this.isActive,
     required this.price,
+    required this.originalPrice,
+    required this.finalPrice,
     required this.currency,
     required this.stock,
     required this.imageUrls,
     required this.categoryName,
+    this.eco,
+    this.promotion,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -17930,6 +18132,8 @@ class DetailProductData {
       price: json['price'] is int
           ? json['price'] as int
           : int.tryParse('${json['price']}') ?? 0,
+      originalPrice: (json['originalPrice'] as num?)?.toInt() ?? (json['price'] as num?)?.toInt() ?? 0,
+      finalPrice: (json['finalPrice'] as num?)?.toInt() ?? (json['price'] as num?)?.toInt() ?? 0,
       currency: json['currency']?.toString() ?? 'IDR',
       stock: json['stock'] is int
           ? json['stock'] as int
@@ -17938,35 +18142,13 @@ class DetailProductData {
           ? List<String>.from(json['imageUrls'] as List)
           : const [],
       categoryName: json['categoryName']?.toString() ?? '',
+      eco: json['eco'] != null ? EcoData.fromJson(json['eco']) : null,
+      promotion: json['promotion'] != null ? PromotionData.fromJson(json['promotion']) : null,
       createdAt: DateTime.tryParse(json['createdAt']?.toString() ?? '') ??
           DateTime.now(),
       updatedAt: DateTime.tryParse(json['updatedAt']?.toString() ?? '') ??
           DateTime.now(),
     );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'shopId': shopId,
-      'shopName': shopName,
-      'categoryId': categoryId,
-      'name': name,
-      'slug': slug,
-      'description': description,
-      'sku': sku,
-      'favoriteCount': favoriteCount,
-      'reviewCount': reviewCount,
-      'ratingAverage': ratingAverage,
-      'isActive': isActive,
-      'price': price,
-      'currency': currency,
-      'stock': stock,
-      'imageUrls': imageUrls,
-      'categoryName': categoryName,
-      'createdAt': createdAt.toIso8601String(),
-      'updatedAt': updatedAt.toIso8601String(),
-    };
   }
 }
 </file>
@@ -18093,23 +18275,67 @@ import 'package:flutter/material.dart';
 
 class PriceDisplayWidget extends StatelessWidget {
   final int price;
+  final int? originalPrice;
+  final int? discountPercent;
   final String currency;
 
   const PriceDisplayWidget({
     super.key,
     required this.price,
+    this.originalPrice,
+    this.discountPercent,
     required this.currency,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Text(
-      CurrencyHelper.formatRupiah(price),
-      style: const TextStyle(
-        fontSize: 24,
-        fontWeight: FontWeight.bold,
-        color: AppTheme.primaryColor,
-      ),
+    final hasDiscount = originalPrice != null && originalPrice! > price;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (hasDiscount) ...[
+          Row(
+            children: [
+              Text(
+                CurrencyHelper.formatRupiah(originalPrice!),
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey[500],
+                  decoration: TextDecoration.lineThrough,
+                ),
+              ),
+              if (discountPercent != null && discountPercent! > 0) ...[
+                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: Colors.red.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Text(
+                    '-$discountPercent%',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: Colors.red,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
+          const SizedBox(height: 4),
+        ],
+        Text(
+          CurrencyHelper.formatRupiah(price),
+          style: const TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.w800,
+            color: AppTheme.primaryColor,
+          ),
+        ),
+      ],
     );
   }
 }
@@ -19446,9 +19672,15 @@ class _ProductDetailView extends StatelessWidget {
                         ),
                         const SizedBox(height: UIConstants.spacingM),
                         PriceDisplayWidget(
-                          price: product.price,
+                          price: product.finalPrice > 0 ? product.finalPrice : product.price,
+                          originalPrice: product.originalPrice > product.finalPrice ? product.originalPrice : null,
+                          discountPercent: product.promotion?.discountPercent.toInt(),
                           currency: product.currency,
                         ),
+                        if (product.promotion != null && product.promotion!.hasPromo) ...[
+                          const SizedBox(height: UIConstants.spacingM),
+                          _PromoSection(promotion: product.promotion!),
+                        ],
                         const SizedBox(height: UIConstants.spacingS),
                         StockBadgeWidget(stock: product.stock),
                         const SizedBox(height: UIConstants.spacingM),
@@ -19461,6 +19693,10 @@ class _ProductDetailView extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: UIConstants.spacingS),
+                  if (product.eco != null) ...[
+                    _SustainabilitySection(eco: product.eco!),
+                    const SizedBox(height: UIConstants.spacingS),
+                  ],
                   Container(
                     color: Colors.white,
                     padding: const EdgeInsets.all(UIConstants.paddingM),
@@ -19634,6 +19870,191 @@ class _ProductDetailView extends StatelessWidget {
     if (openCartOnSuccess) {
       await navigator.pushNamed(AppRoutes.cart);
     }
+  }
+}
+
+class _PromoSection extends StatelessWidget {
+  final PromotionData promotion;
+
+  const _PromoSection({required this.promotion});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(UIConstants.paddingM),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFF3E0),
+        borderRadius: BorderRadius.circular(UIConstants.radiusM),
+        border: Border.all(color: Colors.orange.withValues(alpha: 0.3)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.local_offer_rounded, color: Colors.orange, size: 20),
+              const SizedBox(width: 8),
+              Text(
+                promotion.label,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w800,
+                  color: Colors.orange,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  promotion.title,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.black87,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            promotion.savingLabel,
+            style: const TextStyle(
+              fontSize: 12,
+              color: Colors.black54,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          if (promotion.code.isNotEmpty) ...[
+            const SizedBox(height: 4),
+            Text(
+              'Kode: ${promotion.code}',
+              style: TextStyle(
+                fontSize: 12,
+                color: Colors.orange.shade800,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _SustainabilitySection extends StatelessWidget {
+  final EcoData eco;
+
+  const _SustainabilitySection({required this.eco});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      color: Colors.white,
+      padding: const EdgeInsets.all(UIConstants.paddingM),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Kenapa produk ini ramah lingkungan?',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.black87,
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: AppTheme.primaryColor.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  'Eco ${eco.score.toInt()}',
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w800,
+                    color: AppTheme.primaryColor,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: UIConstants.spacingM),
+          EcoAttributeChips(badges: eco.badges, compact: false),
+          const SizedBox(height: UIConstants.spacingM),
+          ...eco.reasons.map((reason) => Padding(
+                padding: const EdgeInsets.only(bottom: 8.0),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Icon(Icons.check_circle_rounded,
+                        color: AppTheme.primaryColor, size: 16),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        reason,
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.grey[700],
+                          height: 1.4,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              )),
+          const SizedBox(height: UIConstants.spacingS),
+          Row(
+            children: [
+              _InfoChip(label: 'Bahan: ${eco.materialLabel}', icon: Icons.grass_rounded),
+              const SizedBox(width: 8),
+              _InfoChip(
+                label: 'Carbon: ${eco.carbonLabel}',
+                icon: Icons.co2_rounded,
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _InfoChip extends StatelessWidget {
+  final String label;
+  final IconData icon;
+
+  const _InfoChip({required this.label, required this.icon});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: Colors.grey[100],
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: Colors.grey[600]),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 11,
+              color: Colors.grey[700],
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 
@@ -21104,9 +21525,31 @@ class SearchProductResult extends Equatable {
   final String name;
   final String? slug;
   final double? price;
+  final double? originalPrice;
+  final double? finalPrice;
   final String? currency;
   final String? imageUrl;
+  final List<String> imageUrls;
+  
+  // Eco
   final double? ecoScore;
+  final String? ecoLabel;
+  final String? materialType;
+  final String? materialLabel;
+  final bool? recyclable;
+  final double? carbonFootprint;
+  final String? carbonLabel;
+  final List<String> ecoBadges;
+  final List<String> ecoReasons;
+  
+  // Promo
+  final bool hasPromo;
+  final String? promotionCode;
+  final String? promotionLabel;
+  final double? discountPercent;
+  final double? discountAmount;
+  final String? savingLabel;
+
   final String? reason;
   final bool fromFallback;
   final double? rating;
@@ -21122,9 +21565,26 @@ class SearchProductResult extends Equatable {
     required this.name,
     this.slug,
     this.price,
+    this.originalPrice,
+    this.finalPrice,
     this.currency,
     this.imageUrl,
+    this.imageUrls = const [],
     this.ecoScore,
+    this.ecoLabel,
+    this.materialType,
+    this.materialLabel,
+    this.recyclable,
+    this.carbonFootprint,
+    this.carbonLabel,
+    this.ecoBadges = const [],
+    this.ecoReasons = const [],
+    this.hasPromo = false,
+    this.promotionCode,
+    this.promotionLabel,
+    this.discountPercent,
+    this.discountAmount,
+    this.savingLabel,
     this.reason,
     this.fromFallback = false,
     this.rating,
@@ -21138,7 +21598,7 @@ class SearchProductResult extends Equatable {
 
   factory SearchProductResult.fromMl(Map<String, dynamic> json) {
     final rawUrls = json['image_urls'] ?? json['imageUrls'];
-    final imageUrls =
+    final List<String> imageUrls =
         rawUrls is List ? rawUrls.whereType<String>().toList() : <String>[];
     final imageUrl =
         json['image_url']?.toString() ??
@@ -21150,9 +21610,31 @@ class SearchProductResult extends Equatable {
       name: json['name']?.toString() ?? '',
       slug: json['slug']?.toString(),
       price: (json['price'] as num?)?.toDouble(),
+      originalPrice: (json['original_price'] as num? ?? json['originalPrice'] as num?)?.toDouble(),
+      finalPrice: (json['final_price'] as num? ?? json['finalPrice'] as num?)?.toDouble(),
       currency: json['currency']?.toString(),
       imageUrl: imageUrl,
-      ecoScore: (json['eco_score'] as num?)?.toDouble(),
+      imageUrls: imageUrls,
+      
+      // Eco
+      ecoScore: (json['eco_score'] as num? ?? json['ecoScore'] as num?)?.toDouble(),
+      ecoLabel: json['eco_label']?.toString() ?? json['ecoLabel']?.toString(),
+      materialType: json['material_type']?.toString() ?? json['materialType']?.toString(),
+      materialLabel: json['material_label']?.toString() ?? json['materialLabel']?.toString(),
+      recyclable: json['recyclable'] as bool?,
+      carbonFootprint: (json['carbon_footprint'] as num? ?? json['carbonFootprint'] as num?)?.toDouble(),
+      carbonLabel: json['carbon_label']?.toString() ?? json['carbonLabel']?.toString(),
+      ecoBadges: List<String>.from(json['eco_badges'] ?? json['ecoBadges'] ?? []),
+      ecoReasons: List<String>.from(json['eco_reasons'] ?? json['ecoReasons'] ?? []),
+      
+      // Promo
+      hasPromo: json['has_promo'] as bool? ?? json['hasPromo'] as bool? ?? false,
+      promotionCode: json['promotion_code']?.toString() ?? json['promotionCode']?.toString(),
+      promotionLabel: json['promotion_label']?.toString() ?? json['promotionLabel']?.toString(),
+      discountPercent: (json['discount_percent'] as num? ?? json['discountPercent'] as num?)?.toDouble(),
+      discountAmount: (json['discount_amount'] as num? ?? json['discountAmount'] as num?)?.toDouble(),
+      savingLabel: json['saving_label']?.toString() ?? json['savingLabel']?.toString(),
+      
       reason: json['reason']?.toString(),
       rating: (json['rating_average'] as num?)?.toDouble() ??
           (json['ratingAverage'] as num?)?.toDouble(),
@@ -21169,16 +21651,43 @@ class SearchProductResult extends Equatable {
   }
 
   factory SearchProductResult.fromCatalog(Map<String, dynamic> json) {
-    final imageUrls = json['imageUrls'];
+    final rawUrls = json['imageUrls'];
+    final List<String> imageUrls =
+        rawUrls is List ? rawUrls.whereType<String>().toList() : <String>[];
+    
+    final eco = json['eco'] as Map<String, dynamic>?;
+    final promo = json['promotion'] as Map<String, dynamic>?;
+
     return SearchProductResult(
       id: json['id']?.toString() ?? '',
       name: json['name']?.toString() ?? '',
       slug: json['slug']?.toString(),
       price: (json['price'] as num?)?.toDouble(),
+      originalPrice: (json['originalPrice'] as num?)?.toDouble(),
+      finalPrice: (json['finalPrice'] as num?)?.toDouble(),
       currency: json['currency']?.toString(),
-      imageUrl: imageUrls is List && imageUrls.isNotEmpty
-          ? imageUrls.first.toString()
-          : null,
+      imageUrl: imageUrls.isNotEmpty ? imageUrls.first : null,
+      imageUrls: imageUrls,
+      
+      // Eco
+      ecoScore: (json['ecoScore'] as num?)?.toDouble() ?? (eco?['score'] as num?)?.toDouble(),
+      ecoLabel: eco?['label']?.toString(),
+      materialType: eco?['materialType']?.toString(),
+      materialLabel: eco?['materialLabel']?.toString(),
+      recyclable: eco?['recyclable'] as bool?,
+      carbonFootprint: (eco?['carbonFootprint'] as num?)?.toDouble(),
+      carbonLabel: eco?['carbonLabel']?.toString(),
+      ecoBadges: List<String>.from(eco?['badges'] ?? []),
+      ecoReasons: List<String>.from(eco?['reasons'] ?? []),
+      
+      // Promo
+      hasPromo: promo?['hasPromo'] as bool? ?? false,
+      promotionCode: promo?['code']?.toString(),
+      promotionLabel: promo?['label']?.toString(),
+      discountPercent: (promo?['discountPercent'] as num?)?.toDouble(),
+      discountAmount: (promo?['discountAmount'] as num?)?.toDouble(),
+      savingLabel: promo?['savingLabel']?.toString(),
+      
       reason: json['description']?.toString(),
       fromFallback: true,
       rating: (json['ratingAverage'] as num?)?.toDouble(),
@@ -24185,6 +24694,7 @@ class ProductBadgesRow extends StatelessWidget {
   final double? ecoScore;
   final int? stock;
   final bool showEcoBadge;
+  final List<String>? ecoBadges;
   final bool showStock;
   final bool compact;
 
@@ -24193,6 +24703,7 @@ class ProductBadgesRow extends StatelessWidget {
     this.ecoScore,
     this.stock,
     this.showEcoBadge = true,
+    this.ecoBadges,
     this.showStock = false,
     this.compact = true,
   });
@@ -24202,6 +24713,12 @@ class ProductBadgesRow extends StatelessWidget {
     final badges = <Widget>[
       if (showEcoBadge && ecoScore != null)
         EcoScoreBadge(score: ecoScore!, compact: compact),
+      if (ecoBadges != null && ecoBadges!.isNotEmpty)
+        ...ecoBadges!.take(compact ? 2 : 5).map((label) => _Badge(
+              label: label,
+              color: AppTheme.primaryColor,
+              backgroundColor: AppTheme.primaryColor.withValues(alpha: 0.05),
+            )),
       if (showStock && stock != null && stock! <= 0)
         const _Badge(label: 'Habis', color: Color(0xFF757575)),
       if (showStock && stock != null && stock! > 0 && stock! <= 5)
@@ -24214,6 +24731,32 @@ class ProductBadgesRow extends StatelessWidget {
       spacing: UIConstants.spacingXS,
       runSpacing: UIConstants.spacingXS,
       children: badges,
+    );
+  }
+}
+
+class EcoAttributeChips extends StatelessWidget {
+  final List<String> badges;
+  final bool compact;
+
+  const EcoAttributeChips({
+    super.key,
+    required this.badges,
+    this.compact = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    if (badges.isEmpty) return const SizedBox.shrink();
+
+    return Wrap(
+      spacing: UIConstants.spacingXS,
+      runSpacing: UIConstants.spacingXS,
+      children: badges.take(compact ? 2 : 10).map((label) => _Badge(
+            label: label,
+            color: AppTheme.primaryColor,
+            backgroundColor: AppTheme.primaryColor.withValues(alpha: 0.08),
+          )).toList(),
     );
   }
 }
@@ -24322,17 +24865,36 @@ class ProductCardData {
   final String? imageUrl;
   final int price;
   final int? originalPrice;
+  final int? finalPrice;
   final int? discountPercent;
+  final int? discountAmount;
+  final String? savingLabel;
   final double? rating;
   final int? reviewCount;
   final int? favoriteCount;
   final int? soldCount;
   final int? stock;
+  
+  // Eco Attributes
   final double? ecoScore;
+  final String? ecoLabel;
+  final String? materialType;
+  final String? materialLabel;
+  final bool? recyclable;
+  final double? carbonFootprint;
+  final String? carbonLabel;
+  final List<String>? ecoBadges;
+  final List<String>? ecoReasons;
+  
   final String? semanticReason;
   final String? shopName;
   final String? categoryName;
+  
+  // Promotion
+  final bool hasPromo;
   final String? promotionCode;
+  final String? promotionLabel;
+  
   final bool isFavorite;
   final bool fromFallback;
   final int? quantity;
@@ -24346,17 +24908,30 @@ class ProductCardData {
     this.imageUrl,
     required this.price,
     this.originalPrice,
+    this.finalPrice,
     this.discountPercent,
+    this.discountAmount,
+    this.savingLabel,
     this.rating,
     this.reviewCount,
     this.favoriteCount,
     this.soldCount,
     this.stock,
     this.ecoScore,
+    this.ecoLabel,
+    this.materialType,
+    this.materialLabel,
+    this.recyclable,
+    this.carbonFootprint,
+    this.carbonLabel,
+    this.ecoBadges,
+    this.ecoReasons,
     this.semanticReason,
     this.shopName,
     this.categoryName,
+    this.hasPromo = false,
     this.promotionCode,
+    this.promotionLabel,
     this.isFavorite = false,
     this.fromFallback = false,
     this.quantity,
@@ -24366,6 +24941,8 @@ class ProductCardData {
 
   bool get isOutOfStock => stock != null && stock! <= 0;
   bool get isLowStock => stock != null && stock! > 0 && stock! <= 5;
+  int get effectivePrice => finalPrice ?? price;
+  bool get displayPromo => hasPromo || (promotionCode != null && promotionCode!.isNotEmpty);
 }
 </file>
 
@@ -24561,14 +25138,16 @@ class ProductCard extends StatelessWidget {
       );
     }
 
-    if (showDiscountBadge &&
-        data.promotionCode != null &&
-        data.promotionCode!.isNotEmpty) {
-      return ProductDiscountBadge(label: data.promotionCode!);
-    }
-
-    if (showDiscountBadge && data.discountPercent != null) {
-      return ProductDiscountBadge(label: '-${data.discountPercent}%');
+    if (showDiscountBadge) {
+      if (data.promotionLabel != null && data.promotionLabel!.isNotEmpty) {
+        return ProductDiscountBadge(label: data.promotionLabel!);
+      }
+      if (data.promotionCode != null && data.promotionCode!.isNotEmpty) {
+        return ProductDiscountBadge(label: data.promotionCode!);
+      }
+      if (data.discountPercent != null) {
+        return ProductDiscountBadge(label: '-${data.discountPercent}%');
+      }
     }
 
     return null;
@@ -25181,6 +25760,7 @@ class ProductHorizontalInfo extends StatelessWidget {
         const SizedBox(height: UIConstants.spacingXS),
         ProductBadgesRow(
           ecoScore: data.ecoScore,
+          ecoBadges: data.ecoBadges,
           stock: data.stock,
           showEcoBadge: showEcoBadge,
           showStock: showStock,
@@ -25414,10 +25994,7 @@ class ProductPriceRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final hasDiscount =
-        originalPrice != null &&
-        originalPrice! > price &&
-        discountPercent != null;
+    final hasDiscount = originalPrice != null && originalPrice! > price;
 
     return Wrap(
       spacing: UIConstants.spacingXS,

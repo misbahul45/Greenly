@@ -32,6 +32,7 @@ class CheckoutDto {
 class CheckoutItemSnapshotDto {
   final String productId;
   final String productName;
+  // Backend treats this as a display hint only and resolves final price server-side.
   final int price;
   final int quantity;
 

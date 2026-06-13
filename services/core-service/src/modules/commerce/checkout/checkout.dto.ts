@@ -12,7 +12,7 @@ export const CheckoutSchema = z.object({
             z.object({
                 productId: z.string().min(1),
                 productName: z.string().min(1),
-                price: z.coerce.number().positive(),
+                price: z.coerce.number().positive().optional(),
                 quantity: z.coerce.number().int().positive(),
             })
         )

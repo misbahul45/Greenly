@@ -6,12 +6,14 @@ import {
   Transport,
 } from '@nestjs/microservices';
 import { ConfigService } from '@nestjs/config';
+import { RabbitMqEventBusModule } from '../../infrastructure/messaging/rabbitmq-event-bus.module';
 
 @Global()
 @Module({
   providers: [MessaggingService],
   exports: [MessaggingService],
   imports: [
+    RabbitMqEventBusModule,
     ClientsModule.registerAsync([
       {
         name: 'RABBITMQ_CLIENT',

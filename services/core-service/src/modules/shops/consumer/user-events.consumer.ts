@@ -17,15 +17,23 @@ export class UserEventsConsumer {
 
   constructor(private readonly shopsService: ShopsService) {}
 
-  @EventPattern('user.deleted')
+  @EventPattern('auth.user.deleted')
   async handleUserDeleted(@Payload() raw: unknown) {
     try {
-      const data = UserDeletedEventSchema.parse(raw);
+      const data = UserDeletedEventSchema.parse(this.extractPayload(raw));
       // Future logic: identify shops owned by data.userId and initiate anonymization flow or soft deletion.
-      this.logger.log(`Successfully processed user.deleted for user ${data.userId}`);
+      this.logger.log(`Successfully processed auth.user.deleted for user ${data.userId}`);
     } catch (error) {
-      this.logger.error(`Failed to process user.deleted: ${error.message}`);
+      this.logger.error(`Failed to process auth.user.deleted: ${error.message}`);
       throw error;
     }
+  }
+
+  private extractPayload(raw: unknown) {
+    if (raw && typeof raw === 'object' && 'payload' in raw) {
+      const payload = (raw as { payload?: unknown }).payload;
+      if (payload && typeof payload === 'object') return payload;
+    }
+    return raw;
   }
 }

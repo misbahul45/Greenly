@@ -5,7 +5,7 @@ import 'package:app/features/ml-products/domain/ml_product_result.dart';
 import 'package:app/features/ml-products/domain/ml_search_request.dart';
 
 class MlProductService {
-  static String get _base => '${ENV.api}/ml';
+  static String get _base => ENV.mlApiUrl;
 
   static List<MlProductResult> _parseList(dynamic data) {
     if (data is List) {

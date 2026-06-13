@@ -17,7 +17,6 @@ import { ShopCreatedPublisher } from './publisher/shop.created.publisher';
 import { ShopApplicationVerifiedPublisher } from './publisher/shop.application.updated.publisher';
 import { ShopBalanceUpdatedPublisher } from './publisher/shop.balance.updated.publisher';
 import { ShopOrderStatusChangedPublisher } from './publisher/shop.order.status_changed.publisher';
-import { ShopFollowerAddedPublisher } from './publisher/shop.follower.added.publisher';
 
 import { EmailConsume } from './consumer/email.consume';
 import { PaymentEventsConsumer } from './consumer/payment-events.consumer';
@@ -64,7 +63,6 @@ import { PayoutEventsConsumer } from './consumer/payout-events.consumer';
     ShopApplicationVerifiedPublisher,
     ShopBalanceUpdatedPublisher,
     ShopOrderStatusChangedPublisher,
-    ShopFollowerAddedPublisher,
 
     EmailConsume,
     PayoutEventsConsumer,

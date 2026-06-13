@@ -14,9 +14,11 @@ import 'package:app/features/auth/domains/response/verify_email_response.dart';
 import 'package:app/shared/domains/data/token_model.dart';
 
 class AuthService {
-  static String get _baseUrl => "${ENV.api}/core";
+  static String get _baseUrl => ENV.coreApiUrl;
 
-  static Future<ApiResponse<RegisterResponse>> register(RegisterDto payload) async {
+  static Future<ApiResponse<RegisterResponse>> register(
+    RegisterDto payload,
+  ) async {
     return await ApiClient.post<RegisterResponse>(
       "$_baseUrl/auth/register",
       payload.toJson(),
@@ -24,8 +26,7 @@ class AuthService {
     );
   }
 
-
-   Future<ApiResponse<LoginResponse>> login(LoginDto payload) async {
+  Future<ApiResponse<LoginResponse>> login(LoginDto payload) async {
     return await ApiClient.post<LoginResponse>(
       "$_baseUrl/auth/login",
       payload.toJson(),
@@ -33,8 +34,9 @@ class AuthService {
     );
   }
 
-
-  Future<ApiResponse<VerifyEmailResponse>> verifyEmail(VerifyEmailDto payload) async {
+  Future<ApiResponse<VerifyEmailResponse>> verifyEmail(
+    VerifyEmailDto payload,
+  ) async {
     return await ApiClient.post<VerifyEmailResponse>(
       "$_baseUrl/auth/verify-email",
       payload.toJson(),
@@ -42,7 +44,9 @@ class AuthService {
     );
   }
 
-  Future<ApiResponse<VerifyPasswordResponse>> verifyPassword(VerifyPasswordDto payload) async {
+  Future<ApiResponse<VerifyPasswordResponse>> verifyPassword(
+    VerifyPasswordDto payload,
+  ) async {
     return await ApiClient.post<VerifyPasswordResponse>(
       "$_baseUrl/auth/verify-password",
       payload.toJson(),
@@ -50,16 +54,13 @@ class AuthService {
     );
   }
 
-
   Future<ApiResponse<dynamic>> resendOtp(String email, String tokenFor) async {
     return await ApiClient.post<dynamic>(
       "$_baseUrl/auth/resend-token?for=$tokenFor",
-      {
-        "email": email,
-      },
+      {"email": email},
     );
   }
-  
+
   Future<ApiResponse<dynamic>> forgotPassword(ForgotPasswordDto payload) async {
     return await ApiClient.post<dynamic>(
       "$_baseUrl/auth/forgot-password",
@@ -73,7 +74,7 @@ class AuthService {
       payload.toJson(),
     );
   }
-  
+
   static Future<ApiResponse<TokenModel>> refreshToken() async {
     return await ApiClient.request<TokenModel>(
       method: "POST",
@@ -85,9 +86,6 @@ class AuthService {
   }
 
   Future<ApiResponse<dynamic>> logout() async {
-    return await ApiClient.post<dynamic>(
-      "$_baseUrl/auth/logout",
-      {},
-    );
+    return await ApiClient.post<dynamic>("$_baseUrl/auth/logout", {});
   }
 }

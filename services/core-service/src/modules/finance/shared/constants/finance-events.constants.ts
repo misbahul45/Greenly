@@ -4,5 +4,6 @@ export const FINANCE_EVENTS = {
   PAYOUT_STATUS_CHANGED: 'payout.status.changed',
   PAYMENT_COMPLETED: 'payment.completed',
   PAYMENT_FAILED: 'payment.failed',
+  PAYMENT_REFUNDED: 'payment.refunded',
   REFUND_PROCESSED: 'refund.processed',
 };

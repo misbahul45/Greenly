@@ -3,7 +3,7 @@ import 'package:app/core/utils/api_client.dart';
 import 'package:app/core/utils/api_response.dart';
 
 class ChatService {
-  static String get _base => '${ENV.api}/core/chat';
+  static String get _base => '${ENV.coreApiUrl}/chat';
 
   Future<ApiResponse<List<ChatConversationData>>> getAllShopConversations() {
     return ApiClient.get(

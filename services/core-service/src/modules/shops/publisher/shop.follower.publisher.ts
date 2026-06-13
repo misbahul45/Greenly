@@ -1,5 +1,5 @@
 import { Injectable } from "@nestjs/common";
-import { MessaggingService } from "../../../libs/messagging/messagging.service";
+import { RabbitMqEventBusService } from "../../../infrastructure/messaging/rabbitmq-event-bus.service";
 
 export interface ShopFollowerAddedEvent {
   userId: string;
@@ -16,10 +16,10 @@ export interface ShopFollowerRemovedEvent {
 
 @Injectable()
 export class ShopFollowerPublisher {
-  constructor(private readonly broker: MessaggingService) {}
+  constructor(private readonly eventBus: RabbitMqEventBusService) {}
 
   async publishShopFollowerAdded(event: ShopFollowerAddedEvent): Promise<void> {
-    await this.broker.publish("shop.follower.added", {
+    await this.eventBus.publish("shop.follower.added", {
       ...event,
       source: "core-service",
       version: "1.0",
@@ -27,7 +27,7 @@ export class ShopFollowerPublisher {
   }
 
   async publishShopFollowerRemoved(event: ShopFollowerRemovedEvent): Promise<void> {
-    await this.broker.publish("shop.follower.removed", {
+    await this.eventBus.publish("shop.follower.removed", {
       ...event,
       source: "core-service",
       version: "1.0",

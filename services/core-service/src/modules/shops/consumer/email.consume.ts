@@ -41,7 +41,6 @@ export class EmailConsume implements OnModuleInit {
     });
   }
 
-  @EventPattern("email.send")
   async handleSendEmail(@Payload() data: unknown) {
     return this.breaker.fire(data);
   }

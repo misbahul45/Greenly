@@ -21,7 +21,6 @@ export class PayoutEventsConsumer {
 
   constructor(private readonly db: DatabaseService) {}
 
-  @EventPattern('shop.payout.processed')
   async handlePayoutProcessed(@Payload() raw: unknown) {
     try {
       const data = PayoutProcessedEventSchema.parse(raw);

@@ -12,11 +12,9 @@ import {
     CreateRefundDto,
 } from "./dto/order.dto";
 import {OrderStatusChangedPublisher} from "./publishers/order-status-changed.publisher";
-import {
-    PaymentCompletedPublisher,
-    PaymentFailedPublisher,
-} from "./publishers/payment.publisher";
 import {RefundProcessedPublisher} from "./publishers/refund-processed.publisher";
+import {OutboxService} from "../../../infrastructure/outbox/outbox.service";
+import {FINANCE_EVENTS} from "../../finance/shared/constants/finance-events.constants";
 
 const VALID_TRANSITIONS: Record<string, string[]> = {
     PENDING: ["PAID", "CANCELLED"],
@@ -33,9 +31,8 @@ export class OrderService {
         private readonly db: DatabaseService,
         private readonly orderRepo: OrderRepository,
         private readonly orderStatusChangedPublisher: OrderStatusChangedPublisher,
-        private readonly paymentCompletedPublisher: PaymentCompletedPublisher,
-        private readonly paymentFailedPublisher: PaymentFailedPublisher,
-        private readonly refundProcessedPublisher: RefundProcessedPublisher
+        private readonly refundProcessedPublisher: RefundProcessedPublisher,
+        private readonly outbox: OutboxService
     ) {}
 
     async findMyOrders(userId: string, query: OrderQueryDto) {
@@ -138,7 +135,7 @@ export class OrderService {
         const orderStatus = dto.status === "SUCCESS" ? "PAID" : "CANCELLED";
 
         await this.db.$transaction(async (tx) => {
-            await tx.payment.update({
+            const payment = await tx.payment.update({
                 where: {orderId: dto.orderId},
                 data: {
                     status: paymentStatus as any,
@@ -149,31 +146,56 @@ export class OrderService {
                             ? new Date(dto.paidAt ?? Date.now())
                             : null,
                 },
+                include: {order: true},
             });
 
             await tx.order.update({
                 where: {id: dto.orderId},
                 data: {status: orderStatus as any},
             });
-        });
 
-        if (dto.status === "SUCCESS") {
-            await this.paymentCompletedPublisher.publish({
-                paymentId: order.payment.id,
-                orderId: dto.orderId,
-                grossAmount: dto.grossAmount,
-                netAmount: order.payment.netAmount.toString(),
-                method: dto.method,
-                timestamp: new Date().toISOString(),
+            await this.outbox.createEvent(tx, {
+                eventType:
+                    dto.status === "SUCCESS"
+                        ? FINANCE_EVENTS.PAYMENT_COMPLETED
+                        : FINANCE_EVENTS.PAYMENT_FAILED,
+                routingKey:
+                    dto.status === "SUCCESS"
+                        ? FINANCE_EVENTS.PAYMENT_COMPLETED
+                        : FINANCE_EVENTS.PAYMENT_FAILED,
+                aggregateType: "payment",
+                aggregateId: payment.id,
+                payload:
+                    dto.status === "SUCCESS"
+                        ? {
+                              paymentId: payment.id,
+                              orderId: dto.orderId,
+                              shopId: order.shopId,
+                              userId: order.userId,
+                              grossAmount: Number(dto.grossAmount),
+                              gatewayFee: Number(payment.gatewayFee),
+                              marketplaceFee: Number(payment.marketplaceFee),
+                              netAmount: Number(payment.netAmount),
+                              method: dto.method,
+                              transactionId: dto.transactionId,
+                              paidAt: new Date(
+                                  dto.paidAt ?? Date.now()
+                              ).toISOString(),
+                              source: "core-service",
+                              version: "1.0",
+                          }
+                        : {
+                              paymentId: payment.id,
+                              orderId: dto.orderId,
+                              shopId: order.shopId,
+                              userId: order.userId,
+                              reason: `Payment ${dto.status}`,
+                              timestamp: new Date().toISOString(),
+                              source: "core-service",
+                              version: "1.0",
+                          },
             });
-        } else {
-            await this.paymentFailedPublisher.publish({
-                paymentId: order.payment.id,
-                orderId: dto.orderId,
-                reason: `Payment ${dto.status}`,
-                timestamp: new Date().toISOString(),
-            });
-        }
+        });
 
         await this.orderStatusChangedPublisher.publish({
             orderId: dto.orderId,

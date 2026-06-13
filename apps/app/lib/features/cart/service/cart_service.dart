@@ -4,9 +4,9 @@ import 'package:app/core/utils/api_response.dart';
 import 'package:app/features/cart/domain/data/cart_item_data.dart';
 
 class CartService {
-  static String get _base => '${ENV.api}/core/cart';
-  static String get _coreBase => '${ENV.api}/core';
-  static String get _catalogBase => '${ENV.api}/catalog';
+  static String get _base => '${ENV.coreApiUrl}/cart';
+  static String get _coreBase => ENV.coreApiUrl;
+  static String get _catalogBase => ENV.catalogApiUrl;
 
   final Map<String, String> _shopNameCache = {};
 
@@ -73,14 +73,14 @@ class CartService {
 
     final withProduct = await Future.wait(futures);
     final needsShopLookup = withProduct.any(
-      (item) => item.shopId != null && (item.shopName == null || item.shopName!.isEmpty),
+      (item) =>
+          item.shopId != null &&
+          (item.shopName == null || item.shopName!.isEmpty),
     );
     return needsShopLookup ? _attachShopNames(withProduct) : withProduct;
   }
 
-  Future<List<CartItemData>> _attachShopNames(
-    List<CartItemData> items,
-  ) async {
+  Future<List<CartItemData>> _attachShopNames(List<CartItemData> items) async {
     final shopIds = items
         .map((e) => e.shopId)
         .whereType<String>()

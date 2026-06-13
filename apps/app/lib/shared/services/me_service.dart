@@ -6,7 +6,7 @@ import 'package:app/shared/domains/dto/update_profile_dto.dart';
 import 'package:app/core/config/env.dart';
 
 class MeService {
-  static String get _baseUrl => "${ENV.api}/core";
+  static String get _baseUrl => ENV.coreApiUrl;
 
   static Future<ApiResponse<UserModel>> getMe() async {
     return await ApiClient.get<UserModel>(
