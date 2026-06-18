@@ -14,6 +14,7 @@ class AppBarConfig {
   });
 }
 
+
 const List<AppBarConfig> mainAppBarConfigs = [
   AppBarConfig(
     title: 'Home',
