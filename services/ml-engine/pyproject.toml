@@ -16,15 +16,13 @@ dependencies = [
     "faiss-cpu>=1.8.0",
     "numpy>=1.26.0",
     "sentence-transformers>=2.7.0,<3.0.0",
-
     # Mac Intel local development
     "torch==2.2.2; sys_platform == 'darwin' and platform_machine == 'x86_64'",
-
     # Apple Silicon and Linux can use newer torch
     "torch>=2.7.0; sys_platform == 'linux'",
     "torch>=2.7.0; sys_platform == 'darwin' and platform_machine == 'arm64'",
-
-    "python-dotenv>=1.0.1"
+    "python-dotenv>=1.0.1",
+    "redis>=8.0.0",
 ]
 
 [tool.uv.sources]

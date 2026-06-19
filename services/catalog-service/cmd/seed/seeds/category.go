@@ -5,21 +5,11 @@ import (
 	"context"
 	"log"
 	"time"
-
-	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 func SeedCategories(ctx context.Context, db *mongo.Database) map[string]string {
 	col := db.Collection("categories")
-	col.Indexes().CreateMany(ctx, []mongo.IndexModel{
-		{
-			Keys:    bson.D{{Key: "slug", Value: 1}},
-			Options: options.Index().SetUnique(true).SetSparse(true),
-		},
-	})
-
 	now := time.Now()
 
 	// Parent categories
