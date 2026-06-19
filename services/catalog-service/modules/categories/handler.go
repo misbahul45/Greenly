@@ -5,6 +5,7 @@ import (
 	"catalog-service/middleware"
 	"catalog-service/utils"
 	"errors"
+	"log"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -55,7 +56,8 @@ func (h *handler) FindMany(c *gin.Context) {
 
 	res, total, err := h.service.FindMany(c.Request.Context(), query)
 	if err != nil {
-		c.Error(middleware.NewAppError(500, "Failed to fetch categories", nil))
+		log.Printf("[HANDLER_ERROR] requestId=%v action=find_many_categories err=%+v", requestID(c), err)
+		c.Error(middleware.NewAppError(500, "Failed to fetch categories", err))
 		return
 	}
 
@@ -76,7 +78,8 @@ func (h *handler) FindOne(c *gin.Context) {
 			c.Error(middleware.NewAppError(404, err.Error(), nil))
 			return
 		}
-		c.Error(middleware.NewAppError(500, "Internal server error", nil))
+		log.Printf("[HANDLER_ERROR] requestId=%v action=categories err=%+v", requestID(c), err)
+		c.Error(middleware.NewAppError(500, "Internal server error", err))
 		return
 	}
 
@@ -101,7 +104,8 @@ func (h *handler) Create(c *gin.Context) {
 			c.Error(middleware.NewAppError(409, err.Error(), nil))
 			return
 		}
-		c.Error(middleware.NewAppError(500, "Internal server error", nil))
+		log.Printf("[HANDLER_ERROR] requestId=%v action=categories err=%+v", requestID(c), err)
+		c.Error(middleware.NewAppError(500, "Internal server error", err))
 		return
 	}
 
@@ -124,7 +128,8 @@ func (h *handler) Update(c *gin.Context) {
 			c.Error(middleware.NewAppError(404, err.Error(), nil))
 			return
 		}
-		c.Error(middleware.NewAppError(500, "Internal server error", nil))
+		log.Printf("[HANDLER_ERROR] requestId=%v action=categories err=%+v", requestID(c), err)
+		c.Error(middleware.NewAppError(500, "Internal server error", err))
 		return
 	}
 
@@ -140,7 +145,8 @@ func (h *handler) Delete(c *gin.Context) {
 			c.Error(middleware.NewAppError(404, err.Error(), nil))
 			return
 		}
-		c.Error(middleware.NewAppError(500, "Internal server error", nil))
+		log.Printf("[HANDLER_ERROR] requestId=%v action=categories err=%+v", requestID(c), err)
+		c.Error(middleware.NewAppError(500, "Internal server error", err))
 		return
 	}
 
@@ -173,4 +179,9 @@ func (h *handler) FindCategoryTree(c *gin.Context) {
 	}
 
 	utils.OK(c, res.Data)
+}
+
+func requestID(c *gin.Context) interface{} {
+	requestID, _ := c.Get("request_id")
+	return requestID
 }

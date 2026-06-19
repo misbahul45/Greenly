@@ -45,7 +45,8 @@ func (h *handler) FindMany(c *gin.Context) {
 
 	res, total, err := h.service.FindMany(c.Request.Context(), query)
 	if err != nil {
-		c.Error(middleware.NewAppError(500, "Failed to fetch products", nil))
+		log.Printf("[HANDLER_ERROR] requestId=%v action=find_many_products err=%+v", requestID(c), err)
+		c.Error(middleware.NewAppError(500, "Failed to fetch products", err))
 		return
 	}
 
@@ -62,7 +63,8 @@ func (h *handler) FindOne(c *gin.Context) {
 			c.Error(middleware.NewAppError(404, err.Error(), nil))
 			return
 		}
-		c.Error(middleware.NewAppError(500, "Internal server error", nil))
+		log.Printf("[HANDLER_ERROR] requestId=%v action=products err=%+v", requestID(c), err)
+		c.Error(middleware.NewAppError(500, "Internal server error", err))
 		return
 	}
 	utils.OK(c, res)
@@ -76,7 +78,8 @@ func (h *handler) FindOneBySlug(c *gin.Context) {
 			c.Error(middleware.NewAppError(404, err.Error(), nil))
 			return
 		}
-		c.Error(middleware.NewAppError(500, "Internal server error", nil))
+		log.Printf("[HANDLER_ERROR] requestId=%v action=products err=%+v", requestID(c), err)
+		c.Error(middleware.NewAppError(500, "Internal server error", err))
 		return
 	}
 	utils.OK(c, res)
@@ -119,7 +122,8 @@ func (h *handler) Create(c *gin.Context) {
 			c.Error(middleware.NewAppError(409, err.Error(), nil))
 			return
 		}
-		c.Error(middleware.NewAppError(500, "Internal server error", nil))
+		log.Printf("[HANDLER_ERROR] requestId=%v action=products err=%+v", requestID(c), err)
+		c.Error(middleware.NewAppError(500, "Internal server error", err))
 		return
 	}
 	utils.Created(c, res)
@@ -143,7 +147,8 @@ func (h *handler) Update(c *gin.Context) {
 			c.Error(middleware.NewAppError(409, err.Error(), nil))
 			return
 		}
-		c.Error(middleware.NewAppError(500, "Internal server error", nil))
+		log.Printf("[HANDLER_ERROR] requestId=%v action=products err=%+v", requestID(c), err)
+		c.Error(middleware.NewAppError(500, "Internal server error", err))
 		return
 	}
 	utils.OK(c, res)
@@ -157,7 +162,8 @@ func (h *handler) Delete(c *gin.Context) {
 			c.Error(middleware.NewAppError(404, err.Error(), nil))
 			return
 		}
-		c.Error(middleware.NewAppError(500, "Internal server error", nil))
+		log.Printf("[HANDLER_ERROR] requestId=%v action=products err=%+v", requestID(c), err)
+		c.Error(middleware.NewAppError(500, "Internal server error", err))
 		return
 	}
 	c.Status(204)
@@ -212,4 +218,9 @@ func (h *handler) BulkUpdate(c *gin.Context) {
 		return
 	}
 	utils.OK(c, res)
+}
+
+func requestID(c *gin.Context) interface{} {
+	requestID, _ := c.Get("request_id")
+	return requestID
 }

@@ -192,17 +192,39 @@ RESPONSE_FILE="$(mktemp)"
 
 log "🤖 Triggering ML engine index rebuild at $REBUILD_URL ..."
 
+set +e
 HTTP_STATUS="$(curl -sS -o "$RESPONSE_FILE" -w "%{http_code}" \
   -X POST "$REBUILD_URL" \
   -H "Content-Type: application/json" \
-  -H "X-Internal-Token: ${ML_INTERNAL_TOKEN}" || true)"
+  -H "X-Internal-Token: ${ML_INTERNAL_TOKEN}")"
+CURL_EXIT=$?
+set -e
 
-if [[ "$HTTP_STATUS" == "200" || "$HTTP_STATUS" == "201" || "$HTTP_STATUS" == "202" ]]; then
+if [[ "$CURL_EXIT" -ne 0 ]]; then
+  log "❌ ML index rebuild request failed before HTTP response (curl exit $CURL_EXIT)"
+  case "$CURL_EXIT" in
+    6) log "   Diagnosis: host/DNS could not be resolved from where this script ran." ;;
+    7) log "   Diagnosis: TCP connection failed. Check Traefik/ml-engine port and container health." ;;
+    28) log "   Diagnosis: request timed out." ;;
+    *) log "   Diagnosis: curl transport error. Check URL and network path." ;;
+  esac
+  log "   URL: $REBUILD_URL"
+elif [[ "$HTTP_STATUS" == "200" || "$HTTP_STATUS" == "201" || "$HTTP_STATUS" == "202" ]]; then
   log "✅ ML index rebuild triggered successfully (HTTP $HTTP_STATUS)"
   cat "$RESPONSE_FILE" && echo
 else
-  log "⚠️  ML index rebuild returned HTTP $HTTP_STATUS — check if ml-engine is running"
+  log "⚠️  ML index rebuild endpoint returned HTTP $HTTP_STATUS"
   cat "$RESPONSE_FILE" && echo
+  case "$HTTP_STATUS" in
+    000) log "   Diagnosis: no HTTP response received. Check Traefik/ml-engine reachability." ;;
+    401|403) log "   Diagnosis: internal token rejected. Check ML_INTERNAL_TOKEN in .env and container env." ;;
+    404) log "   Diagnosis: route not found. Check Traefik strip prefix and ml-engine route registration." ;;
+    500|502|503|504) log "   Diagnosis: endpoint or upstream service error. Check catalog-service/core-service and ml-engine logs." ;;
+    *) log "   Diagnosis: unexpected HTTP status from ml-engine." ;;
+  esac
+  log "   Useful checks:"
+  log "   docker compose -f $ROOT_DIR/docker-compose.yml ps"
+  log "   docker compose -f $ROOT_DIR/docker-compose.yml logs --tail=100 catalog-service ml-engine"
   log "   You can rebuild manually:"
   log "   curl -X POST $REBUILD_URL -H 'X-Internal-Token: \$ML_INTERNAL_TOKEN'"
   if [[ "$FAIL_ON_ML_REBUILD" == "true" ]]; then
@@ -217,4 +239,3 @@ log ""
 log "🎉 All seeds completed!"
 log "   ML index rebuild endpoint: $REBUILD_URL"
 
-ubah ke powershell koe

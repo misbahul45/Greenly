@@ -6,6 +6,7 @@ import (
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
+	"log"
 	"os"
 	"strings"
 	"time"
@@ -41,7 +42,9 @@ func JWTAuthMiddleware(coreSvc coreclient.Client, redisCache cache.Cache) gin.Ha
 
 		secret := os.Getenv("JWT_ACCESS_SECRET_KEY")
 		if secret == "" {
-			c.Error(NewAppError(500, "JWT secret not configured", nil))
+			requestID, _ := c.Get("request_id")
+			log.Printf("[AUTH_ERROR] requestId=%v path=%s message=%q", requestID, c.Request.URL.Path, "JWT_ACCESS_SECRET_KEY is not configured")
+			c.Error(NewAppError(500, "JWT secret not configured", fmt.Errorf("JWT_ACCESS_SECRET_KEY is not configured")))
 			c.Abort()
 			return
 		}
@@ -57,8 +60,8 @@ func JWTAuthMiddleware(coreSvc coreclient.Client, redisCache cache.Cache) gin.Ha
 			},
 		)
 		if err != nil || !token.Valid {
-			fmt.Printf(">>> JWT ERROR: %v\n", err)          // tambah ini
-    		fmt.Printf(">>> TOKEN STRING: %s\n", tokenString)
+			requestID, _ := c.Get("request_id")
+			log.Printf("[AUTH_ERROR] requestId=%v path=%s message=%q err=%v", requestID, c.Request.URL.Path, "invalid JWT", err)
 			c.Error(NewAppError(401, "Invalid token", nil))
 			c.Abort()
 			return
@@ -96,7 +99,7 @@ func JWTAuthMiddleware(coreSvc coreclient.Client, redisCache cache.Cache) gin.Ha
 
 func setUserContext(c *gin.Context, claims *UserLogin, user *coreclient.User) {
 	c.Set("user", claims)
-	c.Set("user_id", claims.Subject)          // ✅ pakai RegisteredClaims.Subject
+	c.Set("user_id", claims.Subject) // ✅ pakai RegisteredClaims.Subject
 	c.Set("user_email", claims.Email)
 	c.Set("user_roles", claims.Roles)
 	c.Set("shop_memberships", claims.ShopMemberships)

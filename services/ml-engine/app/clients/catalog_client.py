@@ -1,7 +1,12 @@
+import logging
+
 import httpx
 
 from app.config import get_settings
 from app.schemas import ProductIndexItem
+
+
+logger = logging.getLogger("ml-engine.catalog-client")
 
 
 class CatalogClient:
@@ -14,8 +19,62 @@ class CatalogClient:
 
         async with httpx.AsyncClient(base_url=self.base_url, timeout=30) as client:
             while True:
-                response = await client.get("/products", params={"page": page, "limit": page_size, "is_active": "true"})
-                response.raise_for_status()
+                path = "/products"
+                params = {"page": page, "limit": page_size, "is_active": "true"}
+                logger.info(
+                    "catalog_request base_url=%s path=%s page=%s limit=%s",
+                    self.base_url,
+                    path,
+                    page,
+                    page_size,
+                )
+                try:
+                    response = await client.get(path, params=params)
+                    logger.info(
+                        "catalog_response base_url=%s path=%s status=%s bodyPreview=%s",
+                        self.base_url,
+                        path,
+                        response.status_code,
+                        response.text[:300] if response.status_code >= 400 else "",
+                    )
+                    response.raise_for_status()
+                except httpx.TimeoutException as exc:
+                    logger.exception(
+                        "catalog_request_failed base_url=%s path=%s errorType=%s message=%s",
+                        self.base_url,
+                        path,
+                        type(exc).__name__,
+                        str(exc),
+                    )
+                    raise
+                except httpx.ConnectError as exc:
+                    logger.exception(
+                        "catalog_request_failed base_url=%s path=%s errorType=%s message=%s",
+                        self.base_url,
+                        path,
+                        type(exc).__name__,
+                        str(exc),
+                    )
+                    raise
+                except httpx.HTTPStatusError as exc:
+                    logger.exception(
+                        "catalog_request_failed base_url=%s path=%s status=%s body=%s",
+                        self.base_url,
+                        path,
+                        exc.response.status_code,
+                        exc.response.text[:1000],
+                    )
+                    raise
+                except httpx.RequestError as exc:
+                    logger.exception(
+                        "catalog_request_failed base_url=%s path=%s errorType=%s message=%s",
+                        self.base_url,
+                        path,
+                        type(exc).__name__,
+                        str(exc),
+                    )
+                    raise
+
                 payload = response.json()
                 items = _extract_items(payload)
                 meta = payload.get("metaData") or payload.get("meta") or {}
@@ -32,10 +91,29 @@ class CatalogClient:
 
     async def fetch_product(self, product_id: str) -> ProductIndexItem | None:
         async with httpx.AsyncClient(base_url=self.base_url, timeout=30) as client:
-            response = await client.get(f"/products/{product_id}")
-            if response.status_code == 404:
-                return None
-            response.raise_for_status()
+            path = f"/products/{product_id}"
+            logger.info("catalog_request base_url=%s path=%s", self.base_url, path)
+            try:
+                response = await client.get(path)
+                logger.info(
+                    "catalog_response base_url=%s path=%s status=%s bodyPreview=%s",
+                    self.base_url,
+                    path,
+                    response.status_code,
+                    response.text[:300] if response.status_code >= 400 else "",
+                )
+                if response.status_code == 404:
+                    return None
+                response.raise_for_status()
+            except httpx.HTTPError as exc:
+                logger.exception(
+                    "catalog_request_failed base_url=%s path=%s errorType=%s message=%s",
+                    self.base_url,
+                    path,
+                    type(exc).__name__,
+                    str(exc),
+                )
+                raise
             payload = response.json()
             item = payload.get("data") if isinstance(payload, dict) else None
             if isinstance(item, dict) and isinstance(item.get("product"), dict):
@@ -98,7 +176,7 @@ def normalize_product(item: dict) -> ProductIndexItem:
     eco = item.get("eco") or item.get("ecoAttribute") or item.get("eco_attribute") or {}
     promo = item.get("promotion") or item.get("promotion_info") or {}
     rating = item.get("rating") or item.get("productRating") or item.get("product_rating") or {}
-    
+
     return ProductIndexItem(
         id=str(_get_id(item)),
         shop_id=item.get("shopId") or item.get("shop_id"),
@@ -116,26 +194,21 @@ def normalize_product(item: dict) -> ProductIndexItem:
         rating_average=_to_float(item.get("ratingAverage") or item.get("rating_average") or rating.get("average")),
         review_count=_to_int(item.get("reviewCount") or item.get("review_count") or rating.get("reviewCount")),
         favorite_count=_to_int(item.get("favoriteCount") or item.get("favorite_count")),
-        
-        # Eco Attributes
         eco_score=_to_float(item.get("ecoScore") or item.get("eco_score") or eco.get("score") or eco.get("ecoScore")),
         eco_label=eco.get("label") or eco.get("ecoLabel"),
         material_type=item.get("materialType") or item.get("material_type") or eco.get("materialType") or eco.get("material_type"),
         material_label=eco.get("materialLabel") or eco.get("material_label"),
         recyclable=item.get("recyclable") if item.get("recyclable") is not None else eco.get("recyclable"),
-        carbon_footprint=_to_float(item.get("carbonFootprint") or item.get("carbon_footprint") or eco.get("carbonFootprint") or eco.get("carbon_footprint") or eco.get("carbonFootprint")),
+        carbon_footprint=_to_float(item.get("carbonFootprint") or item.get("carbon_footprint") or eco.get("carbonFootprint") or eco.get("carbon_footprint")),
         carbon_label=eco.get("carbonLabel") or eco.get("carbon_label"),
         eco_badges=eco.get("badges") or eco.get("eco_badges") or [],
         eco_reasons=eco.get("reasons") or eco.get("eco_reasons") or [],
-        
-        # Promotion
         has_promo=promo.get("hasPromo") or promo.get("has_promo") or False,
         promotion_code=promo.get("code") or promo.get("promotion_code"),
         promotion_label=promo.get("label") or promo.get("promotion_label"),
         discount_percent=_to_float(promo.get("discountPercent") or promo.get("discount_percent")),
         discount_amount=_to_float(promo.get("discountAmount") or promo.get("discount_amount")),
         saving_label=promo.get("savingLabel") or promo.get("saving_label"),
-        
         created_at=item.get("createdAt") or item.get("created_at"),
         updated_at=item.get("updatedAt") or item.get("updated_at"),
     )

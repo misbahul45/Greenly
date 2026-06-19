@@ -3,6 +3,8 @@ package seeds
 import (
 	"context"
 	"log"
+	"os"
+	"strings"
 
 	"github.com/google/uuid"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -14,6 +16,10 @@ func Ptr[T any](v T) *T {
 
 func NewID() string {
 	return uuid.New().String()
+}
+
+func ResetAllowed() bool {
+	return strings.EqualFold(os.Getenv("APP_ENV"), "development") || strings.EqualFold(os.Getenv("SEED_ALLOW_RESET"), "true")
 }
 
 func ResetCollections(ctx context.Context, db *mongo.Database) {

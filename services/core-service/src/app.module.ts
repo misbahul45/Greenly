@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { ModulesModule } from './modules/modules.module';
 import { LibsModule } from './libs/libs.module';
 import { ConfigModule } from '@nestjs/config';
@@ -7,14 +7,16 @@ import { APP_GUARD } from '@nestjs/core';
 import { JwtAccessGuard } from './modules/auth/guards/jwt.access.guard';
 import { ScheduleModule } from '@nestjs/schedule';
 import { RolesGuard } from './modules/auth/guards/roles.guard';
+import { CorrelationIdMiddleware } from './libs/middleware/correlation-id.middleware';
+import { RequestLoggerMiddleware } from './libs/middleware/request-logger.middleware';
 @Module({
   imports: [
-    ModulesModule, 
+    ModulesModule,
     LibsModule,
     ConfigModule.forRoot({
-      isGlobal:true,
-      load:[envConfig],
-      envFilePath:'.env'
+      isGlobal: true,
+      load: [envConfig],
+      envFilePath: '.env',
     }),
     ScheduleModule.forRoot(),
   ],
@@ -27,6 +29,10 @@ import { RolesGuard } from './modules/auth/guards/roles.guard';
       provide: APP_GUARD,
       useClass: RolesGuard,
     },
-  ]
+  ],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer): void {
+    consumer.apply(CorrelationIdMiddleware, RequestLoggerMiddleware).forRoutes('*');
+  }
+}

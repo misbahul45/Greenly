@@ -38,8 +38,17 @@ func main() {
 		seeds.NewID(), seeds.NewID(), seeds.NewID(), seeds.NewID(), seeds.NewID(),
 	}
 
+	if !seeds.ResetAllowed() {
+		log.Fatal("Refusing to reset catalog collections outside development. Set APP_ENV=development or SEED_ALLOW_RESET=true to allow catalog seed reset.")
+	}
+
 	log.Println("🗑️  Resetting collections...")
 	seeds.ResetCollections(ctx, db)
+
+	log.Println("🔧 Ensuring catalog indexes...")
+	if err := databases.CreateCatalogIndexes(db); err != nil {
+		log.Fatal("Failed to ensure catalog indexes:", err)
+	}
 
 	log.Println("🌱 Starting catalog seed...")
 

@@ -226,17 +226,19 @@ func CreateFavoriteIndexes(collection *mongo.Collection) error {
 				{Key: "user_id", Value: 1},
 				{Key: "product_id", Value: 1},
 			},
-			Options: options.Index().SetUnique(true),
+			Options: options.Index().SetName("uniq_favorite_user_product").SetUnique(true),
 		},
 		{
 			Keys: bson.D{
 				{Key: "user_id", Value: 1},
 			},
+			Options: options.Index().SetName("idx_favorite_user"),
 		},
 		{
 			Keys: bson.D{
 				{Key: "product_id", Value: 1},
 			},
+			Options: options.Index().SetName("idx_favorite_product"),
 		},
 	}
 

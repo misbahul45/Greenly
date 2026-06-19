@@ -43,11 +43,8 @@ func main() {
 	db := client.Database("catalog")
 	coreSvc := coreclient.NewClient(coreServiceURL)
 
-	if err := databases.CreateCategoryIndexes(db.Collection("categories")); err != nil {
-		log.Fatalf("Failed to create category indexes: %v", err)
-	}
-	if err := databases.CreateProductIndexes(db.Collection("products")); err != nil {
-		log.Fatalf("Failed to create product indexes: %v", err)
+	if err := databases.CreateCatalogIndexes(db); err != nil {
+		log.Fatalf("Failed to ensure catalog indexes: %v", err)
 	}
 
 	redisCache, err := cache.NewCache()
@@ -56,6 +53,7 @@ func main() {
 	}
 
 	r := gin.Default()
+	r.Use(middleware.RequestLoggerMiddleware())
 	r.Use(middleware.ErrorHandler())
 
 	r.NoRoute(func(c *gin.Context) {

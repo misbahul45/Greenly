@@ -1,4 +1,4 @@
-import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
 import { PrismaMariaDb } from '@prisma/adapter-mariadb';
 import { PrismaClient } from '../../../generated/prisma/client';
 import * as dotenv from 'dotenv';
@@ -10,6 +10,8 @@ export class DatabaseService
   extends PrismaClient
   implements OnModuleInit, OnModuleDestroy
 {
+  private readonly logger = new Logger(DatabaseService.name);
+
   constructor() {
     const adapter = new PrismaMariaDb({
       host: process.env.DATABASE_HOST,
@@ -23,7 +25,25 @@ export class DatabaseService
   }
 
   async onModuleInit() {
+    this.logger.log(
+      JSON.stringify({
+        serviceName: 'core-service',
+        event: 'database_connect_start',
+        host: process.env.DATABASE_HOST,
+        port: process.env.DATABASE_PORT || '3306',
+        database: process.env.DATABASE_NAME,
+      })
+    );
     await this.$connect();
+    this.logger.log(
+      JSON.stringify({
+        serviceName: 'core-service',
+        event: 'database_connect_success',
+        host: process.env.DATABASE_HOST,
+        port: process.env.DATABASE_PORT || '3306',
+        database: process.env.DATABASE_NAME,
+      })
+    );
   }
 
   async onModuleDestroy() {
