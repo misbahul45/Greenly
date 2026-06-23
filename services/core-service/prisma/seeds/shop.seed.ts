@@ -1,8 +1,9 @@
 import { PrismaClient } from '../../generated/prisma/client'
 
 export async function seedShops(prisma: PrismaClient, userIds: Record<string, string>) {
-  const shopsData = [
+const shopsData = [
     {
+      id: 'shop_ecoware_001',
       ownerEmail: 'toko.elektronik@gmail.com',
       name: 'EcoWare Indonesia',
       description: 'Spesialis produk zero waste dan daur ulang — botol, tumbler, tas ramah lingkungan, dan peralatan rumah eco',
@@ -10,8 +11,8 @@ export async function seedShops(prisma: PrismaClient, userIds: Record<string, st
       balance: 5200000,
       followerCount: 312,
       application: {
-        idCardUrl: 'https://imagekit.io/idcard/ecoware-indonesia.jpg',
-        selfieUrl: 'https://imagekit.io/selfie/ecoware-indonesia.jpg',
+        idCardUrl: 'https://images.unsplash.com/photo-1628348070830-1c05cc51a43a?q=80&w=500&auto=format&fit=crop',
+        selfieUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=500&auto=format&fit=crop',
         nib: '1234567890123',
         npwp: '12.345.678.9-012.000',
         bankName: 'BCA',
@@ -22,6 +23,7 @@ export async function seedShops(prisma: PrismaClient, userIds: Record<string, st
       },
     },
     {
+      id: 'shop_bumihijau_002',
       ownerEmail: 'fashion.store@gmail.com',
       name: 'Bumi Hijau Fashion',
       description: 'Fashion sustainable dari bahan organik — kaos GOTS, celana linen, jaket hemp, dan aksesoris eco ramah lingkungan',
@@ -29,8 +31,10 @@ export async function seedShops(prisma: PrismaClient, userIds: Record<string, st
       balance: 3800000,
       followerCount: 245,
       application: {
-        idCardUrl: 'https://imagekit.io/idcard/bumi-hijau-fashion.jpg',
-        selfieUrl: 'https://imagekit.io/selfie/bumi-hijau-fashion.jpg',
+        // Gambar representasi ID Card lanyard
+        idCardUrl: 'https://images.unsplash.com/photo-1589829085413-56de8ae18c73?q=80&w=500&auto=format&fit=crop',
+        // Selfie portrait wanita (Sari Dewi)
+        selfieUrl: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?q=80&w=500&auto=format&fit=crop',
         nib: '2345678901234',
         npwp: '23.456.789.0-123.000',
         bankName: 'Mandiri',
@@ -41,6 +45,7 @@ export async function seedShops(prisma: PrismaClient, userIds: Record<string, st
       },
     },
     {
+      id: 'shop_organik_003',
       ownerEmail: 'kuliner.nusantara@gmail.com',
       name: 'Organik Nusantara',
       description: 'Produk pangan organik bersertifikat dari petani lokal — beras, teh, madu hutan, kopi, dan kit berkebun hidroponik',
@@ -48,8 +53,10 @@ export async function seedShops(prisma: PrismaClient, userIds: Record<string, st
       balance: 2400000,
       followerCount: 421,
       application: {
-        idCardUrl: 'https://imagekit.io/idcard/organik-nusantara.jpg',
-        selfieUrl: 'https://imagekit.io/selfie/organik-nusantara.jpg',
+        // Gambar verifikasi dokumen 
+        idCardUrl: 'https://images.unsplash.com/photo-1616423640778-28d1b53229bd?q=80&w=500&auto=format&fit=crop',
+        // Selfie portrait pria (Bambang Sutrisno)
+        selfieUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=500&auto=format&fit=crop',
         nib: '3456789012345',
         npwp: '34.567.890.1-234.000',
         bankName: 'BNI',
@@ -60,6 +67,7 @@ export async function seedShops(prisma: PrismaClient, userIds: Record<string, st
       },
     },
     {
+      id: 'shop_purenature_004',
       ownerEmail: 'sport.gear@gmail.com',
       name: 'Pure Nature Beauty',
       description: 'Skincare dan perawatan diri 100% alami & organik — serum, pelembab, sabun batang, sikat gigi bambu, dan sampo padat zero waste',
@@ -67,8 +75,10 @@ export async function seedShops(prisma: PrismaClient, userIds: Record<string, st
       balance: 4600000,
       followerCount: 534,
       application: {
-        idCardUrl: 'https://imagekit.io/idcard/pure-nature-beauty.jpg',
-        selfieUrl: 'https://imagekit.io/selfie/pure-nature-beauty.jpg',
+        // Gambar dokumen legalitas
+        idCardUrl: 'https://images.unsplash.com/photo-1554224155-6726b3ff858f?q=80&w=500&auto=format&fit=crop',
+        // Selfie portrait pria (Indra Gunawan)
+        selfieUrl: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?q=80&w=500&auto=format&fit=crop',
         nib: '4567890123456',
         npwp: '45.678.901.2-345.000',
         bankName: 'BRI',
@@ -79,6 +89,7 @@ export async function seedShops(prisma: PrismaClient, userIds: Record<string, st
       },
     },
     {
+      id: 'shop_greentech_005',
       ownerEmail: 'beauty.shop@gmail.com',
       name: 'Green Tech Solutions',
       description: 'Teknologi hijau dan solusi hemat energi — panel surya portable, lampu LED smart, dan produk teknologi ramah lingkungan',
@@ -86,8 +97,10 @@ export async function seedShops(prisma: PrismaClient, userIds: Record<string, st
       balance: 3100000,
       followerCount: 178,
       application: {
-        idCardUrl: 'https://imagekit.io/idcard/green-tech-solutions.jpg',
-        selfieUrl: 'https://imagekit.io/selfie/green-tech-solutions.jpg',
+        // Gambar id card kantor/bisnis
+        idCardUrl: 'https://images.unsplash.com/photo-1563986768609-322da13575f3?q=80&w=500&auto=format&fit=crop',
+        // Selfie portrait wanita (Putri Handayani)
+        selfieUrl: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=500&auto=format&fit=crop',
         nib: '5678901234567',
         npwp: '56.789.012.3-456.000',
         bankName: 'CIMB',

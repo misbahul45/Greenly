@@ -1,0 +1,51 @@
+# FROM ghcr.io/cirruslabs/flutter:stable
+
+# USER root
+
+# ENV ANDROID_HOME=/opt/android-sdk
+# ENV ANDROID_SDK_ROOT=/opt/android-sdk
+# ENV GRADLE_USER_HOME=/root/.gradle
+# ENV PUB_CACHE=/root/.pub-cache
+# ENV PATH="$PATH:/opt/android-sdk/platform-tools:/opt/android-sdk/cmdline-tools/latest/bin"
+
+# WORKDIR /app
+
+# RUN apt-get update && apt-get install -y \
+#     curl \
+#     git \
+#     unzip \
+#     zip \
+#     xz-utils \
+#     openjdk-17-jdk \
+#     ca-certificates \
+#     && rm -rf /var/lib/apt/lists/*
+
+# RUN mkdir -p ${ANDROID_HOME}/cmdline-tools
+
+# RUN if [ ! -d "${ANDROID_HOME}/cmdline-tools/latest" ]; then \
+#       curl -fsSL https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -o /tmp/cmdline-tools.zip && \
+#       unzip -q /tmp/cmdline-tools.zip -d /tmp/android-cmdline-tools && \
+#       mkdir -p ${ANDROID_HOME}/cmdline-tools/latest && \
+#       mv /tmp/android-cmdline-tools/cmdline-tools/* ${ANDROID_HOME}/cmdline-tools/latest/ && \
+#       rm -rf /tmp/cmdline-tools.zip /tmp/android-cmdline-tools; \
+#     fi
+
+# RUN yes | sdkmanager --licenses || true
+
+# RUN sdkmanager \
+#     "platform-tools" \
+#     "cmdline-tools;latest" \
+#     "platforms;android-35" \
+#     "build-tools;35.0.0" \
+#     "platforms;android-34" \
+#     "build-tools;34.0.0"
+
+# RUN flutter config --no-analytics
+# RUN flutter doctor -v
+
+# COPY pubspec.yaml pubspec.lock* ./
+# RUN flutter pub get || true
+
+# COPY . .
+
+# CMD ["flutter", "doctor", "-v"]

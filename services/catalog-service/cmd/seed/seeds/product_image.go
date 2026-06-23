@@ -14,408 +14,184 @@ import (
 )
 
 func SeedProductImages(ctx context.Context, db *mongo.Database, productIDs []string) {
-	col := db.Collection("product_images")
-	now := time.Now()
+    col := db.Collection("product_images")
+    now := time.Now()
 
-	ensureProductImageIndexes(ctx, col)
-	cleanupLegacyRandomProductImages(ctx, col, productIDs)
+    ensureProductImageIndexes(ctx, col)
+    cleanupLegacyRandomProductImages(ctx, col, productIDs)
 
-	type productImageDef struct {
-		Alt   string
-		Files []string
-	}
+    type productImageDef struct {
+        Alt   string
+        Files []string
+    }
 
-	imageDefs := []productImageDef{
-		// 0: Botol Stainless Thermos
-		{
-			Alt: "Botol stainless thermos reusable untuk minuman panas dan dingin",
-			Files: []string{
-				"botol-stainless-thermos-01.webp",
-				"botol-stainless-thermos-02.webp",
-				"botol-stainless-thermos-03.webp",
-			},
-		},
+    // Menggunakan URL Real Unsplash dengan parameter optimasi image (?q=80&w=800)
+    imageDefs := []productImageDef{
+        // 0: Botol Stainless
+        {Alt: "Botol stainless thermos", Files: []string{"https://images.unsplash.com/photo-1602143407151-7111542de6e8?q=80&w=800&auto=format&fit=crop", "https://images.unsplash.com/photo-1544910355-3253b23c21a4?q=80&w=800&auto=format&fit=crop"}},
+        // 1: Tumbler Bambu
+        {Alt: "Tumbler bambu", Files: []string{"https://images.unsplash.com/photo-1590740924976-5085e4922119?q=80&w=800&auto=format&fit=crop", "https://images.unsplash.com/photo-1596752002360-61ba4f1fc4cc?q=80&w=800&auto=format&fit=crop"}},
+        // 2: Tas Kanvas
+        {Alt: "Tas kanvas organik", Files: []string{"https://images.unsplash.com/photo-1544816155-12df9643f363?q=80&w=800&auto=format&fit=crop", "https://images.unsplash.com/photo-1591561954557-26941169b49e?q=80&w=800&auto=format&fit=crop"}},
+        // 3: Tas Bambu
+        {Alt: "Tas bambu artisanal", Files: []string{"https://images.unsplash.com/photo-1621510444391-729f12eb22eb?q=80&w=800&auto=format&fit=crop", "https://images.unsplash.com/photo-1584916201218-f4242ceb4809?q=80&w=800&auto=format&fit=crop"}},
+        // 4: Sedotan Stainless
+        {Alt: "Sedotan stainless", Files: []string{"https://images.unsplash.com/photo-1586034679984-75485ea7cc7f?q=80&w=800&auto=format&fit=crop", "https://images.unsplash.com/photo-1590059283084-255d614e2d3d?q=80&w=800&auto=format&fit=crop"}},
+        // 5: Alat Makan Bambu
+        {Alt: "Alat makan bambu", Files: []string{"https://images.unsplash.com/photo-1603525281561-1ffb4715f3ba?q=80&w=800&auto=format&fit=crop", "https://images.unsplash.com/photo-1581452292070-07e3bd2cf6c4?q=80&w=800&auto=format&fit=crop"}},
+        // 6: Lilin Soy Wax
+        {Alt: "Lilin soy wax", Files: []string{"https://images.unsplash.com/photo-1603006905393-ee049581eb08?q=80&w=800&auto=format&fit=crop", "https://images.unsplash.com/photo-1572413289063-45f8f90dd0f1?q=80&w=800&auto=format&fit=crop"}},
+        // 7: Lap Microfiber (Alternatif kain alami)
+        {Alt: "Lap dapur reusable", Files: []string{"https://images.unsplash.com/photo-1585421514738-01798e348b17?q=80&w=800&auto=format&fit=crop", "https://images.unsplash.com/photo-1613214149922-f181977beae4?q=80&w=800&auto=format&fit=crop"}},
+        // 8: Rak Bambu
+        {Alt: "Rak bambu minimalis", Files: []string{"https://images.unsplash.com/photo-1592336688582-841f3e098a51?q=80&w=800&auto=format&fit=crop", "https://images.unsplash.com/photo-1583847268964-b28dc8f51f92?q=80&w=800&auto=format&fit=crop"}},
+        // 9: Spons Loofah (TAMBAHAN)
+        {Alt: "Spons Loofah alami", Files: []string{"https://images.unsplash.com/photo-1605364121650-70588ea7b7db?q=80&w=800&auto=format&fit=crop", "https://images.unsplash.com/photo-1585507421251-7fbd69317b2b?q=80&w=800&auto=format&fit=crop"}},
 
-		// 1: Tumbler Bambu
-		{
-			Alt: "Tumbler bambu reusable dengan desain natural untuk eco lifestyle",
-			Files: []string{
-				"tumbler-bambu-natural-01.webp",
-				"tumbler-bambu-natural-02.webp",
-				"tumbler-bambu-natural-03.webp",
-			},
-		},
+        // 10: Kaos Katun Organik
+        {Alt: "Kaos katun organik", Files: []string{"https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?q=80&w=800&auto=format&fit=crop", "https://images.unsplash.com/photo-1581655353564-df123a1eb820?q=80&w=800&auto=format&fit=crop"}},
+        // 11: Celana Linen
+        {Alt: "Celana linen natural", Files: []string{"https://images.unsplash.com/photo-1594633312681-425c7b97ccd1?q=80&w=800&auto=format&fit=crop", "https://images.unsplash.com/photo-1604136172384-b2e9c43271ec?q=80&w=800&auto=format&fit=crop"}},
+        // 12: Jaket Hemp
+        {Alt: "Jaket serat hemp", Files: []string{"https://images.unsplash.com/photo-1551028719-00167b16eac5?q=80&w=800&auto=format&fit=crop", "https://images.unsplash.com/photo-1591047139829-d91aecb6caea?q=80&w=800&auto=format&fit=crop"}},
+        // 13: Topi Bambu
+        {Alt: "Topi anyaman bambu", Files: []string{"https://images.unsplash.com/photo-1533596773281-2292f7e7fdf1?q=80&w=800&auto=format&fit=crop", "https://images.unsplash.com/photo-1583344605995-1f654b9d31bd?q=80&w=800&auto=format&fit=crop"}},
+        // 14: Dompet Cork
+        {Alt: "Dompet vegan cork", Files: []string{"https://images.unsplash.com/photo-1628151015968-3a4429e9ef04?q=80&w=800&auto=format&fit=crop", "https://images.unsplash.com/photo-1544816155-12df9643f363?q=80&w=800&auto=format&fit=crop"}},
+        // 15: Kacamata Bambu
+        {Alt: "Kacamata frame bambu", Files: []string{"https://images.unsplash.com/photo-1511499767150-a48a237f0083?q=80&w=800&auto=format&fit=crop", "https://images.unsplash.com/photo-1473496169904-658ba7c44d8a?q=80&w=800&auto=format&fit=crop"}},
+        // 16: Kaos Kaki Bambu (TAMBAHAN)
+        {Alt: "Kaos kaki bambu", Files: []string{"https://images.unsplash.com/photo-1582966772680-860e372bb558?q=80&w=800&auto=format&fit=crop", "https://images.unsplash.com/photo-1601646700676-e13d969eb2db?q=80&w=800&auto=format&fit=crop"}},
 
-		// 2: Tas Kanvas Organik
-		{
-			Alt: "Tas kanvas organik reusable untuk belanja harian ramah lingkungan",
-			Files: []string{
-				"tas-kanvas-organik-01.webp",
-				"tas-kanvas-organik-02.webp",
-				"tas-kanvas-organik-03.webp",
-			},
-		},
+        // 17: Beras Organik
+        {Alt: "Beras organik", Files: []string{"https://images.unsplash.com/photo-1586201375761-83865001e31c?q=80&w=800&auto=format&fit=crop", "https://images.unsplash.com/photo-1536304993881-ff6e9eefa2a6?q=80&w=800&auto=format&fit=crop"}},
+        // 18: Teh Hijau Organik
+        {Alt: "Teh hijau organik", Files: []string{"https://images.unsplash.com/photo-1627492275811-9a74479e0007?q=80&w=800&auto=format&fit=crop", "https://images.unsplash.com/photo-1556679343-c7306c1976bc?q=80&w=800&auto=format&fit=crop"}},
+        // 19: Madu Hutan
+        {Alt: "Madu hutan murni", Files: []string{"https://images.unsplash.com/photo-1587049352847-4d4b1ed738d2?q=80&w=800&auto=format&fit=crop", "https://images.unsplash.com/photo-1587049352851-8d4e89134a6a?q=80&w=800&auto=format&fit=crop"}},
+        // 20: Granola
+        {Alt: "Granola organik", Files: []string{"https://images.unsplash.com/photo-1517445582451-b8471e410b37?q=80&w=800&auto=format&fit=crop", "https://images.unsplash.com/photo-1634591461975-4fc1da93f357?q=80&w=800&auto=format&fit=crop"}},
+        // 21: Kopi Organik
+        {Alt: "Biji kopi organik", Files: []string{"https://images.unsplash.com/photo-1559525839-b184a4d698c7?q=80&w=800&auto=format&fit=crop", "https://images.unsplash.com/photo-1611162458324-aae1eb4129a4?q=80&w=800&auto=format&fit=crop"}},
+        // 22: Kit Hidroponik
+        {Alt: "Kit hidroponik", Files: []string{"https://images.unsplash.com/photo-1530836369250-ef71a3f5e9da?q=80&w=800&auto=format&fit=crop", "https://images.unsplash.com/photo-1589923188900-85dae523342b?q=80&w=800&auto=format&fit=crop"}},
+        // 23: Pupuk Organik
+        {Alt: "Pupuk tanaman", Files: []string{"https://images.unsplash.com/photo-1466692476868-aef1dfb1e735?q=80&w=800&auto=format&fit=crop", "https://images.unsplash.com/photo-1622383563227-04401ab4e5ea?q=80&w=800&auto=format&fit=crop"}},
+        // 24: Gula Aren (TAMBAHAN)
+        {Alt: "Gula aren organik", Files: []string{"https://images.unsplash.com/photo-1621317762646-4a41bd27d2bf?q=80&w=800&auto=format&fit=crop", "https://images.unsplash.com/photo-1518063080076-200c8227b29a?q=80&w=800&auto=format&fit=crop"}},
 
-		// 3: Tas Bambu Artisanal
-		{
-			Alt: "Tas bambu anyam artisanal natural buatan pengrajin lokal",
-			Files: []string{
-				"tas-bambu-artisanal-01.webp",
-				"tas-bambu-artisanal-02.webp",
-				"tas-bambu-artisanal-03.webp",
-			},
-		},
+        // 25: Serum Rosehip
+        {Alt: "Serum rosehip", Files: []string{"https://images.unsplash.com/photo-1620916566398-39f1143ab7be?q=80&w=800&auto=format&fit=crop", "https://images.unsplash.com/photo-1608248543803-ba4f8c70ae0b?q=80&w=800&auto=format&fit=crop"}},
+        // 26: Pelembab Shea
+        {Alt: "Pelembab wajah natural", Files: []string{"https://images.unsplash.com/photo-1556228578-0d85b1a4d571?q=80&w=800&auto=format&fit=crop", "https://images.unsplash.com/photo-1615397323136-2ee2a3e895ec?q=80&w=800&auto=format&fit=crop"}},
+        // 27: Toner Rose
+        {Alt: "Toner wajah natural", Files: []string{"https://images.unsplash.com/photo-1556228720-1c2773d726b2?q=80&w=800&auto=format&fit=crop", "https://images.unsplash.com/photo-1570194065650-d99fb4b8ccb0?q=80&w=800&auto=format&fit=crop"}},
+        // 28: Sunscreen Mineral
+        {Alt: "Sunscreen ramah lingkungan", Files: []string{"https://images.unsplash.com/photo-1556228453-efd6c1ff04f6?q=80&w=800&auto=format&fit=crop", "https://images.unsplash.com/photo-1526045612212-70caf35c14df?q=80&w=800&auto=format&fit=crop"}},
+        // 29: Sikat Bambu
+        {Alt: "Sikat gigi bambu", Files: []string{"https://images.unsplash.com/photo-1607613009820-a29f4bb19718?q=80&w=800&auto=format&fit=crop", "https://images.unsplash.com/photo-1596434452174-89c090680dce?q=80&w=800&auto=format&fit=crop"}},
+        // 30: Sabun Lavender
+        {Alt: "Sabun batang organik", Files: []string{"https://images.unsplash.com/photo-1600857544200-b2f666a9a2ec?q=80&w=800&auto=format&fit=crop", "https://images.unsplash.com/photo-1584824388147-38e945530ec3?q=80&w=800&auto=format&fit=crop"}},
+        // 31: Sampo Padat
+        {Alt: "Sampo padat", Files: []string{"https://images.unsplash.com/photo-1611078512140-52a16c7b3997?q=80&w=800&auto=format&fit=crop", "https://images.unsplash.com/photo-1590439471364-192aa70c0b53?q=80&w=800&auto=format&fit=crop"}},
+        // 32: Deodoran (TAMBAHAN)
+        {Alt: "Deodoran natural", Files: []string{"https://images.unsplash.com/photo-1608248593842-8021c324e9cb?q=80&w=800&auto=format&fit=crop", "https://images.unsplash.com/photo-1615397323062-811c7d23d8c3?q=80&w=800&auto=format&fit=crop"}},
 
-		// 4: Set Sedotan Stainless
-		{
-			Alt: "Set sedotan stainless reusable untuk mengurangi plastik sekali pakai",
-			Files: []string{
-				"set-sedotan-stainless-01.webp",
-				"set-sedotan-stainless-02.webp",
-				"set-sedotan-stainless-03.webp",
-			},
-		},
+        // 33: Panel Surya
+        {Alt: "Panel surya", Files: []string{"https://images.unsplash.com/photo-1509391366360-2e959784a276?q=80&w=800&auto=format&fit=crop", "https://images.unsplash.com/photo-1497440001374-f26997328c1b?q=80&w=800&auto=format&fit=crop"}},
+        // 34: Lampu Smart
+        {Alt: "Lampu LED smart", Files: []string{"https://images.unsplash.com/photo-1550989460-0adf9ea622e2?q=80&w=800&auto=format&fit=crop", "https://images.unsplash.com/photo-1563461660947-507ef49e9c47?q=80&w=800&auto=format&fit=crop"}},
+        // 35: Powerbank Surya (TAMBAHAN)
+        {Alt: "Powerbank tenaga surya", Files: []string{"https://images.unsplash.com/photo-1610488425257-21a4be463d42?q=80&w=800&auto=format&fit=crop", "https://images.unsplash.com/photo-1601362840469-51e4d8d58785?q=80&w=800&auto=format&fit=crop"}},
+    }
 
-		// 5: Peralatan Makan Bambu
-		{
-			Alt: "Set peralatan makan bambu reusable untuk travel dan bekal harian",
-			Files: []string{
-				"peralatan-makan-bambu-01.webp",
-				"peralatan-makan-bambu-02.webp",
-				"peralatan-makan-bambu-03.webp",
-			},
-		},
+    if len(productIDs) == 0 {
+        log.Println("⚠️  Product images skipped: no product IDs provided")
+        return
+    }
 
-		// 6: Lilin Soy Wax
-		{
-			Alt: "Lilin soy wax aromatherapy berbahan alami dan rendah emisi",
-			Files: []string{
-				"lilin-soy-wax-01.webp",
-				"lilin-soy-wax-02.webp",
-				"lilin-soy-wax-03.webp",
-			},
-		},
+    limit := len(productIDs)
+    if len(imageDefs) < limit {
+        limit = len(imageDefs)
+        log.Printf(
+            "⚠️  Product images warning: productIDs=%d but image definitions=%d. Extra products skipped.",
+            len(productIDs),
+            len(imageDefs),
+        )
+    }
 
-		// 7: Lap Microfiber
-		{
-			Alt: "Lap microfiber reusable untuk membersihkan rumah tanpa tisu sekali pakai",
-			Files: []string{
-				"lap-microfiber-reusable-01.webp",
-				"lap-microfiber-reusable-02.webp",
-				"lap-microfiber-reusable-03.webp",
-			},
-		},
+    total := 0
 
-		// 8: Rak Bambu
-		{
-			Alt: "Rak bambu natural untuk penyimpanan rumah minimalis ramah lingkungan",
-			Files: []string{
-				"rak-bambu-natural-01.webp",
-				"rak-bambu-natural-02.webp",
-				"rak-bambu-natural-03.webp",
-			},
-		},
+    for i := 0; i < limit; i++ {
+        productID := productIDs[i]
+        def := imageDefs[i]
 
-		// 9: Kaos Katun Organik
-		{
-			Alt: "Kaos katun organik basic untuk sustainable fashion harian",
-			Files: []string{
-				"kaos-katun-organik-01.webp",
-				"kaos-katun-organik-02.webp",
-				"kaos-katun-organik-03.webp",
-			},
-		},
+        for order, fileName := range def.Files {
+            imageURL := buildCatalogProductImageURL(fileName)
+            isPrimary := order == 0
 
-		// 10: Celana Linen
-		{
-			Alt: "Celana linen natural breathable untuk sustainable fashion",
-			Files: []string{
-				"celana-linen-natural-01.webp",
-				"celana-linen-natural-02.webp",
-				"celana-linen-natural-03.webp",
-			},
-		},
+            filter := bson.M{
+                "product_id": productID,
+                "order":      order,
+                "deleted_at": nil,
+            }
 
-		// 11: Jaket Hemp
-		{
-			Alt: "Jaket hemp olive berbahan serat alami untuk eco fashion",
-			Files: []string{
-				"jaket-hemp-olive-01.webp",
-				"jaket-hemp-olive-02.webp",
-				"jaket-hemp-olive-03.webp",
-			},
-		},
+            update := bson.M{
+                "$set": bson.M{
+                    "product_key": productID,
+                    "url":         imageURL,
+                    "alt":         def.Alt,
+                    "is_primary":  isPrimary,
+                    "order":       order,
+                    "updated_at":  now,
+                    "deleted_at":  nil,
+                },
+                "$setOnInsert": bson.M{
+                    "_id":        NewID(),
+                    "product_id": productID,
+                    "file_id":    NewID(),
+                    "created_at": now,
+                },
+            }
 
-		// 12: Topi Bambu
-		{
-			Alt: "Topi bambu natural untuk aktivitas outdoor dan gaya hidup tropis",
-			Files: []string{
-				"topi-bambu-natural-01.webp",
-				"topi-bambu-natural-02.webp",
-				"topi-bambu-natural-03.webp",
-			},
-		},
+            opts := options.Update().SetUpsert(true)
 
-		// 13: Dompet Cork
-		{
-			Alt: "Dompet cork vegan leather ringan dengan material terbarukan",
-			Files: []string{
-				"dompet-cork-natural-01.webp",
-				"dompet-cork-natural-02.webp",
-				"dompet-cork-natural-03.webp",
-			},
-		},
+            if _, err := col.UpdateOne(ctx, filter, update, opts); err != nil {
+                log.Printf("⚠️  Product image upsert failed product_id=%s order=%d url=%s: %v", productID, order, imageURL, err)
+                continue
+            }
 
-		// 14: Kacamata Bambu
-		{
-			Alt: "Kacamata bambu handcrafted dengan frame natural ramah lingkungan",
-			Files: []string{
-				"kacamata-bambu-01.webp",
-				"kacamata-bambu-02.webp",
-				"kacamata-bambu-03.webp",
-			},
-		},
+            total++
+        }
+    }
 
-		// 15: Beras Organik
-		{
-			Alt: "Beras organik lokal dari pertanian berkelanjutan",
-			Files: []string{
-				"beras-organik-lokal-01.webp",
-				"beras-organik-lokal-02.webp",
-				"beras-organik-lokal-03.webp",
-			},
-		},
-
-		// 16: Teh Hijau Organik
-		{
-			Alt: "Teh hijau organik loose leaf dari kebun lokal",
-			Files: []string{
-				"teh-hijau-organik-01.webp",
-				"teh-hijau-organik-02.webp",
-				"teh-hijau-organik-03.webp",
-			},
-		},
-
-		// 17: Madu Hutan
-		{
-			Alt: "Madu hutan alami dari peternak lebah lokal",
-			Files: []string{
-				"madu-hutan-alami-01.webp",
-				"madu-hutan-alami-02.webp",
-				"madu-hutan-alami-03.webp",
-			},
-		},
-
-		// 18: Granola Organik
-		{
-			Alt: "Granola organik dengan oat, kacang, dan buah kering",
-			Files: []string{
-				"granola-organik-01.webp",
-				"granola-organik-02.webp",
-				"granola-organik-03.webp",
-			},
-		},
-
-		// 19: Kopi Flores Organik
-		{
-			Alt: "Kopi Flores organik arabica dari petani lokal Indonesia",
-			Files: []string{
-				"kopi-flores-organik-01.webp",
-				"kopi-flores-organik-02.webp",
-				"kopi-flores-organik-03.webp",
-			},
-		},
-
-		// 20: Kit Hidroponik
-		{
-			Alt: "Kit hidroponik rumahan untuk menanam sayur tanpa lahan luas",
-			Files: []string{
-				"kit-hidroponik-rumah-01.webp",
-				"kit-hidroponik-rumah-02.webp",
-				"kit-hidroponik-rumah-03.webp",
-			},
-		},
-
-		// 21: Pupuk Organik Cair
-		{
-			Alt: "Pupuk organik cair untuk tanaman rumah dan kebun kecil",
-			Files: []string{
-				"pupuk-organik-cair-01.webp",
-				"pupuk-organik-cair-02.webp",
-				"pupuk-organik-cair-03.webp",
-			},
-		},
-
-		// 22: Serum Rosehip
-		{
-			Alt: "Serum rosehip natural untuk skincare organik",
-			Files: []string{
-				"serum-rosehip-natural-01.webp",
-				"serum-rosehip-natural-02.webp",
-				"serum-rosehip-natural-03.webp",
-			},
-		},
-
-		// 23: Pelembab Shea Butter
-		{
-			Alt: "Pelembab shea butter natural untuk kulit normal dan sensitif",
-			Files: []string{
-				"pelembab-shea-butter-01.webp",
-				"pelembab-shea-butter-02.webp",
-				"pelembab-shea-butter-03.webp",
-			},
-		},
-
-		// 24: Toner Rose Water
-		{
-			Alt: "Toner rose water natural untuk perawatan wajah harian",
-			Files: []string{
-				"toner-rose-water-01.webp",
-				"toner-rose-water-02.webp",
-				"toner-rose-water-03.webp",
-			},
-		},
-
-		// 25: Sunscreen Mineral
-		{
-			Alt: "Sunscreen mineral zinc oxide untuk perlindungan kulit harian",
-			Files: []string{
-				"sunscreen-mineral-01.webp",
-				"sunscreen-mineral-02.webp",
-				"sunscreen-mineral-03.webp",
-			},
-		},
-
-		// 26: Sikat Gigi Bambu
-		{
-			Alt: "Sikat gigi bambu biodegradable untuk mengurangi plastik kamar mandi",
-			Files: []string{
-				"sikat-gigi-bambu-01.webp",
-				"sikat-gigi-bambu-02.webp",
-				"sikat-gigi-bambu-03.webp",
-			},
-		},
-
-		// 27: Sabun Batang Lavender
-		{
-			Alt: "Sabun batang natural lavender dengan kemasan minim plastik",
-			Files: []string{
-				"sabun-batang-lavender-01.webp",
-				"sabun-batang-lavender-02.webp",
-				"sabun-batang-lavender-03.webp",
-			},
-		},
-
-		// 28: Sampo Padat
-		{
-			Alt: "Sampo padat zero waste untuk perawatan rambut tanpa botol plastik",
-			Files: []string{
-				"sampo-padat-zero-waste-01.webp",
-				"sampo-padat-zero-waste-02.webp",
-				"sampo-padat-zero-waste-03.webp",
-			},
-		},
-
-		// 29: Panel Surya Portable
-		{
-			Alt: "Panel surya portable untuk camping dan kebutuhan energi outdoor",
-			Files: []string{
-				"panel-surya-portable-01.webp",
-				"panel-surya-portable-02.webp",
-				"panel-surya-portable-03.webp",
-			},
-		},
-
-		// 30: Lampu LED Smart
-		{
-			Alt: "Lampu LED smart hemat energi untuk rumah modern",
-			Files: []string{
-				"lampu-led-smart-hemat-energi-01.webp",
-				"lampu-led-smart-hemat-energi-02.webp",
-				"lampu-led-smart-hemat-energi-03.webp",
-			},
-		},
-	}
-
-	if len(productIDs) == 0 {
-		log.Println("⚠️  Product images skipped: no product IDs provided")
-		return
-	}
-
-	limit := len(productIDs)
-	if len(imageDefs) < limit {
-		limit = len(imageDefs)
-		log.Printf(
-			"⚠️  Product images warning: productIDs=%d but image definitions=%d. Extra products skipped.",
-			len(productIDs),
-			len(imageDefs),
-		)
-	}
-
-	total := 0
-
-	for i := 0; i < limit; i++ {
-		productID := productIDs[i]
-		def := imageDefs[i]
-
-		for order, fileName := range def.Files {
-			imageURL := buildCatalogProductImageURL(fileName)
-			isPrimary := order == 0
-
-			filter := bson.M{
-				"product_id": productID,
-				"order":      order,
-				"deleted_at": nil,
-			}
-
-			update := bson.M{
-				"$set": bson.M{
-					"product_key": productID,
-					"url":         imageURL,
-					"alt":         def.Alt,
-					"is_primary":  isPrimary,
-					"order":       order,
-					"updated_at":  now,
-					"deleted_at":  nil,
-				},
-				"$setOnInsert": bson.M{
-					"_id":        NewID(),
-					"product_id": productID,
-					"file_id":    NewID(),
-					"created_at": now,
-				},
-			}
-
-			opts := options.Update().SetUpsert(true)
-
-			if _, err := col.UpdateOne(ctx, filter, update, opts); err != nil {
-				log.Printf("⚠️  Product image upsert failed product_id=%s order=%d url=%s: %v", productID, order, imageURL, err)
-				continue
-			}
-
-			total++
-		}
-	}
-
-	log.Printf("✅ Product images seeded/updated (%d)", total)
+    log.Printf("✅ Product images seeded/updated (%d)", total)
 }
 
+// Fungsi helper diperbarui agar langsung mengembalikan URL jika formatnya HTTP/HTTPS
 func buildCatalogProductImageURL(fileName string) string {
-	baseURL := os.Getenv("PUBLIC_CATALOG_ASSET_URL")
+    // Cek apakah string sudah berbentuk link eksternal penuh
+    if strings.HasPrefix(fileName, "http://") || strings.HasPrefix(fileName, "https://") {
+        return fileName
+    }
 
-	if baseURL == "" {
-		baseURL = os.Getenv("CATALOG_ASSET_BASE_URL")
-	}
+    baseURL := os.Getenv("PUBLIC_CATALOG_ASSET_URL")
 
-	if baseURL == "" {
-		baseURL = "http://localhost/api/catalog/assets"
-	}
+    if baseURL == "" {
+        baseURL = os.Getenv("CATALOG_ASSET_BASE_URL")
+    }
 
-	baseURL = strings.TrimRight(baseURL, "/")
-	fileName = strings.TrimLeft(fileName, "/")
+    if baseURL == "" {
+        baseURL = "http://localhost/api/catalog/assets"
+    }
 
-	return fmt.Sprintf("%s/products/%s", baseURL, fileName)
+    baseURL = strings.TrimRight(baseURL, "/")
+    fileName = strings.TrimLeft(fileName, "/")
+
+    return fmt.Sprintf("%s/products/%s", baseURL, fileName)
 }
+
+// Sisa fungsi `ensureProductImageIndexes` dan `cleanupLegacyRandomProductImages` biarkan sama seperti aslinya
 
 func ensureProductImageIndexes(ctx context.Context, col *mongo.Collection) {
 	indexes := []mongo.IndexModel{

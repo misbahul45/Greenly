@@ -1,20 +1,15 @@
-import {PrismaClient} from "../../generated/prisma/client";
-
-const bannerImage = (fileName: string) => {
-    const baseUrl = process.env.PUBLIC_ASSET_URL ?? "http://localhost:3000";
-    return `${baseUrl}/banners/${fileName}`;
-};
+import { PrismaClient } from "../../generated/prisma/client";
 
 export async function seedBanners(prisma: PrismaClient, promoIds: string[]) {
     const future = new Date("2026-12-31T23:59:59Z");
     const past = new Date("2025-01-01T00:00:00Z");
 
+    // 5 Banner Utama (Platform & Promo)
     const platformBanners = [
         {
             title: "Greenly Eco Fest — Hemat Hingga 25% untuk Produk Hijau",
-            description:
-                "Perayaan belanja produk ramah lingkungan: zero waste, organik, sustainable fashion, dan green technology.",
-            imageUrl: bannerImage("greenly-eco-fest.webp"),
+            description: "Perayaan belanja produk ramah lingkungan: zero waste, organik, sustainable fashion, dan green technology.",
+            imageUrl: "https://4s0138q05g.ufs.sh/f/L7c2JRqY80pwIqii5F0EnHZwk9itfhKbPQzUrlByMFRoumjq", // Gambar daun/alam hijau
             promotionId: promoIds[9] ?? null,
             isActive: true,
             position: 1,
@@ -24,9 +19,8 @@ export async function seedBanners(prisma: PrismaClient, promoIds: string[]) {
         },
         {
             title: "Selamat Datang di Greenly — Mulai Eco Living Hari Ini",
-            description:
-                "Temukan produk eco-friendly pilihan untuk membantu gaya hidup lebih hemat, sehat, dan berkelanjutan.",
-            imageUrl: bannerImage("greenly-welcome.webp"),
+            description: "Temukan produk eco-friendly pilihan untuk membantu gaya hidup lebih hemat, sehat, dan berkelanjutan.",
+            imageUrl: "https://4s0138q05g.ufs.sh/f/L7c2JRqY80pw6kdBuw5LyApYEHq3UsFjwOgGdx5oX2hzRTQ6", // Estetika tanaman dalam ruangan
             promotionId: promoIds[0] ?? null,
             isActive: true,
             position: 2,
@@ -36,9 +30,8 @@ export async function seedBanners(prisma: PrismaClient, promoIds: string[]) {
         },
         {
             title: "Flash Sale Zero Waste — Diskon 20% Produk Pilihan",
-            description:
-                "Belanja tumbler, tas pakai ulang, wadah makanan, dan kebutuhan zero waste lainnya dengan harga spesial.",
-            imageUrl: bannerImage("greenly-zero-waste-sale.webp"),
+            description: "Belanja tumbler, tas pakai ulang, wadah makanan, dan kebutuhan zero waste lainnya dengan harga spesial.",
+            imageUrl: "https://4s0138q05g.ufs.sh/f/L7c2JRqY80pw5K6td5MCYBIkcd7Lwe0PrRvG6Nj9UXnDZAzV", // Wadah kaca zero waste
             promotionId: promoIds[2] ?? null,
             isActive: true,
             position: 3,
@@ -48,9 +41,8 @@ export async function seedBanners(prisma: PrismaClient, promoIds: string[]) {
         },
         {
             title: "Gratis Ongkir untuk Order di Atas Rp 75.000",
-            description:
-                "Belanja produk hijau lebih hemat dengan pengiriman ramah lingkungan untuk pesanan pilihan.",
-            imageUrl: bannerImage("greenly-free-shipping.webp"),
+            description: "Belanja produk hijau lebih hemat dengan pengiriman ramah lingkungan untuk pesanan pilihan.",
+            imageUrl: "https://4s0138q05g.ufs.sh/f/L7c2JRqY80pw7lccVTE4XjJqcruKHvponI78PZLGelQbDgxM", // Packaging kertas daur ulang
             promotionId: promoIds[3] ?? null,
             isActive: true,
             position: 4,
@@ -60,75 +52,14 @@ export async function seedBanners(prisma: PrismaClient, promoIds: string[]) {
         },
         {
             title: "Earth Day Every Day — Pilih Produk yang Lebih Baik",
-            description:
-                "Dukung gaya hidup berkelanjutan dengan produk organik, reusable, recyclable, dan eco-certified.",
-            imageUrl: bannerImage("greenly-earth-day.webp"),
+            description: "Dukung gaya hidup berkelanjutan dengan produk organik, reusable, recyclable, dan eco-certified.",
+            imageUrl: "https://4s0138q05g.ufs.sh/f/L7c2JRqY80pw85pFblwSmvBu1kPX4TYIRMh5aqJoCw0sDyjf", // Tangan memegang tanah & tunas
             promotionId: promoIds[4] ?? null,
             isActive: true,
             position: 5,
             startDate: past,
             endDate: future,
             type: "EVENT" as const,
-        },
-        {
-            title: "Cashback Rp 100.000 untuk Transaksi di Atas 500K",
-            description:
-                "Lengkapi kebutuhan eco-living kamu dan dapatkan cashback untuk pembelian produk hijau pilihan.",
-            imageUrl: bannerImage("greenly-cashback.webp"),
-            promotionId: promoIds[6] ?? null,
-            isActive: true,
-            position: 6,
-            startDate: past,
-            endDate: future,
-            type: "PROMO" as const,
-        },
-        {
-            title: "Weekend Eco Sale — Belanja Hijau Setiap Akhir Pekan",
-            description:
-                "Nikmati promo akhir pekan untuk produk organik, sustainable fashion, dan kebutuhan rumah ramah lingkungan.",
-            imageUrl: bannerImage("greenly-weekend-sale.webp"),
-            promotionId: promoIds[7] ?? null,
-            isActive: true,
-            position: 7,
-            startDate: past,
-            endDate: future,
-            type: "HOME" as const,
-        },
-        {
-            title: "Pengguna Baru — Diskon 30% untuk Order Pertama",
-            description:
-                "Mulai perjalanan eco-shopping kamu dengan diskon spesial khusus pengguna baru Greenly.",
-            imageUrl: bannerImage("greenly-new-user.webp"),
-            promotionId: promoIds[5] ?? null,
-            isActive: true,
-            position: 8,
-            startDate: past,
-            endDate: future,
-            type: "HOME" as const,
-        },
-        {
-            title: "Hari Lingkungan Hidup — Promo Spesial 5 Juni",
-            description:
-                "Rayakan Hari Lingkungan Hidup dengan memilih produk yang lebih bertanggung jawab untuk bumi.",
-            imageUrl: bannerImage("greenly-environment-day.webp"),
-            promotionId: null,
-            isActive: true,
-            position: 9,
-            startDate: new Date("2026-06-01T00:00:00Z"),
-            endDate: new Date("2026-06-07T23:59:59Z"),
-            type: "EVENT" as const,
-        },
-        {
-            title: "Potongan Langsung Rp 50.000 untuk Produk Organik",
-            description:
-                "Belanja bahan pangan organik, skincare alami, dan kebutuhan rumah sehat dengan potongan langsung.",
-            imageUrl: bannerImage("greenly-organic-discount.webp"),
-            promotionId: promoIds[1] ?? null,
-            isActive: true,
-            position: 10,
-            startDate: past,
-            endDate: future,
-            type: "PROMO" as const,
         },
     ];
 
@@ -157,58 +88,34 @@ export async function seedBanners(prisma: PrismaClient, promoIds: string[]) {
         });
     }
 
+    // 3 Banner Spesifik Toko
     const shopBanners = [
         {
             title: "EcoWare Indonesia — Zero Waste Lifestyle Starts Here",
-            description:
-                "Produk reusable untuk hidup minim sampah: tumbler, botol stainless, tas belanja, dan wadah makanan.",
-            imageUrl: bannerImage("shop-ecoware.webp"),
+            description: "Produk reusable untuk hidup minim sampah: tumbler, botol stainless, tas belanja, dan wadah makanan.",
+            imageUrl: "https://4s0138q05g.ufs.sh/f/L7c2JRqY80pw5aLkDRMCYBIkcd7Lwe0PrRvG6Nj9UXnDZAzV", // Gelas/Tumbler reusable
             isActive: true,
-            position: 1,
+            position: 6,
             startDate: past,
             endDate: future,
             type: "HOME" as const,
         },
         {
             title: "Bumi Hijau Fashion — Tampil Stylish, Jaga Bumi",
-            description:
-                "Koleksi sustainable fashion dari bahan organik, linen, hemp, dan material rendah dampak lingkungan.",
-            imageUrl: bannerImage("shop-bumi-hijau-fashion.webp"),
+            description: "Koleksi sustainable fashion dari bahan organik, linen, hemp, dan material rendah dampak lingkungan.",
+            imageUrl: "https://4s0138q05g.ufs.sh/f/L7c2JRqY80pwfwbPv8bjG3IovPRT59QcBWEZL6U4M0aw2dzn", // Rak pakaian minimalis/natural
             isActive: true,
-            position: 1,
+            position: 7,
             startDate: past,
             endDate: future,
             type: "HOME" as const,
         },
         {
             title: "Organik Nusantara — Dari Alam untuk Kesehatan",
-            description:
-                "Produk pangan organik dari petani lokal: sayur, buah, rempah, beras, dan kebutuhan dapur sehat.",
-            imageUrl: bannerImage("shop-organik-nusantara.webp"),
+            description: "Produk pangan organik dari petani lokal: sayur, buah, rempah, beras, dan kebutuhan dapur sehat.",
+            imageUrl: "https://4s0138q05g.ufs.sh/f/L7c2JRqY80pwtFWK3RinbEum13KN4jh5fHDOr8GQwzqYIiBM", // Keranjang sayuran segar
             isActive: true,
-            position: 1,
-            startDate: past,
-            endDate: future,
-            type: "HOME" as const,
-        },
-        {
-            title: "Pure Nature Beauty — Cantik Alami, Ramah Bumi",
-            description:
-                "Skincare dan personal care berbahan alami, cruelty-free, dan ramah lingkungan.",
-            imageUrl: bannerImage("shop-pure-nature-beauty.webp"),
-            isActive: true,
-            position: 1,
-            startDate: past,
-            endDate: future,
-            type: "HOME" as const,
-        },
-        {
-            title: "Green Tech Solutions — Teknologi untuk Masa Depan",
-            description:
-                "Solusi green technology seperti panel surya portable, lampu hemat energi, dan perangkat outdoor eco-friendly.",
-            imageUrl: bannerImage("shop-green-tech.webp"),
-            isActive: true,
-            position: 1,
+            position: 8,
             startDate: past,
             endDate: future,
             type: "HOME" as const,
@@ -239,5 +146,5 @@ export async function seedBanners(prisma: PrismaClient, promoIds: string[]) {
         });
     }
 
-    console.log("✅ Greenly Banners Seeded Successfully");
+    console.log("✅ Greenly Banners Seeded Successfully (8 items)");
 }
