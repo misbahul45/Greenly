@@ -22,7 +22,7 @@ class StatisticWidget extends StatelessWidget {
       crossAxisCount: 2,
       crossAxisSpacing: UIConstants.spacingM,
       mainAxisSpacing: UIConstants.spacingM,
-      childAspectRatio: 1.45,
+      childAspectRatio: 1.2,
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       children: [

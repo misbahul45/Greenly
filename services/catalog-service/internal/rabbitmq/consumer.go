@@ -240,17 +240,16 @@ func (c *consumer) Stop() error {
 }
 
 type OrderCreatedEvent struct {
-	EventID     string             `json:"eventId"`
-	OrderID     string             `json:"orderId"`
-	UserID      string             `json:"userId"`
-	ShopID      string             `json:"shopId"`
-	ProductID   string             `json:"productId"`
-	Quantity    int                `json:"quantity"`
-	TotalAmount string             `json:"totalAmount"`
-	Timestamp   string             `json:"timestamp"`
-	Items       []OrderCreatedItem `json:"items"`
+    EventID     string             `json:"eventId"`
+    OrderID     string             `json:"orderId"`
+    UserID      string             `json:"userId"`
+    ShopID      string             `json:"shopId"`
+    ProductID   string             `json:"productId"`
+    Quantity    int                `json:"quantity"`
+    TotalAmount json.Number        `json:"totalAmount"` // ✅ Menggunakan json.Number
+    Timestamp   string             `json:"timestamp"`
+    Items       []OrderCreatedItem `json:"items"`
 }
-
 type OrderCreatedItem struct {
 	ProductID string `json:"productId"`
 	Quantity  int    `json:"quantity"`

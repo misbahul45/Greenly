@@ -27,12 +27,12 @@ class UIConstants {
   static const double iconSizeM = 20.0;
   static const double iconSizeL = 24.0;
 
-  static const double fontSizeXS = 11.0;
-  static const double fontSizeS = 12.0;
-  static const double fontSizeM = 13.0;
-  static const double fontSizeL = 15.0;
-  static const double fontSizeXL = 18.0;
-  static const double fontSizeXXL = 22.0;
+  static const double fontSizeXS = 8.0;
+  static const double fontSizeS = 10.0;
+  static const double fontSizeM = 12.0;
+  static const double fontSizeL = 14.0;
+  static const double fontSizeXL = 16.0;
+  static const double fontSizeXXL = 18.0;
 
   static const EdgeInsets screenPadding = EdgeInsets.symmetric(
     horizontal: paddingL,

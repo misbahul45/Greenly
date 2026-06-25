@@ -28,6 +28,60 @@ export class PaymentService {
         private readonly outbox: OutboxService
     ) {}
 
+    async paymentSuccess(sessionId?: string) {
+        if (!sessionId) {
+            throw new BadRequestException("Missing checkout session id");
+        }
+
+        const payment = await this.db.payment.findFirst({
+            where: {
+                stripeCheckoutSessionId: sessionId,
+            },
+            include: {
+                order: true,
+            },
+        });
+
+        if (!payment) {
+            throw new NotFoundException("Payment not found");
+        }
+
+        return {
+            data: {
+                paymentId: payment.id,
+                orderId: payment.orderId,
+                sessionId,
+                paymentStatus: payment.status,
+                orderStatus: payment.order.status,
+            },
+            message: "Payment success redirect",
+        };
+    }
+
+    async paymentCancel(sessionId?: string) {
+        const payment = sessionId
+            ? await this.db.payment.findFirst({
+                where: {
+                    stripeCheckoutSessionId: sessionId,
+                },
+                include: {
+                    order: true,
+                },
+            })
+            : null;
+
+        return {
+            data: {
+                paymentId: payment?.id ?? null,
+                orderId: payment?.orderId ?? null,
+                sessionId: sessionId ?? null,
+                paymentStatus: payment?.status ?? "PENDING",
+                orderStatus: payment?.order.status ?? "PENDING",
+            },
+            message: "Payment cancelled",
+        };
+    }
+
     async getPayments(query: ListPaymentsQueryDto, shopId?: string) {
         const [data, total] = await this.paymentRepo.findByShopIdAndFilters(
             shopId,

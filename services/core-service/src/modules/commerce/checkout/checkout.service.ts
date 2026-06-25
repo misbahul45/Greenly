@@ -34,9 +34,12 @@ export class CheckoutService {
     ) {}
 
     async checkout(userId: string, dto: CheckoutDto) {
+        this.logger.log(`[CHECKOUT START] userId: ${userId}, shopId: ${dto.shopId}, itemIds: ${JSON.stringify(dto.itemIds)}`);
+
         const cart = await this.cartRepo.findCartWithItems(userId);
 
         if (!cart || cart.items.length === 0) {
+            this.logger.warn(`[CHECKOUT FAILED] Cart empty for userId: ${userId}`);
             throw new BadRequestException("Cart is empty");
         }
 
@@ -45,6 +48,7 @@ export class CheckoutService {
         );
 
         if (selectedItems.length === 0) {
+            this.logger.warn(`[CHECKOUT FAILED] No valid items filtered from cart for userId: ${userId}`);
             throw new BadRequestException(
                 "No valid items selected for checkout"
             );
@@ -57,10 +61,14 @@ export class CheckoutService {
         const shippingAddress =
             dto.shippingAddress?.trim() || user?.profile?.address?.trim();
         if (!shippingAddress) {
+            this.logger.warn(`[CHECKOUT FAILED] Shipping address missing for userId: ${userId}`);
             throw new BadRequestException("Shipping address is required");
         }
 
+        // Ambil data produk aktual dari catalog-service dan buat snapshot
         const snapshots = await this.buildSnapshots(dto, selectedItems);
+        this.logger.debug(`[CHECKOUT SNAPSHOTS] Resolved items: ${JSON.stringify(snapshots)}`);
+
         const itemsPayload = snapshots.map((item) => ({
             productId: item.productId,
             quantity: item.quantity,
@@ -76,6 +84,9 @@ export class CheckoutService {
                   },
               })
             : null;
+        if (dto.promoCode) {
+            this.logger.debug(`[CHECKOUT PROMO] Code: ${dto.promoCode}, Found: ${!!promo}`);
+        }
 
         const subtotal = snapshots.reduce(
             (sum, item) => sum + item.quantity * item.price,
@@ -97,6 +108,8 @@ export class CheckoutService {
         const netAmount = grossAmount - marketplaceFee - gatewayFee;
         const currency = this.stripeService.currency;
         const stripe = this.stripeService.stripe;
+
+        this.logger.log(`[CHECKOUT CALCULATION] Subtotal: ${subtotal}, Discount: ${discount}, TotalAmount: ${totalAmount}, Currency Config: ${currency}`);
 
         const { order, payment } = await this.db.$transaction(async (tx) => {
             const shop = await tx.shop.findUnique({ where: { id: dto.shopId } });
@@ -157,14 +170,19 @@ export class CheckoutService {
             return { order: newOrder, payment: newPayment };
         });
 
+        this.logger.log(`[CHECKOUT DB TRANSACTION SUCCESS] OrderId: ${order.id}, PaymentId: ${payment.id}`);
+
+        const stripeLineItems = this.buildStripeLineItems(
+            snapshots,
+            totalAmount,
+            discount,
+            currency
+        );
+        this.logger.debug(`[STRIPE PAYLOAD LINE_ITEMS] Sending to Stripe: ${JSON.stringify(stripeLineItems)}`);
+
         const session = await stripe.checkout.sessions.create({
             mode: "payment",
-            line_items: this.buildStripeLineItems(
-                snapshots,
-                totalAmount,
-                discount,
-                currency
-            ),
+            line_items: stripeLineItems,
             metadata: {
                 orderId: order.id,
                 paymentId: payment.id,
@@ -185,6 +203,8 @@ export class CheckoutService {
                 Math.floor(Date.now() / 1000) +
                 this.stripeService.checkoutExpiresHours * 3600,
         });
+
+        this.logger.log(`[STRIPE SESSION CREATED] SessionId: ${session.id}, URL: ${session.url}`);
 
         await this.db.payment.update({
             where: { id: payment.id },
@@ -235,12 +255,16 @@ export class CheckoutService {
         dto: CheckoutDto,
         selectedItems: any[]
     ): Promise<CheckoutItemSnapshot[]> {
-        const catalogProducts = await this.catalogClient.resolveProducts(
-            selectedItems.map((item) => item.productId)
-        );
+        const productIds = selectedItems.map((item) => item.productId);
+        this.logger.debug(`[RESOLVING CATALOG PRODUCTS] Requesting IDs: ${JSON.stringify(productIds)}`);
+        
+        const catalogProducts = await this.catalogClient.resolveProducts(productIds);
 
         return selectedItems.map((cartItem) => {
             const product = catalogProducts.get(cartItem.productId);
+            
+            this.logger.debug(`[CATALOG PRODUCT MAPPING] ProductId: ${cartItem.productId}, Data found in Catalog: ${JSON.stringify(product)}`);
+
             if (!product) {
                 throw new BadRequestException(
                     `Product ${cartItem.productId} is not available`
@@ -268,26 +292,28 @@ export class CheckoutService {
             return {
                 productId: cartItem.productId,
                 productName: product.name,
-                price: product.price,
+                price: product.price, // 🔍 Perhatikan nilai price dari log ini nanti
                 quantity: cartItem.quantity,
             };
         });
     }
 
-    private buildStripeLineItems(
+ private buildStripeLineItems(
         items: CheckoutItemSnapshot[],
         totalAmount: number,
         discount: number,
         currency: string
     ) {
+        const isZeroDecimal = ['jpy', 'krw', 'vnd', 'clp', 'pyg'].includes(currency.toLowerCase());
+        const multiplier = isZeroDecimal ? 1 : 100;
+
         if (discount > 0) {
             return [
                 {
                     quantity: 1,
                     price_data: {
-                        currency,
-                        // Kirim angka utuh, IDR tidak pakai desimal/sen
-                        unit_amount: Math.round(totalAmount),
+                        currency: currency.toLowerCase(),
+                        unit_amount: Math.round(totalAmount * multiplier),
                         product_data: {
                             name: "Total pembayaran Greenly",
                         },
@@ -299,9 +325,8 @@ export class CheckoutService {
         return items.map((item) => ({
             quantity: item.quantity,
             price_data: {
-                currency,
-                // Kirim angka utuh, IDR tidak pakai desimal/sen
-                unit_amount: Math.round(item.price),
+                currency: currency.toLowerCase(),
+                unit_amount: Math.round(item.price * multiplier),
                 product_data: {
                     name: item.productName,
                     metadata: {

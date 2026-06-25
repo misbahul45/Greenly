@@ -57,4 +57,20 @@ export class StripePaymentController {
   ) {
     return ErrorHandler(() => this.paymentService.handleStripeWebhook(request, signature));
   }
+
+  @Get('success')
+  @Public()
+  paymentSuccess(@Query('session_id') sessionId?: string) {
+    return ErrorHandler(() =>
+      this.paymentService.paymentSuccess(sessionId),
+    );
+  }
+
+  @Get('cancel')
+  @Public()
+  paymentCancel(@Query('session_id') sessionId?: string) {
+    return ErrorHandler(() =>
+      this.paymentService.paymentCancel(sessionId),
+    );
+  }
 }
