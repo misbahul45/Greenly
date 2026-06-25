@@ -4,14 +4,14 @@ import {
     BadRequestException,
     Logger,
 } from "@nestjs/common";
-import {DatabaseService} from "../../../libs/database/database.service";
-import {CartRepository} from "../cart/cart.repository";
-import {CheckoutDto} from "./checkout.dto";
-import {CheckoutInitiatedPublisher} from "./checkout-initiated.publisher";
-import {StripeService} from "../../finance/payment/stripe.service";
-import {COMMERCE_ROUTING_KEYS} from "../shared/constants/routing-keys.constant";
-import {OutboxService} from "../../../infrastructure/outbox/outbox.service";
-import {CatalogClientService} from "./catalog-client.service";
+import { DatabaseService } from "../../../libs/database/database.service";
+import { CartRepository } from "../cart/cart.repository";
+import { CheckoutDto } from "./checkout.dto";
+import { CheckoutInitiatedPublisher } from "./checkout-initiated.publisher";
+import { StripeService } from "../../finance/payment/stripe.service";
+import { COMMERCE_ROUTING_KEYS } from "../shared/constants/routing-keys.constant";
+import { OutboxService } from "../../../infrastructure/outbox/outbox.service";
+import { CatalogClientService } from "./catalog-client.service";
 
 type CheckoutItemSnapshot = {
     productId: string;
@@ -51,8 +51,8 @@ export class CheckoutService {
         }
 
         const user = await this.db.user.findUnique({
-            where: {id: userId},
-            include: {profile: true},
+            where: { id: userId },
+            include: { profile: true },
         });
         const shippingAddress =
             dto.shippingAddress?.trim() || user?.profile?.address?.trim();
@@ -66,13 +66,13 @@ export class CheckoutService {
             quantity: item.quantity,
         }));
 
-const promo = dto.promoCode
+        const promo = dto.promoCode
             ? await this.db.promotion.findFirst({
                   where: {
                       code: dto.promoCode,
                       isActive: true,
-                      startDate: {lte: new Date()},
-                      endDate: {gte: new Date()},
+                      startDate: { lte: new Date() },
+                      endDate: { gte: new Date() },
                   },
               })
             : null;
@@ -98,8 +98,8 @@ const promo = dto.promoCode
         const currency = this.stripeService.currency;
         const stripe = this.stripeService.stripe;
 
-        const {order, payment} = await this.db.$transaction(async (tx) => {
-            const shop = await tx.shop.findUnique({where: {id: dto.shopId}});
+        const { order, payment } = await this.db.$transaction(async (tx) => {
+            const shop = await tx.shop.findUnique({ where: { id: dto.shopId } });
             if (!shop) {
                 throw new NotFoundException(`Shop ${dto.shopId} not found`);
             }
@@ -122,7 +122,7 @@ const promo = dto.promoCode
                         })),
                     },
                 },
-                include: {items: true},
+                include: { items: true },
             });
 
             const newPayment = await tx.payment.create({
@@ -154,7 +154,7 @@ const promo = dto.promoCode
                 },
             });
 
-            return {order: newOrder, payment: newPayment};
+            return { order: newOrder, payment: newPayment };
         });
 
         const session = await stripe.checkout.sessions.create({
@@ -187,7 +187,7 @@ const promo = dto.promoCode
         });
 
         await this.db.payment.update({
-            where: {id: payment.id},
+            where: { id: payment.id },
             data: {
                 transactionId: session.id,
                 stripeCheckoutSessionId: session.id,
@@ -286,10 +286,8 @@ const promo = dto.promoCode
                     quantity: 1,
                     price_data: {
                         currency,
-                        unit_amount: this.stripeService.toStripeAmount(
-                            totalAmount,
-                            currency
-                        ),
+                        // Kirim angka utuh, IDR tidak pakai desimal/sen
+                        unit_amount: Math.round(totalAmount),
                         product_data: {
                             name: "Total pembayaran Greenly",
                         },
@@ -302,10 +300,8 @@ const promo = dto.promoCode
             quantity: item.quantity,
             price_data: {
                 currency,
-                unit_amount: this.stripeService.toStripeAmount(
-                    item.price,
-                    currency
-                ),
+                // Kirim angka utuh, IDR tidak pakai desimal/sen
+                unit_amount: Math.round(item.price),
                 product_data: {
                     name: item.productName,
                     metadata: {

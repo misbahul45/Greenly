@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 
 class UIConstants {
   static const double paddingXS = 4.0;
-  static const double paddingS = 8.0;
-  static const double paddingM = 16.0;
-  static const double paddingL = 24.0;
-  static const double paddingXL = 32.0;
+  static const double paddingS = 6.0;
+  static const double paddingM = 10.0;
+  static const double paddingL = 12.0;
+  static const double paddingXL = 16.0;
 
   static const double spacingXS = 4.0;
   static const double spacingS = 8.0;

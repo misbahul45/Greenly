@@ -45,8 +45,8 @@ class _SplashScreenState extends State<SplashScreen>
   Future<void> _checkAndNavigate() async {
     await Future.delayed(const Duration(milliseconds: 2200));
     if (!mounted) return;
-    //AuthStorage.clear();
-    // OnboardingStorage.clearOnboarding();
+    AuthStorage.clear();
+    OnboardingStorage.clearOnboarding();
     final token = await AuthStorage.getAccessToken();
     final hasOnboarded = await OnboardingStorage.hasSeenOnboarding();
     if (!mounted) return;

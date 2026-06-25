@@ -8,6 +8,7 @@ set -euo pipefail
 #   ./scripts/seed-all.sh
 #   ./scripts/seed-all.sh --mode host
 #   ./scripts/seed-all.sh --mode docker
+#   ./scripts/seed-all.sh --reset                  # <--- OPSI RESET DITAMBAHKAN
 #   ./scripts/seed-all.sh --ml-url http://localhost/api/ml
 #   ./scripts/seed-all.sh --fail-on-ml-rebuild
 #
@@ -22,6 +23,7 @@ log() {
 }
 
 SEED_MODE="${SEED_MODE:-host}"
+RESET_DB="false" # <--- DEFAULT TIDAK RESET
 
 ROOT_ENV="$ROOT_DIR/.env"
 
@@ -69,6 +71,10 @@ while [[ $# -gt 0 ]]; do
       ;;
     --fail-on-ml-rebuild)
       FAIL_ON_ML_REBUILD="true"
+      shift
+      ;;
+    --reset)          # <--- DETEKSI ARGUMEN RESET
+      RESET_DB="true"
       shift
       ;;
     *)
@@ -148,6 +154,7 @@ log "  ROOT_DIR=$ROOT_DIR"
 log "  CATALOG_DIR=$CATALOG_DIR"
 log "  CORE_DIR=$CORE_DIR"
 log "  SEED_MODE=$SEED_MODE"
+log "  RESET_DB=$RESET_DB"
 log "  ML_API_URL=$ML_API_URL"
 log "  ML_INTERNAL_TOKEN is set: $([[ -n "$ML_INTERNAL_TOKEN" ]] && echo yes || echo no)"
 
@@ -162,11 +169,20 @@ fi
 # ── 1. Core-service migration + seed inside Docker ────────────────────────────
 log "🌱 Running core-service migration + seed inside Docker container..."
 
-docker compose -f "$ROOT_DIR/docker-compose.yml" exec -T core-service sh -lc '
-  test -n "$DATABASE_URL" && echo "DATABASE_URL is set"
-  pnpm prisma migrate deploy
-  pnpm prisma db seed
-'
+if [[ "$RESET_DB" == "true" ]]; then
+  log "⚠️  RESET MODE AKTIF: Menghapus database dan melakukan migrasi ulang..."
+  docker compose -f "$ROOT_DIR/docker-compose.yml" exec -T core-service sh -lc '
+    test -n "$DATABASE_URL" && echo "DATABASE_URL is set"
+    pnpm prisma migrate reset --force --skip-seed
+    pnpm prisma db seed
+  '
+else
+  docker compose -f "$ROOT_DIR/docker-compose.yml" exec -T core-service sh -lc '
+    test -n "$DATABASE_URL" && echo "DATABASE_URL is set"
+    pnpm prisma migrate deploy
+    pnpm prisma db seed
+  '
+fi
 
 log "✅ Core migration + seed complete"
 
@@ -238,4 +254,3 @@ rm -f "$RESPONSE_FILE"
 log ""
 log "🎉 All seeds completed!"
 log "   ML index rebuild endpoint: $REBUILD_URL"
-
