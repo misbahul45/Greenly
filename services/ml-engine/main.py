@@ -12,6 +12,7 @@ from app.api.events import router as events_router
 from app.api.health import router as health_router
 from app.api.recommendation import router as recommendation_router
 from app.api.search import router as search_router
+from app.deps import init_redis, close_redis
 from app.workers.event_consumer import catalog_event_consumer
 
 
@@ -156,4 +157,9 @@ app.include_router(events_router)
 
 @app.on_event("startup")
 async def startup():
+    await init_redis()
     catalog_event_consumer.start()
+
+@app.on_event("shutdown")
+async def shutdown():
+    await close_redis()

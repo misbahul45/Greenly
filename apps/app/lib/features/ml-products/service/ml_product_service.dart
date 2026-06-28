@@ -1,6 +1,7 @@
 import 'package:app/core/config/env.dart';
 import 'package:app/core/utils/api_client.dart';
 import 'package:app/core/utils/api_response.dart';
+import 'package:app/features/auth/presentation/bloc/auth_storage.dart';
 import 'package:app/features/ml-products/domain/ml_product_result.dart';
 import 'package:app/features/ml-products/domain/ml_search_request.dart';
 
@@ -19,11 +20,12 @@ class MlProductService {
 
   Future<ApiResponse<List<MlProductResult>>> getHomeRecommendations({
     int limit = 10,
-    List<String>? recentProductIds,
-  }) {
+  }) async {
     final query = <String, dynamic>{'limit': limit};
-    if (recentProductIds != null && recentProductIds.isNotEmpty) {
-      query['recent_product_ids'] = recentProductIds.join(',');
+    
+    final user = await AuthStorage.getUser();
+    if (user != null) {
+      query['user_id'] = user.id;
     }
     
     return ApiClient.get<List<MlProductResult>>(
@@ -69,8 +71,14 @@ class MlProductService {
     String? productId,
     String? source,
     Map<String, dynamic>? metadata,
-  }) {
+  }) async {
     final payload = <String, dynamic>{'event_type': eventType};
+    
+    final user = await AuthStorage.getUser();
+    if (user != null) {
+      payload['user_id'] = user.id;
+    }
+    
     if (productId != null) payload['product_id'] = productId;
     if (source != null) payload['source'] = source;
     if (metadata != null) payload['metadata'] = metadata;

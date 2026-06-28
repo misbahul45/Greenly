@@ -2,7 +2,7 @@ from fastapi import APIRouter, Query, Request
 import numpy as np
 
 from app.core.ranking import rank_home_products, rank_eco_products, rank_personalized_home_products
-from app.deps import get_vector_store
+from app.deps import get_vector_store, get_redis
 
 router = APIRouter(prefix="/recommendations")
 
@@ -11,31 +11,41 @@ router = APIRouter(prefix="/recommendations")
 async def home_recommendations(
     request: Request, 
     user_id: str | None = None,
-    recent_product_ids: str | None = None,
     limit: int = Query(20, ge=1, le=100)
 ):
     store = get_vector_store()
     
-    if recent_product_ids and store.embeddings is not None and len(store.products) > 0:
-        ids = [pid.strip() for pid in recent_product_ids.split(",") if pid.strip()]
-        vectors = []
-        for pid in ids:
-            vec = store.get_embedding(pid)
-            if vec is not None:
-                vectors.append(vec)
+    if user_id and store.embeddings is not None and len(store.products) > 0:
+        try:
+            redis = get_redis()
+            recent_product_ids = await redis.lrange(f"recent_views:{user_id}", 0, 9)
+        except Exception:
+            recent_product_ids = []
+
+        if recent_product_ids:
+            vectors = []
+            for pid in recent_product_ids:
+                vec = store.get_embedding(pid)
+                if vec is not None:
+                    vectors.append(vec)
+                    
+            if vectors:
+                # Mean pooling to create user preference vector
+                user_vector = np.mean(vectors, axis=0)
                 
-        if vectors:
-            # Mean pooling to create user preference vector
-            user_vector = np.mean(vectors, axis=0)
-            
-            # Compute cosine similarity with all products
-            scores = store.embeddings @ user_vector.astype("float32")
-            
-            similarities = {}
-            for idx, score in enumerate(scores):
-                similarities[store.products[idx].id] = float(score)
+                # Normalize the vector to maintain scale for cosine similarity
+                norm = np.linalg.norm(user_vector)
+                if norm > 0:
+                    user_vector = user_vector / norm
                 
-            results = rank_personalized_home_products(store.products, similarities, limit)
+                # Compute cosine similarity with all products
+                scores = store.embeddings @ user_vector.astype("float32")
+                
+                similarities = {}
+                for idx, score in enumerate(scores):
+                    similarities[store.products[idx].id] = float(score)
+                    
+                results = rank_personalized_home_products(store.products, similarities, limit)
             return {
                 "status": "success",
                 "statusCode": 200,

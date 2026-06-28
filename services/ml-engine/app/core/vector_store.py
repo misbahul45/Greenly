@@ -152,7 +152,7 @@ class VectorStore:
         if not self.products or self.embeddings is None:
             return []
 
-        has_filters = filters is not None or exclude_product_id is not None
+        has_filters = filters is not None
         
         if has_filters:
             # Pre-filtering: calculate scores only for valid products
@@ -182,23 +182,42 @@ class VectorStore:
             return results
             
         else:
-            # No filters: use fast FAISS index if available
-            search_limit = min(limit, len(self.products))
+            # No attribute filters: fast path using FAISS
+            # Fetch limit + 1 in case the excluded product is the top result
+            fetch_limit = limit + 1 if exclude_product_id else limit
+            
             if faiss is not None and self.index is not None:
-                scores, indices = self.index.search(query_vector.reshape(1, -1).astype("float32"), search_limit)
-                pairs = list(zip(indices[0].tolist(), scores[0].tolist()))
+                query_vector_2d = query_vector.reshape(1, -1).astype("float32")
+                distances, indices = self.index.search(query_vector_2d, min(fetch_limit, len(self.products)))
+                
+                results = []
+                for i in range(len(indices[0])):
+                    idx = indices[0][i]
+                    if idx < 0 or idx >= len(self.products):
+                        continue
+                    
+                    product = self.products[idx]
+                    if exclude_product_id and product.id == exclude_product_id:
+                        continue
+                        
+                    score = float(distances[0][i])
+                    results.append(_to_search_result(product, score))
+                
+                # Take exactly limit since we might have fetched limit + 1
+                return results[:limit]
             else:
                 scores = self.embeddings @ query_vector.astype("float32")
-                top_indices = np.argsort(scores)[::-1][:search_limit]
-                pairs = [(int(idx), float(scores[idx])) for idx in top_indices]
-
-            results: list[SearchResult] = []
-            for index, score in pairs:
-                if index < 0 or index >= len(self.products):
-                    continue
-                product = self.products[index]
-                results.append(_to_search_result(product, float(score)))
-            return results
+                top_indices = np.argsort(scores)[::-1][:fetch_limit]
+                
+                results: list[SearchResult] = []
+                for idx in top_indices:
+                    product = self.products[idx]
+                    if exclude_product_id and product.id == exclude_product_id:
+                        continue
+                    results.append(_to_search_result(product, float(scores[idx])))
+                    if len(results) == limit:
+                        break
+                return results
 
 
 def _passes_filters(product: ProductIndexItem, filters: SearchFilters | None) -> bool:

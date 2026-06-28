@@ -11,17 +11,20 @@ def rank_personalized_home_products(
     similarities: dict[str, float], 
     limit: int
 ) -> list[SearchResult]:
-    def blend_score(product: ProductIndexItem) -> float:
-        # similarities[product.id] is between ~0.0 and 1.0 (cosine sim)
+    # Pre-compute scores to avoid O(N*log(N)) duplicate calculation
+    blend_scores: dict[str, float] = {}
+    
+    for product in products:
         sim = max(similarities.get(product.id, 0.0), 0.0)
         base = home_score(product)
-        # Blend: 40% similarity, 60% business logic
-        return 0.40 * sim + 0.60 * base
+        blend_scores[product.id] = 0.40 * sim + 0.60 * base
         
-    ranked = sorted(products, key=blend_score, reverse=True)
+    ranked = sorted(products, key=lambda p: blend_scores[p.id], reverse=True)
+    
     results = []
     for product in ranked[:limit]:
-        result = to_result(product, blend_score(product))
+        score = blend_scores[product.id]
+        result = to_result(product, score)
         result.reason = "Berdasarkan riwayat dan preferensi Anda" if similarities.get(product.id, 0.0) > 0.4 else result.reason
         results.append(result)
     return results
@@ -34,7 +37,7 @@ def rank_eco_products(products: list[ProductIndexItem], limit: int) -> list[Sear
         key=lambda p: (p.eco_score or 0, p.rating_average or 0),
         reverse=True,
     )
-    return [to_result(product, product.eco_score or 0) for product in ranked[:limit]]
+    return [to_result(product, (product.eco_score or 0) / 100) for product in ranked[:limit]]
 
 
 def home_score(product: ProductIndexItem) -> float:
