@@ -19,10 +19,16 @@ class MlProductService {
 
   Future<ApiResponse<List<MlProductResult>>> getHomeRecommendations({
     int limit = 10,
+    List<String>? recentProductIds,
   }) {
+    final query = <String, dynamic>{'limit': limit};
+    if (recentProductIds != null && recentProductIds.isNotEmpty) {
+      query['recent_product_ids'] = recentProductIds.join(',');
+    }
+    
     return ApiClient.get<List<MlProductResult>>(
       '$_base/recommendations/home',
-      query: {'limit': limit},
+      query: query,
       fromJsonT: _parseList,
     );
   }
@@ -56,5 +62,19 @@ class MlProductService {
       request.toJson(),
       fromJsonT: _parseList,
     );
+  }
+
+  Future<ApiResponse<dynamic>> logEvent({
+    required String eventType,
+    String? productId,
+    String? source,
+    Map<String, dynamic>? metadata,
+  }) {
+    final payload = <String, dynamic>{'event_type': eventType};
+    if (productId != null) payload['product_id'] = productId;
+    if (source != null) payload['source'] = source;
+    if (metadata != null) payload['metadata'] = metadata;
+
+    return ApiClient.post<dynamic>('$_base/events', payload);
   }
 }

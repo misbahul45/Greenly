@@ -36,48 +36,81 @@ class OrderDetailScreen extends StatelessWidget {
             style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
           ),
         ),
-        body: BlocBuilder<OrderBloc, OrderState>(
-          buildWhen: (p, c) =>
-              p.isDetailLoading != c.isDetailLoading ||
-              p.detail != c.detail ||
-              p.detailError != c.detailError,
-          builder: (context, state) {
-            if (state.isDetailLoading) {
-              return const OrderDetailSkeleton();
-            }
-
-            final order = state.detail;
-            if (order == null) {
-              return Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.error_outline_rounded,
-                      size: 48,
-                      color: Colors.grey[300],
-                    ),
-                    const SizedBox(height: UIConstants.spacingM),
-                    Text(
-                      state.detailError ?? 'Pesanan tidak ditemukan',
-                      style: TextStyle(color: Colors.grey[600]),
-                    ),
-                  ],
+        body: BlocListener<OrderBloc, OrderState>(
+          listenWhen: (p, c) =>
+              p.isCancelling != c.isCancelling ||
+              p.cancelError != c.cancelError,
+          listener: (context, state) {
+            if (!state.isCancelling && state.cancelError != null) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(state.cancelError!),
+                  backgroundColor: Colors.red,
                 ),
               );
             }
-
-            return ListView(
-              padding: const EdgeInsets.all(UIConstants.paddingM),
-              children: [
-                _statusCard(order),
-                const SizedBox(height: UIConstants.spacingS),
-                _itemsCard(order),
-                const SizedBox(height: UIConstants.spacingS),
-                if (order.payment != null) _paymentCard(context, order),
-              ],
-            );
+            if (!state.isCancelling &&
+                state.cancelError == null &&
+                state.detail?.status == 'CANCELLED') {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Pesanan berhasil dibatalkan'),
+                  backgroundColor: AppTheme.primaryColor,
+                ),
+              );
+            }
           },
+          child: BlocBuilder<OrderBloc, OrderState>(
+            buildWhen: (p, c) =>
+                p.isDetailLoading != c.isDetailLoading ||
+                p.detail != c.detail ||
+                p.detailError != c.detailError ||
+                p.isCancelling != c.isCancelling,
+            builder: (context, state) {
+              if (state.isDetailLoading) {
+                return const OrderDetailSkeleton();
+              }
+
+              final order = state.detail;
+              if (order == null) {
+                return Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.error_outline_rounded,
+                        size: 48,
+                        color: Colors.grey[300],
+                      ),
+                      const SizedBox(height: UIConstants.spacingM),
+                      Text(
+                        state.detailError ?? 'Pesanan tidak ditemukan',
+                        style: TextStyle(color: Colors.grey[600]),
+                      ),
+                    ],
+                  ),
+                );
+              }
+
+              return ListView(
+                padding: const EdgeInsets.all(UIConstants.paddingM),
+                children: [
+                  _statusCard(order),
+                  const SizedBox(height: UIConstants.spacingS),
+                  _itemsCard(order),
+                  const SizedBox(height: UIConstants.spacingS),
+                  if (order.payment != null) _paymentCard(context, order),
+                  if (order.status == 'PENDING') ...[
+                    const SizedBox(height: UIConstants.spacingL),
+                    _CancelOrderButton(
+                      orderId: order.id,
+                      isCancelling: state.isCancelling,
+                    ),
+                  ],
+                ],
+              );
+            },
+          ),
         ),
       ),
     );
@@ -406,6 +439,89 @@ class _ResumePaymentButtonState extends State<_ResumePaymentButton> {
               )
             : const Icon(Icons.payment_rounded, size: 18),
         label: Text(_loading ? 'Menyiapkan...' : 'Lanjutkan Pembayaran'),
+      ),
+    );
+  }
+}
+
+class _CancelOrderButton extends StatelessWidget {
+  final String orderId;
+  final bool isCancelling;
+
+  const _CancelOrderButton({
+    required this.orderId,
+    required this.isCancelling,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      height: UIConstants.buttonHeight,
+      child: OutlinedButton.icon(
+        onPressed: isCancelling ? null : () => _showConfirmDialog(context),
+        style: OutlinedButton.styleFrom(
+          foregroundColor: Colors.red,
+          side: const BorderSide(color: Colors.red),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(UIConstants.radiusL),
+          ),
+        ),
+        icon: isCancelling
+            ? const SizedBox(
+                width: 18,
+                height: 18,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: Colors.red,
+                ),
+              )
+            : const Icon(Icons.cancel_outlined, size: 20),
+        label: Text(
+          isCancelling ? 'Membatalkan...' : 'Batalkan Pesanan',
+          style: const TextStyle(
+            fontSize: UIConstants.fontSizeL,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showConfirmDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(UIConstants.radiusL),
+        ),
+        title: const Row(
+          children: [
+            Icon(Icons.warning_amber_rounded, color: Colors.red, size: 24),
+            SizedBox(width: UIConstants.spacingS),
+            Text('Batalkan Pesanan'),
+          ],
+        ),
+        content: const Text(
+          'Apakah kamu yakin ingin membatalkan pesanan ini? Tindakan ini tidak dapat dibatalkan.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Tidak'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(dialogContext);
+              context.read<OrderBloc>().add(OrderCancelRequested(orderId));
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Ya, Batalkan'),
+          ),
+        ],
       ),
     );
   }

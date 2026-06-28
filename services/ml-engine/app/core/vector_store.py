@@ -152,28 +152,53 @@ class VectorStore:
         if not self.products or self.embeddings is None:
             return []
 
-        search_limit = min(max(limit * 4, limit), len(self.products))
-        if faiss is not None and self.index is not None:
-            scores, indices = self.index.search(query_vector.reshape(1, -1).astype("float32"), search_limit)
-            pairs = list(zip(indices[0].tolist(), scores[0].tolist()))
+        has_filters = filters is not None or exclude_product_id is not None
+        
+        if has_filters:
+            # Pre-filtering: calculate scores only for valid products
+            valid_indices = []
+            for i, p in enumerate(self.products):
+                if exclude_product_id and p.id == exclude_product_id:
+                    continue
+                if _passes_filters(p, filters):
+                    valid_indices.append(i)
+                    
+            if not valid_indices:
+                return []
+                
+            # Compute dot product manually for valid indices
+            valid_embeddings = self.embeddings[valid_indices]
+            scores = valid_embeddings @ query_vector.astype("float32")
+            
+            # Sort top K
+            search_limit = min(limit, len(valid_indices))
+            top_local_indices = np.argsort(scores)[::-1][:search_limit]
+            
+            results: list[SearchResult] = []
+            for local_idx in top_local_indices:
+                global_idx = valid_indices[local_idx]
+                product = self.products[global_idx]
+                results.append(_to_search_result(product, float(scores[local_idx])))
+            return results
+            
         else:
-            scores = self.embeddings @ query_vector.astype("float32")
-            top_indices = np.argsort(scores)[::-1][:search_limit]
-            pairs = [(int(idx), float(scores[idx])) for idx in top_indices]
+            # No filters: use fast FAISS index if available
+            search_limit = min(limit, len(self.products))
+            if faiss is not None and self.index is not None:
+                scores, indices = self.index.search(query_vector.reshape(1, -1).astype("float32"), search_limit)
+                pairs = list(zip(indices[0].tolist(), scores[0].tolist()))
+            else:
+                scores = self.embeddings @ query_vector.astype("float32")
+                top_indices = np.argsort(scores)[::-1][:search_limit]
+                pairs = [(int(idx), float(scores[idx])) for idx in top_indices]
 
-        results: list[SearchResult] = []
-        for index, score in pairs:
-            if index < 0 or index >= len(self.products):
-                continue
-            product = self.products[index]
-            if exclude_product_id and product.id == exclude_product_id:
-                continue
-            if not _passes_filters(product, filters):
-                continue
-            results.append(_to_search_result(product, float(score)))
-            if len(results) >= limit:
-                break
-        return results
+            results: list[SearchResult] = []
+            for index, score in pairs:
+                if index < 0 or index >= len(self.products):
+                    continue
+                product = self.products[index]
+                results.append(_to_search_result(product, float(score)))
+            return results
 
 
 def _passes_filters(product: ProductIndexItem, filters: SearchFilters | None) -> bool:

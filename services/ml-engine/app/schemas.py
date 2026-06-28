@@ -114,6 +114,15 @@ class EcoScoreResponse(BaseModel):
     reasons: list[str]
 
 
+class TelemetryEvent(BaseModel):
+    user_id: str | None = None
+    event_type: str  # e.g., "click", "view", "add_to_cart"
+    product_id: str | None = None
+    source: str | None = None  # e.g., "home_recommendation", "search", "similar"
+    metadata: dict[str, Any] | None = None
+    timestamp: str | None = None
+
+
 class ApiResponse(BaseModel):
     status: str = "success"
     statusCode: int = 200

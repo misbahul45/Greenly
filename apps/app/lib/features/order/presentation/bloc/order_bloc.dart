@@ -13,6 +13,7 @@ class OrderBloc extends Bloc<OrderEvent, OrderState> {
     on<OrderListRequested>(_onList);
     on<OrderLoadMoreRequested>(_onLoadMore);
     on<OrderDetailRequested>(_onDetail);
+    on<OrderCancelRequested>(_onCancel);
   }
 
   Future<void> _onList(
@@ -88,5 +89,25 @@ class OrderBloc extends Bloc<OrderEvent, OrderState> {
         detailError: res.isSuccess ? null : res.message,
       ),
     );
+  }
+
+  Future<void> _onCancel(
+    OrderCancelRequested event,
+    Emitter<OrderState> emit,
+  ) async {
+    emit(state.copyWith(isCancelling: true, cancelError: null));
+
+    final res = await _service.cancelOrder(event.orderId);
+
+    if (res.isSuccess) {
+      emit(state.copyWith(isCancelling: false));
+      // Reload detail to reflect the updated status
+      add(OrderDetailRequested(event.orderId));
+    } else {
+      emit(state.copyWith(
+        isCancelling: false,
+        cancelError: res.message,
+      ));
+    }
   }
 }

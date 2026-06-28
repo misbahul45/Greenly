@@ -8,6 +8,7 @@ from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.api.eco import router as eco_router
+from app.api.events import router as events_router
 from app.api.health import router as health_router
 from app.api.recommendation import router as recommendation_router
 from app.api.search import router as search_router
@@ -150,6 +151,7 @@ app.include_router(health_router)
 app.include_router(search_router)
 app.include_router(recommendation_router)
 app.include_router(eco_router)
+app.include_router(events_router)
 
 
 @app.on_event("startup")

@@ -13,6 +13,9 @@ class OrderState extends Equatable {
   final bool isDetailLoading;
   final String? detailError;
 
+  final bool isCancelling;
+  final String? cancelError;
+
   const OrderState({
     this.data = const [],
     this.isLoading = false,
@@ -24,6 +27,8 @@ class OrderState extends Equatable {
     this.detail,
     this.isDetailLoading = false,
     this.detailError,
+    this.isCancelling = false,
+    this.cancelError,
   });
 
   OrderState copyWith({
@@ -38,6 +43,8 @@ class OrderState extends Equatable {
     OrderData? detail,
     bool? isDetailLoading,
     String? detailError,
+    bool? isCancelling,
+    String? cancelError,
   }) {
     return OrderState(
       data: data ?? this.data,
@@ -50,6 +57,8 @@ class OrderState extends Equatable {
       detail: detail ?? this.detail,
       isDetailLoading: isDetailLoading ?? this.isDetailLoading,
       detailError: detailError,
+      isCancelling: isCancelling ?? this.isCancelling,
+      cancelError: cancelError,
     );
   }
 
@@ -65,5 +74,7 @@ class OrderState extends Equatable {
     detail,
     isDetailLoading,
     detailError,
+    isCancelling,
+    cancelError,
   ];
 }

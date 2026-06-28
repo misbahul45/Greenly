@@ -2,11 +2,42 @@ from app.schemas import ProductIndexItem, SearchResult
 
 
 def rank_home_products(products: list[ProductIndexItem], limit: int) -> list[SearchResult]:
-    ranked = sorted(products, key=_home_score, reverse=True)
-    return [_to_result(product, _home_score(product)) for product in ranked[:limit]]
+    ranked = sorted(products, key=home_score, reverse=True)
+    return [to_result(product, home_score(product)) for product in ranked[:limit]]
 
 
-def _home_score(product: ProductIndexItem) -> float:
+def rank_personalized_home_products(
+    products: list[ProductIndexItem], 
+    similarities: dict[str, float], 
+    limit: int
+) -> list[SearchResult]:
+    def blend_score(product: ProductIndexItem) -> float:
+        # similarities[product.id] is between ~0.0 and 1.0 (cosine sim)
+        sim = max(similarities.get(product.id, 0.0), 0.0)
+        base = home_score(product)
+        # Blend: 40% similarity, 60% business logic
+        return 0.40 * sim + 0.60 * base
+        
+    ranked = sorted(products, key=blend_score, reverse=True)
+    results = []
+    for product in ranked[:limit]:
+        result = to_result(product, blend_score(product))
+        result.reason = "Berdasarkan riwayat dan preferensi Anda" if similarities.get(product.id, 0.0) > 0.4 else result.reason
+        results.append(result)
+    return results
+
+
+def rank_eco_products(products: list[ProductIndexItem], limit: int) -> list[SearchResult]:
+    # Sort strictly by eco_score, then rating_average
+    ranked = sorted(
+        products,
+        key=lambda p: (p.eco_score or 0, p.rating_average or 0),
+        reverse=True,
+    )
+    return [to_result(product, product.eco_score or 0) for product in ranked[:limit]]
+
+
+def home_score(product: ProductIndexItem) -> float:
     eco = (product.eco_score or 0) / 100
     rating = (product.rating_average or 0) / 5
     favorites = min((product.favorite_count or 0) / 100, 1)
@@ -23,7 +54,7 @@ def _home_score(product: ProductIndexItem) -> float:
     )
 
 
-def _to_result(product: ProductIndexItem, score: float) -> SearchResult:
+def to_result(product: ProductIndexItem, score: float) -> SearchResult:
     image_url = product.image_urls[0] if product.image_urls else None
     reason = "Rekomendasi berdasarkan skor eco, rating, favorit, dan stok"
     if product.eco_score and product.eco_score >= 80:

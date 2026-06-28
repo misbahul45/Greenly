@@ -1,5 +1,8 @@
+import 'dart:io';
+import 'package:app/core/config/env.dart';
 import 'package:app/core/constants/ui_constants.dart';
 import 'package:app/core/theme/app_theme.dart';
+import 'package:app/core/utils/api_client.dart';
 import 'package:app/features/Main/features/profile/domain/data/profile_detail_data.dart';
 import 'package:app/features/Main/features/profile/widgets/address_form_section_widget.dart';
 import 'package:app/features/auth/presentation/bloc/auth_bloc.dart';
@@ -9,6 +12,7 @@ import 'package:app/shared/services/me_service.dart';
 import 'package:app/shared/widgets/skeleton/profile_skeleton.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:image_picker/image_picker.dart';
 
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({super.key});
@@ -21,7 +25,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _phoneController = TextEditingController();
-  final _avatarController = TextEditingController();
   final _receiverNameController = TextEditingController();
   final _addressLineController = TextEditingController();
   final _cityController = TextEditingController();
@@ -31,7 +34,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
   bool _loading = true;
   bool _saving = false;
-  String _avatarPreview = '';
+  bool _uploading = false;
+  String _avatarUrl = '';
+  File? _pickedFile;
 
   @override
   void initState() {
@@ -47,14 +52,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       final address = p.addressData;
       _nameController.text = p.fullName;
       _phoneController.text = address.phone ?? p.phone ?? '';
-      _avatarController.text = p.avatarUrl ?? '';
       _receiverNameController.text = address.receiverName ?? p.fullName;
       _addressLineController.text = address.addressLine ?? p.address ?? '';
       _cityController.text = address.city ?? '';
       _provinceController.text = address.province ?? '';
       _postalCodeController.text = address.postalCode ?? '';
       _notesController.text = address.notes ?? '';
-      _avatarPreview = p.avatarUrl ?? '';
+      _avatarUrl = p.avatarUrl ?? '';
     }
     setState(() => _loading = false);
   }
@@ -63,7 +67,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   void dispose() {
     _nameController.dispose();
     _phoneController.dispose();
-    _avatarController.dispose();
     _receiverNameController.dispose();
     _addressLineController.dispose();
     _cityController.dispose();
@@ -73,8 +76,78 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     super.dispose();
   }
 
+  Future<void> _pickImage() async {
+    final picker = ImagePicker();
+    final picked = await picker.pickImage(
+      source: ImageSource.gallery,
+      maxWidth: 512,
+      maxHeight: 512,
+      imageQuality: 80,
+    );
+    if (picked == null || !mounted) return;
+
+    final file = File(picked.path);
+    setState(() {
+      _pickedFile = file;
+      _uploading = true;
+    });
+
+    try {
+      final res = await ApiClient.upload<Map<String, dynamic>>(
+        url: '${ENV.catalogApiUrl}/product-images',
+        files: [file],
+        fileField: 'file',
+        fromJsonT: (json) => json as Map<String, dynamic>,
+      );
+
+      if (!mounted) return;
+
+      if (res.isSuccess && res.data != null) {
+        final url = res.data!['url']?.toString() ?? '';
+        if (url.isNotEmpty) {
+          setState(() {
+            _avatarUrl = url;
+            _uploading = false;
+          });
+          return;
+        }
+      }
+
+      // Upload failed — keep the local preview but show error
+      setState(() => _uploading = false);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(res.message.isNotEmpty
+                ? res.message
+                : 'Gagal mengunggah gambar'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _uploading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Terjadi kesalahan saat mengunggah gambar'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
+    if (_uploading) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Tunggu hingga upload gambar selesai'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
     setState(() => _saving = true);
 
     final address = ProfileAddressData(
@@ -92,7 +165,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         name: _nameController.text.trim(),
         phone: _phoneController.text.trim(),
         address: address.composed,
-        avatarUrl: _avatarController.text.trim(),
+        avatarUrl: _avatarUrl.isNotEmpty ? _avatarUrl : null,
         receiverName: _receiverNameController.text.trim(),
         addressLine: _addressLineController.text.trim(),
         city: _cityController.text.trim(),
@@ -150,7 +223,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Center(child: _avatarCircle()),
+                    Center(child: _avatarPicker()),
                     const SizedBox(height: UIConstants.spacingXXL),
                     _label('Nama Lengkap'),
                     _field(
@@ -161,17 +234,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       validator: (v) => (v == null || v.trim().length < 3)
                           ? 'Nama minimal 3 karakter'
                           : null,
-                    ),
-                    const SizedBox(height: UIConstants.spacingL),
-                    _label('URL Foto Profil'),
-                    _field(
-                      controller: _avatarController,
-                      hint: 'https://...',
-                      icon: Icons.image_outlined,
-                      enabled: !_saving,
-                      keyboardType: TextInputType.url,
-                      onChanged: (v) =>
-                          setState(() => _avatarPreview = v.trim()),
                     ),
                     const SizedBox(height: UIConstants.spacingXXL),
                     AddressFormSectionWidget(
@@ -215,34 +277,86 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     );
   }
 
-  Widget _avatarCircle() {
-    return Container(
-      width: 96,
-      height: 96,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: AppTheme.tertiaryColor.withValues(alpha: 0.3),
-        border: Border.all(
-          color: AppTheme.primaryColor.withValues(alpha: 0.2),
-          width: 2,
-        ),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: _avatarPreview.isEmpty
-          ? const Icon(
-              Icons.person_rounded,
-              size: 48,
-              color: AppTheme.primaryColor,
-            )
-          : Image.network(
-              _avatarPreview,
-              fit: BoxFit.cover,
-              errorBuilder: (_, _, _) => const Icon(
-                Icons.person_rounded,
-                size: 48,
-                color: AppTheme.primaryColor,
+  Widget _avatarPicker() {
+    return GestureDetector(
+      onTap: _saving ? null : _pickImage,
+      child: Stack(
+        children: [
+          Container(
+            width: 96,
+            height: 96,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: AppTheme.tertiaryColor.withValues(alpha: 0.3),
+              border: Border.all(
+                color: AppTheme.primaryColor.withValues(alpha: 0.2),
+                width: 2,
               ),
             ),
+            clipBehavior: Clip.antiAlias,
+            child: _buildAvatarContent(),
+          ),
+          Positioned(
+            bottom: 0,
+            right: 0,
+            child: Container(
+              width: 32,
+              height: 32,
+              decoration: BoxDecoration(
+                color: AppTheme.primaryColor,
+                shape: BoxShape.circle,
+                border: Border.all(color: Colors.white, width: 2),
+              ),
+              child: const Icon(
+                Icons.camera_alt_rounded,
+                size: 16,
+                color: Colors.white,
+              ),
+            ),
+          ),
+          if (_uploading)
+            Positioned.fill(
+              child: Container(
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.black.withValues(alpha: 0.4),
+                ),
+                child: const Center(
+                  child: SizedBox(
+                    width: 28,
+                    height: 28,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 3,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAvatarContent() {
+    if (_pickedFile != null) {
+      return Image.file(_pickedFile!, fit: BoxFit.cover);
+    }
+    if (_avatarUrl.isNotEmpty) {
+      return Image.network(
+        _avatarUrl,
+        fit: BoxFit.cover,
+        errorBuilder: (_, _, _) => const Icon(
+          Icons.person_rounded,
+          size: 48,
+          color: AppTheme.primaryColor,
+        ),
+      );
+    }
+    return const Icon(
+      Icons.person_rounded,
+      size: 48,
+      color: AppTheme.primaryColor,
     );
   }
 
