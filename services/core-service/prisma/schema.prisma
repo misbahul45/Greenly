@@ -293,12 +293,13 @@ model Order {
 }
 
 model OrderItem {
-  id          String  @id @default(cuid())
-  orderId     String
-  productId   String
-  productName String
-  price       Decimal @db.Decimal(15, 2)
-  quantity    Int
+  id              String  @id @default(cuid())
+  orderId         String
+  productId       String
+  productName     String
+  productImageUrl String?
+  price           Decimal @db.Decimal(15, 2)
+  quantity        Int
 
   order     Order    @relation(fields: [orderId], references: [id])
   createdAt DateTime @default(now())

@@ -96,8 +96,8 @@ class OrderService {
 
   Future<ApiResponse<dynamic>> cancelOrder(String orderId) {
     return ApiClient.patch<dynamic>(
-      '$_ordersBase/$orderId/status',
-      {'status': 'CANCELLED'},
+      '$_ordersBase/$orderId/cancel',
+      {},
     );
   }
 }

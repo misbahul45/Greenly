@@ -197,21 +197,53 @@ class OrderDetailScreen extends StatelessWidget {
               padding: const EdgeInsets.symmetric(vertical: 6),
               child: Row(
                 children: [
-                  Container(
-                    width: 40,
-                    height: 40,
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: AppTheme.tertiaryColor.withValues(alpha: 0.25),
-                      borderRadius: BorderRadius.circular(UIConstants.radiusM),
-                    ),
-                    child: Text(
-                      'x${item.quantity}',
-                      style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        color: AppTheme.primaryColor,
-                      ),
+                  SizedBox(
+                    width: 56,
+                    height: 56,
+                    child: Stack(
+                      children: [
+                        ClipRRect(
+                          borderRadius:
+                              BorderRadius.circular(UIConstants.radiusM),
+                          child: item.productImageUrl != null &&
+                                  item.productImageUrl!.isNotEmpty
+                              ? Image.network(
+                                  item.productImageUrl!,
+                                  width: 56,
+                                  height: 56,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (_, _, _) =>
+                                      _productPlaceholder(),
+                                )
+                              : _productPlaceholder(),
+                        ),
+                        Positioned(
+                          bottom: 0,
+                          right: 0,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 5,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppTheme.primaryColor,
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(
+                                color: Colors.white,
+                                width: 1.5,
+                              ),
+                            ),
+                            child: Text(
+                              'x${item.quantity}',
+                              style: const TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                   const SizedBox(width: UIConstants.spacingS),
@@ -257,6 +289,22 @@ class OrderDetailScreen extends StatelessWidget {
             ],
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _productPlaceholder() {
+    return Container(
+      width: 56,
+      height: 56,
+      decoration: BoxDecoration(
+        color: AppTheme.tertiaryColor.withValues(alpha: 0.25),
+        borderRadius: BorderRadius.circular(UIConstants.radiusM),
+      ),
+      child: const Icon(
+        Icons.inventory_2_outlined,
+        size: 24,
+        color: AppTheme.primaryColor,
       ),
     );
   }

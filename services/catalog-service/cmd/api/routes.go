@@ -15,6 +15,7 @@ import (
 	productrating "catalog-service/modules/product_rating"
 	product "catalog-service/modules/products"
 	review "catalog-service/modules/reviews"
+	uploads "catalog-service/modules/uploads"
 	"context"
 	"log"
 
@@ -137,4 +138,5 @@ func Routes(
 	favorite.FavoriteRouter(r, db, coreSvc, redisCache)
 	review.ReviewRouter(r, db, coreSvc, redisCache)
 	productrating.ProductRatingRouter(r, db)
+	uploads.UploadRouter(r, coreSvc, redisCache)
 }

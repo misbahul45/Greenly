@@ -11,6 +11,7 @@ class OrderItemData {
   final String id;
   final String productId;
   final String productName;
+  final String? productImageUrl;
   final int price;
   final int quantity;
 
@@ -18,6 +19,7 @@ class OrderItemData {
     required this.id,
     required this.productId,
     required this.productName,
+    this.productImageUrl,
     required this.price,
     required this.quantity,
   });
@@ -27,6 +29,7 @@ class OrderItemData {
       id: json['id']?.toString() ?? '',
       productId: json['productId']?.toString() ?? '',
       productName: json['productName']?.toString() ?? '',
+      productImageUrl: json['productImageUrl']?.toString(),
       price: _toInt(json['price']),
       quantity: _toInt(json['quantity']),
     );

@@ -18,6 +18,7 @@ type CheckoutItemSnapshot = {
     productName: string;
     price: number;
     quantity: number;
+    imageUrl?: string;
 };
 
 @Injectable()
@@ -130,6 +131,7 @@ export class CheckoutService {
                         create: snapshots.map((item) => ({
                             productId: item.productId,
                             productName: item.productName,
+                            productImageUrl: item.imageUrl || null,
                             price: item.price,
                             quantity: item.quantity,
                         })),
@@ -292,8 +294,9 @@ export class CheckoutService {
             return {
                 productId: cartItem.productId,
                 productName: product.name,
-                price: product.price, // 🔍 Perhatikan nilai price dari log ini nanti
+                price: product.price,
                 quantity: cartItem.quantity,
+                imageUrl: product.imageUrl,
             };
         });
     }

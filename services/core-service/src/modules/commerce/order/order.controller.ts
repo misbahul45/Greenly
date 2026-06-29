@@ -64,6 +64,16 @@ export class OrderController {
     );
   }
 
+  @Patch(':orderId/cancel')
+  cancelMyOrder(
+    @CurrentUser() user: UserLogin,
+    @Param(new ZodValidationPipe(OrderIdParamSchema)) params: OrderIdParamDto,
+  ) {
+    return ErrorHandler(() =>
+      this.orderService.cancelMyOrder(params.orderId, user.sub),
+    );
+  }
+
   @Post('payment-callback')
   handlePaymentCallback(
     @Body(new ZodValidationPipe(PaymentCallbackSchema)) dto: PaymentCallbackDto,

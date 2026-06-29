@@ -600,7 +600,7 @@ flowchart LR
     D -->|Yes| E[Display ML Results\n+ Semantic Reason Chips]
     D -->|No| F[GET /api/catalog/products/search]
     B -->|No| F
-    F --> G[Display Catalog Results\n+ Katalog Badge]
+    F --> G[Display Catalog Resulberts\n+ Katalog Badge]
 ```
 
 ### File Kunci untuk Referensi

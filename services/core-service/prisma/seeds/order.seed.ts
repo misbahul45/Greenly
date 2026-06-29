@@ -20,6 +20,33 @@ export async function seedOrders(
 
   const shopOwnerEmails = Object.keys(shopIds)
 
+  // Map product IDs to realistic Pexels images for seed data visualization
+  const getProductImage = (productId: string) => {
+    const images: Record<string, string> = {
+      'prod-001': 'https://images.pexels.com/photos/3394650/pexels-photo-3394650.jpeg',
+      'prod-002': 'https://images.pexels.com/photos/4014919/pexels-photo-4014919.jpeg',
+      'prod-010': 'https://images.pexels.com/photos/7623519/pexels-photo-7623519.jpeg',
+      'prod-011': 'https://images.pexels.com/photos/14428675/pexels-photo-14428675.jpeg',
+      'prod-020': 'https://images.pexels.com/photos/5114289/pexels-photo-5114289.jpeg',
+      'prod-021': 'https://images.pexels.com/photos/16532190/pexels-photo-16532190.jpeg',
+      'prod-030': 'https://images.pexels.com/photos/2529148/pexels-photo-2529148.jpeg',
+      'prod-031': 'https://images.pexels.com/photos/6779737/pexels-photo-6779737.jpeg',
+      'prod-040': 'https://images.pexels.com/photos/1608248543803-ba4f8c70ae0b.jpeg',
+      'prod-041': 'https://images.pexels.com/photos/1526045612212-70caf35c14df.jpeg',
+      'prod-042': 'https://images.pexels.com/photos/1556228578-0d85b1a4d571.jpeg',
+      'prod-003': 'https://images.pexels.com/photos/437037/pexels-photo-437037.jpeg',
+      'prod-012': 'https://images.pexels.com/photos/5175692/pexels-photo-5175692.jpeg',
+      'prod-013': 'https://images.pexels.com/photos/11442987/pexels-photo-11442987.jpeg',
+      'prod-022': 'https://images.pexels.com/photos/1559525839-b184a4d698c7.jpeg',
+      'prod-023': 'https://images.pexels.com/photos/1417945/pexels-photo-1417945.jpeg',
+      'prod-032': 'https://images.pexels.com/photos/3660204/pexels-photo-3660204.jpeg',
+      'prod-033': 'https://images.pexels.com/photos/3660204/pexels-photo-3660204.jpeg',
+      'prod-043': 'https://images.pexels.com/photos/1620916566398-39f1143ab7be.jpeg',
+      'prod-044': 'https://images.pexels.com/photos/1615397323136-2ee2a3e895ec.jpeg',
+    };
+    return images[productId] || 'https://images.pexels.com/photos/9209891/pexels-photo-9209891.jpeg';
+  }
+
   const ordersData = [
     {
       customerEmail: 'budi.santoso@gmail.com',
@@ -169,6 +196,7 @@ export async function seedOrders(
           create: o.items.map((item) => ({
             productId: item.productId,
             productName: item.productName,
+            productImageUrl: getProductImage(item.productId),
             price: item.price,
             quantity: item.quantity,
           })),

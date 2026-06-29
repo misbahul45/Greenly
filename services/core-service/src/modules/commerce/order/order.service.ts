@@ -119,6 +119,39 @@ export class OrderService {
         };
     }
 
+    async cancelMyOrder(orderId: string, userId: string) {
+        const order = await this.orderRepo.findById(orderId);
+        if (!order) {
+            throw new NotFoundException(`Order ${orderId} not found`);
+        }
+
+        if (order.userId !== userId) {
+            throw new BadRequestException(
+                "You are not authorized to cancel this order"
+            );
+        }
+
+        if (order.status !== "PENDING") {
+            throw new BadRequestException(
+                `Cannot cancel order with status ${order.status}. Only PENDING orders can be cancelled.`
+            );
+        }
+
+        const updated = await this.orderRepo.updateStatus(orderId, "CANCELLED");
+
+        await this.orderStatusChangedPublisher.publish({
+            orderId,
+            previousStatus: order.status,
+            newStatus: "CANCELLED",
+            timestamp: new Date().toISOString(),
+        });
+
+        return {
+            data: {orderId: updated.id, status: updated.status},
+            message: "Order cancelled successfully",
+        };
+    }
+
     async handlePaymentCallback(dto: PaymentCallbackDto) {
         const order = await this.orderRepo.findById(dto.orderId);
         if (!order) {
@@ -268,6 +301,7 @@ export class OrderService {
                 id: item.id,
                 productId: item.productId,
                 productName: item.productName,
+                productImageUrl: item.productImageUrl || null,
                 price: item.price,
                 quantity: item.quantity,
             })),

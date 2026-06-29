@@ -94,7 +94,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
     try {
       final res = await ApiClient.upload<Map<String, dynamic>>(
-        url: '${ENV.catalogApiUrl}/product-images',
+        url: '${ENV.catalogApiUrl}/uploads/avatar',
         files: [file],
         fileField: 'file',
         fromJsonT: (json) => json as Map<String, dynamic>,
