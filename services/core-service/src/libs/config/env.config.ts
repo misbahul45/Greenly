@@ -16,6 +16,8 @@ export default () => ({
     redis: {
         host: process.env.REDIS_HOST || "localhost",
         port: parseInt(process.env.REDIS_PORT ?? "6379", 10),
+        // Local Docker: redis://...
+        // Managed Cloud (Upstash): rediss://... (TLS required)
         url:
             process.env.REDIS_URL ||
             `redis://${process.env.REDIS_HOST || "localhost"}:${process.env.REDIS_PORT || 6379}`,

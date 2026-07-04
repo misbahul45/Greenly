@@ -16,8 +16,18 @@ func main() {
 	}
 
 	mongoURI := os.Getenv("MONGODB_URL")
+	// ===============================
+	// Local Docker implementation (fallback)
+	// ===============================
+	// if mongoURI == "" {
+	// 	mongoURI = "mongodb://root:root@localhost:27017/catalog?authSource=admin"
+	// }
+	// ===============================
+	// Managed Cloud (MongoDB Atlas)
+	// MONGODB_URL must be set. No localhost fallback.
+	// ===============================
 	if mongoURI == "" {
-		mongoURI = "mongodb://root:root@localhost:27017/catalog?authSource=admin"
+		log.Fatal("MONGODB_URL is required. Set it to your MongoDB Atlas connection string (mongodb+srv://...).")
 	}
 
 	client, err := databases.Connect(mongoURI)

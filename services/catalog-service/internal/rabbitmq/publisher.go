@@ -30,8 +30,9 @@ type Publisher interface {
 }
 
 type publisher struct {
-	conn    *amqp.Connection
-	channel *amqp.Channel
+	conn     *amqp.Connection
+	channel  *amqp.Channel
+	exchange string
 }
 
 type ProductEventPayload struct {
@@ -143,6 +144,11 @@ func NewPublisher() (Publisher, error) {
 		rabbitURL = "amqp://guest:guest@localhost:5672/"
 	}
 
+	exchangeName := os.Getenv("RABBITMQ_EXCHANGE")
+	if exchangeName == "" {
+		exchangeName = "greenly_events"
+	}
+
 	conn, err := amqp.Dial(rabbitURL)
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to RabbitMQ: %w", err)
@@ -155,7 +161,7 @@ func NewPublisher() (Publisher, error) {
 	}
 
 	err = ch.ExchangeDeclare(
-		"greenly_events",
+		exchangeName,
 		"topic",
 		true,
 		false,
@@ -170,8 +176,9 @@ func NewPublisher() (Publisher, error) {
 	}
 
 	return &publisher{
-		conn:    conn,
-		channel: ch,
+		conn:     conn,
+		channel:  ch,
+		exchange: exchangeName,
 	}, nil
 }
 
@@ -183,7 +190,7 @@ func (p *publisher) publish(ctx context.Context, routingKey string, payload inte
 
 	err = p.channel.PublishWithContext(
 		ctx,
-		"greenly_events",
+		p.exchange,
 		routingKey,
 		false,
 		false,

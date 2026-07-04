@@ -2,9 +2,11 @@ package cache
 
 import (
 	"context"
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/redis/go-redis/v9"
@@ -43,20 +45,103 @@ type redisCache struct {
 }
 
 func NewCache() (Cache, error) {
+	// ===============================
+	// Managed Cloud (Upstash)
+	// Priority: REDIS_URL (supports rediss:// TLS)
+	// ===============================
+	redisURL := os.Getenv("REDIS_URL")
+	if redisURL != "" {
+		opt, err := redis.ParseURL(redisURL)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse REDIS_URL: %w", err)
+		}
+
+		poolSize := 10
+		if v := os.Getenv("REDIS_POOL_SIZE"); v != "" {
+			if n, err := strconv.Atoi(v); err == nil && n > 0 {
+				poolSize = n
+			}
+		}
+		opt.PoolSize = poolSize
+
+		minIdle := 3
+		if v := os.Getenv("REDIS_MIN_IDLE"); v != "" {
+			if n, err := strconv.Atoi(v); err == nil && n > 0 {
+				minIdle = n
+			}
+		}
+		opt.MinIdleConns = minIdle
+
+		maxRetries := 3
+		if v := os.Getenv("REDIS_MAX_RETRIES"); v != "" {
+			if n, err := strconv.Atoi(v); err == nil && n > 0 {
+				maxRetries = n
+			}
+		}
+		opt.MaxRetries = maxRetries
+
+		client := redis.NewClient(opt)
+
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+
+		err = client.Ping(ctx).Err()
+		if err != nil {
+			return nil, fmt.Errorf("failed to connect to Redis: %w", err)
+		}
+
+		return &redisCache{
+			client: client,
+		}, nil
+	}
+
+	// ===============================
+	// Local Docker implementation (fallback)
+	// Uses REDIS_HOST + REDIS_PORT without TLS
+	// ===============================
+	// host := os.Getenv("REDIS_HOST")
+	// if host == "" {
+	// 	host = "localhost"
+	// }
+	// port := os.Getenv("REDIS_PORT")
+	// if port == "" {
+	// 	port = "6379"
+	// }
+	// client := redis.NewClient(&redis.Options{
+	// 	Addr:     fmt.Sprintf("%s:%s", host, port),
+	// 	Password: "",
+	// 	DB:       0,
+	// })
+	// ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	// defer cancel()
+	// err := client.Ping(ctx).Err()
+	// if err != nil {
+	// 	return nil, fmt.Errorf("failed to connect to Redis: %w", err)
+	// }
+	// return &redisCache{
+	// 	client: client,
+	// }, nil
+
+	// ===============================
+	// Managed Cloud fallback with TLS
+	// When REDIS_URL is not set but REDIS_HOST is available
+	// ===============================
 	host := os.Getenv("REDIS_HOST")
 	if host == "" {
 		host = "localhost"
 	}
-
 	port := os.Getenv("REDIS_PORT")
 	if port == "" {
 		port = "6379"
 	}
+	password := os.Getenv("REDIS_PASSWORD")
 
 	client := redis.NewClient(&redis.Options{
-		Addr:     fmt.Sprintf("%s:%s", host, port),
-		Password: "",
-		DB:       0,
+		Addr:      fmt.Sprintf("%s:%s", host, port),
+		Password:  password,
+		DB:        0,
+		TLSConfig: &tls.Config{},
+		PoolSize:  10,
 	})
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)

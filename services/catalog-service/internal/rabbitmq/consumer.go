@@ -35,6 +35,7 @@ type consumer struct {
 	noAck        bool
 	requeueLimit int
 	requeueDelay time.Duration
+	exchange     string
 }
 
 func NewConsumer() (Consumer, error) {
@@ -70,13 +71,19 @@ func NewConsumer() (Consumer, error) {
 		return nil, fmt.Errorf("failed to open channel: %w", err)
 	}
 
-	if err := ch.ExchangeDeclare("greenly_events", "topic", true, false, false, false, nil); err != nil {
+	exchangeName := os.Getenv("RABBITMQ_EXCHANGE")
+	if exchangeName == "" {
+		exchangeName = "greenly_events"
+	}
+
+	if err := ch.ExchangeDeclare(exchangeName, "topic", true, false, false, false, nil); err != nil {
 		ch.Close()
 		conn.Close()
 		return nil, fmt.Errorf("failed to declare exchange: %w", err)
 	}
 
-	if err := ch.ExchangeDeclare("greenly_events_dlx", "topic", true, false, false, false, nil); err != nil {
+	dlxName := exchangeName + "_dlx"
+	if err := ch.ExchangeDeclare(dlxName, "topic", true, false, false, false, nil); err != nil {
 		ch.Close()
 		conn.Close()
 		return nil, fmt.Errorf("failed to declare DLX: %w", err)
@@ -108,11 +115,16 @@ func NewConsumer() (Consumer, error) {
 		noAck:        !manualAck,
 		requeueLimit: requeueLimit,
 		requeueDelay: requeueDelay,
+		exchange:     exchangeName,
 	}, nil
 }
 
 func (c *consumer) Start(ctx context.Context) error {
-	args := amqp.Table{"x-dead-letter-exchange": "greenly_events_dlx"}
+	exchangeName := os.Getenv("RABBITMQ_EXCHANGE")
+	if exchangeName == "" {
+		exchangeName = "greenly_events"
+	}
+	args := amqp.Table{"x-dead-letter-exchange": exchangeName + "_dlx"}
 	q, err := c.channel.QueueDeclare("catalog_service_queue", true, false, false, false, args)
 	if err != nil {
 		c.channel.Close()
@@ -192,7 +204,7 @@ func (c *consumer) RegisterHandler(eventName string, handler EventHandler) {
 }
 
 func (c *consumer) bindRoutingKey(routingKey string) error {
-	return c.channel.QueueBind(c.queue.Name, routingKey, "greenly_events", false, nil)
+	return c.channel.QueueBind(c.queue.Name, routingKey, c.exchange, false, nil)
 }
 
 func (c *consumer) handleMessage(ctx context.Context, msg amqp.Delivery) {

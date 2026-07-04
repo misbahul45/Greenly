@@ -150,8 +150,17 @@ func buildCatalogProductImageURL(fileName string) string {
 	if baseURL == "" {
 		baseURL = os.Getenv("CATALOG_ASSET_BASE_URL")
 	}
+	// ===============================
+	// Local Docker implementation (fallback)
+	// ===============================
+	// if baseURL == "" {
+	// 	baseURL = "http://localhost/api/catalog/assets"
+	// }
+	// ===============================
+	// Managed Cloud: require explicit env var
+	// ===============================
 	if baseURL == "" {
-		baseURL = "http://localhost/api/catalog/assets"
+		baseURL = "/api/catalog/assets"
 	}
 
 	baseURL = strings.TrimRight(baseURL, "/")

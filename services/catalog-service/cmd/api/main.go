@@ -1,8 +1,10 @@
 package main
 
 import (
+	"context"
 	"log"
 	"os"
+	"time"
 
 	"catalog-service/databases"
 	"catalog-service/internal/cache"
@@ -12,6 +14,12 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
+	"go.mongodb.org/mongo-driver/mongo"
+)
+
+var (
+	mongoClient *mongo.Client
+	mongoDB     *mongo.Database
 )
 
 func main() {
@@ -35,21 +43,24 @@ func main() {
 		log.Fatal("CORE_SERVICE_URL is required")
 	}
 
-	client, err := databases.Connect(mongoURI)
+	mongoClient, err = databases.Connect(mongoURI)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	db := client.Database("catalog")
+	mongoDB = mongoClient.Database("catalog")
 	coreSvc := coreclient.NewClient(coreServiceURL)
 
-	if err := databases.CreateCatalogIndexes(db); err != nil {
+	if err := databases.CreateCatalogIndexes(mongoDB); err != nil {
 		log.Fatalf("Failed to ensure catalog indexes: %v", err)
 	}
 
 	redisCache, err := cache.NewCache()
 	if err != nil {
-		log.Fatalf("Failed to initialize cache: %v", err)
+		// Cloud: Redis (Upstash) may be unavailable during startup.
+		// Continue without cache — degraded mode.
+		log.Printf("[WARN] Redis cache unavailable, operating without cache: %v", err)
+		redisCache = nil
 	}
 
 	r := gin.Default()
@@ -61,16 +72,32 @@ func main() {
 	})
 
 	r.GET("/health", func(c *gin.Context) {
+		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+		defer cancel()
+
+		mongoConnected := false
+		if mongoClient != nil {
+			err := mongoClient.Ping(ctx, nil)
+			mongoConnected = err == nil
+		}
+
+		status := "ok"
+		if !mongoConnected || redisCache == nil {
+			status = "degraded"
+		}
+
 		utils.OK(c, gin.H{
-			"status":  "ok",
-			"service": "catalog-service",
+			"status":   status,
+			"service":  "catalog-service",
+			"database": mongoConnected,
+			"cache":    redisCache != nil,
 		})
 	})
 
 	api := r.Group("/")
-	Routes(api, db, coreSvc, redisCache)
+	Routes(api, mongoDB, coreSvc, redisCache)
 
-	go initRabbitMQ(db)
+	go initRabbitMQ(mongoDB)
 
 	log.Println("Server running on port " + PORT)
 	r.Run(":" + PORT)
