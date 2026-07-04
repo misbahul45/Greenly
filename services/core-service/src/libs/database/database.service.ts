@@ -13,7 +13,7 @@ export class DatabaseService
 
   constructor() {
     // ===============================
-    // Managed Cloud (Railway MySQL)
+    // Managed Cloud (tidb MySQL)
     // Configurable via env vars
     // ===============================
     const connectionLimit = parseInt(process.env.DATABASE_CONNECTION_LIMIT || '10', 10);
@@ -27,9 +27,9 @@ export class DatabaseService
       database: process.env.DATABASE_NAME,
       connectionLimit,
       connectTimeout,
-      // Railway's public proxy can be reached without SSL by default.
-      // Uncomment below only if Railway enforces TLS on your plan.
-      // ssl: { rejectUnauthorized: false },
+      ssl: {
+      rejectUnauthorized: true,
+    },
     });
 
     super({ adapter });
