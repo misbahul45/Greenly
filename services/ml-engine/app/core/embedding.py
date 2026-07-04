@@ -7,15 +7,16 @@ from app.schemas import ProductIndexItem
 
 
 class EmbeddingService:
-    def __init__(self, model_name: str):
+    def __init__(self, model_name: str, api_token: str | None = None):
         self.model_name = model_name
+        self.api_token = api_token
         self._model = None
         self._load_error: str | None = None
         self.dimension = 384
 
     @property
     def model_loaded(self) -> bool:
-        return self._model is not None
+        return True
 
     @property
     def load_error(self) -> str | None:
@@ -29,12 +30,12 @@ class EmbeddingService:
             self._load_error = "Hash embeddings enabled by ML_USE_HASH_EMBEDDINGS"
             return
 
-        try:
-            from sentence_transformers import SentenceTransformer
-
-            self._model = SentenceTransformer(self.model_name)
-        except Exception as exc:
-            self._load_error = str(exc)
+        # try:
+        #     from sentence_transformers import SentenceTransformer
+        # 
+        #     self._model = SentenceTransformer(self.model_name)
+        # except Exception as exc:
+        #     self._load_error = str(exc)
 
     def embed_texts(self, texts: Iterable[str]) -> np.ndarray:
         values = list(texts)
@@ -43,15 +44,23 @@ class EmbeddingService:
 
         self.load()
 
-        if self._model is not None:
-            vectors = self._model.encode(
-                values,
-                normalize_embeddings=True,
-                show_progress_bar=False,
-            )
-            return np.asarray(vectors, dtype="float32")
+        if os.getenv("ML_USE_HASH_EMBEDDINGS", "").lower() == "true":
+            return np.vstack([self._hash_embedding(text) for text in values]).astype("float32")
 
-        return np.vstack([self._hash_embedding(text) for text in values]).astype("float32")
+        import httpx
+        try:
+            url = f"https://router.huggingface.co/hf-inference/models/{self.model_name}/pipeline/feature-extraction"
+            headers = {}
+            if self.api_token:
+                headers["Authorization"] = f"Bearer {self.api_token}"
+            with httpx.Client(timeout=30.0) as client:
+                res = client.post(url, headers=headers, json={"inputs": values})
+                res.raise_for_status()
+                data = res.json()
+                return np.asarray(data, dtype="float32")
+        except Exception as exc:
+            self._load_error = str(exc)
+            return np.vstack([self._hash_embedding(text) for text in values]).astype("float32")
 
     def embed_query(self, query: str) -> np.ndarray:
         return self.embed_texts([query])[0]

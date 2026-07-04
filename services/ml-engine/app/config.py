@@ -6,6 +6,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     ml_port: int = 8000
     model_name: str = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
+    huggingface_api_token: str | None = None
     # Local Docker: http://catalog-service:8081
     # Managed Cloud: set via env CATALOG_SERVICE_URL
     catalog_service_url: str = "http://catalog-service:8081"

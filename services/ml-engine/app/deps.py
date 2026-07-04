@@ -7,7 +7,8 @@ from app.core.vector_store import VectorStore
 
 @lru_cache
 def get_embedding_service() -> EmbeddingService:
-    return EmbeddingService(get_settings().model_name)
+    settings = get_settings()
+    return EmbeddingService(settings.model_name, settings.huggingface_api_token)
 
 
 @lru_cache
