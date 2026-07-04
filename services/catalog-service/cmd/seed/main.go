@@ -11,17 +11,19 @@ import (
 )
 
 func main() {
-	if err := godotenv.Load(); err != nil {
-		log.Println("No .env file found, using environment variables")
+	if err := godotenv.Load("../../.env"); err != nil {
+		log.Println("No .env file found at ../../.env, using environment variables")
 	}
 
 	mongoURI := os.Getenv("MONGODB_URL")
+
 	// ===============================
 	// Local Docker implementation (fallback)
 	// ===============================
 	// if mongoURI == "" {
-	// 	mongoURI = "mongodb://root:root@localhost:27017/catalog?authSource=admin"
+	//  mongoURI = "mongodb://root:root@localhost:27017/catalog?authSource=admin"
 	// }
+
 	// ===============================
 	// Managed Cloud (MongoDB Atlas)
 	// MONGODB_URL must be set. No localhost fallback.
@@ -43,7 +45,6 @@ func main() {
 		seeds.NewID(), seeds.NewID(), seeds.NewID(), seeds.NewID(), seeds.NewID(),
 		seeds.NewID(), seeds.NewID(), seeds.NewID(), seeds.NewID(), seeds.NewID(),
 	}
-
 	shopIDs := []string{
 		seeds.NewID(), seeds.NewID(), seeds.NewID(), seeds.NewID(), seeds.NewID(),
 	}
@@ -61,7 +62,6 @@ func main() {
 	}
 
 	log.Println("🌱 Starting catalog seed...")
-
 	categoryIDs := seeds.SeedCategories(ctx, db)
 	productIDs := seeds.SeedProducts(ctx, db, categoryIDs)
 	seeds.SeedProductVariants(ctx, db, productIDs)

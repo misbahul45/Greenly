@@ -1,19 +1,5 @@
-import { PrismaMariaDb } from '@prisma/adapter-mariadb'
-import 'dotenv/config'
-
-export function createPrismaAdapter() {
-  return new PrismaMariaDb({
-    host: process.env.DATABASE_HOST,
-    port: parseInt(process.env.DATABASE_PORT || '3306'),
-    user: process.env.DATABASE_USER,
-    password: process.env.DATABASE_PASSWORD,
-    database: process.env.DATABASE_NAME,
-    connectionLimit: 5,
-    allowPublicKeyRetrieval: true,
-  })
-}
-
 import { PrismaClient } from '../generated/prisma/client'
+import { createPrismaAdapter } from './adapter'
 import { seedRbac } from './seeds/role.seed'
 import { seedUsers } from './seeds/user.seed'
 import { seedShops } from './seeds/shop.seed'
@@ -36,11 +22,8 @@ async function main() {
   await prisma.$connect()
 
   await seedRbac(prisma)
-
   const userIds = await seedUsers(prisma)
-
   const shopIds = await seedShops(prisma, userIds)
-
   const promoIds = await seedPromotions(prisma, shopIds)
   await seedOrders(prisma, userIds, shopIds)
   await seedPayouts(prisma, shopIds)
