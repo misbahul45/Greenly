@@ -1,5 +1,4 @@
 import 'package:app/core/constants/ui_constants.dart';
-import 'package:app/core/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 
 class CategoryCard extends StatelessWidget {

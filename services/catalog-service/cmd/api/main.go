@@ -25,7 +25,7 @@ var (
 func main() {
 	err := godotenv.Load()
 	if err != nil {
-		log.Println("No .env file found, using process environment")
+		log.Fatal("Error loading .env file")
 	}
 
 	PORT := os.Getenv("PORT")

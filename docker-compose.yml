@@ -92,14 +92,14 @@ services:
       dockerfile: Dockerfile.dev
     volumes:
       - core_node_modules:/app/node_modules
+    env_file:
+      - .env
 
     # depends_on:
     #   # mysql     - Cloud: Railway MySQL
     #   # redis     - Cloud: Upstash Redis
     #   # rabbitmq  - Cloud: CloudAMQP
 
-    env_file:
-      - .env
 
     develop:
       watch:
@@ -132,16 +132,16 @@ services:
     volumes:
       - ./services/ml-engine:/app
       - ml_venv:/app/.venv
+    
+    env_file:
+      - .env
 
     depends_on:
       - catalog-service
       # redis     - Cloud: Upstash Redis
       # rabbitmq  - Cloud: CloudAMQP
 
-    env_file:
-      - .env
       
-
     develop:
       watch:
         - action: sync
@@ -169,13 +169,13 @@ services:
     volumes:
       - ./services/ml-engine:/app
       - ml_venv:/app/.venv
+    env_file:
+      - .env
 
     # depends_on:
     #   # rabbitmq  - Cloud: CloudAMQP
     #   # redis     - Cloud: Upstash Redis
 
-    env_file:
-      - .env
       
     command: uv run celery -A app.workers.celery_app worker --loglevel=info --concurrency=2
     networks:
@@ -185,13 +185,14 @@ services:
     build:
       context: ./services/catalog-service
       dockerfile: Dockerfile.dev
+    
+    env_file:
+      - .env
 
     # depends_on:
     #   # rabbitmq  - Cloud: CloudAMQP
     #   # mongodb   - Cloud: MongoDB Atlas
     #   # redis     - Cloud: Upstash Redis
-    env_file:
-      - .env
 
     develop:
       watch:
