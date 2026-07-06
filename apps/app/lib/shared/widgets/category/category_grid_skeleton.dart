@@ -1,7 +1,7 @@
-import 'package:app/core/constants/ui_constants.dart';
-import 'package:app/shared/widgets/skeleton/app_skeleton_box.dart';
-import 'package:app/shared/widgets/skeleton/app_skeleton_card.dart';
-import 'package:app/shared/widgets/skeleton/app_skeleton_line.dart';
+import 'package:Greenly/core/constants/ui_constants.dart';
+import 'package:Greenly/shared/widgets/skeleton/app_skeleton_box.dart';
+import 'package:Greenly/shared/widgets/skeleton/app_skeleton_card.dart';
+import 'package:Greenly/shared/widgets/skeleton/app_skeleton_line.dart';
 import 'package:flutter/material.dart';
 
 class CategoryGridSkeleton extends StatelessWidget {
@@ -45,7 +45,7 @@ class CategoryCardSkeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const AppSkeletonCard(
+    return AppSkeletonCard(
       padding: EdgeInsets.all(UIConstants.paddingS),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,

@@ -1,4 +1,4 @@
-import 'package:app/features/auth/domains/data/login_data.dart';
+import 'package:Greenly/features/auth/domains/data/login_data.dart';
 
 class VerifyEmailResponse {
   final LoginData data;

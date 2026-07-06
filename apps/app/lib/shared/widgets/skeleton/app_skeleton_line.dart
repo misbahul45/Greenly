@@ -1,4 +1,4 @@
-import 'package:app/shared/widgets/skeleton/app_skeleton_box.dart';
+import 'package:Greenly/shared/widgets/skeleton/app_skeleton_box.dart';
 import 'package:flutter/material.dart';
 
 class AppSkeletonLine extends StatelessWidget {

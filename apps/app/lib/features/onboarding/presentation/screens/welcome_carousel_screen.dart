@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:app/core/theme/app_theme.dart';
-import 'package:app/features/onboarding/presentation/widgets/dot_indicator_widget.dart';
-import 'package:app/features/onboarding/presentation/widgets/illustration_eco.dart';
-import 'package:app/features/onboarding/presentation/widgets/illustration_product.dart';
-import 'package:app/features/onboarding/presentation/widgets/illustration_score.dart';
+import 'package:Greenly/core/theme/app_theme.dart';
+import 'package:Greenly/features/onboarding/presentation/widgets/dot_indicator_widget.dart';
+import 'package:Greenly/features/onboarding/presentation/widgets/illustration_eco.dart';
+import 'package:Greenly/features/onboarding/presentation/widgets/illustration_product.dart';
+import 'package:Greenly/features/onboarding/presentation/widgets/illustration_score.dart';
 
 class WelcomeCarouselScreen extends StatefulWidget {
   final VoidCallback onNext;

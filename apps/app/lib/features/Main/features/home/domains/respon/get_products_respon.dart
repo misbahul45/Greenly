@@ -1,5 +1,5 @@
-import 'package:app/core/utils/json_mapper.dart';
-import 'package:app/features/Main/features/home/domains/data/product_data.dart';
+import 'package:Greenly/core/utils/json_mapper.dart';
+import 'package:Greenly/features/Main/features/home/domains/data/product_data.dart';
 
 class GetProductsRespon {
   final List<ProductData> data;

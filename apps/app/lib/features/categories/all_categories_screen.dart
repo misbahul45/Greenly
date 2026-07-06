@@ -1,10 +1,10 @@
-import 'package:app/core/constants/ui_constants.dart';
-import 'package:app/core/router/app_routes.dart';
-import 'package:app/features/Main/features/home/home_service.dart';
-import 'package:app/features/categories/bloc/categories_bloc.dart';
-import 'package:app/shared/widgets/cart_button_widget.dart';
-import 'package:app/shared/widgets/category/category_grid.dart';
-import 'package:app/shared/widgets/category/category_grid_skeleton.dart';
+import 'package:Greenly/core/constants/ui_constants.dart';
+import 'package:Greenly/core/router/app_routes.dart';
+import 'package:Greenly/features/Main/features/home/home_service.dart';
+import 'package:Greenly/features/categories/bloc/categories_bloc.dart';
+import 'package:Greenly/shared/widgets/cart_button_widget.dart';
+import 'package:Greenly/shared/widgets/category/category_grid.dart';
+import 'package:Greenly/shared/widgets/category/category_grid_skeleton.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -132,14 +132,17 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
                 itemCountOverride:
                     state.data.length + (state.isLoadingMore ? 3 : 0),
                 loadingItemBuilder: (_, _) => const CategoryCardSkeleton(),
-                onTap: (category) => Navigator.pushNamed(
-                  context,
-                  AppRoutes.categoryProducts,
-                  arguments: {
-                    'categoryId': category.id,
-                    'categoryName': category.name,
-                  },
-                ),
+                onTap: (category) {
+                  final selectedCategory = category as dynamic;
+                  Navigator.pushNamed(
+                    context,
+                    AppRoutes.categoryProducts,
+                    arguments: {
+                      'categoryId': selectedCategory?.id,
+                      'categoryName': selectedCategory?.name,
+                    },
+                  );
+                },
               ),
             );
           },

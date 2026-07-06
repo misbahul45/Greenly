@@ -1,5 +1,5 @@
-import 'package:app/core/constants/ui_constants.dart';
-import 'package:app/core/theme/app_theme.dart';
+import 'package:Greenly/core/constants/ui_constants.dart';
+import 'package:Greenly/core/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:webview_flutter/webview_flutter.dart';

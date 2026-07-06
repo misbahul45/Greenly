@@ -1,10 +1,10 @@
-import 'package:app/core/constants/ui_constants.dart';
-import 'package:app/core/router/app_routes.dart';
-import 'package:app/core/theme/app_theme.dart';
-import 'package:app/features/shop/domain/data/shop_data.dart';
-import 'package:app/features/shop/presentation/bloc/following_shops_bloc.dart';
-import 'package:app/features/shop/service/shop_service.dart';
-import 'package:app/shared/widgets/skeleton/shop_skeleton.dart';
+import 'package:Greenly/core/constants/ui_constants.dart';
+import 'package:Greenly/core/router/app_routes.dart';
+import 'package:Greenly/core/theme/app_theme.dart';
+import 'package:Greenly/features/shop/domain/data/shop_data.dart';
+import 'package:Greenly/features/shop/presentation/bloc/following_shops_bloc.dart';
+import 'package:Greenly/features/shop/service/shop_service.dart';
+import 'package:Greenly/shared/widgets/skeleton/shop_skeleton.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 

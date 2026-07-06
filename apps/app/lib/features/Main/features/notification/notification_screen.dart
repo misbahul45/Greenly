@@ -1,8 +1,8 @@
 import 'dart:async';
 
-import 'package:app/core/constants/ui_constants.dart';
-import 'package:app/core/theme/app_theme.dart';
-import 'package:app/features/Main/features/notification/notification_service.dart';
+import 'package:Greenly/core/constants/ui_constants.dart';
+import 'package:Greenly/core/theme/app_theme.dart';
+import 'package:Greenly/features/Main/features/notification/notification_service.dart';
 import 'package:flutter/material.dart';
 
 class NotificationScreen extends StatefulWidget {

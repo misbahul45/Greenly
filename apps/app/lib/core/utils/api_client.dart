@@ -1,11 +1,11 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
-import 'package:app/features/auth/auth_service.dart';
-import 'package:app/features/auth/presentation/bloc/auth_storage.dart';
+import 'package:Greenly/features/auth/auth_service.dart';
+import 'package:Greenly/features/auth/presentation/bloc/auth_storage.dart';
 import 'package:http/http.dart' as http;
-import 'package:app/core/utils/api_response.dart';
-import 'package:app/core/utils/metadata.dart';
+import 'package:Greenly/core/utils/api_response.dart';
+import 'package:Greenly/core/utils/metadata.dart';
 
 class ApiClient {
   static const Duration _timeout = Duration(seconds: 20);

@@ -1,6 +1,6 @@
-import 'package:app/core/constants/ui_constants.dart';
-import 'package:app/core/theme/app_theme.dart';
-import 'package:app/features/product-detail/domains/data/review_data.dart';
+import 'package:Greenly/core/constants/ui_constants.dart';
+import 'package:Greenly/core/theme/app_theme.dart';
+import 'package:Greenly/features/product-detail/domains/data/review_data.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 

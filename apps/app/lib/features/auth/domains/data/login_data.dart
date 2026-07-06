@@ -1,5 +1,5 @@
-import 'package:app/features/auth/domains/data/user_login_data.dart';
-import 'package:app/shared/domains/data/token_model.dart';
+import 'package:Greenly/features/auth/domains/data/user_login_data.dart';
+import 'package:Greenly/shared/domains/data/token_model.dart';
 
 class LoginData {
   final TokenModel tokens;

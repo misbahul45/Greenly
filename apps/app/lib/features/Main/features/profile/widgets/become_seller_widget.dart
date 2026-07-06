@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:app/core/constants/ui_constants.dart';
-import 'package:app/core/theme/app_theme.dart';
+import 'package:Greenly/core/constants/ui_constants.dart';
+import 'package:Greenly/core/theme/app_theme.dart';
 
 class BecomeSellerWidget extends StatelessWidget {
   final VoidCallback? onTap;

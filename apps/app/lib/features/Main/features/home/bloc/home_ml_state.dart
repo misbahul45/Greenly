@@ -1,4 +1,4 @@
-import 'package:app/features/ml-products/domain/ml_product_result.dart';
+import 'package:Greenly/features/ml-products/domain/ml_product_result.dart';
 
 class MlSectionState {
   final List<MlProductResult> data;

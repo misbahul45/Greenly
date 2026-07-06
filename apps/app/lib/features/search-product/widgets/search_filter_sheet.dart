@@ -1,7 +1,7 @@
-import 'package:app/core/constants/ui_constants.dart';
-import 'package:app/core/theme/app_theme.dart';
-import 'package:app/features/Main/features/home/domains/data/category_data.dart';
-import 'package:app/features/search-product/domain/dto/search_product_filter.dart';
+import 'package:Greenly/core/constants/ui_constants.dart';
+import 'package:Greenly/core/theme/app_theme.dart';
+import 'package:Greenly/features/Main/features/home/domains/data/category_data.dart';
+import 'package:Greenly/features/search-product/domain/dto/search_product_filter.dart';
 import 'package:flutter/material.dart';
 
 class SearchFilterSheet extends StatefulWidget {

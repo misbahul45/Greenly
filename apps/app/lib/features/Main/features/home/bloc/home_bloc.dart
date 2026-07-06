@@ -1,6 +1,6 @@
-import 'package:app/features/Main/features/home/bloc/home_event.dart';
-import 'package:app/features/Main/features/home/bloc/home_state.dart';
-import 'package:app/features/Main/features/home/home_service.dart';
+import 'package:Greenly/features/Main/features/home/bloc/home_event.dart';
+import 'package:Greenly/features/Main/features/home/bloc/home_state.dart';
+import 'package:Greenly/features/Main/features/home/home_service.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 class HomeBloc extends Bloc<HomeEvent, HomeState> {

@@ -1,5 +1,5 @@
-import 'package:app/core/router/app_routes.dart';
-import 'package:app/core/router/router_generate.dart';
+import 'package:Greenly/core/router/app_routes.dart';
+import 'package:Greenly/core/router/router_generate.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 

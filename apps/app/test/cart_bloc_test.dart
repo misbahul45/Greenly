@@ -1,7 +1,7 @@
-import 'package:app/core/utils/api_response.dart';
-import 'package:app/features/cart/domain/data/cart_item_data.dart';
-import 'package:app/features/cart/presentation/bloc/cart_bloc.dart';
-import 'package:app/features/cart/service/cart_service.dart';
+import 'package:Greenly/core/utils/api_response.dart';
+import 'package:Greenly/features/cart/domain/data/cart_item_data.dart';
+import 'package:Greenly/features/cart/presentation/bloc/cart_bloc.dart';
+import 'package:Greenly/features/cart/service/cart_service.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

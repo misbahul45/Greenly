@@ -1,6 +1,6 @@
-import 'package:app/core/constants/ui_constants.dart';
-import 'package:app/features/Main/features/home/domains/data/category_data.dart';
-import 'package:app/shared/widgets/category/category_card.dart';
+import 'package:Greenly/core/constants/ui_constants.dart';
+import 'package:Greenly/features/Main/features/home/domains/data/category_data.dart';
+import 'package:Greenly/shared/widgets/category/category_card.dart';
 import 'package:flutter/material.dart';
 
 class CategoryGrid extends StatelessWidget {

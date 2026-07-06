@@ -1,4 +1,4 @@
-import 'package:app/features/product-detail/domains/data/detail_product_data.dart';
+import 'package:Greenly/features/product-detail/domains/data/detail_product_data.dart';
 
 class GetDetailProductRespon {
   final DetailProductData data;

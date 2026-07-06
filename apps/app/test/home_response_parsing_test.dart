@@ -1,17 +1,14 @@
-import 'package:app/core/utils/json_mapper.dart';
-import 'package:app/features/Main/features/home/domains/data/banner_data.dart';
-import 'package:app/features/Main/features/home/domains/data/category_data.dart';
-import 'package:app/features/Main/features/home/domains/data/product_data.dart';
-import 'package:app/features/Main/features/home/domains/data/promotion_data.dart';
-import 'package:app/features/Main/features/home/domains/respon/active_banner_respon.dart';
-import 'package:app/features/Main/features/home/domains/respon/get_categories_respon.dart';
-import 'package:app/features/Main/features/home/domains/respon/get_products_respon.dart';
+import 'package:Greenly/core/utils/json_mapper.dart';
+import 'package:Greenly/features/Main/features/home/domains/data/banner_data.dart';
+import 'package:Greenly/features/Main/features/home/domains/data/category_data.dart';
+import 'package:Greenly/features/Main/features/home/domains/data/product_data.dart';
+import 'package:Greenly/features/Main/features/home/domains/data/promotion_data.dart';
+import 'package:Greenly/features/Main/features/home/domains/respon/active_banner_respon.dart';
+import 'package:Greenly/features/Main/features/home/domains/respon/get_categories_respon.dart';
+import 'package:Greenly/features/Main/features/home/domains/respon/get_products_respon.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  // ---------------------------------------------------------------------------
-  // JsonMapper.list — response shape resilience
-  // ---------------------------------------------------------------------------
   group('JsonMapper.list', () {
     test('returns [] for null', () {
       expect(

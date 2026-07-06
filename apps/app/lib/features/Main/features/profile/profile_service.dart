@@ -1,6 +1,6 @@
-import 'package:app/core/config/env.dart';
-import 'package:app/core/utils/api_client.dart';
-import 'package:app/features/Main/features/profile/domain/data/profile_stats_data.dart';
+import 'package:Greenly/core/config/env.dart';
+import 'package:Greenly/core/utils/api_client.dart';
+import 'package:Greenly/features/Main/features/profile/domain/data/profile_stats_data.dart';
 
 class ProfileService {
   static String get _coreBase => ENV.coreApiUrl;

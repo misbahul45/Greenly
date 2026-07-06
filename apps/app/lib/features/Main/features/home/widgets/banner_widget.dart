@@ -1,9 +1,9 @@
 import 'dart:async';
 
-import 'package:app/core/theme/app_theme.dart';
-import 'package:app/features/Main/features/home/bloc/home_bloc.dart';
-import 'package:app/features/Main/features/home/bloc/home_state.dart';
-import 'package:app/features/Main/features/home/widgets/skeleton/banner_skeleton.dart';
+import 'package:Greenly/core/theme/app_theme.dart';
+import 'package:Greenly/features/Main/features/home/bloc/home_bloc.dart';
+import 'package:Greenly/features/Main/features/home/bloc/home_state.dart';
+import 'package:Greenly/features/Main/features/home/widgets/skeleton/banner_skeleton.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 

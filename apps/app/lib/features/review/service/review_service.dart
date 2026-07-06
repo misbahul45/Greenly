@@ -1,9 +1,9 @@
-import 'package:app/core/config/env.dart';
-import 'package:app/core/utils/api_client.dart';
-import 'package:app/core/utils/api_response.dart';
-import 'package:app/features/product-detail/domains/respon/get_reviews_respon.dart';
-import 'package:app/features/review/domain/data/my_review_data.dart';
-import 'package:app/features/review/domain/dto/review_dto.dart';
+import 'package:Greenly/core/config/env.dart';
+import 'package:Greenly/core/utils/api_client.dart';
+import 'package:Greenly/core/utils/api_response.dart';
+import 'package:Greenly/features/product-detail/domains/respon/get_reviews_respon.dart';
+import 'package:Greenly/features/review/domain/data/my_review_data.dart';
+import 'package:Greenly/features/review/domain/dto/review_dto.dart';
 
 class ReviewService {
   static String get _base => '${ENV.catalogApiUrl}/reviews';

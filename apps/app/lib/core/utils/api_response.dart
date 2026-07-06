@@ -1,6 +1,6 @@
 
 
-import 'package:app/core/utils/metadata.dart';
+import 'package:Greenly/core/utils/metadata.dart';
 class ApiResponse<T> {
   final String status;
   final int statusCode;

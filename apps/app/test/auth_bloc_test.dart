@@ -1,9 +1,9 @@
 import 'dart:convert';
 
-import 'package:app/features/auth/auth_service.dart';
-import 'package:app/features/auth/presentation/bloc/auth_bloc.dart';
-import 'package:app/features/auth/presentation/bloc/auth_event.dart';
-import 'package:app/features/auth/presentation/bloc/auth_state.dart';
+import 'package:Greenly/features/auth/auth_service.dart';
+import 'package:Greenly/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:Greenly/features/auth/presentation/bloc/auth_event.dart';
+import 'package:Greenly/features/auth/presentation/bloc/auth_state.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 

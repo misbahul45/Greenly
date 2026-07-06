@@ -1,5 +1,6 @@
 import 'dart:async';
-import 'package:app/core/theme/app_theme.dart';
+import 'package:Greenly/core/theme/app_theme.dart';
+import 'package:Greenly/shared/widgets/skeleton/app_skeleton_box.dart';
 import 'package:flutter/material.dart';
 
 class ProductImageGallery extends StatefulWidget {

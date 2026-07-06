@@ -1,7 +1,7 @@
-import 'package:app/core/constants/ui_constants.dart';
-import 'package:app/features/product-detail/domains/data/review_data.dart';
-import 'package:app/features/review/domain/dto/review_dto.dart';
-import 'package:app/features/review/service/review_service.dart';
+import 'package:Greenly/core/constants/ui_constants.dart';
+import 'package:Greenly/features/product-detail/domains/data/review_data.dart';
+import 'package:Greenly/features/review/domain/dto/review_dto.dart';
+import 'package:Greenly/features/review/service/review_service.dart';
 import 'package:flutter/material.dart';
 
 class ReviewFormSheet extends StatefulWidget {

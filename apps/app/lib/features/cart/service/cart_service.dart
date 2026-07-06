@@ -1,7 +1,7 @@
-import 'package:app/core/config/env.dart';
-import 'package:app/core/utils/api_client.dart';
-import 'package:app/core/utils/api_response.dart';
-import 'package:app/features/cart/domain/data/cart_item_data.dart';
+import 'package:Greenly/core/config/env.dart';
+import 'package:Greenly/core/utils/api_client.dart';
+import 'package:Greenly/core/utils/api_response.dart';
+import 'package:Greenly/features/cart/domain/data/cart_item_data.dart';
 
 class CartService {
   static String get _base => '${ENV.coreApiUrl}/cart';

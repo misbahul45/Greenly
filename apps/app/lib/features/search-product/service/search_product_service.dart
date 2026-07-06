@@ -1,8 +1,8 @@
-import 'package:app/core/config/env.dart';
-import 'package:app/core/utils/api_client.dart';
-import 'package:app/features/search-product/domain/data/search_product_result.dart';
-import 'package:app/features/search-product/domain/dto/search_product_filter.dart';
-import 'package:app/features/search-product/domain/dto/semantic_search_request.dart';
+import 'package:Greenly/core/config/env.dart';
+import 'package:Greenly/core/utils/api_client.dart';
+import 'package:Greenly/features/search-product/domain/data/search_product_result.dart';
+import 'package:Greenly/features/search-product/domain/dto/search_product_filter.dart';
+import 'package:Greenly/features/search-product/domain/dto/semantic_search_request.dart';
 
 class SearchResultPair {
   final List<SearchProductResult> results;

@@ -1,4 +1,4 @@
-import 'package:app/shared/widgets/category/category_grid_skeleton.dart';
+import 'package:Greenly/shared/widgets/category/category_grid_skeleton.dart';
 import 'package:flutter/material.dart';
 
 class CategoriesSkeleton extends StatelessWidget {

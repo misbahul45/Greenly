@@ -1,15 +1,15 @@
-import 'package:app/core/constants/ui_constants.dart';
-import 'package:app/features/Main/features/profile/bloc/profile_bloc.dart';
-import 'package:app/features/Main/features/profile/domain/data/profile_stats_data.dart';
-import 'package:app/features/Main/features/profile/profile_service.dart';
-import 'package:app/features/Main/features/profile/widgets/address_section_widget.dart';
-import 'package:app/features/Main/features/profile/widgets/become_seller_widget.dart';
-import 'package:app/features/Main/features/profile/widgets/my_action_widget.dart';
-import 'package:app/features/Main/features/profile/widgets/my_activities_widget.dart';
-import 'package:app/features/Main/features/profile/widgets/my_orders_widget.dart';
-import 'package:app/features/Main/features/profile/widgets/profile_widget.dart';
-import 'package:app/features/Main/features/profile/widgets/statistic_widget.dart';
-import 'package:app/shared/widgets/skeleton/profile_skeleton.dart';
+import 'package:Greenly/core/constants/ui_constants.dart';
+import 'package:Greenly/features/Main/features/profile/bloc/profile_bloc.dart';
+import 'package:Greenly/features/Main/features/profile/domain/data/profile_stats_data.dart';
+import 'package:Greenly/features/Main/features/profile/profile_service.dart';
+import 'package:Greenly/features/Main/features/profile/widgets/address_section_widget.dart';
+import 'package:Greenly/features/Main/features/profile/widgets/become_seller_widget.dart';
+import 'package:Greenly/features/Main/features/profile/widgets/my_action_widget.dart';
+import 'package:Greenly/features/Main/features/profile/widgets/my_activities_widget.dart';
+import 'package:Greenly/features/Main/features/profile/widgets/my_orders_widget.dart';
+import 'package:Greenly/features/Main/features/profile/widgets/profile_widget.dart';
+import 'package:Greenly/features/Main/features/profile/widgets/statistic_widget.dart';
+import 'package:Greenly/shared/widgets/skeleton/profile_skeleton.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 

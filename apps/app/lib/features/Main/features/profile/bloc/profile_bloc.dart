@@ -1,5 +1,5 @@
-import 'package:app/features/Main/features/profile/domain/data/profile_stats_data.dart';
-import 'package:app/features/Main/features/profile/profile_service.dart';
+import 'package:Greenly/features/Main/features/profile/domain/data/profile_stats_data.dart';
+import 'package:Greenly/features/Main/features/profile/profile_service.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 

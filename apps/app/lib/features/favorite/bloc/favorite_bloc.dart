@@ -1,5 +1,5 @@
-import 'package:app/features/favorite/domain/data/favorite_data.dart';
-import 'package:app/features/favorite/service/favorite_service.dart';
+import 'package:Greenly/features/favorite/domain/data/favorite_data.dart';
+import 'package:Greenly/features/favorite/service/favorite_service.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 

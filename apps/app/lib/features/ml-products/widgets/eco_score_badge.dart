@@ -1,5 +1,5 @@
-import 'package:app/core/constants/ui_constants.dart';
-import 'package:app/core/theme/app_theme.dart';
+import 'package:Greenly/core/constants/ui_constants.dart';
+import 'package:Greenly/core/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 
 class EcoScoreBadge extends StatelessWidget {

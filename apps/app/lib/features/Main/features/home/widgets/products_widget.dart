@@ -1,8 +1,8 @@
-import 'package:app/core/router/app_routes.dart';
-import 'package:app/features/Main/features/home/bloc/home_bloc.dart';
-import 'package:app/features/Main/features/home/bloc/home_state.dart';
-import 'package:app/features/Main/features/home/widgets/product_grid.dart';
-import 'package:app/shared/widgets/section_title_widget.dart';
+import 'package:Greenly/core/router/app_routes.dart';
+import 'package:Greenly/features/Main/features/home/bloc/home_bloc.dart';
+import 'package:Greenly/features/Main/features/home/bloc/home_state.dart';
+import 'package:Greenly/features/Main/features/home/widgets/product_grid.dart';
+import 'package:Greenly/shared/widgets/section_title_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 

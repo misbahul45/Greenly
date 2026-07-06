@@ -1,4 +1,4 @@
-import 'package:app/features/search-product/domain/dto/search_product_filter.dart';
+import 'package:Greenly/features/search-product/domain/dto/search_product_filter.dart';
 
 class SemanticSearchRequest {
   final String query;

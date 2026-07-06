@@ -1,4 +1,4 @@
-import 'package:app/core/utils/safe_json.dart';
+import 'package:Greenly/core/utils/safe_json.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

@@ -1,9 +1,9 @@
-import 'package:app/core/utils/api_client.dart';
-import 'package:app/core/utils/api_response.dart';
-import 'package:app/features/Main/features/profile/domain/data/profile_detail_data.dart';
-import 'package:app/shared/domains/data/user_model.dart';
-import 'package:app/shared/domains/dto/update_profile_dto.dart';
-import 'package:app/core/config/env.dart';
+import 'package:Greenly/core/utils/api_client.dart';
+import 'package:Greenly/core/utils/api_response.dart';
+import 'package:Greenly/features/Main/features/profile/domain/data/profile_detail_data.dart';
+import 'package:Greenly/shared/domains/data/user_model.dart';
+import 'package:Greenly/shared/domains/dto/update_profile_dto.dart';
+import 'package:Greenly/core/config/env.dart';
 
 class MeService {
   static String get _baseUrl => ENV.coreApiUrl;

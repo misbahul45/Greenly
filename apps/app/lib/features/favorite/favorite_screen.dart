@@ -1,13 +1,13 @@
-import 'package:app/core/constants/ui_constants.dart';
-import 'package:app/core/router/app_routes.dart';
-import 'package:app/core/theme/app_theme.dart';
-import 'package:app/features/favorite/bloc/favorite_bloc.dart';
-import 'package:app/features/favorite/domain/data/favorite_data.dart';
-import 'package:app/features/favorite/service/favorite_service.dart';
-import 'package:app/shared/widgets/product/adaptive_product_grid_delegate.dart';
-import 'package:app/shared/widgets/product/product_card.dart';
-import 'package:app/shared/widgets/product/product_card_data.dart';
-import 'package:app/shared/widgets/product/product_card_skeleton.dart';
+import 'package:Greenly/core/constants/ui_constants.dart';
+import 'package:Greenly/core/router/app_routes.dart';
+import 'package:Greenly/core/theme/app_theme.dart';
+import 'package:Greenly/features/favorite/bloc/favorite_bloc.dart';
+import 'package:Greenly/features/favorite/domain/data/favorite_data.dart';
+import 'package:Greenly/features/favorite/service/favorite_service.dart';
+import 'package:Greenly/shared/widgets/product/adaptive_product_grid_delegate.dart';
+import 'package:Greenly/shared/widgets/product/product_card.dart';
+import 'package:Greenly/shared/widgets/product/product_card_data.dart';
+import 'package:Greenly/shared/widgets/product/product_card_skeleton.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 

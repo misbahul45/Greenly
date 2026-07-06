@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:app/core/theme/app_theme.dart';
-import 'package:app/features/onboarding/presentation/widgets/eco_badge.dart';
+import 'package:Greenly/core/theme/app_theme.dart';
+import 'package:Greenly/features/onboarding/presentation/widgets/eco_badge.dart';
 
 class IllustrationEco extends StatelessWidget {
   const IllustrationEco({super.key});

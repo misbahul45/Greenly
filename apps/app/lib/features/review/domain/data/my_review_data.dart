@@ -1,4 +1,4 @@
-import 'package:app/features/product-detail/domains/data/review_data.dart';
+import 'package:Greenly/features/product-detail/domains/data/review_data.dart';
 
 class MyReviewData {
   final ReviewData review;

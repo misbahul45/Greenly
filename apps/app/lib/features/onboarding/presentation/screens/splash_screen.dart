@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:app/core/constants/ui_constants.dart';
-import 'package:app/core/theme/app_theme.dart';
-import 'package:app/features/onboarding/data/onboarding_storage.dart';
-import 'package:app/features/auth/presentation/bloc/auth_storage.dart';
-import 'package:app/core/router/auth_routes.dart';
-import 'package:app/core/router/app_routes.dart';
+import 'package:Greenly/core/constants/ui_constants.dart';
+import 'package:Greenly/core/theme/app_theme.dart';
+import 'package:Greenly/features/onboarding/data/onboarding_storage.dart';
+import 'package:Greenly/features/auth/presentation/bloc/auth_storage.dart';
+import 'package:Greenly/core/router/auth_routes.dart';
+import 'package:Greenly/core/router/app_routes.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});

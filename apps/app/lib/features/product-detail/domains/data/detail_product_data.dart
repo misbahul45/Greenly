@@ -1,4 +1,4 @@
-import 'package:app/features/Main/features/home/domains/data/promotion_data.dart';
+import 'package:Greenly/features/Main/features/home/domains/data/promotion_data.dart';
 
 import '../../../Main/features/home/domains/data/product_data.dart';
 

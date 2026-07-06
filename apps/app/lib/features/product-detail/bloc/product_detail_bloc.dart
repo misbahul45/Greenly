@@ -1,8 +1,8 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:app/features/product-detail/bloc/product_detail_event.dart';
-import 'package:app/features/product-detail/bloc/product_detail_state.dart';
-import 'package:app/features/product-detail/product_detail_service.dart';
-import 'package:app/features/product-detail/product_review_service.dart';
+import 'package:Greenly/features/product-detail/bloc/product_detail_event.dart';
+import 'package:Greenly/features/product-detail/bloc/product_detail_state.dart';
+import 'package:Greenly/features/product-detail/product_detail_service.dart';
+import 'package:Greenly/features/product-detail/product_review_service.dart';
 
 class ProductDetailBloc extends Bloc<ProductDetailEvent, ProductDetailState> {
   final ProductDetailService productDetailService;

@@ -1,6 +1,6 @@
-import 'package:app/core/constants/ui_constants.dart';
-import 'package:app/features/ml-products/domain/ml_product_result.dart';
-import 'package:app/features/ml-products/widgets/ml_product_card.dart';
+import 'package:Greenly/core/constants/ui_constants.dart';
+import 'package:Greenly/features/ml-products/domain/ml_product_result.dart';
+import 'package:Greenly/features/ml-products/widgets/ml_product_card.dart';
 import 'package:flutter/material.dart';
 
 class MlProductHorizontalList extends StatelessWidget {

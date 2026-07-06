@@ -1,9 +1,9 @@
-import 'package:app/features/Main/features/chat/chat_list_screen.dart';
-import 'package:app/features/Main/features/home/home_screen.dart';
-import 'package:app/features/Main/features/notification/notification_screen.dart';
-import 'package:app/features/Main/features/profile/profile_screen.dart';
-import 'package:app/features/Main/widgets/main_app_bar.dart';
-import 'package:app/features/Main/widgets/main_bottom_bar.dart';
+import 'package:Greenly/features/Main/features/chat/chat_list_screen.dart';
+import 'package:Greenly/features/Main/features/home/home_screen.dart';
+import 'package:Greenly/features/Main/features/notification/notification_screen.dart';
+import 'package:Greenly/features/Main/features/profile/profile_screen.dart';
+import 'package:Greenly/features/Main/widgets/main_app_bar.dart';
+import 'package:Greenly/features/Main/widgets/main_bottom_bar.dart';
 import 'package:flutter/material.dart';
 
 class MainScreen extends StatefulWidget {

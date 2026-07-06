@@ -1,5 +1,5 @@
-import 'package:app/core/utils/json_mapper.dart';
-import 'package:app/features/product-detail/domains/data/review_data.dart';
+import 'package:Greenly/core/utils/json_mapper.dart';
+import 'package:Greenly/features/product-detail/domains/data/review_data.dart';
 
 class GetReviewsRespon {
   final List<ReviewData> data;

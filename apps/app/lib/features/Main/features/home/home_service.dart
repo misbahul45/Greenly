@@ -1,9 +1,9 @@
-import 'package:app/core/config/env.dart';
-import 'package:app/core/utils/api_client.dart';
-import 'package:app/core/utils/api_response.dart';
-import 'package:app/features/Main/features/home/domains/respon/active_banner_respon.dart';
-import 'package:app/features/Main/features/home/domains/respon/get_categories_respon.dart';
-import 'package:app/features/Main/features/home/domains/respon/get_products_respon.dart';
+import 'package:Greenly/core/config/env.dart';
+import 'package:Greenly/core/utils/api_client.dart';
+import 'package:Greenly/core/utils/api_response.dart';
+import 'package:Greenly/features/Main/features/home/domains/respon/active_banner_respon.dart';
+import 'package:Greenly/features/Main/features/home/domains/respon/get_categories_respon.dart';
+import 'package:Greenly/features/Main/features/home/domains/respon/get_products_respon.dart';
 
 class HomeService {
   static String get _baseUrlCore => ENV.coreApiUrl;

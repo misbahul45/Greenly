@@ -1,7 +1,7 @@
-import 'package:app/core/config/app_bar_config.dart';
-import 'package:app/core/router/app_routes.dart';
-import 'package:app/core/theme/app_theme.dart';
-import 'package:app/shared/widgets/cart_button_widget.dart';
+import 'package:Greenly/core/config/app_bar_config.dart';
+import 'package:Greenly/core/router/app_routes.dart';
+import 'package:Greenly/core/theme/app_theme.dart';
+import 'package:Greenly/shared/widgets/cart_button_widget.dart';
 import 'package:flutter/material.dart';
 
 class MainAppBar extends StatelessWidget implements PreferredSizeWidget {

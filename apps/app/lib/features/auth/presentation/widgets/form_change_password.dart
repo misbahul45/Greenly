@@ -1,9 +1,9 @@
-import 'package:app/features/auth/auth_validation.dart';
-import 'package:app/shared/widgets/text_validation_widget.dart';
+import 'package:Greenly/features/auth/auth_validation.dart';
+import 'package:Greenly/shared/widgets/text_validation_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:app/features/auth/presentation/bloc/auth_bloc.dart';
-import 'package:app/features/auth/presentation/bloc/auth_state.dart';
+import 'package:Greenly/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:Greenly/features/auth/presentation/bloc/auth_state.dart';
 
 class FormChangePassword extends StatefulWidget {
   final void Function(

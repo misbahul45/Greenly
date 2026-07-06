@@ -1,6 +1,6 @@
-import 'package:app/features/search-product/domain/data/search_product_result.dart';
-import 'package:app/features/search-product/domain/dto/search_product_filter.dart';
-import 'package:app/features/search-product/service/search_product_service.dart';
+import 'package:Greenly/features/search-product/domain/data/search_product_result.dart';
+import 'package:Greenly/features/search-product/domain/dto/search_product_filter.dart';
+import 'package:Greenly/features/search-product/service/search_product_service.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';

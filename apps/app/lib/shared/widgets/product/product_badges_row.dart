@@ -1,6 +1,6 @@
-import 'package:app/core/constants/ui_constants.dart';
-import 'package:app/core/theme/app_theme.dart';
-import 'package:app/features/ml-products/widgets/eco_score_badge.dart';
+import 'package:Greenly/core/constants/ui_constants.dart';
+import 'package:Greenly/core/theme/app_theme.dart';
+import 'package:Greenly/features/ml-products/widgets/eco_score_badge.dart';
 import 'package:flutter/material.dart';
 
 class ProductBadgesRow extends StatelessWidget {

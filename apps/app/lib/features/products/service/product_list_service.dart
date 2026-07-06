@@ -1,7 +1,7 @@
-import 'package:app/core/config/env.dart';
-import 'package:app/core/utils/api_client.dart';
-import 'package:app/core/utils/api_response.dart';
-import 'package:app/features/Main/features/home/domains/respon/get_products_respon.dart';
+import 'package:Greenly/core/config/env.dart';
+import 'package:Greenly/core/utils/api_client.dart';
+import 'package:Greenly/core/utils/api_response.dart';
+import 'package:Greenly/features/Main/features/home/domains/respon/get_products_respon.dart';
 
 class ProductListService {
   static String get _base => '${ENV.catalogApiUrl}/products';

@@ -1,8 +1,8 @@
-import 'package:app/core/constants/ui_constants.dart';
-import 'package:app/core/router/app_routes.dart';
-import 'package:app/core/theme/app_theme.dart';
-import 'package:app/features/shop/domain/data/shop_data.dart';
-import 'package:app/features/shop/service/shop_service.dart';
+import 'package:Greenly/core/constants/ui_constants.dart';
+import 'package:Greenly/core/router/app_routes.dart';
+import 'package:Greenly/core/theme/app_theme.dart';
+import 'package:Greenly/features/shop/domain/data/shop_data.dart';
+import 'package:Greenly/features/shop/service/shop_service.dart';
 import 'package:flutter/material.dart';
 
 class ShopInfoWidget extends StatefulWidget {

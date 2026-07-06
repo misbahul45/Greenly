@@ -1,5 +1,5 @@
-import 'package:app/core/router/app_routes.dart';
-import 'package:app/shared/widgets/category/category_card.dart';
+import 'package:Greenly/core/router/app_routes.dart';
+import 'package:Greenly/shared/widgets/category/category_card.dart';
 import 'package:flutter/material.dart';
 
 class CategoryWidget extends StatelessWidget {

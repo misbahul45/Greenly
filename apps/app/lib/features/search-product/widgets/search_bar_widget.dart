@@ -1,4 +1,4 @@
-import 'package:app/core/constants/ui_constants.dart';
+import 'package:Greenly/core/constants/ui_constants.dart';
 import 'package:flutter/material.dart';
 
 class SearchBarWidget extends StatelessWidget {

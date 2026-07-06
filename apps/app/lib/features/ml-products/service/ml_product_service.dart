@@ -1,9 +1,9 @@
-import 'package:app/core/config/env.dart';
-import 'package:app/core/utils/api_client.dart';
-import 'package:app/core/utils/api_response.dart';
-import 'package:app/features/auth/presentation/bloc/auth_storage.dart';
-import 'package:app/features/ml-products/domain/ml_product_result.dart';
-import 'package:app/features/ml-products/domain/ml_search_request.dart';
+import 'package:Greenly/core/config/env.dart';
+import 'package:Greenly/core/utils/api_client.dart';
+import 'package:Greenly/core/utils/api_response.dart';
+import 'package:Greenly/features/auth/presentation/bloc/auth_storage.dart';
+import 'package:Greenly/features/ml-products/domain/ml_product_result.dart';
+import 'package:Greenly/features/ml-products/domain/ml_search_request.dart';
 
 class MlProductService {
   static String get _base => ENV.mlApiUrl;

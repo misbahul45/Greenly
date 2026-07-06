@@ -1,8 +1,8 @@
-import 'package:app/core/constants/ui_constants.dart';
-import 'package:app/core/router/app_routes.dart';
-import 'package:app/features/order/service/order_service.dart';
-import 'package:app/shared/widgets/section_title_widget.dart';
-import 'package:app/shared/widgets/skeleton/app_skeleton_box.dart';
+import 'package:Greenly/core/constants/ui_constants.dart';
+import 'package:Greenly/core/router/app_routes.dart';
+import 'package:Greenly/features/order/service/order_service.dart';
+import 'package:Greenly/shared/widgets/section_title_widget.dart';
+import 'package:Greenly/shared/widgets/skeleton/app_skeleton_box.dart';
 import 'package:flutter/material.dart';
 
 class MyOrdersWidget extends StatefulWidget {

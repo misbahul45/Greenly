@@ -1,6 +1,6 @@
-import 'package:app/features/Main/features/home/bloc/home_ml_event.dart';
-import 'package:app/features/Main/features/home/bloc/home_ml_state.dart';
-import 'package:app/features/ml-products/service/ml_product_service.dart';
+import 'package:Greenly/features/Main/features/home/bloc/home_ml_event.dart';
+import 'package:Greenly/features/Main/features/home/bloc/home_ml_state.dart';
+import 'package:Greenly/features/ml-products/service/ml_product_service.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 class HomeMlBloc extends Bloc<HomeMlEvent, HomeMlState> {

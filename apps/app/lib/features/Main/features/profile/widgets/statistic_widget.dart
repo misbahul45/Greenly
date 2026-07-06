@@ -1,5 +1,5 @@
-import 'package:app/core/constants/ui_constants.dart';
-import 'package:app/shared/widgets/charts/stat_card.dart';
+import 'package:Greenly/core/constants/ui_constants.dart';
+import 'package:Greenly/shared/widgets/charts/stat_card.dart';
 import 'package:flutter/material.dart';
 
 class StatisticWidget extends StatelessWidget {

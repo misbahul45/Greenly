@@ -1,5 +1,5 @@
-import 'package:app/features/order/domain/data/order_data.dart';
-import 'package:app/features/order/service/order_service.dart';
+import 'package:Greenly/features/order/domain/data/order_data.dart';
+import 'package:Greenly/features/order/service/order_service.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 

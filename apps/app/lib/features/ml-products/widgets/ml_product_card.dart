@@ -1,7 +1,7 @@
-import 'package:app/core/router/app_routes.dart';
-import 'package:app/features/ml-products/domain/ml_product_result.dart';
-import 'package:app/shared/widgets/product/product_card_data.dart';
-import 'package:app/shared/widgets/product/product_compact_card.dart';
+import 'package:Greenly/core/router/app_routes.dart';
+import 'package:Greenly/features/ml-products/domain/ml_product_result.dart';
+import 'package:Greenly/shared/widgets/product/product_card_data.dart';
+import 'package:Greenly/shared/widgets/product/product_compact_card.dart';
 import 'package:flutter/material.dart';
 
 class MlProductCard extends StatelessWidget {

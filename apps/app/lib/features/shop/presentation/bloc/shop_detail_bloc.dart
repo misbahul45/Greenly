@@ -1,5 +1,5 @@
-import 'package:app/features/shop/domain/data/shop_data.dart';
-import 'package:app/features/shop/service/shop_service.dart';
+import 'package:Greenly/features/shop/domain/data/shop_data.dart';
+import 'package:Greenly/features/shop/service/shop_service.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 

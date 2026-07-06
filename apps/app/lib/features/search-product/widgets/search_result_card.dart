@@ -1,6 +1,6 @@
-import 'package:app/features/search-product/domain/data/search_product_result.dart';
-import 'package:app/shared/widgets/product/product_card_data.dart';
-import 'package:app/shared/widgets/product/product_horizontal_card.dart';
+import 'package:Greenly/features/search-product/domain/data/search_product_result.dart';
+import 'package:Greenly/shared/widgets/product/product_card_data.dart';
+import 'package:Greenly/shared/widgets/product/product_horizontal_card.dart';
 import 'package:flutter/material.dart';
 
 class SearchResultCard extends StatelessWidget {

@@ -1,7 +1,7 @@
-import 'package:app/core/constants/ui_constants.dart';
-import 'package:app/shared/widgets/skeleton/app_skeleton_box.dart';
-import 'package:app/shared/widgets/skeleton/app_skeleton_card.dart';
-import 'package:app/shared/widgets/skeleton/app_skeleton_line.dart';
+import 'package:Greenly/core/constants/ui_constants.dart';
+import 'package:Greenly/shared/widgets/skeleton/app_skeleton_box.dart';
+import 'package:Greenly/shared/widgets/skeleton/app_skeleton_card.dart';
+import 'package:Greenly/shared/widgets/skeleton/app_skeleton_line.dart';
 import 'package:flutter/material.dart';
 
 class SearchResultSkeletonList extends StatelessWidget {

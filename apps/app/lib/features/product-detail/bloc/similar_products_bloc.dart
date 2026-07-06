@@ -1,6 +1,6 @@
-import 'package:app/features/ml-products/service/ml_product_service.dart';
-import 'package:app/features/product-detail/bloc/similar_products_event.dart';
-import 'package:app/features/product-detail/bloc/similar_products_state.dart';
+import 'package:Greenly/features/ml-products/service/ml_product_service.dart';
+import 'package:Greenly/features/product-detail/bloc/similar_products_event.dart';
+import 'package:Greenly/features/product-detail/bloc/similar_products_state.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 class SimilarProductsBloc

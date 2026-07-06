@@ -1,8 +1,8 @@
 // product_image_section.dart
-import 'package:app/core/theme/app_theme.dart';
-import 'package:app/features/Main/features/home/domains/data/promotion_data.dart';
-import 'package:app/features/Main/features/home/widgets/product_image_placeholder.dart';
-import 'package:app/features/Main/features/home/widgets/product_promo_badge.dart';
+import 'package:Greenly/core/theme/app_theme.dart';
+import 'package:Greenly/features/Main/features/home/domains/data/promotion_data.dart';
+import 'package:Greenly/features/Main/features/home/widgets/product_image_placeholder.dart';
+import 'package:Greenly/features/Main/features/home/widgets/product_promo_badge.dart';
 import 'package:flutter/material.dart';
 
 class ProductImageSection extends StatelessWidget {

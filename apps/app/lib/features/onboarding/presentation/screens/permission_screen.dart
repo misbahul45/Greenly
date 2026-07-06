@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:app/core/theme/app_theme.dart';
-import 'package:app/features/onboarding/presentation/widgets/permission_card_widget.dart';
+import 'package:Greenly/core/theme/app_theme.dart';
+import 'package:Greenly/features/onboarding/presentation/widgets/permission_card_widget.dart';
 
 class PermissionScreen extends StatefulWidget {
   final ValueChanged<bool> onLocationChanged;

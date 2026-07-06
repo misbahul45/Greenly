@@ -1,4 +1,4 @@
-import 'package:app/shared/widgets/product/product_card_skeleton.dart';
+import 'package:Greenly/shared/widgets/product/product_card_skeleton.dart';
 import 'package:flutter/material.dart';
 
 class ProductSkeleton extends StatelessWidget {

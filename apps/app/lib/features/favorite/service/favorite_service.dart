@@ -1,7 +1,7 @@
-import 'package:app/core/config/env.dart';
-import 'package:app/core/utils/api_client.dart';
-import 'package:app/core/utils/api_response.dart';
-import 'package:app/features/favorite/domain/data/favorite_data.dart';
+import 'package:Greenly/core/config/env.dart';
+import 'package:Greenly/core/utils/api_client.dart';
+import 'package:Greenly/core/utils/api_response.dart';
+import 'package:Greenly/features/favorite/domain/data/favorite_data.dart';
 
 class FavoriteService {
   static String get _base => '${ENV.catalogApiUrl}/favorites';

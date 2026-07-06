@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:app/core/theme/app_theme.dart';
-import 'package:app/features/onboarding/presentation/widgets/interest_chip_widget.dart';
+import 'package:Greenly/core/theme/app_theme.dart';
+import 'package:Greenly/features/onboarding/presentation/widgets/interest_chip_widget.dart';
 
 class InterestScreen extends StatefulWidget {
   final List<String> selectedCategories;

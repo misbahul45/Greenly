@@ -1,5 +1,5 @@
-import 'package:app/features/review/domain/data/my_review_data.dart';
-import 'package:app/features/review/service/review_service.dart';
+import 'package:Greenly/features/review/domain/data/my_review_data.dart';
+import 'package:Greenly/features/review/service/review_service.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 

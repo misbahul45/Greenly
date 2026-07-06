@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:app/features/onboarding/presentation/screens/welcome_carousel_screen.dart';
-import 'package:app/features/onboarding/presentation/screens/interest_screen.dart';
-import 'package:app/features/onboarding/presentation/screens/permission_screen.dart';
-import 'package:app/features/onboarding/data/onboarding_storage.dart';
-import 'package:app/core/router/auth_routes.dart';
+import 'package:Greenly/features/onboarding/presentation/screens/welcome_carousel_screen.dart';
+import 'package:Greenly/features/onboarding/presentation/screens/interest_screen.dart';
+import 'package:Greenly/features/onboarding/presentation/screens/permission_screen.dart';
+import 'package:Greenly/features/onboarding/data/onboarding_storage.dart';
+import 'package:Greenly/core/router/auth_routes.dart';
 
 class OnboardingCoordinatorScreen extends StatefulWidget {
   const OnboardingCoordinatorScreen({super.key});

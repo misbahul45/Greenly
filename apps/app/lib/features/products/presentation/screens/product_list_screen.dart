@@ -1,10 +1,10 @@
-import 'package:app/core/constants/ui_constants.dart';
-import 'package:app/features/Main/features/home/widgets/product_widget.dart';
-import 'package:app/features/products/presentation/bloc/product_list_bloc.dart';
-import 'package:app/features/products/service/product_list_service.dart';
-import 'package:app/shared/widgets/cart_button_widget.dart';
-import 'package:app/shared/widgets/product/adaptive_product_grid_delegate.dart';
-import 'package:app/shared/widgets/product/product_card_skeleton.dart';
+import 'package:Greenly/core/constants/ui_constants.dart';
+import 'package:Greenly/features/Main/features/home/widgets/product_widget.dart';
+import 'package:Greenly/features/products/presentation/bloc/product_list_bloc.dart';
+import 'package:Greenly/features/products/service/product_list_service.dart';
+import 'package:Greenly/shared/widgets/cart_button_widget.dart';
+import 'package:Greenly/shared/widgets/product/adaptive_product_grid_delegate.dart';
+import 'package:Greenly/shared/widgets/product/product_card_skeleton.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 

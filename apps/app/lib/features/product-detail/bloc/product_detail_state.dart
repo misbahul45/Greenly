@@ -1,5 +1,5 @@
-import 'package:app/features/product-detail/domains/data/detail_product_data.dart';
-import 'package:app/features/product-detail/domains/data/review_data.dart';
+import 'package:Greenly/features/product-detail/domains/data/detail_product_data.dart';
+import 'package:Greenly/features/product-detail/domains/data/review_data.dart';
 
 class DetailProductDataState {
   final DetailProductData? data;

@@ -1,8 +1,8 @@
-import 'package:app/core/theme/app_theme.dart';
-import 'package:app/features/auth/auth_validation.dart';
-import 'package:app/shared/widgets/text_validation_widget.dart';
+import 'package:Greenly/core/theme/app_theme.dart';
+import 'package:Greenly/features/auth/auth_validation.dart';
+import 'package:Greenly/shared/widgets/text_validation_widget.dart';
 import 'package:flutter/material.dart';
-import 'package:app/shared/widgets/otp_field_widget.dart';
+import 'package:Greenly/shared/widgets/otp_field_widget.dart';
 
 class FormOtpEmail extends StatefulWidget {
   final void Function(String otp) onSubmitOtp;

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:app/core/theme/app_theme.dart';
+import 'package:Greenly/core/theme/app_theme.dart';
 
 class PermissionCardWidget extends StatelessWidget {
   final IconData icon;

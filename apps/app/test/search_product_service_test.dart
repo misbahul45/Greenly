@@ -1,5 +1,5 @@
-import 'package:app/features/search-product/domain/dto/search_product_filter.dart';
-import 'package:app/features/search-product/service/search_product_service.dart';
+import 'package:Greenly/features/search-product/domain/dto/search_product_filter.dart';
+import 'package:Greenly/features/search-product/service/search_product_service.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

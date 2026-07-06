@@ -1,5 +1,5 @@
-import 'package:app/core/router/app_routes.dart';
-import 'package:app/features/cart/presentation/bloc/cart_bloc.dart';
+import 'package:Greenly/core/router/app_routes.dart';
+import 'package:Greenly/features/cart/presentation/bloc/cart_bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 

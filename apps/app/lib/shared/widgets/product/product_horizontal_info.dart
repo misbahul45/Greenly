@@ -1,7 +1,7 @@
-import 'package:app/core/constants/ui_constants.dart';
-import 'package:app/shared/widgets/product/product_badges_row.dart';
-import 'package:app/shared/widgets/product/product_card_data.dart';
-import 'package:app/shared/widgets/product/product_price_row.dart';
+import 'package:Greenly/core/constants/ui_constants.dart';
+import 'package:Greenly/shared/widgets/product/product_badges_row.dart';
+import 'package:Greenly/shared/widgets/product/product_card_data.dart';
+import 'package:Greenly/shared/widgets/product/product_price_row.dart';
 import 'package:flutter/material.dart';
 
 class ProductHorizontalInfo extends StatelessWidget {
