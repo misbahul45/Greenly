@@ -185,14 +185,13 @@ services:
     build:
       context: ./services/catalog-service
       dockerfile: Dockerfile.dev
-    
-    env_file:
-      - .env
 
     # depends_on:
     #   # rabbitmq  - Cloud: CloudAMQP
     #   # mongodb   - Cloud: MongoDB Atlas
     #   # redis     - Cloud: Upstash Redis
+    env_file:
+      - .env
 
     develop:
       watch:

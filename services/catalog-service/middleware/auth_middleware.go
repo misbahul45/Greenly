@@ -75,12 +75,18 @@ func JWTAuthMiddleware(coreSvc coreclient.Client, redisCache cache.Cache) gin.Ha
 		}
 
 		cacheKey := tokenCacheKey(tokenString)
-		if cached, err := redisCache.GetUser(c.Request.Context(), cacheKey); err == nil && cached != "" {
-			var user coreclient.User
-			if json.Unmarshal([]byte(cached), &user) == nil {
-				setUserContext(c, claims, &user)
-				c.Next()
-				return
+
+		// Cloud: Redis (Upstash) may be nil if it was unavailable at startup.
+		// Guard every call so the middleware degrades gracefully instead of
+		// panicking with a nil pointer dereference.
+		if redisCache != nil {
+			if cached, err := redisCache.GetUser(c.Request.Context(), cacheKey); err == nil && cached != "" {
+				var user coreclient.User
+				if json.Unmarshal([]byte(cached), &user) == nil {
+					setUserContext(c, claims, &user)
+					c.Next()
+					return
+				}
 			}
 		}
 
@@ -91,7 +97,13 @@ func JWTAuthMiddleware(coreSvc coreclient.Client, redisCache cache.Cache) gin.Ha
 			return
 		}
 
-		redisCache.SetUser(c.Request.Context(), cacheKey, user, userCacheTTL)
+		if redisCache != nil {
+			if err := redisCache.SetUser(c.Request.Context(), cacheKey, user, userCacheTTL); err != nil {
+				requestID, _ := c.Get("request_id")
+				log.Printf("[CACHE_WARN] requestId=%v path=%s message=%q err=%v", requestID, c.Request.URL.Path, "failed to cache user", err)
+			}
+		}
+
 		setUserContext(c, claims, user)
 		c.Next()
 	}
