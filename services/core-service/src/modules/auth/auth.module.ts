@@ -44,7 +44,7 @@ function validateJwtSecrets(config: ConfigService) {
     }),
   ],
 
-  controllers: [AuthController, EmailConsumer],
+  controllers: [AuthController],
 
   providers: [
     AuthRepository,
@@ -54,6 +54,7 @@ function validateJwtSecrets(config: ConfigService) {
     UserForgotPasswordPublisher,
     UserResendTokenPublisher,
     JwtAccessStrategy,
+    EmailConsumer,
     JwtRefreshStrategy,
   ],
 
