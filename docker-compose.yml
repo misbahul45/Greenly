@@ -101,17 +101,17 @@ services:
     #   # rabbitmq  - Cloud: CloudAMQP
 
 
-    develop:
-      watch:
-        - action: sync
-          path: ./services/core-service
-          target: /app
-          ignore:
-            - node_modules/
-            - dist/
+    # develop:
+    #   watch:
+    #     - action: sync
+    #       path: ./services/core-service
+    #       target: /app
+    #       ignore:
+    #         - node_modules/
+    #         - dist/
 
-        - action: rebuild
-          path: ./services/core-service/package.json
+    #     - action: rebuild
+    #       path: ./services/core-service/package.json
 
     labels:
       - "traefik.enable=true"
@@ -142,14 +142,14 @@ services:
       # rabbitmq  - Cloud: CloudAMQP
 
       
-    develop:
-      watch:
-        - action: sync
-          path: ./services/ml-engine
-          target: /app
+    # develop:
+    #   watch:
+    #     - action: sync
+    #       path: ./services/ml-engine
+    #       target: /app
 
-        - action: rebuild
-          path: ./services/ml-engine/pyproject.toml
+    #     - action: rebuild
+    #       path: ./services/ml-engine/pyproject.toml
 
     labels:
       - "traefik.enable=true"
@@ -193,14 +193,14 @@ services:
     env_file:
       - .env
 
-    develop:
-      watch:
-        - action: sync
-          path: ./services/catalog-service
-          target: /app
+    # develop:
+    #   watch:
+    #     - action: sync
+    #       path: ./services/catalog-service
+    #       target: /app
 
-        - action: rebuild
-          path: ./services/catalog-service/go.mod
+    #     - action: rebuild
+    #       path: ./services/catalog-service/go.mod
 
     labels:
       - "traefik.enable=true"
