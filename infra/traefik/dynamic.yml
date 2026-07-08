@@ -7,7 +7,6 @@ http:
         browserXssFilter: true
         customResponseHeaders:
           X-Powered-By: "Greenly-Infrastructure"
-
     rate-limit:
       rateLimit:
         average: 100

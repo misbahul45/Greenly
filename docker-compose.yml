@@ -14,18 +14,20 @@ volumes:
 services:
   traefik:
     image: traefik:v2.11
-    command:
-      - "--api.insecure=${TRAEFIK_API_INSECURE:-false}"
-      - "--providers.docker=true"
-      - "--providers.docker.exposedbydefault=false"
-      - "--providers.docker.network=${COMPOSE_PROJECT_NAME:-greenly}_network"
-      - "--entrypoints.web.address=:${HTTP_PORT:-80}"
     restart: unless-stopped
+    command:
+      - "--configFile=/etc/traefik/traefik.yml"
+    environment:
+      - DUCKDNS_TOKEN=${DUCKDNS_TOKEN}
     ports:
-      - "${HTTP_PORT:-80}:${HTTP_PORT:-80}"
+      - "${HTTP_PORT:-80}:80"
+      - "443:443"
       - "${TRAEFIK_DASHBOARD_PORT:-8080}:8080"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./traefik.yml:/etc/traefik/traefik.yml:ro
+      - ./dynamic.yml:/etc/traefik/dynamic.yml:ro
+      - ./letsencrypt:/letsencrypt
     networks:
       - greenly_network
 
@@ -41,20 +43,19 @@ services:
     restart: unless-stopped
     env_file:
       - .env
-
     # depends_on:
     #   # mysql     - Cloud: Railway MySQL
     #   # redis     - Cloud: Upstash Redis
     #   # rabbitmq  - Cloud: CloudAMQP
-
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.core.rule=PathPrefix(`/api/core`)"
-      - "traefik.http.routers.core.entrypoints=web"
-      - "traefik.http.services.core.loadbalancer.server.port=3000"
+      - "traefik.http.routers.core-secure.rule=PathPrefix(`/api/core`)"
+      - "traefik.http.routers.core-secure.entrypoints=websecure"
+      - "traefik.http.routers.core-secure.tls=true"
+      - "traefik.http.routers.core-secure.tls.certresolver=duckdns"
       - "traefik.http.middlewares.core-strip.stripprefix.prefixes=/api/core"
-      - "traefik.http.routers.core.middlewares=core-strip"
-
+      - "traefik.http.routers.core-secure.middlewares=core-strip,security-headers,rate-limit"
+      - "traefik.http.services.core.loadbalancer.server.port=3000"
     networks:
       - greenly_network
 
@@ -65,20 +66,19 @@ services:
     restart: unless-stopped
     env_file:
       - .env
-
     depends_on:
       - catalog-service
-      # redis     - Cloud: Upstash Redis
-      # rabbitmq  - Cloud: CloudAMQP
-
+    # redis     - Cloud: Upstash Redis
+    # rabbitmq  - Cloud: CloudAMQP
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.ml.rule=PathPrefix(`/api/ml`)"
-      - "traefik.http.routers.ml.entrypoints=web"
-      - "traefik.http.services.ml.loadbalancer.server.port=8000"
+      - "traefik.http.routers.ml-secure.rule=PathPrefix(`/api/ml`)"
+      - "traefik.http.routers.ml-secure.entrypoints=websecure"
+      - "traefik.http.routers.ml-secure.tls=true"
+      - "traefik.http.routers.ml-secure.tls.certresolver=duckdns"
       - "traefik.http.middlewares.ml-strip.stripprefix.prefixes=/api/ml"
-      - "traefik.http.routers.ml.middlewares=ml-strip"
-
+      - "traefik.http.routers.ml-secure.middlewares=ml-strip,security-headers,rate-limit"
+      - "traefik.http.services.ml.loadbalancer.server.port=8000"
     networks:
       - greenly_network
 
@@ -100,19 +100,18 @@ services:
     restart: unless-stopped
     env_file:
       - .env
-
     # depends_on:
     #   # rabbitmq  - Cloud: CloudAMQP
     #   # mongodb   - Cloud: MongoDB Atlas
     #   # redis     - Cloud: Upstash Redis
-
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.catalog.rule=PathPrefix(`/api/catalog`)"
-      - "traefik.http.routers.catalog.entrypoints=web"
-      - "traefik.http.services.catalog.loadbalancer.server.port=8081"
+      - "traefik.http.routers.catalog-secure.rule=PathPrefix(`/api/catalog`)"
+      - "traefik.http.routers.catalog-secure.entrypoints=websecure"
+      - "traefik.http.routers.catalog-secure.tls=true"
+      - "traefik.http.routers.catalog-secure.tls.certresolver=duckdns"
       - "traefik.http.middlewares.catalog-strip.stripprefix.prefixes=/api/catalog"
-      - "traefik.http.routers.catalog.middlewares=catalog-strip"
-
+      - "traefik.http.routers.catalog-secure.middlewares=catalog-strip,security-headers,rate-limit"
+      - "traefik.http.services.catalog.loadbalancer.server.port=8081"
     networks:
       - greenly_network

@@ -8,13 +8,28 @@ log:
 entryPoints:
   web:
     address: ":80"
+    http:
+      redirections:
+        entryPoint:
+          to: websecure
+          scheme: https
+  websecure:
+    address: ":443"
+
+certificatesResolvers:
+  duckdns:
+    acme:
+      email: misbahulmuttaqin.395@gmail.com
+      storage: /letsencrypt/acme.json
+      dnsChallenge:
+        provider: duckdns
+        delayBeforeCheck: 30
 
 providers:
   docker:
     endpoint: "unix:///var/run/docker.sock"
     exposedByDefault: false
     watch: true
-  
   file:
     filename: /etc/traefik/dynamic.yml
     watch: true
