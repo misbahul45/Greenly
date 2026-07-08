@@ -56,7 +56,7 @@ export default function FormLogin() {
               };
         
 
-        console.log(result)
+        // console.log(result)
 
         toast.success("Login berhasil", {
           description: "Selamat datang kembali 👋",
