@@ -1,4 +1,4 @@
-import { ShopStatus } from "generated/prisma/enums";
+import { ShopStatus } from "@prisma/client";
 
 export interface MeResponse {
   id: string;

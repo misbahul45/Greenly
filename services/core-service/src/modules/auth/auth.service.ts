@@ -7,13 +7,13 @@ import { ConfigService } from '@nestjs/config';
 import { generateOtp, hashValue } from '../../common/utils/crypto';
 import { JwtService } from '@nestjs/jwt';
 import { StringValue } from 'ms';
-import { AuthTokenType } from '../../../generated/prisma/enums';
+import { AuthTokenType } from '@prisma/client';
 import { UserRegisteredPublisher } from './publisher/user_registered.publisher';
 import { UserForgotPasswordPublisher } from './publisher/user_forgot_password.publisher';
 import { UserLoginPublisher } from './publisher/user_login.publisher';
 import { UserResendTokenPublisher } from './publisher/user_resend_token.publisher';
 import { ChangePasswordResponse, LoginResponse, RefreshTokenResponse, RegisterResponse, VerifyEmailResponse } from './types';
-import { AuthToken } from 'generated/prisma/client';
+import { AuthToken } from '@prisma/client';
 
 @Injectable()
 export class AuthService {

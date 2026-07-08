@@ -1,4 +1,4 @@
-import { PrismaClient } from "../../generated/prisma/client";
+import { PrismaClient } from "@prisma/client";
 
 export async function seedBanners(prisma: PrismaClient, promoIds: string[]) {
     const future = new Date("2026-12-31T23:59:59Z");

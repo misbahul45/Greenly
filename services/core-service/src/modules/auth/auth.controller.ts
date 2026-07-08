@@ -30,7 +30,7 @@ import ErrorHandler from 'src/libs/errors/handler.error';
 import { ZodValidationPipe } from 'src/libs/pipes/zod-validation.pipe';
 import { Public } from './decorators/public.decorator';
 import { CurrentUser } from './decorators/current-user.decorator';
-import { AuthTokenType } from './../../../generated/prisma/enums';
+import { AuthTokenType } from '@prisma/client';
 import { JwtRefreshGuard } from './guards/jwt.refresh.guard';
 import { AppError } from './../../libs/errors/app.error';
 

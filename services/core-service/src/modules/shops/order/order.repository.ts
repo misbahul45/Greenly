@@ -1,7 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import { DatabaseService } from "../../../libs/database/database.service";
-import { OrderStatus } from "../../../../generated/prisma/enums";
-import { Prisma } from "../../../../generated/prisma/browser";
+import { OrderStatus } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 
 @Injectable()
 export class OrderRepository {

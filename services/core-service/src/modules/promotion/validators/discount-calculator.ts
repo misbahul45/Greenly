@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { PromotionType } from '../../../../generated/prisma/enums';
+import { PromotionType } from '@prisma/client';
 import { DiscountResult } from '../interfaces/discount-result.interface';
 
 export interface PromotionForCalculation {

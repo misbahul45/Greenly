@@ -1,4 +1,4 @@
-import { PrismaClient } from '../../generated/prisma/client'
+import { PrismaClient } from '@prisma/client'
 
 export async function seedLedgers(prisma: PrismaClient, shopIds: Record<string, string>) {
   const ledgerData: Array<{

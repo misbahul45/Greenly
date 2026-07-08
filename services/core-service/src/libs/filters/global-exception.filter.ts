@@ -7,7 +7,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
-import { Prisma } from '../../../generated/prisma/client';
+import { Prisma } from '@prisma/client';
 import { AppError } from '../errors/app.error';
 import { sanitizeForLog, stringifyForLog } from '../utils/log-sanitizer';
 
@@ -51,8 +51,8 @@ export class GlobalExceptionFilter implements ExceptionFilter {
         typeof exceptionResponse === 'object'
           ? exceptionResponse.errors ?? null
           : null;
-      cause = exception.cause;
-    } else if (exception instanceof Prisma.PrismaClientKnownRequestError) {
+      cause = exception.cause as any;
+    } else if (exception instanceof Prisma.PrismaClientKnownRequestError ) {
       status = this.mapPrismaStatus(exception.code);
       message = this.mapPrismaMessage(exception.code);
       prismaCode = exception.code;

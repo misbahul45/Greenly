@@ -1,5 +1,5 @@
 import { HttpException, Logger } from '@nestjs/common';
-import { Prisma } from '../../../generated/prisma/client';
+import { Prisma } from '@prisma/client';
 import { AppError } from './app.error';
 
 const logger = new Logger('ErrorHandler');

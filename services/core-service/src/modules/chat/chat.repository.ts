@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { randomUUID } from 'crypto';
-import { Prisma } from '../../../generated/prisma/client';
+import { Prisma } from '@prisma/client';
 import { AppError } from '../../libs/errors/app.error';
 import { DatabaseService } from '../../libs/database/database.service';
 import { ChatQueryDto, CreateConversationDto } from './chat.dto';

@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common'
 import { DatabaseService } from '../../../libs/database/database.service'
-import { AuthTokenType, Prisma, UserStatus } from '../../../../generated/prisma/client'
+import { AuthTokenType, Prisma, UserStatus } from '@prisma/client'
 
 @Injectable()
 export class UsersRepositository {

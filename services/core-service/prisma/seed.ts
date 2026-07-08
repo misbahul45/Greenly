@@ -1,4 +1,4 @@
-import { PrismaClient } from '../generated/prisma/client'
+import { PrismaClient } from '@prisma/client'
 import { createPrismaAdapter } from './adapter'
 import { seedRbac } from './seeds/role.seed'
 import { seedUsers } from './seeds/user.seed'

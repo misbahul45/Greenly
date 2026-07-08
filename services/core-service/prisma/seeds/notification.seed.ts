@@ -1,4 +1,4 @@
-import { PrismaClient } from '../../generated/prisma/client'
+import { PrismaClient } from '@prisma/client'
 
 export async function seedNotifications(prisma: PrismaClient, userIds: Record<string, string>) {
   const allUserIds = Object.values(userIds)

@@ -1,4 +1,4 @@
-import { ShopApplication } from "generated/prisma/client";
+import { ShopApplication } from "@prisma/client";
 
 export interface CreateShopApplicationResponse extends ShopApplication { }
 

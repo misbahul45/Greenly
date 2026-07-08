@@ -1,7 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import { DatabaseService } from "../../../libs/database/database.service";
 import { AddMemberDTO, UpdateMemberRoleDTO, type ShopMemberQueryDTO } from "./member.dto";
-import { Prisma } from "../../../../generated/prisma/browser";
+import { Prisma } from "@prisma/client";
 
 @Injectable()
 export class MemberRepository {

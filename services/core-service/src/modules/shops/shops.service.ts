@@ -3,7 +3,7 @@ import { ShopsRepository } from "./shops.repository"
 import { ShopCreatedPublisher } from "./publisher/shop.created.publisher"
 import { CreateShopDTO, UpdateShopDTO, ShopQueryDTO } from "./shops.dto"
 import { AppError } from "../../libs/errors/app.error"
-import { ShopStatus } from "../../../generated/prisma/enums"
+import { ShopStatus } from "@prisma/client"
 import { randomUUID } from "crypto"
 
 @Injectable()

@@ -1,4 +1,4 @@
-import { Promotion } from '../../../../generated/prisma/browser';
+import { Promotion } from '@prisma/client';
 import { CartItemDto } from '../promotion.dto';
 import { DiscountResult } from './discount-result.interface';
 

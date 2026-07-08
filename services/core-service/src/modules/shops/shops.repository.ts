@@ -1,7 +1,7 @@
 import { Injectable } from "@nestjs/common"
 import { DatabaseService } from "../../libs/database/database.service"
-import { ShopStatus } from "../../../generated/prisma/enums"
-import { Prisma } from "../../../generated/prisma/browser"
+import { ShopStatus } from "@prisma/client"
+import { Prisma } from "@prisma/client"
 import { ShopFilters, ShopQueryParams } from "./types"
 
 @Injectable()

@@ -1,5 +1,5 @@
-import { UserProfile } from "generated/prisma/browser";
-import { User } from "generated/prisma/client";
+import { UserProfile } from "@prisma/client";
+import { User } from "@prisma/client";
 import { MeResponse } from "src/modules/identity/me/types";
 import { UserResponse } from "src/modules/identity/users/types";
 

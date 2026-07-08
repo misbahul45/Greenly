@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { MessaggingService } from '../../../libs/messagging/messagging.service';
-import { PromotionType } from '../../../../generated/prisma/enums';
+import { PromotionType } from '@prisma/client';
 
 export interface PromotionCreatedPayload {
   promotionId: string;

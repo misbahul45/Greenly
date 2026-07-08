@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { DatabaseService } from '../../../libs/database/database.service';
-import { Prisma } from '../../../../generated/prisma/browser';
+import { Prisma } from '@prisma/client';
 import { CreateLedgerDto } from './dto';
 import { ListLedgersQueryDto } from './dto';
 

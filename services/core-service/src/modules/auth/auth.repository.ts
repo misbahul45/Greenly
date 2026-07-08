@@ -3,9 +3,8 @@ import { DatabaseService } from '../../libs/database/database.service';
 import { RegisterDTO } from "./auth.dto";
 import { randomAvatarUrl } from "../../common/utils/random-avatar";
 import { generateOtp, hashValue } from "../../common/utils/crypto";
-import { AuthTokenType, UserStatus } from "../../../generated/prisma/enums";
-import * as bcrypt from 'bcrypt'
-import { AuthToken } from "generated/prisma/client";
+import { AuthTokenType, UserStatus } from "@prisma/client";
+import { AuthToken } from "@prisma/client";
 @Injectable()
 export class AuthRepository{
     constructor(

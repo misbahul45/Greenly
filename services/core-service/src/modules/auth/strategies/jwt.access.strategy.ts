@@ -3,7 +3,7 @@ import {PassportStrategy} from "@nestjs/passport";
 import {Strategy, ExtractJwt, StrategyOptionsWithRequest} from "passport-jwt";
 import {ConfigService} from "@nestjs/config";
 import {AuthRepository} from "../auth.repository";
-import {UserStatus} from "../../../../generated/prisma/enums";
+import {UserStatus} from "@prisma/client";
 import {AppError} from "../../../libs/errors/app.error";
 import {Request} from "express";
 
