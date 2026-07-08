@@ -64,7 +64,7 @@ export default function FormLogin() {
         });
 
         navigate({
-          to:dummyLoginResponse.user.roles.includes('SUPER_ADMIN')?'/admin/dashboard':'/seller/dashboard'
+          to:value.email.includes('rani')?'/admin/dashboard':'/seller/dashboard'
         })
       } catch (error: any) {
         console.log(error)
