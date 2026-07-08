@@ -6,23 +6,21 @@ volumes:
   # mysql_data:       # Cloud: Railway MySQL
   # mongo_data:       # Cloud: MongoDB Atlas
   # redis_data:       # Cloud: Upstash Redis
-  core_node_modules:
-  catalog_node_modules:
-  ml_venv:
   go_mod_cache:
-  flutter_pub_cache:
-  flutter_gradle_cache:
-  flutter_android_sdk:
+  # flutter_pub_cache:
+  # flutter_gradle_cache:
+  # flutter_android_sdk:
 
 services:
   traefik:
     image: traefik:v2.11
     command:
-      - "--api.insecure=${TRAEFIK_API_INSECURE:-true}"
+      - "--api.insecure=${TRAEFIK_API_INSECURE:-false}"
       - "--providers.docker=true"
       - "--providers.docker.exposedbydefault=false"
       - "--providers.docker.network=${COMPOSE_PROJECT_NAME:-greenly}_network"
       - "--entrypoints.web.address=:${HTTP_PORT:-80}"
+    restart: unless-stopped
     ports:
       - "${HTTP_PORT:-80}:${HTTP_PORT:-80}"
       - "${TRAEFIK_DASHBOARD_PORT:-8080}:8080"
@@ -31,67 +29,16 @@ services:
     networks:
       - greenly_network
 
-  # mysql:
-  #   image: mysql:8.0
-  #   restart: always
-  #   environment:
-  #     MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-  #     MYSQL_DATABASE: ${MYSQL_DATABASE}
-  #     MYSQL_USER: ${MYSQL_USER}
-  #     MYSQL_PASSWORD: ${MYSQL_PASSWORD}
-  #   ports:
-  #     - "${MYSQL_PORT:-3307}:${MYSQL_CONTAINER_PORT:-3306}"
-  #   volumes:
-  #     - mysql_data:/var/lib/mysql
-  #   networks:
-  #     - greenly_network
-  # Local development only. Production/cloud dev uses Railway MySQL.
-
-  # mongodb:
-  #   image: mongo:7
-  #   restart: always
-  #   environment:
-  #     MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
-  #     MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
-  #   ports:
-  #     - "${MONGODB_PORT:-27017}:${MONGODB_CONTAINER_PORT:-27017}"
-  #   volumes:
-  #     - mongo_data:/data/db
-  #   networks:
-  #     - greenly_network
-  # Local development only. Production/cloud dev uses MongoDB Atlas.
-
-  # redis:
-  #   image: redis:7
-  #   restart: always
-  #   ports:
-  #     - "${REDIS_PORT:-6379}:${REDIS_CONTAINER_PORT:-6379}"
-  #   volumes:
-  #     - redis_data:/data
-  #   networks:
-  #     - greenly_network
-  # Local development only. Production/cloud dev uses Upstash Redis.
-
-  # rabbitmq:
-  #   image: rabbitmq:3-management
-  #   container_name: ${RABBITMQ_CONTAINER_NAME:-greenly_rabbitmq}
-  #   restart: always
-  #   environment:
-  #     RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
-  #     RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
-  #   ports:
-  #     - "${RABBITMQ_PORT:-5672}:${RABBITMQ_CONTAINER_PORT:-5672}"
-  #     - "${RABBITMQ_MANAGEMENT_PORT:-15672}:${RABBITMQ_MANAGEMENT_CONTAINER_PORT:-15672}"
-  #   networks:
-  #     - greenly_network
-  # Local development only. Production/cloud dev uses CloudAMQP.
+  # mysql:      # Local development only. Production uses Railway MySQL.
+  # mongodb:    # Local development only. Production uses MongoDB Atlas.
+  # redis:      # Local development only. Production uses Upstash Redis.
+  # rabbitmq:   # Local development only. Production uses CloudAMQP.
 
   core-service:
     build:
       context: ./services/core-service
-      dockerfile: Dockerfile.dev
-    volumes:
-      - core_node_modules:/app/node_modules
+      dockerfile: Dockerfile
+    restart: unless-stopped
     env_file:
       - .env
 
@@ -99,19 +46,6 @@ services:
     #   # mysql     - Cloud: Railway MySQL
     #   # redis     - Cloud: Upstash Redis
     #   # rabbitmq  - Cloud: CloudAMQP
-
-
-    # develop:
-    #   watch:
-    #     - action: sync
-    #       path: ./services/core-service
-    #       target: /app
-    #       ignore:
-    #         - node_modules/
-    #         - dist/
-
-    #     - action: rebuild
-    #       path: ./services/core-service/package.json
 
     labels:
       - "traefik.enable=true"
@@ -127,12 +61,8 @@ services:
   ml-engine:
     build:
       context: ./services/ml-engine
-      dockerfile: Dockerfile.dev
-
-    volumes:
-      - ./services/ml-engine:/app
-      - ml_venv:/app/.venv
-    
+      dockerfile: Dockerfile
+    restart: unless-stopped
     env_file:
       - .env
 
@@ -140,16 +70,6 @@ services:
       - catalog-service
       # redis     - Cloud: Upstash Redis
       # rabbitmq  - Cloud: CloudAMQP
-
-      
-    # develop:
-    #   watch:
-    #     - action: sync
-    #       path: ./services/ml-engine
-    #       target: /app
-
-    #     - action: rebuild
-    #       path: ./services/ml-engine/pyproject.toml
 
     labels:
       - "traefik.enable=true"
@@ -162,21 +82,13 @@ services:
     networks:
       - greenly_network
 
+  # ml-worker (Celery) dimatikan di production
   # ml-worker:
   #   build:
   #     context: ./services/ml-engine
-  #     dockerfile: Dockerfile.dev
-  #   volumes:
-  #     - ./services/ml-engine:/app
-  #     - ml_venv:/app/.venv
+  #     dockerfile: Dockerfile
   #   env_file:
   #     - .env
-
-  #   # depends_on:
-  #   #   # rabbitmq  - Cloud: CloudAMQP
-  #   #   # redis     - Cloud: Upstash Redis
-
-      
   #   command: uv run celery -A app.workers.celery_app worker --loglevel=info --concurrency=2
   #   networks:
   #     - greenly_network
@@ -184,23 +96,15 @@ services:
   catalog-service:
     build:
       context: ./services/catalog-service
-      dockerfile: Dockerfile.dev
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    env_file:
+      - .env
 
     # depends_on:
     #   # rabbitmq  - Cloud: CloudAMQP
     #   # mongodb   - Cloud: MongoDB Atlas
     #   # redis     - Cloud: Upstash Redis
-    env_file:
-      - .env
-
-    # develop:
-    #   watch:
-    #     - action: sync
-    #       path: ./services/catalog-service
-    #       target: /app
-
-    #     - action: rebuild
-    #       path: ./services/catalog-service/go.mod
 
     labels:
       - "traefik.enable=true"
@@ -212,127 +116,3 @@ services:
 
     networks:
       - greenly_network
-
-  # flutter-android-build:
-  #   profiles:
-  #     - android
-  #   build:
-  #     context: ./apps/app
-  #     dockerfile: Dockerfile.android
-  #   working_dir: /app
-  #   volumes:
-  #     - ./apps/app:/app
-  #     - flutter_pub_cache:/root/.pub-cache
-  #     - flutter_gradle_cache:/root/.gradle
-  #     - flutter_android_sdk:/opt/android-sdk
-  #   environment:
-  #     APP_ENV: ${APP_ENV:-development}
-  #     API_URL: ${API_URL:-http://localhost/api}
-  #     ANDROID_HOME: /opt/android-sdk
-  #     ANDROID_SDK_ROOT: /opt/android-sdk
-  #     GRADLE_USER_HOME: /root/.gradle
-  #     PUB_CACHE: /root/.pub-cache
-  #     JAVA_TOOL_OPTIONS: "-Dfile.encoding=UTF-8"
-  #   command: >
-  #     sh -c "
-  #       flutter pub get &&
-  #       flutter analyze &&
-  #       flutter build apk --debug
-  #         --dart-define=API_URL=\"$${API_URL}\"
-  #     "
-  #   develop:
-  #     watch:
-  #       - action: sync
-  #         path: ./apps/app/lib
-  #         target: /app/lib
-  #       - action: sync
-  #         path: ./apps/app/assets
-  #         target: /app/assets
-  #         ignore:
-  #           - "**/*.psd"
-  #           - "**/*.ai"
-  #       - action: sync
-  #         path: ./apps/app/android
-  #         target: /app/android
-  #       - action: sync
-  #         path: ./apps/app/test
-  #         target: /app/test
-  #       - action: rebuild
-  #         path: ./apps/app/pubspec.yaml
-  #       - action: rebuild
-  #         path: ./apps/app/pubspec.lock
-  #       - action: rebuild
-  #         path: ./apps/app/Dockerfile.android
-  #   networks:
-  #     - greenly_network
-
-  # flutter-android-dev:
-  #   profiles:
-  #     - android
-  #   build:
-  #     context: ./apps/app
-  #     dockerfile: Dockerfile.android
-  #   working_dir: /app
-  #   stdin_open: true
-  #   tty: true
-  #   volumes:
-  #     - ./apps/app:/app
-  #     - flutter_pub_cache:/root/.pub-cache
-  #     - flutter_gradle_cache:/root/.gradle
-  #     - flutter_android_sdk:/opt/android-sdk
-  #   depends_on:
-  #     - core-service
-  #     - catalog-service
-  #     - ml-engine
-  #   environment:
-  #     APP_ENV: ${APP_ENV:-development}
-  #     API_URL: ${API_URL:-http://localhost/api}
-  #     ADB_DEVICE: ${ADB_DEVICE:-}
-  #     ANDROID_HOME: /opt/android-sdk
-  #     ANDROID_SDK_ROOT: /opt/android-sdk
-  #     GRADLE_USER_HOME: /root/.gradle
-  #     PUB_CACHE: /root/.pub-cache
-  #     JAVA_TOOL_OPTIONS: "-Dfile.encoding=UTF-8"
-  #   command: >
-  #     sh -c "
-  #       flutter pub get &&
-  #       if [ -n \"$${ADB_DEVICE}\" ]; then
-  #         adb connect \"$${ADB_DEVICE}\" || true;
-  #         flutter devices;
-  #         flutter run -d \"$${ADB_DEVICE}\"
-  #           --dart-define=API_URL=\"$${API_URL}\";
-  #       else
-  #         echo 'ADB_DEVICE belum diset.';
-  #         echo 'Contoh .env:';
-  #         echo 'API_URL=http://192.168.18.141/api';
-  #         echo 'ADB_DEVICE=192.168.18.xxx:5555';
-  #         echo 'Lalu jalankan: docker compose --profile android up --watch flutter-android-dev';
-  #         exit 1;
-  #       fi
-  #     "
-  #   develop:
-  #     watch:
-  #       - action: sync
-  #         path: ./apps/app/lib
-  #         target: /app/lib
-  #       - action: sync
-  #         path: ./apps/app/assets
-  #         target: /app/assets
-  #         ignore:
-  #           - "**/*.psd"
-  #           - "**/*.ai"
-  #       - action: sync
-  #         path: ./apps/app/android
-  #         target: /app/android
-  #       - action: sync
-  #         path: ./apps/app/test
-  #         target: /app/test
-  #       - action: sync
-  #         path: ./apps/app/pubspec.yaml
-  #         target: /app/pubspec.yaml
-  #       - action: rebuild
-  #         path: ./apps/app/pubspec.lock
-  #       - action: rebuild
-  #         path: ./apps/app/Dockerfile.android
-  #   networks:
-  #     - greenly_network
