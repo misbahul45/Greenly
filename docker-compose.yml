@@ -49,7 +49,7 @@ services:
     #   # rabbitmq  - Cloud: CloudAMQP
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.core-secure.rule=PathPrefix(`/api/core`)"
+      - "traefik.http.routers.core-secure.rule=Host(`greenly-api.duckdns.org`) && PathPrefix(`/api/core`)"
       - "traefik.http.routers.core-secure.entrypoints=websecure"
       - "traefik.http.routers.core-secure.tls=true"
       - "traefik.http.routers.core-secure.tls.certresolver=duckdns"
@@ -72,7 +72,7 @@ services:
     # rabbitmq  - Cloud: CloudAMQP
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.ml-secure.rule=PathPrefix(`/api/ml`)"
+      - "traefik.http.routers.ml-secure.rule=Host(`greenly-api.duckdns.org`) && PathPrefix(`/api/ml`)"
       - "traefik.http.routers.ml-secure.entrypoints=websecure"
       - "traefik.http.routers.ml-secure.tls=true"
       - "traefik.http.routers.ml-secure.tls.certresolver=duckdns"
@@ -106,7 +106,7 @@ services:
     #   # redis     - Cloud: Upstash Redis
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.catalog-secure.rule=PathPrefix(`/api/catalog`)"
+      - "traefik.http.routers.catalog-secure.rule=Host(`greenly-api.duckdns.org`) && PathPrefix(`/api/catalog`)"
       - "traefik.http.routers.catalog-secure.entrypoints=websecure"
       - "traefik.http.routers.catalog-secure.tls=true"
       - "traefik.http.routers.catalog-secure.tls.certresolver=duckdns"
