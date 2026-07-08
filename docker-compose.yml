@@ -43,10 +43,6 @@ services:
     restart: unless-stopped
     env_file:
       - .env
-    # depends_on:
-    #   # mysql     - Cloud: Railway MySQL
-    #   # redis     - Cloud: Upstash Redis
-    #   # rabbitmq  - Cloud: CloudAMQP
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.core-secure.rule=Host(`greenly-api.duckdns.org`) && PathPrefix(`/api/core`)"
@@ -54,9 +50,8 @@ services:
       - "traefik.http.routers.core-secure.tls=true"
       - "traefik.http.routers.core-secure.tls.certresolver=duckdns"
       - "traefik.http.middlewares.core-strip.stripprefix.prefixes=/api/core"
-      - "traefik.http.routers.core-secure.middlewares=core-strip,security-headers,rate-limit"
-      - "traefik.http.services.core.loadbalancer.server.port=3000"
       - "traefik.http.routers.core-secure.middlewares=core-strip,security-headers@file,rate-limit@file"
+      - "traefik.http.services.core.loadbalancer.server.port=3000"
     networks:
       - greenly_network
 
@@ -69,8 +64,6 @@ services:
       - .env
     depends_on:
       - catalog-service
-    # redis     - Cloud: Upstash Redis
-    # rabbitmq  - Cloud: CloudAMQP
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.ml-secure.rule=Host(`greenly-api.duckdns.org`) && PathPrefix(`/api/ml`)"
@@ -78,22 +71,10 @@ services:
       - "traefik.http.routers.ml-secure.tls=true"
       - "traefik.http.routers.ml-secure.tls.certresolver=duckdns"
       - "traefik.http.middlewares.ml-strip.stripprefix.prefixes=/api/ml"
-      - "traefik.http.routers.ml-secure.middlewares=ml-strip,security-headers,rate-limit"
-      - "traefik.http.services.ml.loadbalancer.server.port=8000"
       - "traefik.http.routers.ml-secure.middlewares=ml-strip,security-headers@file,rate-limit@file"
+      - "traefik.http.services.ml.loadbalancer.server.port=8000"
     networks:
       - greenly_network
-
-  # ml-worker (Celery) dimatikan di production
-  # ml-worker:
-  #   build:
-  #     context: ./services/ml-engine
-  #     dockerfile: Dockerfile
-  #   env_file:
-  #     - .env
-  #   command: uv run celery -A app.workers.celery_app worker --loglevel=info --concurrency=2
-  #   networks:
-  #     - greenly_network
 
   catalog-service:
     build:
@@ -102,10 +83,6 @@ services:
     restart: unless-stopped
     env_file:
       - .env
-    # depends_on:
-    #   # rabbitmq  - Cloud: CloudAMQP
-    #   # mongodb   - Cloud: MongoDB Atlas
-    #   # redis     - Cloud: Upstash Redis
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.catalog-secure.rule=Host(`greenly-api.duckdns.org`) && PathPrefix(`/api/catalog`)"
@@ -113,8 +90,7 @@ services:
       - "traefik.http.routers.catalog-secure.tls=true"
       - "traefik.http.routers.catalog-secure.tls.certresolver=duckdns"
       - "traefik.http.middlewares.catalog-strip.stripprefix.prefixes=/api/catalog"
-      - "traefik.http.routers.catalog-secure.middlewares=catalog-strip,security-headers,rate-limit"
-      - "traefik.http.services.catalog.loadbalancer.server.port=8081"
       - "traefik.http.routers.catalog-secure.middlewares=catalog-strip,security-headers@file,rate-limit@file"
+      - "traefik.http.services.catalog.loadbalancer.server.port=8081"
     networks:
       - greenly_network
