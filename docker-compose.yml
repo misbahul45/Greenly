@@ -162,24 +162,24 @@ services:
     networks:
       - greenly_network
 
-  ml-worker:
-    build:
-      context: ./services/ml-engine
-      dockerfile: Dockerfile.dev
-    volumes:
-      - ./services/ml-engine:/app
-      - ml_venv:/app/.venv
-    env_file:
-      - .env
+  # ml-worker:
+  #   build:
+  #     context: ./services/ml-engine
+  #     dockerfile: Dockerfile.dev
+  #   volumes:
+  #     - ./services/ml-engine:/app
+  #     - ml_venv:/app/.venv
+  #   env_file:
+  #     - .env
 
-    # depends_on:
-    #   # rabbitmq  - Cloud: CloudAMQP
-    #   # redis     - Cloud: Upstash Redis
+  #   # depends_on:
+  #   #   # rabbitmq  - Cloud: CloudAMQP
+  #   #   # redis     - Cloud: Upstash Redis
 
       
-    command: uv run celery -A app.workers.celery_app worker --loglevel=info --concurrency=2
-    networks:
-      - greenly_network
+  #   command: uv run celery -A app.workers.celery_app worker --loglevel=info --concurrency=2
+  #   networks:
+  #     - greenly_network
 
   catalog-service:
     build:
