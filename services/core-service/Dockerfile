@@ -9,9 +9,14 @@ COPY package.json pnpm-lock.yaml ./
 RUN pnpm install --frozen-lockfile
 
 COPY . .
+
+# Dummy DATABASE_URL hanya untuk build-time (prisma generate).
+# Value sebenarnya di-supply saat runtime lewat env_file di docker-compose.
+ARG DATABASE_URL="mysql://user:pass@localhost:3306/db"
+ENV DATABASE_URL=$DATABASE_URL
+
 RUN pnpm run build
 
-# hapus devDependencies, sisakan node_modules production-only
 RUN pnpm prune --prod
 
 # ---- Stage 2: runtime ----
