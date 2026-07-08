@@ -1,21 +1,26 @@
-import { Inject, Injectable } from '@nestjs/common';
-import { ClientProxy } from '@nestjs/microservices';
-import { firstValueFrom } from 'rxjs';
-import { RabbitMqEventBusService } from '../../infrastructure/messaging/rabbitmq-event-bus.service';
+import { Inject, Injectable } from "@nestjs/common";
+import { ClientProxy } from "@nestjs/microservices";
+import { RabbitMqEventBusService } from "../../infrastructure/messaging/rabbitmq-event-bus.service";
+import { firstValueFrom } from "rxjs";
 
 @Injectable()
 export class MessaggingService {
-    constructor(
-    @Inject('RABBITMQ_CLIENT')
+  constructor(
+    @Inject("RABBITMQ_CLIENT")
     private readonly client: ClientProxy,
     private readonly eventBus: RabbitMqEventBusService,
   ) {}
 
-  async publish(event: string, payload: any) {
-    return this.eventBus.publish(event, payload);
+  // Event (Fire & Forget)
+  async publish(event: string, payload: unknown) {
+    await this.eventBus.publish(event, payload);
   }
 
-  async request<T = any>(pattern: string, payload: any): Promise<T> {
+  // RPC
+  async request<T>(
+    pattern: string,
+    payload: unknown,
+  ): Promise<T> {
     return firstValueFrom(
       this.client.send<T>(pattern, payload),
     );
