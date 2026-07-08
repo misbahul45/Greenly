@@ -5,7 +5,7 @@ import { StringValue } from 'ms';
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { AuthRepository } from './auth.repository';
-import { EmailConsume } from './consumer/email.consume';
+import { EmailConsumer } from './consumer/email.consume';
 import { UserRegisteredPublisher } from './publisher/user_registered.publisher';
 import { UserLoginPublisher } from './publisher/user_login.publisher';
 import { UserForgotPasswordPublisher } from './publisher/user_forgot_password.publisher';
@@ -44,7 +44,7 @@ function validateJwtSecrets(config: ConfigService) {
     }),
   ],
 
-  controllers: [AuthController, EmailConsume],
+  controllers: [AuthController, EmailConsumer],
 
   providers: [
     AuthRepository,
