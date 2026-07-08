@@ -13,3 +13,4 @@
 # Keep examples
 !.env.example
 !**/.env.example
+letsencrypt/acme.json
