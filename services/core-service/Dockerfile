@@ -13,6 +13,10 @@ COPY . .
 ARG DATABASE_URL="mysql://user:pass@localhost:3306/db"
 ENV DATABASE_URL=$DATABASE_URL
 
+# Paksa V8 pakai heap lebih besar dari default (yang auto-detect dari RAM fisik VPS
+# yang kecil), supaya build bisa "meluber" ke swap saat RAM fisik habis.
+ENV NODE_OPTIONS="--max-old-space-size=2560"
+
 RUN pnpm run build
 
 RUN pnpm prune --prod
