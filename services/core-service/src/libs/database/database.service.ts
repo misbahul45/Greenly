@@ -1,6 +1,6 @@
 import { Injectable, Logger, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
 import { PrismaMariaDb } from '@prisma/adapter-mariadb';
-import { PrismaClient } from '../../../generated/prisma/client';
+import { PrismaClient } from '@prisma/client';
 import * as dotenv from 'dotenv';
 dotenv.config();
 
