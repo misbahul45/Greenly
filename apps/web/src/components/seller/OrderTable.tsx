@@ -47,6 +47,7 @@ export function OrderTable() {
 
   const [shopId, setShopId] = React.useState<string | null>(null);
   const [data, setData] = React.useState<SellerOrder[]>([]);
+  const [selectedOrder, setSelectedOrder] = React.useState<SellerOrder | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [statusFilter, setStatusFilter] = React.useState("ALL");
   const [page] = React.useState(1);
@@ -182,6 +183,7 @@ export function OrderTable() {
                   </TableCell>
                   <TableCell>{new Date(order.createdAt).toLocaleDateString("id-ID")}</TableCell>
                   <TableCell className="text-right space-x-1">
+                    <Button size="sm" variant="outline" onClick={() => setSelectedOrder(order)}>Lihat</Button>
                     {order.status === "PAID" && (
                       <Button size="sm" onClick={() => handleUpdateStatus(order.id, "PROCESSING")}>Proses</Button>
                     )}
@@ -198,6 +200,56 @@ export function OrderTable() {
           </TableBody>
         </Table>
       </div>
+
+      {selectedOrder && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
+            <div className="mb-4">
+              <h2 className="text-lg font-semibold">Detail Pesanan</h2>
+              <p className="text-sm text-muted-foreground">Informasi pesanan masuk seller.</p>
+            </div>
+
+            <div className="space-y-3 rounded-md border p-4 text-sm">
+              <div className="flex justify-between gap-4">
+                <span className="text-muted-foreground">ID Pesanan</span>
+                <span className="text-right font-mono text-xs uppercase">{selectedOrder.id}</span>
+              </div>
+              <div className="flex justify-between gap-4">
+                <span className="text-muted-foreground">Toko</span>
+                <span className="text-right font-medium">{selectedOrder.shopName ?? "Toko Nesa"}</span>
+              </div>
+              <div className="flex justify-between gap-4">
+                <span className="text-muted-foreground">Total</span>
+                <span className="text-right font-medium">
+                  Rp {Number(selectedOrder.totalAmount).toLocaleString("id-ID")}
+                </span>
+              </div>
+              <div className="flex justify-between gap-4">
+                <span className="text-muted-foreground">Status</span>
+                <Badge className={getStatusBadgeClass(selectedOrder.status)}>
+                  {selectedOrder.status}
+                </Badge>
+              </div>
+              <div className="flex justify-between gap-4">
+                <span className="text-muted-foreground">Tanggal</span>
+                <span className="text-right font-medium">
+                  {new Date(selectedOrder.createdAt).toLocaleDateString("id-ID")}
+                </span>
+              </div>
+              <div className="flex justify-between gap-4">
+                <span className="text-muted-foreground">Item</span>
+                <span className="text-right font-medium">{selectedOrder.items?.length ?? 0} produk</span>
+              </div>
+            </div>
+
+            <div className="mt-4 flex justify-end">
+              <Button variant="outline" onClick={() => setSelectedOrder(null)}>
+                Tutup
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
