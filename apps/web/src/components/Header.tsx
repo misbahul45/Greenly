@@ -11,7 +11,7 @@ type HeaderProps = {
 
 export default function Header({
   onOpenSidebar,
-  userName = "Super Admin",
+  userName,
 }: HeaderProps) {
   return (
     <header className="sticky top-0 z-40 border-b bg-[#F9FAFB]">
@@ -48,17 +48,19 @@ export default function Header({
             <Settings className="h-5 w-5 text-gray-600" />
           </button>
 
-          <div className="flex items-center gap-3 rounded-xl bg-white px-3 py-2 shadow-sm">
-            <div className="text-right leading-tight">
-              <div className="text-sm font-semibold text-gray-800">
-                {userName}
+          {userName && (
+            <div className="flex items-center gap-3 rounded-xl bg-white px-3 py-2 shadow-sm">
+              <div className="text-right leading-tight">
+                <div className="text-sm font-semibold text-gray-800">
+                  {userName}
+                </div>
+              </div>
+
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#D1A87A] font-semibold text-white">
+                {userName.slice(0, 1)}
               </div>
             </div>
-
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#D1A87A] font-semibold text-white">
-              {userName?.slice(0, 1)}
-            </div>
-          </div>
+          )}
         </div>
       </div>
     </header>

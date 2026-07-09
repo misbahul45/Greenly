@@ -17,14 +17,7 @@ function SellerLayout() {
       <SidebarSeller open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
       <div className="flex min-h-screen flex-1 flex-col">
-        <Header
-          title="Admin Penjual"
-          userName="Penjual"
-          onOpenSidebar={() => setSidebarOpen(true)}
-        />
-
-        {/* debug biar yakin layout kepanggil */}
-        {/* <div className="px-4 pt-2 text-xs opacity-60">SELLER LAYOUT AKTIF ✅</div> */}
+        <Header onOpenSidebar={() => setSidebarOpen(true)} />
 
         <main className="flex-1 px-4 pb-6 pt-4 sm:px-6 sm:pt-6">
           <Outlet />

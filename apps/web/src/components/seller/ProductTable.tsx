@@ -55,11 +55,35 @@ export function ProductTableFull() {
   });
 
   React.useEffect(() => {
+    let cancelled = false;
+
+    setLoading(true);
     getMyShop().then(res => {
+      if (cancelled) return;
       const id = res.data?.id || res.data?.shop?.id;
-      if (id) setShopId(id);
+      if (id) {
+        setShopId(id);
+      } else {
+        toast.error("Toko seller tidak ditemukan");
+        setLoading(false);
+      }
+    }).catch(() => {
+      if (cancelled) return;
+      toast.error("Gagal memuat toko seller");
+      setLoading(false);
     });
-    getCategories({ data: { limit: 100 } }).then(res => setCategories(res.data));
+
+    getCategories({ data: { limit: 100 } })
+      .then(res => {
+        if (!cancelled) setCategories(res.data);
+      })
+      .catch(() => {
+        if (!cancelled) toast.error("Gagal memuat kategori");
+      });
+
+    return () => {
+      cancelled = true;
+    };
   }, [getMyShop, getCategories]);
 
   React.useEffect(() => {
@@ -68,7 +92,10 @@ export function ProductTableFull() {
   }, [search]);
 
   const fetchData = React.useCallback(async () => {
-    if (!shopId) return;
+    if (!shopId) {
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     try {
       const res = await getProducts({

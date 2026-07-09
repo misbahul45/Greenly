@@ -30,14 +30,34 @@ function LaporanKeuanganPage() {
   const [typeFilter, setTypeFilter] = useState("Semua")
 
   useEffect(() => {
+    let cancelled = false;
+
+    setLoading(true);
     getMyShop().then(res => {
+      if (cancelled) return;
       const id = res.data?.id || res.data?.shop?.id;
-      if (id) setShopId(id);
+      if (id) {
+        setShopId(id);
+      } else {
+        toast.error("Toko seller tidak ditemukan");
+        setLoading(false);
+      }
+    }).catch(() => {
+      if (cancelled) return;
+      toast.error("Gagal memuat toko seller");
+      setLoading(false);
     });
+
+    return () => {
+      cancelled = true;
+    };
   }, [getMyShop]);
 
   const fetchData = useCallback(async () => {
-    if (!shopId) return;
+    if (!shopId) {
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     try {
       const [balRes, ledgerRes] = await Promise.all([

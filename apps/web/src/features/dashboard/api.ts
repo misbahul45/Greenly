@@ -12,6 +12,8 @@ type ApiResult<T> = {
   }
 }
 
+const API_TIMEOUT_MS = 15000
+
 function apiBaseUrl() {
   const coreUrl = process.env.API_URL
   if (coreUrl) {
@@ -22,6 +24,7 @@ function apiBaseUrl() {
 
 async function request<T>(path: string, accessToken?: string, refreshToken?: string) {
   const response = await axios.get<ApiResult<T>>(`${apiBaseUrl()}${path}`, {
+    timeout: API_TIMEOUT_MS,
     headers: {
       ...(accessToken && { Authorization: `Bearer ${accessToken}` }),
       ...(refreshToken && { "x-refresh-token": refreshToken }),

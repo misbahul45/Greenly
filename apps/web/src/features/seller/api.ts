@@ -15,6 +15,8 @@ type ApiResult<T> = {
   message?: string
 }
 
+const API_TIMEOUT_MS = 15000
+
 function apiBaseUrl() {
   const coreUrl = process.env.API_URL
   if (coreUrl) {
@@ -34,6 +36,7 @@ async function request<T>(
     method,
     url: `${apiBaseUrl()}${path}`,
     data,
+    timeout: API_TIMEOUT_MS,
     headers: {
       ...(accessToken && { Authorization: `Bearer ${accessToken}` }),
       ...(refreshToken && { "x-refresh-token": refreshToken }),
