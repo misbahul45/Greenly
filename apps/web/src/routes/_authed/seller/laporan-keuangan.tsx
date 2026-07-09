@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router"
 import { useMemo, useState, useEffect, useCallback } from "react"
 import { useServerFn } from "@tanstack/react-start"
-import { firstShopFromPayload, getShopBalanceFn, getShopLedgerFn, getMyShopFn } from "#/features/seller/api.server"
+import { firstShopFromPayload, getShopBalanceFn, getShopLedgerFn, getMyShopFn } from "#/features/seller/api"
 import { toast } from "sonner"
 
 export const Route = createFileRoute("/_authed/seller/laporan-keuangan")({
