@@ -20,8 +20,8 @@ import {
   getMyShopFn,
   firstShopFromPayload,
   type SellerProduct
-} from "#/features/seller/api";
-import { getCategoriesFn, type AdminCategory } from "#/features/admin/api";
+} from "#/features/seller/api.server";
+import { getCategoriesFn, type AdminCategory } from "#/features/admin/api.server";
 
 type FormMode = "create" | "edit";
 

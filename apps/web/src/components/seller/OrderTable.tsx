@@ -11,7 +11,7 @@ import {
 import { Button } from "#/components/ui/button";
 import { Badge } from "#/components/ui/badge";
 import { useServerFn } from "@tanstack/react-start";
-import { firstShopFromPayload, getShopOrdersFn, updateOrderStatusFn, getMyShopFn, type SellerOrder } from "#/features/seller/api";
+import { firstShopFromPayload, getShopOrdersFn, updateOrderStatusFn, getMyShopFn, type SellerOrder } from "#/features/seller/api.server";
 
 const fallbackOrders: SellerOrder[] = [
   {
