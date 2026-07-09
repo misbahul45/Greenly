@@ -41,22 +41,11 @@ export default function FormLogin() {
     },
     onSubmit: async ({ value }) => {
       try {
-        // const result = await loginFn({ data: value });
-        const dummyLoginResponse: LoginResponse = {
-                tokens: {
-                  accessToken: "dummy-access-token-123456",
-                  refreshToken: "dummy-refresh-token-abcdef",
-                },
-                user: {
-                  id: 1,
-                  email: "admin@example.com",
-                  name: "Admin User",
-                  roles: ["ADMIN"],
-                },
-              };
+        const response = await loginFn({ data: value });
+        const result = response.data as LoginResponse;
         
 
-        // console.log(result)
+         console.log(result)
 
         toast.success("Login berhasil", {
           description: "Selamat datang kembali 👋",
@@ -64,7 +53,7 @@ export default function FormLogin() {
         });
 
         navigate({
-          to:dummyLoginResponse.user.roles.includes('rani')?'/admin/dashboard':'/seller/dashboard'
+          to:result.user.roles.includes('ADMIN')?'/admin/dashboard':'/seller/dashboard'
         })
       } catch (error: any) {
         console.log(error)
