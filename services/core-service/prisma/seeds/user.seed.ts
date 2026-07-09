@@ -27,7 +27,7 @@ export async function seedUsers(prisma: PrismaClient) {
   ]
 
   const shopOwners = [
-    { email: 'nesa@gmail.com', password: 'toko12345', fullName: 'nessa', phone: '081234500001', address: 'Jl. Elektronik No. 1, Jakarta' },
+    { email: 'nesa@gmail.com', password: 'nesa12345', fullName: 'nessa', phone: '081234500001', address: 'Jl. Elektronik No. 1, Jakarta' },
     { email: 'fashion.store@gmail.com', password: 'fashion12345', fullName: 'Sari Dewi', phone: '081234500002', address: 'Jl. Mode No. 2, Bandung' },
     { email: 'kuliner.nusantara@gmail.com', password: 'kuliner12345', fullName: 'Bambang Sutrisno', phone: '081234500003', address: 'Jl. Kuliner No. 3, Surabaya' },
     { email: 'sport.gear@gmail.com', password: 'sport12345', fullName: 'Indra Gunawan', phone: '081234500004', address: 'Jl. Olahraga No. 4, Yogyakarta' },
