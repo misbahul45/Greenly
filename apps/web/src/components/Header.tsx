@@ -1,12 +1,6 @@
 "use client"
 
-import * as React from "react"
-import { useNavigate } from "@tanstack/react-router"
-import { useServerFn } from "@tanstack/react-start"
-import { Bell, LogOut, Menu, Search, Settings } from "lucide-react"
-import { toast } from "sonner"
-
-import { logoutFn } from "#/server/auth"
+import { Bell, Menu, Search, Settings } from "lucide-react"
 
 type HeaderProps = {
   title?: string
@@ -20,30 +14,6 @@ export default function Header({
   onOpenSidebar,
   userName = "Super Admin",
 }: HeaderProps) {
-  const navigate = useNavigate()
-  const logout = useServerFn(logoutFn)
-  const [isLoggingOut, setIsLoggingOut] = React.useState(false)
-
-  const handleLogout = async () => {
-    if (isLoggingOut) return
-
-    setIsLoggingOut(true)
-    try {
-      await logout()
-      toast.success("Logout berhasil", {
-        position: "bottom-right",
-      })
-      await navigate({ to: "/auth/login" })
-    } catch (error: any) {
-      toast.error("Logout gagal", {
-        description: error.message ?? "Terjadi kesalahan",
-        position: "bottom-right",
-      })
-    } finally {
-      setIsLoggingOut(false)
-    }
-  }
-
   return (
     <header className="sticky top-0 z-40 border-b bg-[#F9FAFB]">
       <div className="flex items-center gap-4 px-4 py-3">
@@ -80,17 +50,6 @@ export default function Header({
 
           <button type="button" aria-label="Pengaturan">
             <Settings className="h-5 w-5 text-gray-600" />
-          </button>
-
-          <button
-            type="button"
-            onClick={handleLogout}
-            disabled={isLoggingOut}
-            className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-white text-red-600 shadow-sm transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
-            aria-label="Logout"
-            title="Logout"
-          >
-            <LogOut className="h-5 w-5" />
           </button>
 
           <div className="flex items-center gap-3 rounded-xl bg-white px-3 py-2 shadow-sm">
