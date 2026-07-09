@@ -1,7 +1,7 @@
 import { PrismaClient } from '@prisma/client'
 
 export async function seedShops(prisma: PrismaClient, userIds: Record<string, string>) {
-const shopsData = [
+  const shopsData = [
     {
       id: 'shop_ecoware_001',
       ownerEmail: 'toko.elektronik@gmail.com',
@@ -31,9 +31,7 @@ const shopsData = [
       balance: 3800000,
       followerCount: 245,
       application: {
-        // Gambar representasi ID Card lanyard
         idCardUrl: 'https://images.unsplash.com/photo-1589829085413-56de8ae18c73?q=80&w=500&auto=format&fit=crop',
-        // Selfie portrait wanita (Sari Dewi)
         selfieUrl: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?q=80&w=500&auto=format&fit=crop',
         nib: '2345678901234',
         npwp: '23.456.789.0-123.000',
@@ -53,9 +51,7 @@ const shopsData = [
       balance: 2400000,
       followerCount: 421,
       application: {
-        // Gambar verifikasi dokumen 
         idCardUrl: 'https://images.unsplash.com/photo-1616423640778-28d1b53229bd?q=80&w=500&auto=format&fit=crop',
-        // Selfie portrait pria (Bambang Sutrisno)
         selfieUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=500&auto=format&fit=crop',
         nib: '3456789012345',
         npwp: '34.567.890.1-234.000',
@@ -75,9 +71,7 @@ const shopsData = [
       balance: 4600000,
       followerCount: 534,
       application: {
-        // Gambar dokumen legalitas
         idCardUrl: 'https://images.unsplash.com/photo-1554224155-6726b3ff858f?q=80&w=500&auto=format&fit=crop',
-        // Selfie portrait pria (Indra Gunawan)
         selfieUrl: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?q=80&w=500&auto=format&fit=crop',
         nib: '4567890123456',
         npwp: '45.678.901.2-345.000',
@@ -97,9 +91,7 @@ const shopsData = [
       balance: 3100000,
       followerCount: 178,
       application: {
-        // Gambar id card kantor/bisnis
         idCardUrl: 'https://images.unsplash.com/photo-1563986768609-322da13575f3?q=80&w=500&auto=format&fit=crop',
-        // Selfie portrait wanita (Putri Handayani)
         selfieUrl: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=500&auto=format&fit=crop',
         nib: '5678901234567',
         npwp: '56.789.012.3-456.000',
@@ -118,17 +110,28 @@ const shopsData = [
     const ownerId = userIds[s.ownerEmail]
     if (!ownerId) continue
 
-    const existing = await prisma.shop.findFirst({ where: { ownerId, name: s.name } })
+    // Cari berdasarkan id fixed yang sudah ditentukan, bukan ownerId+name,
+    // supaya id shop tetap stabil & konsisten setiap kali seed dijalankan
+    // (penting kalau id ini dipakai/direferensikan oleh seed produk lain).
+    const existing = await prisma.shop.findUnique({ where: { id: s.id } })
 
     let shop
     if (existing) {
       shop = await prisma.shop.update({
-        where: { id: existing.id },
-        data: { status: s.status, balance: s.balance, followerCount: s.followerCount },
+        where: { id: s.id },
+        data: {
+          ownerId,
+          name: s.name,
+          description: s.description,
+          status: s.status,
+          balance: s.balance,
+          followerCount: s.followerCount,
+        },
       })
     } else {
       shop = await prisma.shop.create({
         data: {
+          id: s.id,
           ownerId,
           name: s.name,
           description: s.description,
@@ -165,6 +168,6 @@ const shopsData = [
     createdShops[s.ownerEmail] = shop.id
   }
 
-  console.log('✅ Shops Seeded Successfully')
+  console.log('✅ Shops Seeded Successfully (id fixed sesuai shopsData)')
   return createdShops
 }
