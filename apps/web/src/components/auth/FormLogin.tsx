@@ -26,6 +26,23 @@ import { Input } from "#/components/ui/input"
 import { LoginSchema } from "#/schema/auth"
 import { loginFn } from "#/server/auth"
 
+function getDashboardPath(roles: string[]) {
+  const normalizedRoles = roles.map((role) => role.toUpperCase())
+
+  if (normalizedRoles.includes("SELLER")) {
+    return "/seller/dashboard"
+  }
+
+  if (
+    normalizedRoles.includes("ADMIN") ||
+    normalizedRoles.includes("SUPER_ADMIN")
+  ) {
+    return "/admin/dashboard"
+  }
+
+  return "/seller/dashboard"
+}
+
 export default function FormLogin() {
   const [showPassword, setShowPassword] = React.useState(false)
   const navigate = useNavigate()
@@ -41,9 +58,6 @@ export default function FormLogin() {
     onSubmit: async ({ value }) => {
       try {
         const response = await loginFn({ data: value })
-        const isAdmin = response.user.roles.some((role) =>
-          ["ADMIN", "SUPER_ADMIN"].includes(role)
-        )
 
         toast.success("Login berhasil", {
           description: "Selamat datang kembali",
@@ -51,7 +65,7 @@ export default function FormLogin() {
         })
 
         await navigate({
-          to: isAdmin ? "/admin/dashboard" : "/seller/dashboard",
+          to: getDashboardPath(response.user.roles),
         })
       } catch (error: any) {
         toast.error("Login gagal", {
