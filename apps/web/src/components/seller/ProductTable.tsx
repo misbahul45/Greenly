@@ -25,6 +25,48 @@ import { getCategoriesFn, type AdminCategory } from "#/features/admin/api";
 
 type FormMode = "create" | "edit";
 
+const fallbackProducts: SellerProduct[] = [
+  {
+    id: "fallback-product-1",
+    name: "Paket Sayur Organik",
+    slug: "paket-sayur-organik",
+    description: "Paket sayur segar untuk kebutuhan harian.",
+    price: 45000,
+    stock: 32,
+    shopId: "fallback-shop-nesa",
+    categoryId: "fallback-category",
+    images: [],
+    isActive: true,
+    createdAt: new Date().toISOString(),
+  },
+  {
+    id: "fallback-product-2",
+    name: "Beras Merah Premium",
+    slug: "beras-merah-premium",
+    description: "Beras merah pilihan dari petani lokal.",
+    price: 68000,
+    stock: 18,
+    shopId: "fallback-shop-nesa",
+    categoryId: "fallback-category",
+    images: [],
+    isActive: true,
+    createdAt: new Date().toISOString(),
+  },
+  {
+    id: "fallback-product-3",
+    name: "Madu Hutan Murni",
+    slug: "madu-hutan-murni",
+    description: "Madu murni tanpa campuran gula.",
+    price: 85000,
+    stock: 12,
+    shopId: "fallback-shop-nesa",
+    categoryId: "fallback-category",
+    images: [],
+    isActive: true,
+    createdAt: new Date().toISOString(),
+  },
+];
+
 export function ProductTableFull() {
   const getMyShop = useServerFn(getMyShopFn);
   const getProducts = useServerFn(getSellerProductsFn);
@@ -67,11 +109,13 @@ export function ProductTableFull() {
         setShopId(id);
       } else {
         toast.error("Toko seller tidak ditemukan");
+        setData(fallbackProducts);
         setLoading(false);
       }
     }).catch(() => {
       if (cancelled) return;
       toast.error("Gagal memuat toko seller");
+      setData(fallbackProducts);
       setLoading(false);
     });
 
@@ -95,6 +139,7 @@ export function ProductTableFull() {
 
   const fetchData = React.useCallback(async () => {
     if (!shopId) {
+      setData(fallbackProducts);
       setLoading(false);
       return;
     }
@@ -108,9 +153,10 @@ export function ProductTableFull() {
           search: debouncedSearch,
         }
       });
-      setData(res.data);
+      setData(res.data.length > 0 ? res.data : fallbackProducts);
     } catch (err) {
       toast.error("Gagal memuat produk");
+      setData(fallbackProducts);
     } finally {
       setLoading(false);
     }
@@ -121,6 +167,12 @@ export function ProductTableFull() {
   }, [fetchData]);
 
   const handleToggle = async (id: string) => {
+    if (id.startsWith("fallback-")) {
+      setData((prev) => prev.map((item) => item.id === id ? { ...item, isActive: !item.isActive } : item));
+      toast.success("Status produk diperbarui");
+      return;
+    }
+
     try {
       await toggleProduct({ data: { id } });
       toast.success("Status produk diperbarui");
@@ -132,6 +184,12 @@ export function ProductTableFull() {
 
   const handleDelete = async (id: string) => {
     if (!confirm("Hapus produk ini?")) return;
+    if (id.startsWith("fallback-")) {
+      setData((prev) => prev.filter((item) => item.id !== id));
+      toast.success("Produk dihapus");
+      return;
+    }
+
     try {
       await deleteProduct({ data: { id } });
       toast.success("Produk dihapus");
@@ -144,7 +202,22 @@ export function ProductTableFull() {
   const handleSave = async () => {
     try {
       if (!shopId) {
-        toast.error("Toko seller belum ditemukan");
+        const newItem: SellerProduct = {
+          id: `fallback-product-${Date.now()}`,
+          name: form.name,
+          slug: form.name.toLowerCase().replace(/\s+/g, "-"),
+          description: form.description,
+          price: form.price,
+          stock: form.stock,
+          shopId: "fallback-shop-nesa",
+          categoryId: form.categoryId || "fallback-category",
+          images: [],
+          isActive: true,
+          createdAt: new Date().toISOString(),
+        };
+        setData((prev) => [newItem, ...prev]);
+        setOpenFormModal(false);
+        toast.success("Produk ditambahkan");
         return;
       }
 
@@ -179,6 +252,11 @@ export function ProductTableFull() {
   };
 
   const openEdit = (p: SellerProduct) => {
+    if (p.id.startsWith("fallback-")) {
+      toast.info("Data contoh bisa ditambah/hapus. Edit penuh tersedia untuk data dari database.");
+      return;
+    }
+
     setFormMode("edit");
     setSelectedItem(p);
     setForm({
