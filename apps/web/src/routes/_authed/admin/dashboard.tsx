@@ -1,309 +1,107 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { createFileRoute } from "@tanstack/react-router"
+import { useServerFn } from "@tanstack/react-start"
+import { getAdminDashboardFn } from "#/features/dashboard/api"
 
 export const Route = createFileRoute("/_authed/admin/dashboard")({
   component: AdminDashboard,
 })
 
+type AdminDashboardData = Awaited<ReturnType<typeof getAdminDashboardFn>>
+
+/*
+const weeklySalesData = { ... } // static dummy data replaced by API
+const orders = [ ... ] // static dummy orders replaced by API
+*/
+
+function formatRupiah(value: number) {
+  return new Intl.NumberFormat("id-ID", {
+    style: "currency",
+    currency: "IDR",
+    maximumFractionDigits: 0,
+  }).format(value)
+}
+
 function AdminDashboard() {
-  const weeklySalesData = {
-    "6-12 Mei 2024": [
-      { day: "Senin", sales: 1200000 },
-      { day: "Selasa", sales: 1800000 },
-      { day: "Rabu", sales: 1400000 },
-      { day: "Kamis", sales: 2200000 },
-      { day: "Jumat", sales: 2000000 },
-      { day: "Sabtu", sales: 2800000 },
-      { day: "Minggu", sales: 3200000 },
-    ],
-    "13-19 Mei 2024": [
-      { day: "Senin", sales: 1500000 },
-      { day: "Selasa", sales: 1700000 },
-      { day: "Rabu", sales: 2100000 },
-      { day: "Kamis", sales: 2600000 },
-      { day: "Jumat", sales: 2300000 },
-      { day: "Sabtu", sales: 3000000 },
-      { day: "Minggu", sales: 3500000 },
-    ],
-    "20-26 Mei 2024": [
-      { day: "Senin", sales: 1100000 },
-      { day: "Selasa", sales: 1600000 },
-      { day: "Rabu", sales: 1900000 },
-      { day: "Kamis", sales: 2400000 },
-      { day: "Jumat", sales: 2200000 },
-      { day: "Sabtu", sales: 2700000 },
-      { day: "Minggu", sales: 3100000 },
-    ],
+  const getDashboard = useServerFn(getAdminDashboardFn)
+  const [data, setData] = useState<AdminDashboardData | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    getDashboard()
+      .then((result) => {
+        setData(result)
+        setError(null)
+      })
+      .catch((err) => {
+        setError(err instanceof Error ? err.message : "Gagal memuat dashboard")
+      })
+      .finally(() => setLoading(false))
+  }, [getDashboard])
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="grid md:grid-cols-4 gap-4">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="bg-white p-4 rounded-xl shadow-sm ring-1 ring-black/5 animate-pulse h-24" />
+          ))}
+        </div>
+      </div>
+    )
   }
 
-  const [selectedWeek, setSelectedWeek] = useState("6-12 Mei 2024")
-
-  const weeklySales =
-    weeklySalesData[selectedWeek as keyof typeof weeklySalesData]
-
-  const maxSales = Math.max(...weeklySales.map((item) => item.sales))
-
-  function exportWeeklySalesCSV() {
-    const headers = ["Periode", "Hari", "Penjualan"]
-    const rows = weeklySales.map((item) => [
-      selectedWeek,
-      item.day,
-      item.sales,
-    ])
-
-    const csvContent = [
-      headers.join(","),
-      ...rows.map((row) => row.join(",")),
-    ].join("\n")
-
-    const blob = new Blob([csvContent], {
-      type: "text/csv;charset=utf-8;",
-    })
-
-    const url = URL.createObjectURL(blob)
-    const link = document.createElement("a")
-
-    link.href = url
-    link.download = `sales-${selectedWeek
-      .replaceAll(" ", "-")
-      .toLowerCase()}.csv`
-
-    link.click()
-    URL.revokeObjectURL(url)
+  if (error || !data) {
+    return (
+      <div className="rounded-xl bg-white p-6 text-red-600 shadow-sm ring-1 ring-black/5">
+        {error ?? "Data tidak tersedia"}
+      </div>
+    )
   }
 
   return (
     <div className="space-y-6">
-      {/* ===== STATS ===== */}
       <div className="grid md:grid-cols-4 gap-4">
-        <Card title="Total Penjualan" value="Rp 128.5M" growth="+12.5%" />
-        <Card title="Toko Aktif" value="1,240" growth="+3.2%" />
-        <Card title="Total Customer" value="8,542" growth="+5.7%" />
-        <Card
-          title="Menunggu Approval"
-          value="42"
-          growth="Segera proses"
-          danger
+        <StatCard title="Total Customer" value={data.totalUsers.toLocaleString("id-ID")} />
+        <StatCard title="Toko Terdaftar" value={data.totalShops.toLocaleString("id-ID")} />
+        <StatCard title="Total Pesanan" value={data.totalOrders.toLocaleString("id-ID")} />
+        <StatCard title="Total Revenue" value={formatRupiah(data.totalRevenue)} />
+      </div>
+
+      <div className="grid md:grid-cols-3 gap-4">
+        <StatCard title="Total Produk" value={data.totalProducts.toLocaleString("id-ID")} />
+        <StatCard title="Total Kategori" value={data.totalCategories.toLocaleString("id-ID")} />
+        <StatCard
+          title="Status ML Engine"
+          value={data.mlStatus === "online" ? "Online" : "Tidak Tersedia"}
+          accent={data.mlStatus === "online" ? "green" : "gray"}
         />
       </div>
-
-      {/* ===== GRAPH + SIDE ===== */}
-      <div className="grid md:grid-cols-3 gap-6">
-        {/* LINE CHART */}
-        <div className="md:col-span-2 bg-white p-6 rounded-xl shadow-sm ring-1 ring-black/5">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
-            <div>
-              <h3 className="font-semibold">Sales Growth</h3>
-              <p className="text-sm text-muted-foreground">
-                Pertumbuhan penjualan periode {selectedWeek}
-              </p>
-            </div>
-
-            <div className="flex flex-col sm:flex-row gap-2">
-              <select
-                value={selectedWeek}
-                onChange={(e) => setSelectedWeek(e.target.value)}
-                className="border px-3 py-2 rounded-lg text-sm bg-white"
-              >
-                {Object.keys(weeklySalesData).map((week) => (
-                  <option key={week} value={week}>
-                    {week}
-                  </option>
-                ))}
-              </select>
-
-              <button
-                onClick={exportWeeklySalesCSV}
-                className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-green-700 transition"
-              >
-                Export CSV
-              </button>
-            </div>
-          </div>
-
-          <div className="w-full overflow-x-auto">
-            <svg viewBox="0 0 700 260" className="min-w-[650px] w-full h-72">
-              {/* GRID LINE */}
-              {[50, 100, 150, 200].map((y) => (
-                <line
-                  key={y}
-                  x1="40"
-                  y1={y}
-                  x2="660"
-                  y2={y}
-                  stroke="#e5e7eb"
-                  strokeWidth="1"
-                />
-              ))}
-
-              {/* LINE */}
-              <polyline
-                fill="none"
-                stroke="#16a34a"
-                strokeWidth="4"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                points={weeklySales
-                  .map((item, index) => {
-                    const x = 60 + index * 95
-                    const y = 220 - (item.sales / maxSales) * 170
-                    return `${x},${y}`
-                  })
-                  .join(" ")}
-              />
-
-              {/* DOT + LABEL */}
-              {weeklySales.map((item, index) => {
-                const x = 60 + index * 95
-                const y = 220 - (item.sales / maxSales) * 170
-
-                return (
-                  <g key={item.day}>
-                    <circle cx={x} cy={y} r="6" fill="#16a34a" />
-
-                    <text
-                      x={x}
-                      y={245}
-                      textAnchor="middle"
-                      className="fill-slate-500 text-xs"
-                    >
-                      {item.day.slice(0, 3)}
-                    </text>
-
-                    <text
-                      x={x}
-                      y={y - 12}
-                      textAnchor="middle"
-                      className="fill-slate-700 text-xs font-semibold"
-                    >
-                      {(item.sales / 1000000).toFixed(1)}jt
-                    </text>
-                  </g>
-                )
-              })}
-            </svg>
-          </div>
-        </div>
-
-        {/* TOKO BARU */}
-        <div className="bg-white p-6 rounded-xl shadow-sm ring-1 ring-black/5">
-          <div className="flex justify-between mb-4">
-            <h3 className="font-semibold">Pendaftaran Toko Baru</h3>
-            <button className="text-green-600 text-sm">Lihat Semua</button>
-          </div>
-
-          <div className="space-y-4">
-            {["Tani Jaya Store", "Berkah Tani", "Sawah Makmur", "Agro Mandiri"].map(
-              (t, i) => (
-                <div key={i} className="flex justify-between items-center">
-                  <div>
-                    <p className="text-sm font-medium">{t}</p>
-                    <p className="text-xs text-muted-foreground">2 jam lalu</p>
-                  </div>
-
-                  <button className="bg-green-600 text-white px-3 py-1 rounded-lg text-xs">
-                    Cek
-                  </button>
-                </div>
-              )
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* ===== TABLE ===== */}
-      <div className="bg-white p-6 rounded-xl shadow-sm ring-1 ring-black/5">
-        <div className="flex justify-between mb-4">
-          <h3 className="font-semibold">Latest Orders</h3>
-
-          <div className="flex gap-2">
-            <button className="border px-3 py-1 rounded-lg text-sm">
-              Export CSV
-            </button>
-
-            <button className="bg-green-600 text-white px-3 py-1 rounded-lg text-sm">
-              View All
-            </button>
-          </div>
-        </div>
-
-        <table className="w-full text-sm">
-          <thead className="text-left text-muted-foreground">
-            <tr>
-              <th>ID Pesanan</th>
-              <th>Pelanggan</th>
-              <th>Toko</th>
-              <th>Nominal</th>
-              <th>Status</th>
-              <th></th>
-            </tr>
-          </thead>
-
-          <tbody className="divide-y">
-            {orders.map((o, i) => (
-              <tr key={i}>
-                <td className="py-3">{o.id}</td>
-                <td>{o.customer}</td>
-                <td>{o.store}</td>
-                <td>{o.price}</td>
-                <td>
-                  <span className={`px-2 py-1 rounded text-xs ${o.color}`}>
-                    {o.status}
-                  </span>
-                </td>
-                <td>👁️</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
     </div>
   )
 }
 
-function Card({ title, value, growth, danger = false }: any) {
+function StatCard({
+  title,
+  value,
+  accent = "default",
+}: {
+  title: string
+  value: string
+  accent?: "green" | "gray" | "default"
+}) {
+  const valueColor =
+    accent === "green"
+      ? "text-green-600"
+      : accent === "gray"
+      ? "text-muted-foreground"
+      : "text-gray-900"
+
   return (
     <div className="bg-white p-4 rounded-xl shadow-sm ring-1 ring-black/5">
-      <p className="text-sm text-muted-foreground">{title}</p>
-      <p className="text-xl font-bold mt-1">{value}</p>
-      <p className={`text-xs mt-1 ${danger ? "text-red-500" : "text-green-600"}`}>
-        {growth}
-      </p>
+      <p className="text-xs font-medium uppercase tracking-wide text-gray-400">{title}</p>
+      <p className={`mt-2 text-2xl font-semibold ${valueColor}`}>{value}</p>
     </div>
   )
 }
-
-const orders = [
-  {
-    id: "#ORD-90231",
-    customer: "Budi Santoso",
-    store: "Tani Jaya Store",
-    price: "Rp 1.450.000",
-    status: "SELESAI",
-    color: "bg-green-100 text-green-700",
-  },
-  {
-    id: "#ORD-90232",
-    customer: "Ani Wijaya",
-    store: "Berkah Tani",
-    price: "Rp 2.890.000",
-    status: "DIPROSES",
-    color: "bg-yellow-100 text-yellow-700",
-  },
-  {
-    id: "#ORD-90233",
-    customer: "Siti Aminah",
-    store: "Agro Mandiri",
-    price: "Rp 850.000",
-    status: "DIKIRIM",
-    color: "bg-blue-100 text-blue-700",
-  },
-  {
-    id: "#ORD-90234",
-    customer: "Rudi Hartono",
-    store: "Tani Jaya Store",
-    price: "Rp 3.120.000",
-    status: "SELESAI",
-    color: "bg-green-100 text-green-700",
-  },
-]
