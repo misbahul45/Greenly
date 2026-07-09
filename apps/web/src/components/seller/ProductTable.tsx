@@ -218,8 +218,10 @@ export function ProductTableFull() {
           shopId: "fallback-shop-nesa",
           categoryId: form.categoryId || "fallback-category",
           images: [],
+          imageUrls: [],
           isActive: true,
           createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
         };
         setData((prev) => [newItem, ...prev]);
         setOpenFormModal(false);
@@ -227,12 +229,17 @@ export function ProductTableFull() {
         return;
       }
 
+      const sku = selectedItem?.slug ?? `SKU-${Date.now()}`;
       const payload = {
-        ...form,
+        name: form.name,
+        description: form.description || undefined,
+        sku,
+        price: form.price,
+        currency: "IDR" as const,
+        stock: form.stock,
         shopId,
-        sku: selectedItem?.slug ?? `SKU-${Date.now()}`,
-        currency: "IDR",
-        imageUrls: selectedItem?.images ?? [],
+        categoryId: form.categoryId,
+        imageUrls: selectedItem?.imageUrls ?? [],
         isActive: true,
       };
 
