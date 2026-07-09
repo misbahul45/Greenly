@@ -123,7 +123,7 @@ function SidebarContent({
                 Greenly Mart
               </div>
               <div className="text-xs text-white/80">
-                Seller
+                Admin Panel
               </div>
             </div>
           </div>
@@ -181,8 +181,8 @@ function SidebarContent({
             </div>
 
             <div className="text-xs leading-tight">
-              <div className="font-medium">Nesa</div>
-              <div className="text-white/80">Seller</div>
+              <div className="font-medium">Admin</div>
+              <div className="text-white/80">Admin</div>
             </div>
           </div>
 

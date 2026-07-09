@@ -118,7 +118,7 @@ function SidebarContent({
           />
           <div className="leading-tight">
             <div className="text-sm font-semibold">Greenly Mart</div>
-            <div className="text-xs text-white/80">Super Admin</div>
+            <div className="text-xs text-white/80">Super Admin Panel</div>
           </div>
         </div>
 
@@ -172,7 +172,7 @@ function SidebarContent({
             </div>
 
             <div className="text-xs leading-tight">
-              <div className="font-medium">Rani</div>
+              <div className="font-medium">Admin</div>
               <div className="text-white/80">Super Admin</div>
             </div>
           </div>
