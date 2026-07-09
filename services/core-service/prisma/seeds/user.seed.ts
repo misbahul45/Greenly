@@ -8,7 +8,7 @@ export async function seedUsers(prisma: PrismaClient) {
   const adminUsers = [
     { email: 'rani@gmail.com', password: 'rani12345', fullName: 'Rani', phone: '081200000001', address: 'Jakarta', role: 'SUPER_ADMIN' },
     { email: 'admin@gmail.com', password: 'admin12345', fullName: 'Admin Utama', phone: '081200000004', address: 'Jakarta', role: 'ADMIN' },
-    { email: 'nesa@gmail.com', password: 'nesa12345', fullName: 'Nesa', phone: '081200000002', address: 'Jakarta', role: 'SELLER' },
+    { email: 'nesa@gmail.com', password: 'nesa12345', fullName: 'Nesa', phone: '081200000002', address: 'Jakarta', role: 'ADMIN' },
     { email: 'misbahulmuttaqin395@gmail.com', password: 'takin123', fullName: 'Misbahul Muttaqin', phone: '081298765432', address: 'Jl. Kapasari No. 21, Surabaya', role: 'CUSTOMER' },
   ]
 
