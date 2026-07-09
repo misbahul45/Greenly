@@ -2,9 +2,9 @@
 
 import * as React from "react"
 import { useForm } from "@tanstack/react-form"
-import { useNavigate } from "@tanstack/react-router"
-import { Eye, EyeOff } from "lucide-react"
 import { toast } from "sonner"
+import { Eye, EyeOff } from "lucide-react"
+import { useNavigate } from "@tanstack/react-router"
 
 import { Button } from "#/components/ui/button"
 import {
@@ -28,16 +28,11 @@ import { loginFn } from "#/server/auth"
 import { hasRole } from "#/lib/roles"
 import type { LoginResponse } from "#/types/login.response"
 
-function getDashboardPath(user: LoginResponse["user"]) {
+function getDashboardPath(user: LoginResponse["user"]): string {
   const roles = user.roles as unknown[]
 
-  if (hasRole(roles, "ADMIN", "SUPER_ADMIN")) {
-    return "/admin/dashboard"
-  }
-
-  if (hasRole(roles, "SELLER")) {
-    return "/seller/dashboard"
-  }
+  if (hasRole(roles, "SUPER_ADMIN")) return "/admin/dashboard"
+  if (hasRole(roles, "ADMIN")) return "/seller/dashboard"
 
   return "/auth/login"
 }
