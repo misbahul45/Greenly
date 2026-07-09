@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react"
 import { createFileRoute } from "@tanstack/react-router"
 import { useServerFn } from "@tanstack/react-start"
-import { getSellerDashboardFn } from "#/features/dashboard/api.server"
+import { getSellerDashboardFn } from "#/features/dashboard/api"
 
 export const Route = createFileRoute("/_authed/seller/dashboard")({
   component: SellerDashboard,

@@ -12,7 +12,7 @@ import {
 import { Input } from "#/components/ui/input";
 import { Button } from "#/components/ui/button";
 import { Badge } from "#/components/ui/badge";
-import { getAllOrdersFn, type AdminOrder } from "#/features/admin/api";
+import { getAllOrdersFn, type AdminOrder } from "#/server/admin";
 import { dummyOrders, type Order } from "#/constants/dummy.table";
 
 type SortOrder = "asc" | "desc";
