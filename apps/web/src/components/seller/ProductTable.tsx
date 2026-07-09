@@ -18,7 +18,6 @@ import {
   deleteProductFn,
   toggleProductFn,
   getMyShopFn,
-  firstShopFromPayload,
 } from "#/server/seller.server";
 import { getCategoriesFn } from "#/server/admin.server";
 import type { SellerProduct } from "#/types/server";
@@ -110,7 +109,8 @@ export function ProductTableFull() {
     setLoading(true);
     getMyShop().then(res => {
       if (cancelled) return;
-      const shop = firstShopFromPayload(res);
+      const shops = Array.isArray(res) ? res : [];
+      const shop = shops[0] ?? null;
       const id = shop?.id;
       if (id) {
         setShopId(id);

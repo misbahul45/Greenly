@@ -5,7 +5,7 @@ import { createApi } from "./api";
 import { apiRequest } from "#/lib/request";
 import { withSession } from "#/server/_request";
 import type { UserResponse } from "#/types/user.me";
-import { useAppSession } from "#/hooks/useSession.server";
+import { useAppSession } from "#/hooks/useSession";
 import type { ApiResponse } from "#/types/api.response";
 import type { LoginResponse } from "#/types/login.response";
 

@@ -12,7 +12,7 @@ import {
 import { Input } from "#/components/ui/input";
 import { Button } from "#/components/ui/button";
 import { Badge } from "#/components/ui/badge";
-import { getAllOrdersFn } from "#/server/admin.server";
+import { getAllOrdersFn } from "#/server/admin";
 import type { AdminOrder } from "#/types/server";
 import { dummyOrders, type Order } from "#/constants/dummy.table";
 

@@ -4,12 +4,7 @@ import { Zod } from "#/lib/zod"
 import { withSession } from "#/server/_request"
 import { createCatalogApi } from "#/server/api"
 import type { ApiMeta } from "#/types/api.response"
-
-/*
-import axios from "axios"
-import { useAppSession } from "#/hooks/useSession"
--- old apiBaseUrl pattern removed, now using withSession helper --
-*/
+import type { SellerProduct, SellerOrder, SellerShop } from "#/types/server"
 
 type ApiResult<T> = {
   data: T
@@ -35,36 +30,19 @@ function cleanParams(obj: Record<string, any>) {
   )
 }
 
-export function firstShopFromPayload(payload: any) {
-  const data = payload?.data
-  if (Array.isArray(data)) return data[0] ?? null
-  if (Array.isArray(data?.data)) return data.data[0] ?? null
-  return data?.shop ?? data ?? null
-}
-
 export const getMyShopFn = createServerFn({ method: "GET" })
   .handler(async () => {
     return withSession(async (api) => {
       const res = await api.get("/shops/me")
-      return res.data
+      const raw = res.data
+      const shops: SellerShop[] = Array.isArray(raw?.data)
+        ? raw.data
+        : Array.isArray(raw)
+        ? raw
+        : []
+      return shops
     })
   })
-
-export type SellerProduct = {
-  id: string
-  name: string
-  slug: string
-  description: string
-  price: number
-  stock: number
-  shopId: string
-  categoryId: string
-  imageUrls: string[]
-  images: string[]
-  isActive: boolean
-  createdAt: string
-  updatedAt: string
-}
 
 const GetSellerProductsSchema = z.object({
   shopId: z.string(),
@@ -137,21 +115,6 @@ export const toggleProductFn = createServerFn({ method: "POST" })
     })
   })
 
-export type SellerOrder = {
-  id: string
-  shopName: string
-  totalAmount: number
-  status: "PENDING" | "PAID" | "PROCESSING" | "SHIPPED" | "COMPLETED" | "CANCELLED"
-  createdAt: string
-  items: {
-    id: string
-    productId: string
-    productName: string
-    price: number
-    quantity: number
-  }[]
-}
-
 const GetShopOrdersSchema = z.object({
   shopId: z.string(),
   page: z.number().optional(),
@@ -200,7 +163,10 @@ export const getShopBalanceFn = createServerFn({ method: "GET" })
   .handler(async ({ data }) => {
     return withSession(async (api) => {
       const res = await api.get(`/shops/${data.shopId}/finance/balance`)
-      return res.data
+      const raw = res.data
+      return {
+        balance: Number(raw?.data?.balance ?? raw?.balance ?? 0),
+      }
     })
   })
 

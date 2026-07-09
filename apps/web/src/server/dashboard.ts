@@ -2,12 +2,6 @@ import { createServerFn } from "@tanstack/react-start"
 import { withSession } from "#/server/_request"
 import { createCatalogApi } from "#/server/api"
 
-/*
-import axios from "axios"
-import { useAppSession } from "#/hooks/useSession"
--- old apiBaseUrl pattern removed, now using withSession helper --
-*/
-
 type ApiResult<T> = {
   data: T
   metaData?: { total?: number }
@@ -23,13 +17,6 @@ function countFrom(payload: ApiResult<unknown>) {
 function sumOrders(payload: ApiResult<any>) {
   const items = Array.isArray(payload.data) ? payload.data : []
   return items.reduce((total: number, item: any) => total + Number(item.totalAmount ?? 0), 0)
-}
-
-function firstShopFromPayload(payload: ApiResult<any>) {
-  const data = payload.data
-  if (Array.isArray(data)) return data[0] ?? null
-  if (Array.isArray(data?.data)) return data.data[0] ?? null
-  return data?.shop ?? data ?? null
 }
 
 export const getAdminDashboardFn = createServerFn({ method: "GET" })
@@ -78,8 +65,15 @@ export const getSellerDashboardFn = createServerFn({ method: "GET" })
       const token = authorization?.toString().replace("Bearer ", "")
       const catalogApi = createCatalogApi(token)
 
-      const shopPayload = await api.get("/shops/me")
-      const shop = firstShopFromPayload(shopPayload.data as ApiResult<any>)
+      const shopRes = await api.get("/shops/me")
+      const raw = shopRes.data
+      const shops: any[] = Array.isArray(raw?.data)
+        ? raw.data
+        : Array.isArray(raw)
+        ? raw
+        : []
+
+      const shop = shops[0] ?? null
       const shopId: string | undefined = shop?.id
 
       if (!shopId) {

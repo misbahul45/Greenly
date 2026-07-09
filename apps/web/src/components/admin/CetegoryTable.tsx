@@ -16,7 +16,7 @@ import {
   createCategoryFn,
   updateCategoryFn,
   deleteCategoryFn,
-} from "#/server/admin.server";
+} from "#/server/admin";
 import type { AdminCategory } from "#/types/server";
 import { dummyCategories, type Category } from "#/constants/dummy.table";
 

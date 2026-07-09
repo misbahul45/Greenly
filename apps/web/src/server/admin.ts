@@ -4,12 +4,13 @@ import { Zod } from "#/lib/zod"
 import { withSession } from "#/server/_request"
 import { createCatalogApi } from "#/server/api"
 import type { ApiMeta } from "#/types/api.response"
-
-/*
-import axios from "axios"
-import { useAppSession } from "#/hooks/useSession"
--- old apiBaseUrl pattern removed, now using withSession helper --
-*/
+import type {
+  AdminUser,
+  AdminShop,
+  ShopApplication,
+  AdminCategory,
+  AdminOrder,
+} from "#/types/server"
 
 type ApiResult<T> = {
   data: T
@@ -33,22 +34,6 @@ function cleanParams(obj: Record<string, any>) {
   return Object.fromEntries(
     Object.entries(obj).filter(([, v]) => v !== undefined && v !== "" && v !== null)
   )
-}
-
-export type AdminUser = {
-  id: string
-  email: string
-  name: string | null
-  status: "ACTIVE" | "SUSPENDED" | "BANNED" | "PENDING_VERIFICATION"
-  isActive: boolean
-  createdAt: string
-  roles: { role: { id: string; name: string } }[]
-  profile: {
-    fullName: string | null
-    phone: string | null
-    address: string | null
-    avatarUrl: string | null
-  } | null
 }
 
 const GetUsersSchema = z.object({
@@ -82,22 +67,6 @@ export const updateUserStatusFn = createServerFn({ method: "POST" })
     })
   })
 
-export type AdminShop = {
-  id: string
-  ownerId: string
-  name: string
-  description: string | null
-  status: "PENDING" | "APPROVED" | "REJECTED" | "SUSPENDED"
-  balance: number
-  createdAt: string
-  owner: {
-    email: string
-    profile?: {
-      fullName: string
-    }
-  }
-}
-
 const GetShopsSchema = z.object({
   page: z.number().optional(),
   limit: z.number().optional(),
@@ -128,28 +97,6 @@ export const updateShopStatusFn = createServerFn({ method: "POST" })
       return res.data
     })
   })
-
-export type ShopApplication = {
-  id: string
-  shopId: string
-  shop: {
-    name: string
-    owner: {
-      email: string
-      profile?: {
-        fullName: string
-      }
-    }
-  }
-  status: "PENDING" | "REVIEW" | "APPROVED" | "REJECTED"
-  createdAt: string
-  reviewedAt?: string | null
-  notes?: string | null
-  idCardUrl: string
-  bankName: string
-  bankAccount: string
-  accountName: string
-}
 
 const GetApplicationsSchema = z.object({
   page: z.number().optional(),
@@ -209,15 +156,6 @@ export const reviewApplicationFn = createServerFn({ method: "POST" })
     })
   })
 
-export type AdminCategory = {
-  id: string
-  name: string
-  slug: string
-  parentId: string | null
-  createdAt: string
-  updatedAt: string
-}
-
 const GetCategoriesSchema = z.object({
   page: z.number().optional(),
   limit: z.number().optional(),
@@ -261,22 +199,6 @@ export const deleteCategoryFn = createServerFn({ method: "POST" })
       return res.data
     })
   })
-
-export type AdminOrder = {
-  id: string
-  userId: string
-  shopId: string
-  shopName: string
-  totalAmount: number
-  status: "PENDING" | "PAID" | "PROCESSING" | "SHIPPED" | "COMPLETED" | "CANCELLED"
-  createdAt: string
-  user: {
-    email: string
-    profile: {
-      fullName: string
-    }
-  }
-}
 
 const GetAllOrdersSchema = z.object({
   page: z.number().optional(),

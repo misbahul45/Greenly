@@ -1,4 +1,4 @@
-import { useAppSession } from "#/hooks/useSession.server";
+import { useAppSession } from "#/hooks/useSession";
 import type { ApiResponse } from "#/types/api.response";
 import { createApi } from "#/server/api";
 
