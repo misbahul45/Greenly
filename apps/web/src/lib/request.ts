@@ -1,15 +1,23 @@
-import { useAppSession } from "#/hooks/useSession";
 import type { ApiResponse } from "#/types/api.response";
 import { createApi } from "#/server/api";
 
-export const serverRequest = async <T>(
-  _: any,
-  fn: (api: ReturnType<typeof createApi>) => Promise<T>
-) => {
-  const session = await useAppSession();
+type Tokens = {
+  accessToken?: string
+  refreshToken?: string
+}
 
-  let accessToken = session?.data?.accessToken;
-  const refreshToken = session?.data?.refreshToken;
+type SessionLike = {
+  data: Tokens
+  clear: () => Promise<void>
+  update: (data: Tokens) => Promise<void>
+}
+
+export const serverRequestWithSession = async <T>(
+  session: SessionLike,
+  fn: (api: ReturnType<typeof createApi>) => Promise<T>
+): Promise<T> => {
+  let accessToken = session.data?.accessToken;
+  const refreshToken = session.data?.refreshToken;
 
   let api = createApi(accessToken);
 
@@ -42,7 +50,7 @@ export const serverRequest = async <T>(
         api = createApi(newAccessToken);
 
         return await fn(api);
-      } catch (e) {
+      } catch {
         await session.clear();
         throw new Error("Session expired");
       }
@@ -52,6 +60,14 @@ export const serverRequest = async <T>(
   }
 };
 
+export const serverRequest = async <T>(
+  _ctx: any,
+  fn: (api: ReturnType<typeof createApi>) => Promise<T>
+): Promise<T> => {
+  const { useAppSession } = await import("#/hooks/useSession.server");
+  const session = await useAppSession();
+  return serverRequestWithSession(session, fn);
+};
 
 export const apiRequest = async <T>(
   promise: Promise<{ data: ApiResponse<T> }>

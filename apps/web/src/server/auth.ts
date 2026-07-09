@@ -4,7 +4,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { createApi } from "./api";
 import { apiRequest, serverRequest } from "#/lib/request";
 import type { UserResponse } from "#/types/user.me";
-import { useAppSession } from "#/hooks/useSession";
+import { useAppSession } from "#/hooks/useSession.server";
 import type { ApiResponse } from "#/types/api.response";
 import type { LoginResponse } from "#/types/login.response";
 
