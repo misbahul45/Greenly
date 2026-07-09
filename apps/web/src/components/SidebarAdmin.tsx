@@ -1,7 +1,7 @@
 "use client"
-import { User } from "lucide-react"
 import * as React from "react"
-import { Link, useRouterState } from "@tanstack/react-router"
+import { Link, useNavigate, useRouterState } from "@tanstack/react-router"
+import { useServerFn } from "@tanstack/react-start"
 import {
   LayoutDashboard,
   Store,
@@ -9,8 +9,13 @@ import {
   ShoppingCart,
   Shapes,
   Users,
+  LogOut,
+  User,
   X,
 } from "lucide-react"
+import { toast } from "sonner"
+
+import { logoutFn } from "#/server/auth"
 
 type NavItem = {
   label: string
@@ -63,9 +68,34 @@ function SidebarContent({
   pathname: string
   onNavigate?: () => void
 }) {
+  const navigate = useNavigate()
+  const logout = useServerFn(logoutFn)
+  const [isLoggingOut, setIsLoggingOut] = React.useState(false)
+
+  const handleLogout = async () => {
+    if (isLoggingOut) return
+
+    setIsLoggingOut(true)
+    try {
+      await logout()
+      toast.success("Logout berhasil", {
+        position: "bottom-right",
+      })
+      onNavigate?.()
+      await navigate({ to: "/auth/login" })
+    } catch (error: any) {
+      toast.error("Logout gagal", {
+        description: error.message ?? "Terjadi kesalahan",
+        position: "bottom-right",
+      })
+    } finally {
+      setIsLoggingOut(false)
+    }
+  }
+
   return (
-    <div className="relative h-full overflow-hidden bg-gradient-to-b from-[#1B5E20] to-[#4CAF50] text-white">
-      
+    <div className="relative h-full overflow-hidden bg-linear-to-b from-[#1B5E20] to-[#4CAF50] text-white">
+
       {/* TEXTURE */}
       <div
         aria-hidden="true"
@@ -78,7 +108,7 @@ function SidebarContent({
       />
 
       <div className="relative flex h-full flex-col p-4">
-        
+
         {/* BRAND */}
         <div className="flex items-center gap-3 rounded-2xl bg-white/20 backdrop-blur-md p-3">
           <img
@@ -88,7 +118,7 @@ function SidebarContent({
           />
           <div className="leading-tight">
             <div className="text-sm font-semibold">Greenly Mart</div>
-            <div className="text-xs text-white/80">Super Admin</div>
+            <div className="text-xs text-white/80">Super Admin Panel</div>
           </div>
         </div>
 
@@ -135,21 +165,30 @@ function SidebarContent({
           </nav>
         </div>
 
-        {/* FOOTER */}
-  <div className="mt-4 rounded-2xl bg-white/20 backdrop-blur-md p-3 flex items-center gap-3">
+        <div className="mt-4 space-y-2">
+          <div className="flex items-center gap-3 rounded-2xl bg-white/20 p-3 backdrop-blur-md">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/20">
+              <User className="h-5 w-5 text-white" />
+            </div>
 
-  {/* AVATAR */}
-  <div className="h-10 w-10 rounded-full bg-white/20 flex items-center justify-center">
-    <User className="h-5 w-5 text-white" />
-  </div>
+            <div className="text-xs leading-tight">
+              <div className="font-medium">Admin</div>
+              <div className="text-white/80">Super Admin</div>
+            </div>
+          </div>
 
-  {/* TEXT */}
-  <div className="text-xs leading-tight">
-    <div className="font-medium">Super Admin</div>
-    <div className="text-white/80">super.admin@greenly.com</div>
-  </div>
-
-</div>
+          <button
+            type="button"
+            onClick={handleLogout}
+            disabled={isLoggingOut}
+            className="flex w-full items-center gap-3 rounded-2xl bg-white/15 px-3 py-3 text-sm font-medium text-white transition hover:bg-white/25 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/10 text-white">
+              <LogOut className="h-5 w-5" />
+            </span>
+            <span>{isLoggingOut ? "Keluar..." : "Logout"}</span>
+          </button>
+        </div>
       </div>
     </div>
   )
@@ -185,7 +224,7 @@ export default function SidebarAdmin({
   return (
     <>
       {/* DESKTOP */}
-      <aside className="hidden shrink-0 sm:block">
+      <aside className="hidden w-64 shrink-0 sm:block">
         <div className="sticky top-0 h-screen">
           <SidebarContent pathname={pathname} />
         </div>
@@ -215,7 +254,7 @@ export default function SidebarAdmin({
           ].join(" ")}
         >
           {/* HEADER */}
-          <div className="flex items-center justify-between px-4 py-3 text-white bg-gradient-to-b from-[#1B5E20] to-[#4CAF50]">
+          <div className="flex items-center justify-between px-4 py-3 text-white bg-linear-to-b from-[#1B5E20] to-[#4CAF50]">
             <div className="text-sm font-semibold">Menu</div>
             <button
               onClick={onClose}

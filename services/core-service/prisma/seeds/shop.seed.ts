@@ -4,7 +4,7 @@ export async function seedShops(prisma: PrismaClient, userIds: Record<string, st
   const shopsData = [
     {
       id: 'shop_ecoware_001',
-      ownerEmail: 'toko.elektronik@gmail.com',
+      ownerEmail: 'nesa@gmail.com',
       name: 'EcoWare Indonesia',
       description: 'Spesialis produk zero waste dan daur ulang — botol, tumbler, tas ramah lingkungan, dan peralatan rumah eco',
       status: 'APPROVED' as const,
