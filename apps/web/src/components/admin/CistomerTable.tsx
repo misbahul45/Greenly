@@ -12,7 +12,7 @@ import {
 import { Input } from "#/components/ui/input";
 import { Button } from "#/components/ui/button";
 import { Badge } from "#/components/ui/badge";
-import { getUsersFn, updateUserStatusFn, type AdminUser } from "#/features/admin/api.server";
+import { getUsersFn, updateUserStatusFn, type AdminUser } from "#/features/admin/api";
 import { dummyCustomers, type Customer } from "#/constants/dummy.table";
 
 type SortKey = "fullName" | "email" | "status" | "createdAt";

@@ -21,7 +21,7 @@ import {
   firstShopFromPayload,
   type SellerProduct
 } from "#/features/seller/api.server";
-import { getCategoriesFn, type AdminCategory } from "#/features/admin/api.server";
+import { getCategoriesFn, type AdminCategory } from "#/features/admin/api";
 
 type FormMode = "create" | "edit";
 

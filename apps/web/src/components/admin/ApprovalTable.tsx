@@ -16,7 +16,7 @@ import {
   getApplicationsFn,
   reviewApplicationFn,
   type ShopApplication,
-} from "#/features/admin/api.server";
+} from "#/features/admin/api";
 
 type SortOrder = "asc" | "desc";
 type StatusFilter = "ALL" | ShopApplication["status"];

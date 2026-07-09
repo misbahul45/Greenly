@@ -17,7 +17,7 @@ import {
   updateCategoryFn,
   deleteCategoryFn,
   type AdminCategory,
-} from "#/features/admin/api.server";
+} from "#/features/admin/api";
 import { dummyCategories, type Category } from "#/constants/dummy.table";
 
 type SortOrder = "asc" | "desc";
