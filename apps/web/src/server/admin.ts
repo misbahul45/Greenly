@@ -1,44 +1,14 @@
 import { createServerFn } from "@tanstack/react-start"
 import { z } from "zod"
 import { Zod } from "#/lib/zod"
-import { serverRequest, apiRequest } from "#/lib/request"
+import { withSession } from "#/server/_request"
 import { createCatalogApi } from "#/server/api"
 import type { ApiMeta } from "#/types/api.response"
 
 /*
 import axios from "axios"
 import { useAppSession } from "#/hooks/useSession"
-
-const API_TIMEOUT_MS = 15000
-
-function apiBaseUrl() {
-  const coreUrl = process.env.API_URL
-  if (coreUrl) {
-    return coreUrl.replace(/\/core\/?$/, "")
-  }
-  return process.env.VITE_API_BASE_URL ?? process.env.API_BASE_URL ?? "http://localhost/api"
-}
-
-async function request<T>(
-  method: "GET" | "POST" | "PATCH" | "PUT" | "DELETE",
-  path: string,
-  data?: any,
-  accessToken?: string,
-  refreshToken?: string
-) {
-  const response = await axios({
-    method,
-    url: `${apiBaseUrl()}${path}`,
-    data,
-    timeout: API_TIMEOUT_MS,
-    headers: {
-      ...(accessToken && { Authorization: `Bearer ${accessToken}` }),
-      ...(refreshToken && { "x-refresh-token": refreshToken }),
-    },
-  })
-
-  return response.data as ApiResult<T>
-}
+-- old apiBaseUrl pattern removed, now using withSession helper --
 */
 
 type ApiResult<T> = {
@@ -49,10 +19,9 @@ type ApiResult<T> = {
 }
 
 async function catalogRequest<T>(
-  ctx: unknown,
   fn: (api: ReturnType<typeof createCatalogApi>) => Promise<T>
 ): Promise<T> {
-  return serverRequest<T>(ctx, (coreApi) => {
+  return withSession((coreApi) => {
     const headers = coreApi.defaults.headers as Record<string, any>
     const authorization = headers.Authorization ?? headers.common?.Authorization
     const token = authorization?.toString().replace("Bearer ", "")
@@ -91,8 +60,8 @@ const GetUsersSchema = z.object({
 
 export const getUsersFn = createServerFn({ method: "GET" })
   .inputValidator(Zod(GetUsersSchema))
-  .handler(async ({ data, context }) => {
-    return serverRequest<ApiResult<AdminUser[]>>(context, async (api) => {
+  .handler(async ({ data }) => {
+    return withSession(async (api) => {
       const params = cleanParams({
         page: data.page,
         limit: data.limit,
@@ -106,8 +75,8 @@ export const getUsersFn = createServerFn({ method: "GET" })
 
 export const updateUserStatusFn = createServerFn({ method: "POST" })
   .inputValidator(Zod(z.object({ id: z.string(), status: z.string() })))
-  .handler(async ({ data, context }) => {
-    return serverRequest<any>(context, async (api) => {
+  .handler(async ({ data }) => {
+    return withSession(async (api) => {
       const res = await api.patch(`/users/${data.id}`, { status: data.status })
       return res.data
     })
@@ -138,8 +107,8 @@ const GetShopsSchema = z.object({
 
 export const getShopsFn = createServerFn({ method: "GET" })
   .inputValidator(Zod(GetShopsSchema))
-  .handler(async ({ data, context }) => {
-    return serverRequest<ApiResult<AdminShop[]>>(context, async (api) => {
+  .handler(async ({ data }) => {
+    return withSession(async (api) => {
       const params = cleanParams({
         page: data.page,
         limit: data.limit,
@@ -153,8 +122,8 @@ export const getShopsFn = createServerFn({ method: "GET" })
 
 export const updateShopStatusFn = createServerFn({ method: "POST" })
   .inputValidator(Zod(z.object({ id: z.string(), status: z.string() })))
-  .handler(async ({ data, context }) => {
-    return serverRequest<any>(context, async (api) => {
+  .handler(async ({ data }) => {
+    return withSession(async (api) => {
       const res = await api.patch(`/shops/${data.id}`, { status: data.status })
       return res.data
     })
@@ -190,8 +159,8 @@ const GetApplicationsSchema = z.object({
 
 export const getApplicationsFn = createServerFn({ method: "GET" })
   .inputValidator(Zod(GetApplicationsSchema))
-  .handler(async ({ data, context }) => {
-    return serverRequest<{ data: ShopApplication[]; meta: { total: number } }>(context, async (api) => {
+  .handler(async ({ data }) => {
+    return withSession(async (api) => {
       const shopsRes = await api.get("/shops", { params: { page: 1, limit: 100 } })
       const shopItems: AdminShop[] = Array.isArray(shopsRes.data?.data)
         ? shopsRes.data.data
@@ -230,8 +199,8 @@ export const getApplicationsFn = createServerFn({ method: "GET" })
 
 export const reviewApplicationFn = createServerFn({ method: "POST" })
   .inputValidator(Zod(z.object({ shopId: z.string(), status: z.string(), notes: z.string().optional() })))
-  .handler(async ({ data, context }) => {
-    return serverRequest<any>(context, async (api) => {
+  .handler(async ({ data }) => {
+    return withSession(async (api) => {
       const res = await api.patch(`/shops/${data.shopId}/application/review`, {
         status: data.status,
         notes: data.notes,
@@ -257,8 +226,8 @@ const GetCategoriesSchema = z.object({
 
 export const getCategoriesFn = createServerFn({ method: "GET" })
   .inputValidator(Zod(GetCategoriesSchema))
-  .handler(async ({ data, context }) => {
-    return catalogRequest<{ data: AdminCategory[]; meta?: ApiMeta }>(context, async (api) => {
+  .handler(async ({ data }) => {
+    return catalogRequest<{ data: AdminCategory[]; meta?: ApiMeta }>(async (api) => {
       const params = cleanParams({ page: data.page, limit: data.limit, search: data.search })
       const res = await api.get("/categories", { params })
       return { data: res.data?.data ?? [], meta: res.data?.meta }
@@ -267,8 +236,8 @@ export const getCategoriesFn = createServerFn({ method: "GET" })
 
 export const createCategoryFn = createServerFn({ method: "POST" })
   .inputValidator(Zod(z.object({ name: z.string(), parentId: z.string().optional() })))
-  .handler(async ({ data, context }) => {
-    return catalogRequest<AdminCategory>(context, async (api) => {
+  .handler(async ({ data }) => {
+    return catalogRequest<AdminCategory>(async (api) => {
       const res = await api.post("/categories", { name: data.name, parentId: data.parentId })
       return res.data?.data ?? res.data
     })
@@ -276,8 +245,8 @@ export const createCategoryFn = createServerFn({ method: "POST" })
 
 export const updateCategoryFn = createServerFn({ method: "POST" })
   .inputValidator(Zod(z.object({ id: z.string(), name: z.string().optional(), parentId: z.string().nullable().optional() })))
-  .handler(async ({ data, context }) => {
-    return catalogRequest<AdminCategory>(context, async (api) => {
+  .handler(async ({ data }) => {
+    return catalogRequest<AdminCategory>(async (api) => {
       const { id, ...payload } = data
       const res = await api.put(`/categories/${id}`, cleanParams(payload as Record<string, any>))
       return res.data?.data ?? res.data
@@ -286,8 +255,8 @@ export const updateCategoryFn = createServerFn({ method: "POST" })
 
 export const deleteCategoryFn = createServerFn({ method: "POST" })
   .inputValidator(Zod(z.object({ id: z.string() })))
-  .handler(async ({ data, context }) => {
-    return catalogRequest<any>(context, async (api) => {
+  .handler(async ({ data }) => {
+    return catalogRequest<any>(async (api) => {
       const res = await api.delete(`/categories/${data.id}`)
       return res.data
     })
@@ -317,8 +286,8 @@ const GetAllOrdersSchema = z.object({
 
 export const getAllOrdersFn = createServerFn({ method: "GET" })
   .inputValidator(Zod(GetAllOrdersSchema))
-  .handler(async ({ data, context }) => {
-    return serverRequest<ApiResult<AdminOrder[]>>(context, async (api) => {
+  .handler(async ({ data }) => {
+    return withSession(async (api) => {
       const params = cleanParams({
         page: data.page,
         limit: data.limit,
@@ -330,8 +299,8 @@ export const getAllOrdersFn = createServerFn({ method: "GET" })
   })
 
 export const getPlatformFinanceFn = createServerFn({ method: "GET" })
-  .handler(async ({ context }) => {
-    return serverRequest<any>(context, async (api) => {
+  .handler(async () => {
+    return withSession(async (api) => {
       const res = await api.get("/admin/finance/overview")
       return res.data
     })

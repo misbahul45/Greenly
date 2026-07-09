@@ -1,7 +1,8 @@
 import { createServerFn } from "@tanstack/react-start"
 import { z } from "zod"
 
-import { apiRequest, serverRequest } from "#/lib/request"
+import { apiRequest } from "#/lib/request"
+import { withSession } from "#/server/_request"
 import { Zod } from "#/lib/zod"
 import { createCatalogApi } from "#/server/api"
 import type { ApiMeta } from "#/types/api.response"
@@ -190,7 +191,7 @@ async function catalogRequest<T>(
   ctx: unknown,
   fn: (api: ReturnType<typeof createCatalogApi>) => Promise<T>
 ) {
-  return serverRequest<T>(ctx, (coreApi) => {
+  return withSession((coreApi) => {
     const headers = coreApi.defaults.headers as Record<string, any>
     const authorization =
       headers.Authorization ?? headers.common?.Authorization
@@ -202,8 +203,8 @@ async function catalogRequest<T>(
 
 export const listShopsFn = createServerFn({ method: "GET" })
   .inputValidator(Zod(ShopListSchema))
-  .handler(async ({ data, context }) => {
-    return serverRequest<ListResponse<Shop>>(context, async (api) => {
+  .handler(async ({ data }) => {
+    return withSession(async (api) => {
       const res = await api.get("/shops", { params: cleanParams(data) })
       return {
         data: res.data.data ?? [],
@@ -214,8 +215,8 @@ export const listShopsFn = createServerFn({ method: "GET" })
 
 export const listMyShopsFn = createServerFn({ method: "GET" })
   .inputValidator(Zod(PaginationSchema))
-  .handler(async ({ data, context }) => {
-    return serverRequest<ListResponse<Shop>>(context, async (api) => {
+  .handler(async ({ data }) => {
+    return withSession(async (api) => {
       const res = await api.get("/shops/me", { params: cleanParams(data) })
       return {
         data: res.data.data ?? [],
@@ -226,8 +227,8 @@ export const listMyShopsFn = createServerFn({ method: "GET" })
 
 export const listShopApplicationsFn = createServerFn({ method: "GET" })
   .inputValidator(Zod(ShopApplicationListSchema))
-  .handler(async ({ data, context }) => {
-    return serverRequest<ListResponse<ShopApplication>>(context, async (api) => {
+  .handler(async ({ data }) => {
+    return withSession(async (api) => {
       const { shopId, ...params } = data
       const res = await api.get(`/shops/${shopId}/application/list`, {
         params: cleanParams(params),
@@ -241,8 +242,8 @@ export const listShopApplicationsFn = createServerFn({ method: "GET" })
 
 export const reviewShopApplicationFn = createServerFn({ method: "POST" })
   .inputValidator(Zod(ReviewShopApplicationSchema))
-  .handler(async ({ data, context }) => {
-    await serverRequest<{}>(context, (api) =>
+  .handler(async ({ data }) => {
+    await withSession((api) =>
       apiRequest(
         api.patch(`/shops/${data.shopId}/application/review`, {
           status: data.status,
@@ -256,8 +257,8 @@ export const reviewShopApplicationFn = createServerFn({ method: "POST" })
 
 export const listCategoriesFn = createServerFn({ method: "GET" })
   .inputValidator(Zod(PaginationSchema))
-  .handler(async ({ data, context }) => {
-    return catalogRequest<ListResponse<Category>>(context, async (api) => {
+  .handler(async ({ data }) => {
+    return catalogRequest(null, async (api) => {
       const res = await api.get("/categories", { params: cleanParams(data) })
       return {
         data: res.data.data ?? [],
@@ -268,8 +269,8 @@ export const listCategoriesFn = createServerFn({ method: "GET" })
 
 export const listProductsFn = createServerFn({ method: "GET" })
   .inputValidator(Zod(ProductListSchema))
-  .handler(async ({ data, context }) => {
-    return catalogRequest<ListResponse<Product>>(context, async (api) => {
+  .handler(async ({ data }) => {
+    return catalogRequest(null, async (api) => {
       const res = await api.get("/products", { params: cleanParams(data) })
       return {
         data: res.data.data ?? [],
@@ -280,8 +281,8 @@ export const listProductsFn = createServerFn({ method: "GET" })
 
 export const saveProductFn = createServerFn({ method: "POST" })
   .inputValidator(Zod(SaveProductSchema))
-  .handler(async ({ data, context }) => {
-    await catalogRequest<{}>(context, (api) => {
+  .handler(async ({ data }) => {
+    await catalogRequest(null, (api) => {
       if (data.id) {
         const { id, ...payload } = data
         return apiRequest(api.put(`/products/${id}`, payload))
@@ -295,8 +296,8 @@ export const saveProductFn = createServerFn({ method: "POST" })
 
 export const listShopOrdersFn = createServerFn({ method: "GET" })
   .inputValidator(Zod(ShopOrdersSchema))
-  .handler(async ({ data, context }) => {
-    return serverRequest<ListResponse<ShopOrder>>(context, async (api) => {
+  .handler(async ({ data }) => {
+    return withSession(async (api) => {
       const { shopId, ...params } = data
       const res = await api.get(`/shops/${shopId}/orders`, {
         params: cleanParams(params),
@@ -310,8 +311,8 @@ export const listShopOrdersFn = createServerFn({ method: "GET" })
 
 export const updateShopOrderStatusFn = createServerFn({ method: "POST" })
   .inputValidator(Zod(UpdateShopOrderStatusSchema))
-  .handler(async ({ data, context }) => {
-    await serverRequest<{}>(context, (api) =>
+  .handler(async ({ data }) => {
+    await withSession((api) =>
       apiRequest(
         api.patch(`/shops/${data.shopId}/orders/${data.orderId}/status`, {
           status: data.status,
@@ -324,16 +325,16 @@ export const updateShopOrderStatusFn = createServerFn({ method: "POST" })
 
 export const getShopDashboardSummaryFn = createServerFn({ method: "GET" })
   .inputValidator(Zod(ShopIdSchema))
-  .handler(async ({ data, context }) => {
-    return serverRequest<DashboardSummary>(context, (api) =>
+  .handler(async ({ data }) => {
+    return withSession((api) =>
       apiRequest(api.get(`/shops/${data.shopId}/dashboard/summary`))
     )
   })
 
 export const getShopRevenueFn = createServerFn({ method: "GET" })
   .inputValidator(Zod(ShopRevenueSchema))
-  .handler(async ({ data, context }) => {
-    return serverRequest<RevenueSummary>(context, (api) =>
+  .handler(async ({ data }) => {
+    return withSession((api) =>
       apiRequest(
         api.get(`/shops/${data.shopId}/dashboard/revenue`, {
           params: cleanParams({ range: data.range }),

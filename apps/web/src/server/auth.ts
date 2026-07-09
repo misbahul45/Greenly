@@ -2,7 +2,8 @@ import { Zod } from "#/lib/zod";
 import { LoginSchema } from "#/schema/auth";
 import { createServerFn } from "@tanstack/react-start";
 import { createApi } from "./api";
-import { apiRequest, serverRequest } from "#/lib/request";
+import { apiRequest } from "#/lib/request";
+import { withSession } from "#/server/_request";
 import type { UserResponse } from "#/types/user.me";
 import { useAppSession } from "#/hooks/useSession.server";
 import type { ApiResponse } from "#/types/api.response";
@@ -29,21 +30,19 @@ export const loginFn = createServerFn({ method: "POST" })
 
 export const getCurrentUserFn =
   createServerFn({ method: "GET" })
-    .handler(async (ctx) => {
-      return serverRequest<UserResponse>(ctx, (api) =>
-        apiRequest(
-          api.get("/me")
-        )
+    .handler(async () => {
+      return withSession((api) =>
+        apiRequest(api.get("/me"))
       );
     });
 
 export const logoutFn =
   createServerFn({ method: "POST" })
-    .handler(async (ctx) => {
+    .handler(async () => {
       const session = await useAppSession();
 
       try {
-        await serverRequest<{}>(ctx, async (api) => {
+        await withSession(async (api) => {
           await api.post("/auth/logout");
           return {};
         });

@@ -1,44 +1,14 @@
 import { createServerFn } from "@tanstack/react-start"
 import { z } from "zod"
 import { Zod } from "#/lib/zod"
-import { serverRequest } from "#/lib/request"
+import { withSession } from "#/server/_request"
 import { createCatalogApi } from "#/server/api"
 import type { ApiMeta } from "#/types/api.response"
 
 /*
 import axios from "axios"
 import { useAppSession } from "#/hooks/useSession"
-
-const API_TIMEOUT_MS = 15000
-
-function apiBaseUrl() {
-  const coreUrl = process.env.API_URL
-  if (coreUrl) {
-    return coreUrl.replace(/\/core\/?$/, "")
-  }
-  return process.env.VITE_API_BASE_URL ?? process.env.API_BASE_URL ?? "http://localhost/api"
-}
-
-async function request<T>(
-  method: "GET" | "POST" | "PATCH" | "PUT" | "DELETE",
-  path: string,
-  data?: any,
-  accessToken?: string,
-  refreshToken?: string
-) {
-  const response = await axios({
-    method,
-    url: `${apiBaseUrl()}${path}`,
-    data,
-    timeout: API_TIMEOUT_MS,
-    headers: {
-      ...(accessToken && { Authorization: `Bearer ${accessToken}` }),
-      ...(refreshToken && { "x-refresh-token": refreshToken }),
-    },
-  })
-
-  return response.data as ApiResult<T>
-}
+-- old apiBaseUrl pattern removed, now using withSession helper --
 */
 
 type ApiResult<T> = {
@@ -49,10 +19,9 @@ type ApiResult<T> = {
 }
 
 async function catalogRequest<T>(
-  ctx: unknown,
   fn: (api: ReturnType<typeof createCatalogApi>) => Promise<T>
 ): Promise<T> {
-  return serverRequest<T>(ctx, (coreApi) => {
+  return withSession((coreApi) => {
     const headers = coreApi.defaults.headers as Record<string, any>
     const authorization = headers.Authorization ?? headers.common?.Authorization
     const token = authorization?.toString().replace("Bearer ", "")
@@ -68,21 +37,14 @@ function cleanParams(obj: Record<string, any>) {
 
 export function firstShopFromPayload(payload: any) {
   const data = payload?.data
-
-  if (Array.isArray(data)) {
-    return data[0] ?? null
-  }
-
-  if (Array.isArray(data?.data)) {
-    return data.data[0] ?? null
-  }
-
+  if (Array.isArray(data)) return data[0] ?? null
+  if (Array.isArray(data?.data)) return data.data[0] ?? null
   return data?.shop ?? data ?? null
 }
 
 export const getMyShopFn = createServerFn({ method: "GET" })
-  .handler(async ({ context }) => {
-    return serverRequest<any>(context, async (api) => {
+  .handler(async () => {
+    return withSession(async (api) => {
       const res = await api.get("/shops/me")
       return res.data
     })
@@ -113,8 +75,8 @@ const GetSellerProductsSchema = z.object({
 
 export const getSellerProductsFn = createServerFn({ method: "GET" })
   .inputValidator(Zod(GetSellerProductsSchema))
-  .handler(async ({ data, context }) => {
-    return catalogRequest<ApiResult<SellerProduct[]>>(context, async (api) => {
+  .handler(async ({ data }) => {
+    return catalogRequest<ApiResult<SellerProduct[]>>(async (api) => {
       const params = cleanParams({
         shop_id: data.shopId,
         page: data.page,
@@ -141,8 +103,8 @@ const ProductPayloadSchema = z.object({
 
 export const createProductFn = createServerFn({ method: "POST" })
   .inputValidator(Zod(ProductPayloadSchema))
-  .handler(async ({ data, context }) => {
-    return catalogRequest<any>(context, async (api) => {
+  .handler(async ({ data }) => {
+    return catalogRequest<any>(async (api) => {
       const res = await api.post("/products", data)
       return res.data
     })
@@ -150,8 +112,8 @@ export const createProductFn = createServerFn({ method: "POST" })
 
 export const updateProductFn = createServerFn({ method: "POST" })
   .inputValidator(Zod(z.object({ id: z.string(), data: ProductPayloadSchema })))
-  .handler(async ({ data, context }) => {
-    return catalogRequest<any>(context, async (api) => {
+  .handler(async ({ data }) => {
+    return catalogRequest<any>(async (api) => {
       const res = await api.put(`/products/${data.id}`, data.data)
       return res.data
     })
@@ -159,8 +121,8 @@ export const updateProductFn = createServerFn({ method: "POST" })
 
 export const deleteProductFn = createServerFn({ method: "POST" })
   .inputValidator(Zod(z.object({ id: z.string() })))
-  .handler(async ({ data, context }) => {
-    return catalogRequest<any>(context, async (api) => {
+  .handler(async ({ data }) => {
+    return catalogRequest<any>(async (api) => {
       const res = await api.delete(`/products/${data.id}`)
       return res.data
     })
@@ -168,8 +130,8 @@ export const deleteProductFn = createServerFn({ method: "POST" })
 
 export const toggleProductFn = createServerFn({ method: "POST" })
   .inputValidator(Zod(z.object({ id: z.string() })))
-  .handler(async ({ data, context }) => {
-    return catalogRequest<any>(context, async (api) => {
+  .handler(async ({ data }) => {
+    return catalogRequest<any>(async (api) => {
       const res = await api.patch(`/products/${data.id}/toggle`)
       return res.data
     })
@@ -199,8 +161,8 @@ const GetShopOrdersSchema = z.object({
 
 export const getShopOrdersFn = createServerFn({ method: "GET" })
   .inputValidator(Zod(GetShopOrdersSchema))
-  .handler(async ({ data, context }) => {
-    return serverRequest<ApiResult<SellerOrder[]>>(context, async (api) => {
+  .handler(async ({ data }) => {
+    return withSession(async (api) => {
       const params = cleanParams({
         page: data.page,
         limit: data.limit,
@@ -210,7 +172,7 @@ export const getShopOrdersFn = createServerFn({ method: "GET" })
       return {
         data: res.data?.data ?? [],
         meta: res.data?.metaData ?? res.data?.meta,
-      }
+      } as ApiResult<SellerOrder[]>
     })
   })
 
@@ -224,8 +186,8 @@ export const updateOrderStatusFn = createServerFn({ method: "POST" })
       })
     )
   )
-  .handler(async ({ data, context }) => {
-    return serverRequest<any>(context, async (api) => {
+  .handler(async ({ data }) => {
+    return withSession(async (api) => {
       const res = await api.patch(`/shops/${data.shopId}/orders/${data.orderId}/status`, {
         status: data.status,
       })
@@ -235,8 +197,8 @@ export const updateOrderStatusFn = createServerFn({ method: "POST" })
 
 export const getShopBalanceFn = createServerFn({ method: "GET" })
   .inputValidator(Zod(z.object({ shopId: z.string() })))
-  .handler(async ({ data, context }) => {
-    return serverRequest<any>(context, async (api) => {
+  .handler(async ({ data }) => {
+    return withSession(async (api) => {
       const res = await api.get(`/shops/${data.shopId}/finance/balance`)
       return res.data
     })
@@ -246,13 +208,13 @@ export const getShopLedgerFn = createServerFn({ method: "GET" })
   .inputValidator(
     Zod(z.object({ shopId: z.string(), page: z.number().optional(), limit: z.number().optional() }))
   )
-  .handler(async ({ data, context }) => {
-    return serverRequest<ApiResult<any[]>>(context, async (api) => {
+  .handler(async ({ data }) => {
+    return withSession(async (api) => {
       const params = cleanParams({ page: data.page, limit: data.limit })
       const res = await api.get(`/shops/${data.shopId}/finance/ledger`, { params })
       return {
         data: res.data?.data ?? [],
         meta: res.data?.metaData ?? res.data?.meta,
-      }
+      } as ApiResult<any[]>
     })
   })

@@ -1,31 +1,11 @@
 import { createServerFn } from "@tanstack/react-start"
-import { serverRequest } from "#/lib/request"
+import { withSession } from "#/server/_request"
 import { createCatalogApi } from "#/server/api"
 
 /*
 import axios from "axios"
 import { useAppSession } from "#/hooks/useSession"
-
-const API_TIMEOUT_MS = 15000
-
-function apiBaseUrl() {
-  const coreUrl = process.env.API_URL
-  if (coreUrl) {
-    return coreUrl.replace(/\/core\/?$/, "")
-  }
-  return process.env.API_BASE_URL ?? process.env.VITE_API_BASE_URL ?? "http://localhost/api"
-}
-
-async function request<T>(path: string, accessToken?: string, refreshToken?: string) {
-  const response = await axios.get<ApiResult<T>>(`${apiBaseUrl()}${path}`, {
-    timeout: API_TIMEOUT_MS,
-    headers: {
-      ...(accessToken && { Authorization: `Bearer ${accessToken}` }),
-      ...(refreshToken && { "x-refresh-token": refreshToken }),
-    },
-  })
-  return response.data
-}
+-- old apiBaseUrl pattern removed, now using withSession helper --
 */
 
 type ApiResult<T> = {
@@ -53,16 +33,8 @@ function firstShopFromPayload(payload: ApiResult<any>) {
 }
 
 export const getAdminDashboardFn = createServerFn({ method: "GET" })
-  .handler(async ({ context }) => {
-    return serverRequest<{
-      totalUsers: number
-      totalShops: number
-      totalOrders: number
-      totalProducts: number
-      totalCategories: number
-      totalRevenue: number
-      mlStatus: string
-    }>(context, async (api) => {
+  .handler(async () => {
+    return withSession(async (api) => {
       const headers = api.defaults.headers as Record<string, any>
       const authorization = headers.Authorization ?? headers.common?.Authorization
       const token = authorization?.toString().replace("Bearer ", "")
@@ -99,14 +71,8 @@ export const getAdminDashboardFn = createServerFn({ method: "GET" })
   })
 
 export const getSellerDashboardFn = createServerFn({ method: "GET" })
-  .handler(async ({ context }) => {
-    return serverRequest<{
-      shopName: string
-      totalProducts: number
-      totalOrders: number
-      totalRevenue: number
-      balance: number
-    }>(context, async (api) => {
+  .handler(async () => {
+    return withSession(async (api) => {
       const headers = api.defaults.headers as Record<string, any>
       const authorization = headers.Authorization ?? headers.common?.Authorization
       const token = authorization?.toString().replace("Bearer ", "")
