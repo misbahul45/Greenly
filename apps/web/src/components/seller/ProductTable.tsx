@@ -18,8 +18,8 @@ import {
   deleteProductFn,
   toggleProductFn,
   getMyShopFn,
-} from "#/server/seller.server";
-import { getCategoriesFn } from "#/server/admin.server";
+} from "#/server/seller";
+import { getCategoriesFn } from "#/server/admin";
 import type { SellerProduct } from "#/types/server";
 import type { AdminCategory } from "#/types/server";
 
