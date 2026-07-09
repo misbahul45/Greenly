@@ -41,7 +41,7 @@ export default function FormLogin() {
     },
     onSubmit: async ({ value }) => {
       try {
-        const result = await loginFn({ data: value });
+        // const result = await loginFn({ data: value });
         const dummyLoginResponse: LoginResponse = {
                 tokens: {
                   accessToken: "dummy-access-token-123456",
@@ -56,7 +56,7 @@ export default function FormLogin() {
               };
         
 
-        console.log(result)
+        // console.log(result)
 
         toast.success("Login berhasil", {
           description: "Selamat datang kembali 👋",
