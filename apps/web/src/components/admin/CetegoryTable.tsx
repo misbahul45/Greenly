@@ -1,5 +1,6 @@
 import * as React from "react";
 import { toast } from "sonner";
+import { useServerFn } from "@tanstack/react-start";
 import {
   Table,
   TableBody,
@@ -10,97 +11,104 @@ import {
 } from "#/components/ui/table";
 import { Input } from "#/components/ui/input";
 import { Button } from "#/components/ui/button";
+import {
+  getCategoriesFn,
+  createCategoryFn,
+  updateCategoryFn,
+  deleteCategoryFn,
+  type AdminCategory,
+} from "#/features/admin/api";
 import { dummyCategories, type Category } from "#/constants/dummy.table";
 
 type SortOrder = "asc" | "desc";
 type FormMode = "create" | "edit";
 
-type CategoryForm = Omit<Category, "id" | "createdAt" | "totalProducts">;
-type FormErrors = Partial<Record<keyof CategoryForm, string>>;
-
-const EMPTY_FORM: CategoryForm = {
-  name: "",
-  slug: "",
-  description: "",
-  parent: null,
+type CategoryForm = {
+  name: string;
+  parentId: string | null;
 };
 
-function sortData<T>(data: T[], key: keyof T, order: SortOrder): T[] {
-  return [...data].sort((a, b) => {
-    const av = (a[key] ?? "") as any;
-    const bv = (b[key] ?? "") as any;
+type FormErrors = Partial<Record<keyof CategoryForm, string>>;
 
-    if (typeof av === "string") {
-      return order === "asc" ? av.localeCompare(bv) : bv.localeCompare(av);
-    }
+const EMPTY_FORM: CategoryForm = { name: "", parentId: null };
 
-    if (typeof av === "number") {
-      return order === "asc" ? av - bv : bv - av;
-    }
-
-    if (av instanceof Date) {
-      return order === "asc"
-        ? av.getTime() - bv.getTime()
-        : bv.getTime() - av.getTime();
-    }
-
-    return 0;
-  });
-}
-
-function generateId(prefix: string): string {
-  return `${prefix}-${Date.now()}`;
-}
-
-function generateCategoryCode(): string {
-  return `${Date.now()}`;
+function fromDummy(c: Category): AdminCategory {
+  return {
+    id: c.id,
+    name: c.name,
+    slug: c.slug,
+    parentId: null,
+    createdAt: c.createdAt.toISOString(),
+    updatedAt: c.createdAt.toISOString(),
+  };
 }
 
 export function CategoryTableDummy() {
-  const [data, setData] = React.useState<Category[]>(dummyCategories);
+  const getCategories = useServerFn(getCategoriesFn);
+  const createCategory = useServerFn(createCategoryFn);
+  const updateCategory = useServerFn(updateCategoryFn);
+  const deleteCategory = useServerFn(deleteCategoryFn);
+
+  const [data, setData] = React.useState<AdminCategory[]>(dummyCategories.map(fromDummy));
+  const [loading, setLoading] = React.useState(true);
   const [search, setSearch] = React.useState("");
-  const [sortKey, setSortKey] = React.useState<keyof Category>("createdAt");
   const [sortOrder, setSortOrder] = React.useState<SortOrder>("desc");
+  const [page, setPage] = React.useState(1);
+  const [total, setTotal] = React.useState(0);
+  const limit = 10;
 
   const [openFormModal, setOpenFormModal] = React.useState(false);
   const [openDeleteModal, setOpenDeleteModal] = React.useState(false);
-
   const [formMode, setFormMode] = React.useState<FormMode>("create");
-  const [selectedItem, setSelectedItem] = React.useState<Category | null>(null);
-  const [selectedCategory, setSelectedCategory] =
-    React.useState<Category | null>(null);
+  const [selectedItem, setSelectedItem] = React.useState<AdminCategory | null>(null);
+  const [selectedCategory, setSelectedCategory] = React.useState<AdminCategory | null>(null);
 
   const [form, setForm] = React.useState<CategoryForm>(EMPTY_FORM);
   const [errors, setErrors] = React.useState<FormErrors>({});
+  const [saving, setSaving] = React.useState(false);
 
-  const filtered = sortData(
-    data.filter((c) => {
+  const rootCategories = data.filter((c) => c.parentId === null);
+
+  const fetchData = React.useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await getCategories({ data: { page, limit } });
+      const items = Array.isArray(res.data) ? res.data : [];
+      if (items.length > 0) {
+        setData(items);
+        setTotal((res as any).meta?.total ?? items.length);
+      } else {
+        setData(dummyCategories.map(fromDummy));
+        setTotal(dummyCategories.length);
+      }
+    } catch {
+      toast.error("Gagal memuat kategori dari database, menampilkan data contoh");
+      setData(dummyCategories.map(fromDummy));
+      setTotal(dummyCategories.length);
+    } finally {
+      setLoading(false);
+    }
+  }, [getCategories, page]);
+
+  React.useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  const filtered = [...data]
+    .filter((c) => {
       const keyword = search.toLowerCase();
-
       return (
         c.name.toLowerCase().includes(keyword) ||
-        c.slug.toLowerCase().includes(keyword) ||
-        (c.parent?.toLowerCase().includes(keyword) ?? false) ||
-        c.description.toLowerCase().includes(keyword)
+        c.slug.toLowerCase().includes(keyword)
       );
-    }),
-    sortKey,
-    sortOrder
-  );
+    })
+    .sort((a, b) => {
+      const aT = new Date(a.createdAt).getTime();
+      const bT = new Date(b.createdAt).getTime();
+      return sortOrder === "asc" ? aT - bT : bT - aT;
+    });
 
-  const rootCategories = data.filter((c) => c.parent === null);
-
-  const handleSort = (key: keyof Category) => {
-    if (sortKey === key) {
-      setSortOrder((o) => (o === "asc" ? "desc" : "asc"));
-    } else {
-      setSortKey(key);
-      setSortOrder("asc");
-    }
-  };
-
-  const sortIcon = (key: keyof Category) =>
-    sortKey === key ? (sortOrder === "asc" ? " ↑" : " ↓") : "";
+  const totalPages = Math.max(1, Math.ceil(total / limit));
 
   const openCreate = () => {
     setFormMode("create");
@@ -110,106 +118,75 @@ export function CategoryTableDummy() {
     setOpenFormModal(true);
   };
 
-  const openEdit = (item: Category) => {
+  const openEdit = (item: AdminCategory) => {
     setFormMode("edit");
     setSelectedItem(item);
-    setForm({
-      name: item.name,
-      slug: item.slug,
-      description: item.description,
-      parent: item.parent,
-    });
+    setForm({ name: item.name, parentId: item.parentId });
     setErrors({});
     setOpenFormModal(true);
   };
 
-  const closeFormModal = () => {
-    setOpenFormModal(false);
-    setErrors({});
-  };
-
-  const handleNameChange = (name: string) => {
-    setForm((prev) => ({
-      ...prev,
-      name,
-      slug: prev.slug || generateCategoryCode(),
-    }));
-  };
-
-  const validate = (): boolean => {
-    const e: FormErrors = {};
-
-    if (!form.name.trim()) {
-      e.name = "Nama kategori wajib diisi";
-    }
-
-    setErrors(e);
-    return Object.keys(e).length === 0;
-  };
-
-  const handleSave = () => {
-    if (!validate()) return;
-
-    const finalForm = {
-      ...form,
-      slug: form.slug || generateCategoryCode(),
-    };
-
-    if (formMode === "edit" && selectedItem) {
-      setData((prev) =>
-        prev.map((c) =>
-          c.id === selectedItem.id ? { ...c, ...finalForm } : c
-        )
-      );
-
-      toast.success("Kategori diperbarui", {
-        description: `${finalForm.name} berhasil disimpan.`,
-        position: "bottom-right",
-      });
-    } else {
-      const newItem: Category = {
-        ...finalForm,
-        id: generateId("cat"),
-        totalProducts: 0,
-        createdAt: new Date(),
-      };
-
-      setData((prev) => [newItem, ...prev]);
-
-      toast.success("Kategori ditambahkan", {
-        description: `${finalForm.name} berhasil ditambahkan.`,
-        position: "bottom-right",
-      });
-    }
-
-    setOpenFormModal(false);
-  };
-
-  const openDelete = (item: Category) => {
+  const openDelete = (item: AdminCategory) => {
     setSelectedItem(item);
     setOpenDeleteModal(true);
   };
 
-  const handleDelete = () => {
+  const validate = (): boolean => {
+    const e: FormErrors = {};
+    if (!form.name.trim()) e.name = "Nama kategori wajib diisi";
+    setErrors(e);
+    return Object.keys(e).length === 0;
+  };
+
+  const handleSave = async () => {
+    if (!validate()) return;
+    setSaving(true);
+    try {
+      if (formMode === "create") {
+        await createCategory({
+          data: {
+            name: form.name.trim(),
+            parentId: form.parentId ?? undefined,
+          },
+        });
+        toast.success("Kategori ditambahkan");
+      } else if (selectedItem) {
+        await updateCategory({
+          data: {
+            id: selectedItem.id,
+            name: form.name.trim(),
+            parentId: form.parentId,
+          },
+        });
+        toast.success("Kategori diperbarui");
+      }
+      setOpenFormModal(false);
+      await fetchData();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Gagal menyimpan kategori");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDelete = async () => {
     if (!selectedItem) return;
-
-    const name = selectedItem.name;
-
-    setData((prev) => prev.filter((c) => c.id !== selectedItem.id));
-    setOpenDeleteModal(false);
-    setSelectedItem(null);
-
-    toast.error("Kategori dihapus", {
-      description: `${name} telah dihapus.`,
-      position: "bottom-right",
-    });
+    try {
+      await deleteCategory({ data: { id: selectedItem.id } });
+      toast.success(`Kategori ${selectedItem.name} dihapus`);
+      setOpenDeleteModal(false);
+      setSelectedItem(null);
+      await fetchData();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Gagal menghapus kategori");
+    }
   };
 
   return (
     <div className="w-full space-y-4 overflow-hidden">
       <div className="flex flex-wrap items-center gap-2">
         <Input
-          placeholder="Cari nama, kode, parent, atau deskripsi..."
+          placeholder="Cari nama atau slug kategori..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="max-w-md"
@@ -224,10 +201,7 @@ export function CategoryTableDummy() {
         <div className="ml-auto flex items-center gap-2">
           <select
             value={sortOrder}
-            onChange={(e) => {
-              setSortKey("createdAt");
-              setSortOrder(e.target.value as SortOrder);
-            }}
+            onChange={(e) => setSortOrder(e.target.value as SortOrder)}
             className="h-10 rounded-md border bg-background px-3 text-sm font-medium"
           >
             <option value="desc">Dibuat Terbaru</option>
@@ -246,109 +220,98 @@ export function CategoryTableDummy() {
       <Table className="w-full table-fixed text-sm">
         <TableHeader>
           <TableRow>
-            <TableHead
-              className="w-[15%] cursor-pointer select-none"
-              onClick={() => handleSort("name")}
-            >
-              Nama{sortIcon("name")}
-            </TableHead>
-
-            <TableHead
-              className="w-[14%] cursor-pointer select-none"
-              onClick={() => handleSort("slug")}
-            >
-              Kode{sortIcon("slug")}
-            </TableHead>
-
-            <TableHead
-              className="w-[13%] cursor-pointer select-none"
-              onClick={() => handleSort("parent")}
-            >
-              Parent{sortIcon("parent")}
-            </TableHead>
-
-            <TableHead className="w-[22%]">Deskripsi</TableHead>
-
-            <TableHead
-              className="w-[8%] cursor-pointer select-none"
-              onClick={() => handleSort("totalProducts")}
-            >
-              Produk{sortIcon("totalProducts")}
-            </TableHead>
-
-            <TableHead className="w-[11%]">Dibuat</TableHead>
-
-            <TableHead className="w-[17%]">Aksi</TableHead>
+            <TableHead className="w-[22%]">Nama</TableHead>
+            <TableHead className="w-[20%]">Slug</TableHead>
+            <TableHead className="w-[20%]">Parent ID</TableHead>
+            <TableHead className="w-[15%]">Dibuat</TableHead>
+            <TableHead className="w-[23%]">Aksi</TableHead>
           </TableRow>
         </TableHeader>
 
         <TableBody>
-          {filtered.map((c) => (
-            <TableRow key={c.id}>
-              <TableCell className="truncate font-medium">{c.name}</TableCell>
-
-              <TableCell className="truncate text-xs text-muted-foreground">
-                {c.slug}
-              </TableCell>
-
-              <TableCell className="truncate">
-                {c.parent ?? <span className="text-muted-foreground">—</span>}
-              </TableCell>
-
-              <TableCell className="truncate text-sm text-muted-foreground">
-                {c.description || "—"}
-              </TableCell>
-
-              <TableCell>{c.totalProducts}</TableCell>
-
-              <TableCell className="truncate">
-                {c.createdAt.toLocaleDateString("id-ID")}
-              </TableCell>
-
-              <TableCell>
-                <div className="flex flex-wrap gap-1">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="h-8 px-2 text-xs"
-                    onClick={() => setSelectedCategory(c)}
-                  >
-                    Lihat
-                  </Button>
-
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="h-8 px-2 text-xs"
-                    onClick={() => openEdit(c)}
-                  >
-                    Edit
-                  </Button>
-
-                  <Button
-                    size="sm"
-                    className="h-8 px-2 text-xs bg-red-600 hover:bg-red-700 text-white"
-                    onClick={() => openDelete(c)}
-                  >
-                    Hapus
-                  </Button>
-                </div>
+          {loading ? (
+            <TableRow>
+              <TableCell colSpan={5} className="py-10 text-center">
+                Memuat...
               </TableCell>
             </TableRow>
-          ))}
-
-          {filtered.length === 0 && (
+          ) : filtered.length === 0 ? (
             <TableRow>
-              <TableCell
-                colSpan={7}
-                className="py-10 text-center text-muted-foreground"
-              >
+              <TableCell colSpan={5} className="py-10 text-center text-muted-foreground">
                 Tidak ada kategori ditemukan
               </TableCell>
             </TableRow>
+          ) : (
+            filtered.map((c) => (
+              <TableRow key={c.id}>
+                <TableCell className="truncate font-medium">{c.name}</TableCell>
+                <TableCell className="truncate text-xs text-muted-foreground">
+                  {c.slug}
+                </TableCell>
+                <TableCell className="truncate text-xs text-muted-foreground">
+                  {c.parentId ?? <span className="text-muted-foreground">—</span>}
+                </TableCell>
+                <TableCell className="truncate">
+                  {new Date(c.createdAt).toLocaleDateString("id-ID")}
+                </TableCell>
+                <TableCell>
+                  <div className="flex flex-wrap gap-1">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-8 px-2 text-xs"
+                      onClick={() => setSelectedCategory(c)}
+                    >
+                      Lihat
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-8 px-2 text-xs"
+                      onClick={() => openEdit(c)}
+                    >
+                      Edit
+                    </Button>
+                    <Button
+                      size="sm"
+                      className="h-8 px-2 text-xs bg-red-600 hover:bg-red-700 text-white"
+                      onClick={() => openDelete(c)}
+                    >
+                      Hapus
+                    </Button>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))
           )}
         </TableBody>
       </Table>
+
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between pt-2 text-sm">
+          <span className="text-muted-foreground">
+            Halaman {page} dari {totalPages}
+          </span>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={page <= 1}
+              onClick={() => setPage((p) => p - 1)}
+            >
+              Sebelumnya
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={page >= totalPages}
+              onClick={() => setPage((p) => p + 1)}
+            >
+              Berikutnya
+            </Button>
+          </div>
+        </div>
+      )}
 
       {selectedCategory && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
@@ -359,56 +322,30 @@ export function CategoryTableDummy() {
                 Informasi lengkap kategori yang dipilih.
               </p>
             </div>
-
             <div className="space-y-3 rounded-md border p-4 text-sm">
               <div className="flex justify-between gap-4">
                 <span className="text-muted-foreground">Nama</span>
-                <span className="text-right font-medium">
-                  {selectedCategory.name}
-                </span>
+                <span className="text-right font-medium">{selectedCategory.name}</span>
               </div>
-
               <div className="flex justify-between gap-4">
-                <span className="text-muted-foreground">Kode</span>
-                <span className="text-right font-medium">
-                  {selectedCategory.slug}
-                </span>
+                <span className="text-muted-foreground">Slug</span>
+                <span className="text-right font-medium">{selectedCategory.slug}</span>
               </div>
-
               <div className="flex justify-between gap-4">
-                <span className="text-muted-foreground">Parent</span>
+                <span className="text-muted-foreground">Parent ID</span>
                 <span className="text-right font-medium">
-                  {selectedCategory.parent ?? "—"}
+                  {selectedCategory.parentId ?? "—"}
                 </span>
               </div>
-
-              <div className="flex justify-between gap-4">
-                <span className="text-muted-foreground">Deskripsi</span>
-                <span className="max-w-[240px] text-right font-medium">
-                  {selectedCategory.description || "—"}
-                </span>
-              </div>
-
-              <div className="flex justify-between gap-4">
-                <span className="text-muted-foreground">Total Produk</span>
-                <span className="text-right font-medium">
-                  {selectedCategory.totalProducts}
-                </span>
-              </div>
-
               <div className="flex justify-between gap-4">
                 <span className="text-muted-foreground">Dibuat</span>
                 <span className="text-right font-medium">
-                  {selectedCategory.createdAt.toLocaleDateString("id-ID")}
+                  {new Date(selectedCategory.createdAt).toLocaleDateString("id-ID")}
                 </span>
               </div>
             </div>
-
             <div className="flex justify-end">
-              <Button
-                variant="outline"
-                onClick={() => setSelectedCategory(null)}
-              >
+              <Button variant="outline" onClick={() => setSelectedCategory(null)}>
                 Tutup
               </Button>
             </div>
@@ -428,64 +365,34 @@ export function CategoryTableDummy() {
                 <label className="text-sm font-medium">
                   Nama Kategori <span className="text-destructive">*</span>
                 </label>
-
                 <Input
                   value={form.name}
-                  onChange={(e) => handleNameChange(e.target.value)}
+                  onChange={(e) => {
+                    setForm((prev) => ({ ...prev, name: e.target.value }));
+                    if (e.target.value.trim()) setErrors((prev) => ({ ...prev, name: undefined }));
+                  }}
                   placeholder="Nama kategori"
                   className={`mt-1 ${errors.name ? "border-red-500" : ""}`}
                 />
-
                 {errors.name && (
                   <p className="mt-1 text-xs text-red-500">{errors.name}</p>
                 )}
               </div>
 
               <div>
-                <label className="text-sm font-medium">Kode Otomatis</label>
-
-                <Input
-                  value={form.slug || "kode akan otomatis dibuat"}
-                  readOnly
-                  className="mt-1 cursor-not-allowed bg-muted text-muted-foreground"
-                />
-
-                <p className="mt-1 text-xs text-muted-foreground">
-                  Kode dibuat otomatis oleh sistem setelah nama kategori diisi.
-                </p>
-              </div>
-
-              <div>
-                <label className="text-sm font-medium">Deskripsi</label>
-
-                <Input
-                  value={form.description}
-                  onChange={(e) =>
-                    setForm({ ...form, description: e.target.value })
-                  }
-                  placeholder="Deskripsi singkat kategori"
-                  className="mt-1"
-                />
-              </div>
-
-              <div>
                 <label className="text-sm font-medium">Parent Kategori</label>
-
                 <select
                   className="mt-1 w-full rounded-md border bg-background px-3 py-2 text-sm"
-                  value={form.parent ?? ""}
+                  value={form.parentId ?? ""}
                   onChange={(e) =>
-                    setForm({ ...form, parent: e.target.value || null })
+                    setForm((prev) => ({ ...prev, parentId: e.target.value || null }))
                   }
                 >
                   <option value="">— Tidak ada (root) —</option>
-
                   {rootCategories
-                    .filter(
-                      (r) => formMode === "create" || r.id !== selectedItem?.id
-                    )
+                    .filter((r) => formMode === "create" || r.id !== selectedItem?.id)
                     .map((r) => (
-                      <option key={r.id} value={r.name}>
+                      <option key={r.id} value={r.id}>
                         {r.name}
                       </option>
                     ))}
@@ -494,15 +401,15 @@ export function CategoryTableDummy() {
             </div>
 
             <div className="flex justify-end gap-2 pt-2">
-              <Button variant="outline" onClick={closeFormModal}>
+              <Button variant="outline" onClick={() => setOpenFormModal(false)}>
                 Batal
               </Button>
-
               <Button
                 className="bg-green-600 hover:bg-green-700 text-white"
                 onClick={handleSave}
+                disabled={saving}
               >
-                {formMode === "edit" ? "Simpan Perubahan" : "Tambah Kategori"}
+                {saving ? "Menyimpan..." : formMode === "edit" ? "Simpan Perubahan" : "Tambah Kategori"}
               </Button>
             </div>
           </div>
@@ -513,23 +420,15 @@ export function CategoryTableDummy() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <div className="w-full max-w-sm space-y-4 rounded-lg bg-background p-6 shadow-lg">
             <h2 className="text-lg font-semibold">Hapus Kategori</h2>
-
             <p className="text-sm text-muted-foreground">
               Yakin ingin menghapus kategori{" "}
-              <span className="font-medium text-foreground">
-                {selectedItem.name}
-              </span>
-              ? Tindakan ini tidak bisa dibatalkan.
+              <span className="font-medium text-foreground">{selectedItem.name}</span>? Tindakan
+              ini tidak bisa dibatalkan.
             </p>
-
             <div className="flex justify-end gap-2">
-              <Button
-                variant="outline"
-                onClick={() => setOpenDeleteModal(false)}
-              >
+              <Button variant="outline" onClick={() => setOpenDeleteModal(false)}>
                 Batal
               </Button>
-
               <Button
                 className="bg-red-600 hover:bg-red-700 text-white"
                 onClick={handleDelete}
