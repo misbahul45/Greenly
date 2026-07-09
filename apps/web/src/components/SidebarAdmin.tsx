@@ -172,8 +172,8 @@ function SidebarContent({
             </div>
 
             <div className="text-xs leading-tight">
-              <div className="font-medium">Super Admin</div>
-              <div className="text-white/80">super.admin@greenly.com</div>
+              <div className="font-medium">Rani</div>
+              <div className="text-white/80">Super Admin</div>
             </div>
           </div>
 

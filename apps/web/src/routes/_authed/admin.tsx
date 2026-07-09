@@ -18,8 +18,8 @@ function AdminLayout() {
 
       <div className="flex min-h-screen flex-1 flex-col">
         <Header
-          title="Dashboard"
-          userName="Admin"
+          title="Super Admin"
+          userName="Rani"
           onOpenSidebar={() => setSidebarOpen(true)}
         />
 
