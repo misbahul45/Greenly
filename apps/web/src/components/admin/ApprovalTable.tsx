@@ -15,8 +15,8 @@ import { Badge } from "#/components/ui/badge";
 import {
   getApplicationsFn,
   reviewApplicationFn,
-  type ShopApplication,
-} from "#/server/admin";
+} from "#/server/admin.server";
+import type { ShopApplication } from "#/types/server";
 
 type SortOrder = "asc" | "desc";
 type StatusFilter = "ALL" | ShopApplication["status"];

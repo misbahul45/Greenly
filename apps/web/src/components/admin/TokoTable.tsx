@@ -13,7 +13,8 @@ import { Button } from "#/components/ui/button";
 import { Badge } from "#/components/ui/badge";
 import { dummyShops, type Shop } from "#/constants/dummy.table";
 import { useServerFn } from "@tanstack/react-start";
-import { getShopsFn, reviewApplicationFn } from "#/server/admin";
+import { getShopsFn, reviewApplicationFn } from "#/server/admin.server";
+import type { AdminShop } from "#/types/server";
 
 type SortOrder = "asc" | "desc";
 

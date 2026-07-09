@@ -16,8 +16,8 @@ import {
   createCategoryFn,
   updateCategoryFn,
   deleteCategoryFn,
-  type AdminCategory,
-} from "#/server/admin";
+} from "#/server/admin.server";
+import type { AdminCategory } from "#/types/server";
 import { dummyCategories, type Category } from "#/constants/dummy.table";
 
 type SortOrder = "asc" | "desc";

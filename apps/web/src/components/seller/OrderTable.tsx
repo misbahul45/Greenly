@@ -11,7 +11,8 @@ import {
 import { Button } from "#/components/ui/button";
 import { Badge } from "#/components/ui/badge";
 import { useServerFn } from "@tanstack/react-start";
-import { firstShopFromPayload, getShopOrdersFn, updateOrderStatusFn, getMyShopFn, type SellerOrder } from "#/server/seller";
+import { firstShopFromPayload, getShopOrdersFn, updateOrderStatusFn, getMyShopFn } from "#/server/seller.server";
+import type { SellerOrder } from "#/types/server";
 
 const fallbackOrders: SellerOrder[] = [
   {
@@ -46,7 +47,7 @@ export function OrderTable() {
   const updateStatus = useServerFn(updateOrderStatusFn);
 
   const [shopId, setShopId] = React.useState<string | null>(null);
-  const [data, setData] = React.useState<SellerOrder[]>([]);
+  const [data, setData] = React.useState<any[]>([]);
   const [selectedOrder, setSelectedOrder] = React.useState<SellerOrder | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [statusFilter, setStatusFilter] = React.useState("ALL");
@@ -59,7 +60,8 @@ export function OrderTable() {
     setLoading(true);
     getMyShop().then(res => {
       if (cancelled) return;
-      const shop = firstShopFromPayload(res);
+      const shops = Array.isArray(res) ? res : [];
+      const shop = shops[0] ?? null;
       const id = shop?.id;
       if (id) {
         setShopId(id);

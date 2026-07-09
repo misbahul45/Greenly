@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react"
 import { createFileRoute } from "@tanstack/react-router"
 import { useServerFn } from "@tanstack/react-start"
-import { getAdminDashboardFn } from "#/server/dashboard"
+import { getAdminDashboardFn } from "#/server/dashboard.server"
 
 export const Route = createFileRoute("/_authed/admin/dashboard")({
   component: AdminDashboard,

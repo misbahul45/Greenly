@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router"
 import { useMemo, useState, useEffect, useCallback } from "react"
 import { useServerFn } from "@tanstack/react-start"
-import { firstShopFromPayload, getShopBalanceFn, getShopLedgerFn, getMyShopFn } from "#/server/seller"
+import { firstShopFromPayload, getShopBalanceFn, getShopLedgerFn, getMyShopFn } from "#/server/seller.server"
 import { toast } from "sonner"
 
 export const Route = createFileRoute("/_authed/seller/laporan-keuangan")({
@@ -99,7 +99,7 @@ function LaporanKeuanganPage() {
         getLedger({ data: { shopId, limit: 100 } })
       ]);
       const items = Array.isArray(ledgerRes.data) ? ledgerRes.data : [];
-      setBalance(Number(balRes.data?.balance ?? (items.length ? 273500 : 0)));
+      setBalance(Number(balRes.balance ?? 0));
       setLedger(items.length > 0 ? items : fallbackLedger);
     } catch (err) {
       toast.error("Gagal memuat data keuangan");

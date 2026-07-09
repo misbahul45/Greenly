@@ -19,9 +19,10 @@ import {
   toggleProductFn,
   getMyShopFn,
   firstShopFromPayload,
-  type SellerProduct
-} from "#/server/seller";
-import { getCategoriesFn, type AdminCategory } from "#/server/admin";
+} from "#/server/seller.server";
+import { getCategoriesFn } from "#/server/admin.server";
+import type { SellerProduct } from "#/types/server";
+import type { AdminCategory } from "#/types/server";
 
 type FormMode = "create" | "edit";
 
