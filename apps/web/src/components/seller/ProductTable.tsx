@@ -36,8 +36,10 @@ const fallbackProducts: SellerProduct[] = [
     shopId: "fallback-shop-nesa",
     categoryId: "fallback-category",
     images: [],
+    imageUrls: [],
     isActive: true,
     createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
   },
   {
     id: "fallback-product-2",
@@ -49,8 +51,10 @@ const fallbackProducts: SellerProduct[] = [
     shopId: "fallback-shop-nesa",
     categoryId: "fallback-category",
     images: [],
+    imageUrls: [],
     isActive: true,
     createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
   },
   {
     id: "fallback-product-3",
@@ -62,8 +66,10 @@ const fallbackProducts: SellerProduct[] = [
     shopId: "fallback-shop-nesa",
     categoryId: "fallback-category",
     images: [],
+    imageUrls: [],
     isActive: true,
     createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
   },
 ];
 
