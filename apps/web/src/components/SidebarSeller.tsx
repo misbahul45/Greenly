@@ -95,7 +95,7 @@ function SidebarContent({
   }
 
   return (
-    <div className="relative h-full overflow-hidden bg-gradient-to-b from-[#1B5E20] to-[#4CAF50] text-white">
+    <div className="relative h-full overflow-hidden bg-linear-to-b from-[#1B5E20] to-[#4CAF50] text-white">
 
       {/* TEXTURE */}
       <div
@@ -265,7 +265,7 @@ export default function SidebarSeller({
           ].join(" ")}
         >
           {/* HEADER */}
-          <div className="flex items-center justify-between px-4 py-3 text-white bg-gradient-to-b from-[#1B5E20] to-[#4CAF50]">
+          <div className="flex items-center justify-between px-4 py-3 text-white bg-linear-to-b from-[#1B5E20] to-[#4CAF50]">
             <div className="text-sm font-semibold">
               Menu
             </div>
