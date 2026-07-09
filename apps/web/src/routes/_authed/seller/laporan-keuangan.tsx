@@ -59,7 +59,7 @@ function LaporanKeuanganPage() {
       if (id) {
         setShopId(id)
       } else {
-        toast.error("Toko seller tidak ditemukan")
+        // toast.error("Toko seller tidak ditemukan")
         setBalance(273500)
         setLedger(fallbackLedger)
         setLoading(false)

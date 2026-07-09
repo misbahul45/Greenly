@@ -115,7 +115,7 @@ export function ProductTableFull() {
       if (id) {
         setShopId(id);
       } else {
-        toast.error("Toko seller tidak ditemukan");
+        // toast.error("Toko seller tidak ditemukan");
         setData(fallbackProducts);
         setLoading(false);
       }
