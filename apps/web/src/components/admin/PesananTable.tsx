@@ -14,7 +14,6 @@ import { Button } from "#/components/ui/button";
 import { Badge } from "#/components/ui/badge";
 import { getAllOrdersFn } from "#/server/admin";
 import type { AdminOrder } from "#/types/server";
-import { dummyOrders, type Order } from "#/constants/dummy.table";
 
 type SortOrder = "asc" | "desc";
 type StatusFilter = AdminOrder["status"] | "ALL";
@@ -50,11 +49,12 @@ function toAdminOrder(o: Order): AdminOrder {
   };
 }
 
-export function OrderTableDummy() {
+export function OrderTable() {
   const getOrders = useServerFn(getAllOrdersFn);
 
-  const [data, setData] = React.useState<AdminOrder[]>(dummyOrders.map(toAdminOrder));
+  const [data, setData] = React.useState<AdminOrder[]>([]);
   const [loading, setLoading] = React.useState(true);
+  const [error, setError] = React.useState<string | null>(null);
   const [search, setSearch] = React.useState("");
   const [sortOrder, setSortOrder] = React.useState<SortOrder>("desc");
   const [filterStatus, setFilterStatus] = React.useState<StatusFilter>("ALL");
@@ -66,6 +66,7 @@ export function OrderTableDummy() {
 
   const fetchData = React.useCallback(async () => {
     setLoading(true);
+    setError(null);
     try {
       const res = await getOrders({
         data: {
@@ -75,17 +76,12 @@ export function OrderTableDummy() {
         },
       });
       const items = Array.isArray(res.data) ? res.data : [];
-      if (items.length > 0) {
-        setData(items);
-        setTotal(res.metaData?.total ?? res.meta?.total ?? items.length);
-      } else {
-        setData(dummyOrders.map(toAdminOrder));
-        setTotal(dummyOrders.length);
-      }
-    } catch {
-      toast.error("Gagal memuat pesanan dari database, menampilkan data contoh");
-      setData(dummyOrders.map(toAdminOrder));
-      setTotal(dummyOrders.length);
+      setData(items);
+      setTotal(res.metaData?.total ?? res.meta?.total ?? items.length);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Gagal memuat pesanan";
+      setError(msg);
+      toast.error(msg);
     } finally {
       setLoading(false);
     }
@@ -172,9 +168,18 @@ export function OrderTableDummy() {
 
         <TableBody>
           {loading ? (
+            Array.from({ length: 5 }).map((_, i) => (
+              <TableRow key={i}>
+                {Array.from({ length: 7 }).map((__, j) => (
+                  <TableCell key={j}><div className="h-4 bg-gray-100 rounded animate-pulse" /></TableCell>
+                ))}
+              </TableRow>
+            ))
+          ) : error ? (
             <TableRow>
               <TableCell colSpan={7} className="py-10 text-center">
-                Memuat...
+                <p className="text-red-500 font-medium">{error}</p>
+                <button onClick={fetchData} className="mt-3 text-sm text-green-600 underline hover:no-underline">Coba lagi</button>
               </TableCell>
             </TableRow>
           ) : filtered.length === 0 ? (

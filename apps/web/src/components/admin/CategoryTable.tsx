@@ -18,7 +18,6 @@ import {
   deleteCategoryFn,
 } from "#/server/admin";
 import type { AdminCategory } from "#/types/server";
-import { dummyCategories, type Category } from "#/constants/dummy.table";
 
 type SortOrder = "asc" | "desc";
 type FormMode = "create" | "edit";
@@ -32,25 +31,15 @@ type FormErrors = Partial<Record<keyof CategoryForm, string>>;
 
 const EMPTY_FORM: CategoryForm = { name: "", parentId: null };
 
-function fromDummy(c: Category): AdminCategory {
-  return {
-    id: c.id,
-    name: c.name,
-    slug: c.slug,
-    parentId: null,
-    createdAt: c.createdAt.toISOString(),
-    updatedAt: c.createdAt.toISOString(),
-  };
-}
-
-export function CategoryTableDummy() {
+export function CategoryTable() {
   const getCategories = useServerFn(getCategoriesFn);
   const createCategory = useServerFn(createCategoryFn);
   const updateCategory = useServerFn(updateCategoryFn);
   const deleteCategory = useServerFn(deleteCategoryFn);
 
-  const [data, setData] = React.useState<AdminCategory[]>(dummyCategories.map(fromDummy));
+  const [data, setData] = React.useState<AdminCategory[]>([]);
   const [loading, setLoading] = React.useState(true);
+  const [error, setError] = React.useState<string | null>(null);
   const [search, setSearch] = React.useState("");
   const [sortOrder, setSortOrder] = React.useState<SortOrder>("desc");
   const [page, setPage] = React.useState(1);
@@ -71,20 +60,16 @@ export function CategoryTableDummy() {
 
   const fetchData = React.useCallback(async () => {
     setLoading(true);
+    setError(null);
     try {
       const res = await getCategories({ data: { page, limit } });
       const items = Array.isArray(res.data) ? res.data : [];
-      if (items.length > 0) {
-        setData(items);
-        setTotal((res as any).meta?.total ?? items.length);
-      } else {
-        setData(dummyCategories.map(fromDummy));
-        setTotal(dummyCategories.length);
-      }
-    } catch {
-      toast.error("Gagal memuat kategori dari database, menampilkan data contoh");
-      setData(dummyCategories.map(fromDummy));
-      setTotal(dummyCategories.length);
+      setData(items);
+      setTotal((res as any).meta?.total ?? items.length);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Gagal memuat kategori";
+      setError(msg);
+      toast.error(msg);
     } finally {
       setLoading(false);
     }
@@ -230,9 +215,18 @@ export function CategoryTableDummy() {
 
         <TableBody>
           {loading ? (
+            Array.from({ length: 5 }).map((_, i) => (
+              <TableRow key={i}>
+                {Array.from({ length: 5 }).map((__, j) => (
+                  <TableCell key={j}><div className="h-4 bg-gray-100 rounded animate-pulse" /></TableCell>
+                ))}
+              </TableRow>
+            ))
+          ) : error ? (
             <TableRow>
               <TableCell colSpan={5} className="py-10 text-center">
-                Memuat...
+                <p className="text-red-500 font-medium">{error}</p>
+                <button onClick={fetchData} className="mt-3 text-sm text-green-600 underline hover:no-underline">Coba lagi</button>
               </TableCell>
             </TableRow>
           ) : filtered.length === 0 ? (

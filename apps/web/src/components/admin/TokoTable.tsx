@@ -11,10 +11,20 @@ import {
 import { Input } from "#/components/ui/input";
 import { Button } from "#/components/ui/button";
 import { Badge } from "#/components/ui/badge";
-import { dummyShops, type Shop } from "#/constants/dummy.table";
 import { useServerFn } from "@tanstack/react-start";
 import { getShopsFn, reviewApplicationFn } from "#/server/admin";
 import type { AdminShop } from "#/types/server";
+
+type Shop = {
+  id: string;
+  name: string;
+  owner: string;
+  email: string;
+  status: "PENDING" | "APPROVED" | "REJECTED" | "SUSPENDED";
+  balance: number;
+  totalProducts: number;
+  createdAt: Date;
+};
 
 type SortOrder = "asc" | "desc";
 
@@ -60,10 +70,11 @@ function getStatusLabel(status: Shop["status"]) {
   return "Menunggu";
 }
 
-export function ShopTableDummy() {
+export function ShopTable() {
   const getShops = useServerFn(getShopsFn);
   const reviewApplication = useServerFn(reviewApplicationFn);
-  const [data, setData] = React.useState<Shop[]>(dummyShops);
+  const [data, setData] = React.useState<Shop[]>([]);
+  const [error, setError] = React.useState<string | null>(null);
   const [search, setSearch] = React.useState("");
   const [sortKey, setSortKey] = React.useState<keyof Shop>("createdAt");
   const [sortOrder, setSortOrder] = React.useState<SortOrder>("desc");
@@ -77,23 +88,23 @@ export function ShopTableDummy() {
 
   const fetchData = React.useCallback(async () => {
     try {
+      setError(null);
       const res = await getShops({ data: { limit: 100 } });
       const shops = Array.isArray(res.data) ? res.data : [];
-
-      if (shops.length > 0) {
-        setData(shops.map((shop: any) => ({
-          id: shop.id,
-          name: shop.name,
-          owner: shop.owner?.fullName ?? shop.owner?.profile?.fullName ?? "-",
-          email: shop.owner?.email ?? "-",
-          status: shop.status,
-          balance: Number(shop.balance ?? 0),
-          totalProducts: Number(shop.totalProducts ?? 0),
-          createdAt: new Date(shop.createdAt),
-        })));
-      }
-    } catch {
-      toast.error("Gagal memuat toko dari database, menampilkan data contoh");
+      setData(shops.map((shop: any) => ({
+        id: shop.id,
+        name: shop.name,
+        owner: shop.owner?.fullName ?? shop.owner?.profile?.fullName ?? "-",
+        email: shop.owner?.email ?? "-",
+        status: shop.status,
+        balance: Number(shop.balance ?? 0),
+        totalProducts: Number(shop.totalProducts ?? 0),
+        createdAt: new Date(shop.createdAt),
+      })));
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Gagal memuat toko";
+      setError(msg);
+      toast.error(msg);
     }
   }, [getShops]);
 

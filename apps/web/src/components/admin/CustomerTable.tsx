@@ -14,7 +14,6 @@ import { Button } from "#/components/ui/button";
 import { Badge } from "#/components/ui/badge";
 import { getUsersFn, updateUserStatusFn } from "#/server/admin";
 import type { AdminUser } from "#/types/server";
-import { dummyCustomers, type Customer } from "#/constants/dummy.table";
 
 type SortKey = "fullName" | "email" | "status" | "createdAt";
 type SortOrder = "asc" | "desc";
@@ -77,12 +76,13 @@ type ConfirmAction = {
   item: NormalizedUser;
 };
 
-export function CustomerTableDummy() {
+export function CustomerTable() {
   const getUsers = useServerFn(getUsersFn);
   const updateStatus = useServerFn(updateUserStatusFn);
 
-  const [data, setData] = React.useState<NormalizedUser[]>(dummyCustomers.map(fromDummy));
+  const [data, setData] = React.useState<NormalizedUser[]>([]);
   const [loading, setLoading] = React.useState(true);
+  const [error, setError] = React.useState<string | null>(null);
   const [search, setSearch] = React.useState("");
   const [sortKey, setSortKey] = React.useState<SortKey>("createdAt");
   const [sortOrder, setSortOrder] = React.useState<SortOrder>("desc");
@@ -96,6 +96,7 @@ export function CustomerTableDummy() {
 
   const fetchData = React.useCallback(async () => {
     setLoading(true);
+    setError(null);
     try {
       const res = await getUsers({
         data: {
@@ -106,19 +107,14 @@ export function CustomerTableDummy() {
         },
       });
       const items = Array.isArray(res.data) ? res.data : [];
-      if (items.length > 0) {
-        setData(items.map(normalizeUser));
-        setTotal(
-          (res as any).metaData?.total ?? (res as any).meta?.total ?? items.length
-        );
-      } else {
-        setData(dummyCustomers.map(fromDummy));
-        setTotal(dummyCustomers.length);
-      }
-    } catch {
-      toast.error("Gagal memuat customer dari database, menampilkan data contoh");
-      setData(dummyCustomers.map(fromDummy));
-      setTotal(dummyCustomers.length);
+      setData(items.map(normalizeUser));
+      setTotal(
+        (res as any).metaData?.total ?? (res as any).meta?.total ?? items.length
+      );
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Gagal memuat customer";
+      setError(msg);
+      toast.error(msg);
     } finally {
       setLoading(false);
     }
@@ -255,9 +251,18 @@ export function CustomerTableDummy() {
 
         <TableBody>
           {loading ? (
+            Array.from({ length: 5 }).map((_, i) => (
+              <TableRow key={i}>
+                {Array.from({ length: 7 }).map((__, j) => (
+                  <TableCell key={j}><div className="h-4 bg-gray-100 rounded animate-pulse" /></TableCell>
+                ))}
+              </TableRow>
+            ))
+          ) : error ? (
             <TableRow>
               <TableCell colSpan={7} className="py-10 text-center">
-                Memuat...
+                <p className="text-red-500 font-medium">{error}</p>
+                <button onClick={fetchData} className="mt-3 text-sm text-green-600 underline hover:no-underline">Coba lagi</button>
               </TableCell>
             </TableRow>
           ) : sorted.length === 0 ? (
