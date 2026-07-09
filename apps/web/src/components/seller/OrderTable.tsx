@@ -11,7 +11,7 @@ import {
 import { Button } from "#/components/ui/button";
 import { Badge } from "#/components/ui/badge";
 import { useServerFn } from "@tanstack/react-start";
-import { getShopOrdersFn, updateOrderStatusFn, getMyShopFn, type SellerOrder } from "#/features/seller/api";
+import { firstShopFromPayload, getShopOrdersFn, updateOrderStatusFn, getMyShopFn, type SellerOrder } from "#/features/seller/api";
 
 export function OrderTable() {
   const getMyShop = useServerFn(getMyShopFn);
@@ -31,7 +31,8 @@ export function OrderTable() {
     setLoading(true);
     getMyShop().then(res => {
       if (cancelled) return;
-      const id = res.data?.id || res.data?.shop?.id;
+      const shop = firstShopFromPayload(res);
+      const id = shop?.id;
       if (id) {
         setShopId(id);
       } else {
@@ -77,8 +78,10 @@ export function OrderTable() {
   }, [fetchData]);
 
   const handleUpdateStatus = async (orderId: string, status: string) => {
+    if (!shopId) return;
+
     try {
-      await updateStatus({ data: { orderId, status } });
+      await updateStatus({ data: { shopId, orderId, status } });
       toast.success("Status pesanan diperbarui");
       fetchData();
     } catch (err) {

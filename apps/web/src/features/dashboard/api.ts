@@ -50,6 +50,20 @@ function successCount(results: PromiseSettledResult<ApiResult<unknown>>[], index
   return result.status === "fulfilled" ? countFrom(result.value) : 0
 }
 
+function firstShopFromPayload(payload: ApiResult<any>) {
+  const data = payload.data
+
+  if (Array.isArray(data)) {
+    return data[0] ?? null
+  }
+
+  if (Array.isArray(data?.data)) {
+    return data.data[0] ?? null
+  }
+
+  return data?.shop ?? data ?? null
+}
+
 export const getAdminDashboardFn = createServerFn({ method: "GET" }).handler(async () => {
   const session = await useAppSession()
   const accessToken = session.data?.accessToken
@@ -84,8 +98,8 @@ export const getSellerDashboardFn = createServerFn({ method: "GET" }).handler(as
   const accessToken = session.data?.accessToken
   const refreshToken = session.data?.refreshToken
   const shopPayload = await request<any>("/core/shops/me", accessToken, refreshToken)
-  const shop = shopPayload.data
-  const shopId = shop?.id ?? shop?.shop?.id
+  const shop = firstShopFromPayload(shopPayload)
+  const shopId = shop?.id
 
   if (!shopId) {
     return {

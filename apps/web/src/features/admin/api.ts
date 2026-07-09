@@ -154,13 +154,15 @@ export type ShopApplication = {
     name: string
     owner: {
       email: string
-      profile: {
+      profile?: {
         fullName: string
       }
     }
   }
   status: "PENDING" | "REVIEW" | "APPROVED" | "REJECTED"
   createdAt: string
+  reviewedAt?: string | null
+  notes?: string | null
   idCardUrl: string
   bankName: string
   bankAccount: string
@@ -180,12 +182,49 @@ export const getApplicationsFn = createServerFn({ method: "GET" })
     const accessToken = session.data?.accessToken
     const refreshToken = session.data?.refreshToken
 
-    const query = new URLSearchParams()
-    if (data.page) query.append("page", data.page.toString())
-    if (data.limit) query.append("limit", data.limit.toString())
-    if (data.status && data.status !== "ALL") query.append("status", data.status)
+    const shops = await request<AdminShop[]>(
+      "GET",
+      `/core/shops?page=1&limit=100`,
+      null,
+      accessToken,
+      refreshToken
+    )
 
-    return request<ShopApplication[]>("GET", `/core/shops/applications/list?${query.toString()}`, null, accessToken, refreshToken)
+    const shopItems = Array.isArray(shops.data) ? shops.data : []
+    const apps = await Promise.all(
+      shopItems.map(async (shop) => {
+        try {
+          const app = await request<ShopApplication>(
+            "GET",
+            `/core/shops/${shop.id}/application`,
+            null,
+            accessToken,
+            refreshToken
+          )
+
+          return {
+            ...app.data,
+            shop: app.data.shop ?? {
+              name: shop.name,
+              owner: {
+                email: shop.owner?.email ?? "-",
+                profile: {
+                  fullName: shop.owner?.profile?.fullName ?? "-",
+                },
+              },
+            },
+          }
+        } catch {
+          return null
+        }
+      })
+    )
+
+    const filtered = apps
+      .filter((app): app is ShopApplication => Boolean(app))
+      .filter((app) => !data.status || data.status === "ALL" || app.status === data.status)
+
+    return { data: filtered, meta: { total: filtered.length } }
   })
 
 export const reviewApplicationFn = createServerFn({ method: "POST" })

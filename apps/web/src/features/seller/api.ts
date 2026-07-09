@@ -55,6 +55,20 @@ export const getMyShopFn = createServerFn({ method: "GET" })
     return request<any>("GET", "/core/shops/me", null, accessToken, refreshToken)
   })
 
+export function firstShopFromPayload(payload: any) {
+  const data = payload?.data
+
+  if (Array.isArray(data)) {
+    return data[0] ?? null
+  }
+
+  if (Array.isArray(data?.data)) {
+    return data.data[0] ?? null
+  }
+
+  return data?.shop ?? data ?? null
+}
+
 // PRODUCTS
 export type SellerProduct = {
   id: string
@@ -166,7 +180,7 @@ export const getShopOrdersFn = createServerFn({ method: "GET" })
   })
 
 export const updateOrderStatusFn = createServerFn({ method: "POST" })
-  .inputValidator(Zod(z.object({ orderId: z.string(), status: z.string() })))
+  .inputValidator(Zod(z.object({ shopId: z.string(), orderId: z.string(), status: z.string() })))
   .handler(async ({ data }) => {
     const session = await useAppSession()
     const accessToken = session.data?.accessToken

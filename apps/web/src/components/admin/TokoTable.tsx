@@ -12,6 +12,8 @@ import { Input } from "#/components/ui/input";
 import { Button } from "#/components/ui/button";
 import { Badge } from "#/components/ui/badge";
 import { dummyShops, type Shop } from "#/constants/dummy.table";
+import { useServerFn } from "@tanstack/react-start";
+import { getShopsFn, reviewApplicationFn } from "#/features/admin/api";
 
 type SortOrder = "asc" | "desc";
 
@@ -58,6 +60,8 @@ function getStatusLabel(status: Shop["status"]) {
 }
 
 export function ShopTableDummy() {
+  const getShops = useServerFn(getShopsFn);
+  const reviewApplication = useServerFn(reviewApplicationFn);
   const [data, setData] = React.useState<Shop[]>(dummyShops);
   const [search, setSearch] = React.useState("");
   const [sortKey, setSortKey] = React.useState<keyof Shop>("createdAt");
@@ -69,6 +73,32 @@ export function ShopTableDummy() {
     React.useState<ConfirmAction | null>(null);
   const [rejectReason, setRejectReason] = React.useState("");
   const [rejectReasonError, setRejectReasonError] = React.useState("");
+
+  const fetchData = React.useCallback(async () => {
+    try {
+      const res = await getShops({ data: { limit: 100 } });
+      const shops = Array.isArray(res.data) ? res.data : [];
+
+      if (shops.length > 0) {
+        setData(shops.map((shop: any) => ({
+          id: shop.id,
+          name: shop.name,
+          owner: shop.owner?.fullName ?? shop.owner?.profile?.fullName ?? "-",
+          email: shop.owner?.email ?? "-",
+          status: shop.status,
+          balance: Number(shop.balance ?? 0),
+          totalProducts: Number(shop.totalProducts ?? 0),
+          createdAt: new Date(shop.createdAt),
+        })));
+      }
+    } catch {
+      toast.error("Gagal memuat toko dari database, menampilkan data contoh");
+    }
+  }, [getShops]);
+
+  React.useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   const filtered = sortData(
     data.filter((s) => {
@@ -100,10 +130,17 @@ export function ShopTableDummy() {
     setData((prev) => prev.map((s) => (s.id === id ? { ...s, status } : s)));
   };
 
-  const handleApprove = (id: string) => {
+  const handleApprove = async (id: string) => {
     const item = data.find((s) => s.id === id);
 
-    updateStatus(id, "APPROVED");
+    try {
+      await reviewApplication({ data: { shopId: id, status: "APPROVED" } });
+      updateStatus(id, "APPROVED");
+      await fetchData();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Gagal menyetujui toko");
+      return;
+    }
 
     toast.success("Toko disetujui", {
       description: `${item?.name} telah diaktifkan.`,
@@ -121,7 +158,7 @@ export function ShopTableDummy() {
     setConfirmAction({ type: "suspend", item });
   };
 
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
     if (!confirmAction) return;
 
     if (confirmAction.type === "reject") {
@@ -130,7 +167,20 @@ export function ShopTableDummy() {
         return;
       }
 
-      updateStatus(confirmAction.item.id, "REJECTED");
+      try {
+        await reviewApplication({
+          data: {
+            shopId: confirmAction.item.id,
+            status: "REJECTED",
+            notes: rejectReason,
+          },
+        });
+        updateStatus(confirmAction.item.id, "REJECTED");
+        await fetchData();
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : "Gagal menolak toko");
+        return;
+      }
 
       toast.error("Toko ditolak", {
         description: `${confirmAction.item.name} telah ditolak.`,

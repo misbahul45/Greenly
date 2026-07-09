@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router"
 import { useMemo, useState, useEffect, useCallback } from "react"
 import { useServerFn } from "@tanstack/react-start"
-import { getShopBalanceFn, getShopLedgerFn, getMyShopFn } from "#/features/seller/api"
+import { firstShopFromPayload, getShopBalanceFn, getShopLedgerFn, getMyShopFn } from "#/features/seller/api"
 import { toast } from "sonner"
 
 export const Route = createFileRoute("/_authed/seller/laporan-keuangan")({
@@ -35,7 +35,8 @@ function LaporanKeuanganPage() {
     setLoading(true);
     getMyShop().then(res => {
       if (cancelled) return;
-      const id = res.data?.id || res.data?.shop?.id;
+      const shop = firstShopFromPayload(res);
+      const id = shop?.id;
       if (id) {
         setShopId(id);
       } else {

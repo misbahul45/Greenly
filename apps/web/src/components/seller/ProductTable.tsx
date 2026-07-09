@@ -18,6 +18,7 @@ import {
   deleteProductFn,
   toggleProductFn,
   getMyShopFn,
+  firstShopFromPayload,
   type SellerProduct
 } from "#/features/seller/api";
 import { getCategoriesFn, type AdminCategory } from "#/features/admin/api";
@@ -60,7 +61,8 @@ export function ProductTableFull() {
     setLoading(true);
     getMyShop().then(res => {
       if (cancelled) return;
-      const id = res.data?.id || res.data?.shop?.id;
+      const shop = firstShopFromPayload(res);
+      const id = shop?.id;
       if (id) {
         setShopId(id);
       } else {
@@ -141,11 +143,25 @@ export function ProductTableFull() {
 
   const handleSave = async () => {
     try {
+      if (!shopId) {
+        toast.error("Toko seller belum ditemukan");
+        return;
+      }
+
+      const payload = {
+        ...form,
+        shopId,
+        sku: selectedItem?.slug ?? `SKU-${Date.now()}`,
+        currency: "IDR",
+        imageUrls: selectedItem?.images ?? [],
+        isActive: true,
+      };
+
       if (formMode === "create") {
-        await createProduct({ data: { ...form, shopId } });
+        await createProduct({ data: payload });
         toast.success("Produk ditambahkan");
       } else if (selectedItem) {
-        await updateProduct({ data: { id: selectedItem.id, data: form } });
+        await updateProduct({ data: { id: selectedItem.id, data: payload } });
         toast.success("Produk diperbarui");
       }
       setOpenFormModal(false);
