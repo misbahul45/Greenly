@@ -1,16 +1,10 @@
-import axios from "axios"
 import { createServerFn } from "@tanstack/react-start"
-import { useAppSession } from "#/hooks/useSession"
+import { serverRequest } from "#/lib/request"
+import { createCatalogApi } from "#/server/api"
 
-type ApiResult<T> = {
-  data: T
-  metaData?: {
-    total?: number
-  }
-  meta?: {
-    total?: number
-  }
-}
+/*
+import axios from "axios"
+import { useAppSession } from "#/hooks/useSession"
 
 const API_TIMEOUT_MS = 15000
 
@@ -30,8 +24,14 @@ async function request<T>(path: string, accessToken?: string, refreshToken?: str
       ...(refreshToken && { "x-refresh-token": refreshToken }),
     },
   })
-
   return response.data
+}
+*/
+
+type ApiResult<T> = {
+  data: T
+  metaData?: { total?: number }
+  meta?: { total?: number }
 }
 
 function countFrom(payload: ApiResult<unknown>) {
@@ -42,89 +42,115 @@ function countFrom(payload: ApiResult<unknown>) {
 
 function sumOrders(payload: ApiResult<any>) {
   const items = Array.isArray(payload.data) ? payload.data : []
-  return items.reduce((total, item) => total + Number(item.totalAmount ?? 0), 0)
-}
-
-function successCount(results: PromiseSettledResult<ApiResult<unknown>>[], index: number) {
-  const result = results[index]
-  return result.status === "fulfilled" ? countFrom(result.value) : 0
+  return items.reduce((total: number, item: any) => total + Number(item.totalAmount ?? 0), 0)
 }
 
 function firstShopFromPayload(payload: ApiResult<any>) {
   const data = payload.data
-
-  if (Array.isArray(data)) {
-    return data[0] ?? null
-  }
-
-  if (Array.isArray(data?.data)) {
-    return data.data[0] ?? null
-  }
-
+  if (Array.isArray(data)) return data[0] ?? null
+  if (Array.isArray(data?.data)) return data.data[0] ?? null
   return data?.shop ?? data ?? null
 }
 
-export const getAdminDashboardFn = createServerFn({ method: "GET" }).handler(async () => {
-  const session = await useAppSession()
-  const accessToken = session.data?.accessToken
-  const refreshToken = session.data?.refreshToken
+export const getAdminDashboardFn = createServerFn({ method: "GET" })
+  .handler(async ({ context }) => {
+    return serverRequest<{
+      totalUsers: number
+      totalShops: number
+      totalOrders: number
+      totalProducts: number
+      totalCategories: number
+      totalRevenue: number
+      mlStatus: string
+    }>(context, async (api) => {
+      const headers = api.defaults.headers as Record<string, any>
+      const authorization = headers.Authorization ?? headers.common?.Authorization
+      const token = authorization?.toString().replace("Bearer ", "")
+      const catalogApi = createCatalogApi(token)
 
-  const results = await Promise.allSettled([
-    request("/core/users?page=1&limit=1", accessToken, refreshToken),
-    request("/core/shops?page=1&limit=1", accessToken, refreshToken),
-    request("/core/orders?page=1&limit=10", accessToken, refreshToken),
-    request("/catalog/products?page=1&limit=1", accessToken, refreshToken),
-    request("/catalog/categories?page=1&limit=1", accessToken, refreshToken),
-    request("/ml/health", accessToken, refreshToken),
-  ])
+      const results = await Promise.allSettled([
+        api.get("/users", { params: { page: 1, limit: 1 } }),
+        api.get("/shops", { params: { page: 1, limit: 1 } }),
+        api.get("/orders", { params: { page: 1, limit: 10 } }),
+        catalogApi.get("/products", { params: { page: 1, limit: 1 } }),
+        catalogApi.get("/categories", { params: { page: 1, limit: 1 } }),
+      ])
 
-  const orders = results[2]
-  const revenue = orders.status === "fulfilled" ? sumOrders(orders.value) : 0
-  const ml = results[5]
+      const pick = (i: number) =>
+        results[i].status === "fulfilled"
+          ? countFrom(results[i].value.data as ApiResult<unknown>)
+          : 0
 
-  return {
-    totalUsers: successCount(results, 0),
-    totalShops: successCount(results, 1),
-    totalOrders: successCount(results, 2),
-    totalProducts: successCount(results, 3),
-    totalCategories: successCount(results, 4),
-    totalRevenue: revenue,
-    mlStatus: ml.status === "fulfilled" ? "online" : "offline",
-  }
-})
+      const ordersPayload =
+        results[2].status === "fulfilled"
+          ? (results[2].value.data as ApiResult<any>)
+          : null
 
-export const getSellerDashboardFn = createServerFn({ method: "GET" }).handler(async () => {
-  const session = await useAppSession()
-  const accessToken = session.data?.accessToken
-  const refreshToken = session.data?.refreshToken
-  const shopPayload = await request<any>("/core/shops/me", accessToken, refreshToken)
-  const shop = firstShopFromPayload(shopPayload)
-  const shopId = shop?.id
+      return {
+        totalUsers: pick(0),
+        totalShops: pick(1),
+        totalOrders: pick(2),
+        totalProducts: pick(3),
+        totalCategories: pick(4),
+        totalRevenue: ordersPayload ? sumOrders(ordersPayload) : 0,
+        mlStatus: "unknown",
+      }
+    })
+  })
 
-  if (!shopId) {
-    return {
-      shopName: shop?.name ?? "Toko Nesa",
-      totalProducts: 3,
-      totalOrders: 3,
-      totalRevenue: 526000,
-      balance: 273500,
-    }
-  }
+export const getSellerDashboardFn = createServerFn({ method: "GET" })
+  .handler(async ({ context }) => {
+    return serverRequest<{
+      shopName: string
+      totalProducts: number
+      totalOrders: number
+      totalRevenue: number
+      balance: number
+    }>(context, async (api) => {
+      const headers = api.defaults.headers as Record<string, any>
+      const authorization = headers.Authorization ?? headers.common?.Authorization
+      const token = authorization?.toString().replace("Bearer ", "")
+      const catalogApi = createCatalogApi(token)
 
-  const results = await Promise.allSettled([
-    request(`/catalog/products?shop_id=${shopId}&page=1&limit=1`, accessToken, refreshToken),
-    request(`/core/shops/${shopId}/orders?page=1&limit=10`, accessToken, refreshToken),
-    request(`/core/shops/${shopId}/finance/balance`, accessToken, refreshToken),
-  ])
+      const shopPayload = await api.get("/shops/me")
+      const shop = firstShopFromPayload(shopPayload.data as ApiResult<any>)
+      const shopId: string | undefined = shop?.id
 
-  const orders = results[1]
-  const balancePayload = results[2]
+      if (!shopId) {
+        return {
+          shopName: shop?.name ?? "-",
+          totalProducts: 0,
+          totalOrders: 0,
+          totalRevenue: 0,
+          balance: 0,
+        }
+      }
 
-  return {
-    shopName: shop?.name ?? shop?.shop?.name ?? "Toko",
-    totalProducts: successCount(results, 0) || 3,
-    totalOrders: successCount(results, 1) || 3,
-    totalRevenue: (orders.status === "fulfilled" ? sumOrders(orders.value) : 0) || 526000,
-    balance: (balancePayload.status === "fulfilled" ? Number((balancePayload.value.data as any)?.balance ?? 0) : 0) || 273500,
-  }
-})
+      const results = await Promise.allSettled([
+        catalogApi.get("/products", { params: { shop_id: shopId, page: 1, limit: 1 } }),
+        api.get(`/shops/${shopId}/orders`, { params: { page: 1, limit: 10 } }),
+        api.get(`/shops/${shopId}/finance/balance`),
+      ])
+
+      const ordersPayload =
+        results[1].status === "fulfilled"
+          ? (results[1].value.data as ApiResult<any>)
+          : null
+
+      const balanceData =
+        results[2].status === "fulfilled"
+          ? (results[2].value.data as any)
+          : null
+
+      return {
+        shopName: shop?.name ?? "-",
+        totalProducts:
+          results[0].status === "fulfilled"
+            ? countFrom(results[0].value.data as ApiResult<unknown>)
+            : 0,
+        totalOrders: ordersPayload ? countFrom(ordersPayload) : 0,
+        totalRevenue: ordersPayload ? sumOrders(ordersPayload) : 0,
+        balance: Number(balanceData?.data?.balance ?? balanceData?.balance ?? 0),
+      }
+    })
+  })

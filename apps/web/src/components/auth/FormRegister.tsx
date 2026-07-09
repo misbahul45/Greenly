@@ -1,3 +1,4 @@
+/*
 "use client"
 
 import * as React from "react"
@@ -87,8 +88,6 @@ export default function FormRegister() {
           }}
         >
           <FieldGroup>
-
-            {/* NAME FIELD */}
             <form.Field
               name="name"
               children={(field) => {
@@ -117,7 +116,6 @@ export default function FormRegister() {
               }}
             />
 
-            {/* EMAIL FIELD */}
             <form.Field
               name="email"
               children={(field) => {
@@ -146,7 +144,6 @@ export default function FormRegister() {
               }}
             />
 
-            {/* PASSWORD FIELD */}
             <form.Field
               name="password"
               children={(field) => {
@@ -217,3 +214,6 @@ export default function FormRegister() {
     </Card>
   )
 }
+*/
+
+export {}

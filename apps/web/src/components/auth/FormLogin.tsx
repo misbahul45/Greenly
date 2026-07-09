@@ -27,33 +27,21 @@ import { LoginSchema } from "#/schema/auth"
 import { loginFn } from "#/server/auth"
 import type { LoginResponse } from "#/types/login.response"
 
-function normalizeRole(role: string) {
-  return role.trim().replace(/[_-]+/g, " ").replace(/\s+/g, " ").toUpperCase()
-}
+const ADMIN_ROLES = ["ADMIN", "SUPER_ADMIN"]
+const SELLER_ROLES = ["SELLER"]
 
 function getDashboardPath(user: LoginResponse["user"]) {
-  const normalizedRoles = user.roles.map(normalizeRole)
-  const identity = `${user.name} ${user.email}`.toLowerCase()
+  const roles = user.roles.map((r) => r.trim().toUpperCase())
 
-  const isSeller =
-    identity.includes("nesa") ||
-    normalizedRoles.some((role) =>
-      ["SELLER", "PENJUAL", "ADMIN PENJUAL"].includes(role)
-    )
-
-  if (isSeller) {
-    return "/seller/dashboard"
-  }
-
-  const isAdmin =
-    identity.includes("rani") ||
-    normalizedRoles.some((role) => ["ADMIN", "SUPER ADMIN"].includes(role))
-
-  if (isAdmin) {
+  if (roles.some((r) => ADMIN_ROLES.includes(r))) {
     return "/admin/dashboard"
   }
 
-  return "/seller/dashboard"
+  if (roles.some((r) => SELLER_ROLES.includes(r))) {
+    return "/seller/dashboard"
+  }
+
+  return "/auth/login"
 }
 
 export default function FormLogin() {
@@ -72,14 +60,22 @@ export default function FormLogin() {
       try {
         const response = await loginFn({ data: value })
 
+        const destination = getDashboardPath(response.user)
+
+        if (destination === "/auth/login") {
+          toast.error("Akses ditolak", {
+            description: "Akun ini tidak memiliki akses ke dashboard.",
+            position: "bottom-right",
+          })
+          return
+        }
+
         toast.success("Login berhasil", {
           description: "Selamat datang kembali",
           position: "bottom-right",
         })
 
-        await navigate({
-          to: getDashboardPath(response.user),
-        })
+        await navigate({ to: destination })
       } catch (error: any) {
         toast.error("Login gagal", {
           description: error.message ?? "Terjadi kesalahan",

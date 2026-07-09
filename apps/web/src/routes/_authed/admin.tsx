@@ -1,11 +1,23 @@
 "use client"
 
 import * as React from "react"
-import { Outlet, createFileRoute } from "@tanstack/react-router"
+import { Outlet, createFileRoute, redirect } from "@tanstack/react-router"
 import Header from "#/components/Header"
 import SidebarAdmin from "#/components/SidebarAdmin"
 
+const ADMIN_ROLES = ["ADMIN", "SUPER_ADMIN"]
+
 export const Route = createFileRoute("/_authed/admin")({
+  beforeLoad: ({ context }) => {
+    const user = (context as any).user
+    const roles: string[] = (user?.roles ?? []).map((r: string) =>
+      r.trim().toUpperCase()
+    )
+    const isAdmin = roles.some((r) => ADMIN_ROLES.includes(r))
+    if (!isAdmin) {
+      throw redirect({ to: "/auth/login" })
+    }
+  },
   component: AdminLayout,
 })
 

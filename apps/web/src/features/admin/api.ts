@@ -1,19 +1,13 @@
-import axios from "axios"
 import { createServerFn } from "@tanstack/react-start"
-import { useAppSession } from "#/hooks/useSession"
 import { z } from "zod"
 import { Zod } from "#/lib/zod"
+import { serverRequest, apiRequest } from "#/lib/request"
+import { createCatalogApi } from "#/server/api"
+import type { ApiMeta } from "#/types/api.response"
 
-type ApiResult<T> = {
-  data: T
-  meta?: {
-    total?: number
-    page?: number
-    limit?: number
-    lastPage?: number
-  }
-  message?: string
-}
+/*
+import axios from "axios"
+import { useAppSession } from "#/hooks/useSession"
 
 const API_TIMEOUT_MS = 15000
 
@@ -45,8 +39,33 @@ async function request<T>(
 
   return response.data as ApiResult<T>
 }
+*/
 
-// USERS
+type ApiResult<T> = {
+  data: T
+  meta?: ApiMeta
+  metaData?: ApiMeta
+  message?: string
+}
+
+async function catalogRequest<T>(
+  ctx: unknown,
+  fn: (api: ReturnType<typeof createCatalogApi>) => Promise<T>
+): Promise<T> {
+  return serverRequest<T>(ctx, (coreApi) => {
+    const headers = coreApi.defaults.headers as Record<string, any>
+    const authorization = headers.Authorization ?? headers.common?.Authorization
+    const token = authorization?.toString().replace("Bearer ", "")
+    return fn(createCatalogApi(token))
+  })
+}
+
+function cleanParams(obj: Record<string, any>) {
+  return Object.fromEntries(
+    Object.entries(obj).filter(([, v]) => v !== undefined && v !== "" && v !== null)
+  )
+}
+
 export type AdminUser = {
   id: string
   email: string
@@ -54,10 +73,10 @@ export type AdminUser = {
   status: "ACTIVE" | "SUSPENDED" | "BANNED" | "PENDING_VERIFICATION"
   isActive: boolean
   createdAt: string
-  roles: string[]
+  roles: { role: { id: string; name: string } }[]
   profile: {
     fullName: string | null
-    phoneNumber: string | null
+    phone: string | null
     address: string | null
     avatarUrl: string | null
   } | null
@@ -72,31 +91,28 @@ const GetUsersSchema = z.object({
 
 export const getUsersFn = createServerFn({ method: "GET" })
   .inputValidator(Zod(GetUsersSchema))
-  .handler(async ({ data }) => {
-    const session = await useAppSession()
-    const accessToken = session.data?.accessToken
-    const refreshToken = session.data?.refreshToken
-
-    const query = new URLSearchParams()
-    if (data.page) query.append("page", data.page.toString())
-    if (data.limit) query.append("limit", data.limit.toString())
-    if (data.search) query.append("search", data.search)
-    if (data.status && data.status !== "ALL") query.append("status", data.status)
-
-    return request<AdminUser[]>("GET", `/core/users?${query.toString()}`, null, accessToken, refreshToken)
+  .handler(async ({ data, context }) => {
+    return serverRequest<ApiResult<AdminUser[]>>(context, async (api) => {
+      const params = cleanParams({
+        page: data.page,
+        limit: data.limit,
+        search: data.search,
+        status: data.status !== "ALL" ? data.status : undefined,
+      })
+      const res = await api.get("/users", { params })
+      return res.data as ApiResult<AdminUser[]>
+    })
   })
 
 export const updateUserStatusFn = createServerFn({ method: "POST" })
   .inputValidator(Zod(z.object({ id: z.string(), status: z.string() })))
-  .handler(async ({ data }) => {
-    const session = await useAppSession()
-    const accessToken = session.data?.accessToken
-    const refreshToken = session.data?.refreshToken
-
-    return request<AdminUser>("PATCH", `/core/users/${data.id}`, { status: data.status }, accessToken, refreshToken)
+  .handler(async ({ data, context }) => {
+    return serverRequest<any>(context, async (api) => {
+      const res = await api.patch(`/users/${data.id}`, { status: data.status })
+      return res.data
+    })
   })
 
-// SHOPS
 export type AdminShop = {
   id: string
   ownerId: string
@@ -122,31 +138,28 @@ const GetShopsSchema = z.object({
 
 export const getShopsFn = createServerFn({ method: "GET" })
   .inputValidator(Zod(GetShopsSchema))
-  .handler(async ({ data }) => {
-    const session = await useAppSession()
-    const accessToken = session.data?.accessToken
-    const refreshToken = session.data?.refreshToken
-
-    const query = new URLSearchParams()
-    if (data.page) query.append("page", data.page.toString())
-    if (data.limit) query.append("limit", data.limit.toString())
-    if (data.search) query.append("search", data.search)
-    if (data.status && data.status !== "ALL") query.append("status", data.status)
-
-    return request<AdminShop[]>("GET", `/core/shops?${query.toString()}`, null, accessToken, refreshToken)
+  .handler(async ({ data, context }) => {
+    return serverRequest<ApiResult<AdminShop[]>>(context, async (api) => {
+      const params = cleanParams({
+        page: data.page,
+        limit: data.limit,
+        search: data.search,
+        status: data.status !== "ALL" ? data.status : undefined,
+      })
+      const res = await api.get("/shops", { params })
+      return res.data as ApiResult<AdminShop[]>
+    })
   })
 
 export const updateShopStatusFn = createServerFn({ method: "POST" })
   .inputValidator(Zod(z.object({ id: z.string(), status: z.string() })))
-  .handler(async ({ data }) => {
-    const session = await useAppSession()
-    const accessToken = session.data?.accessToken
-    const refreshToken = session.data?.refreshToken
-
-    return request<AdminShop>("PATCH", `/core/shops/${data.id}`, { status: data.status }, accessToken, refreshToken)
+  .handler(async ({ data, context }) => {
+    return serverRequest<any>(context, async (api) => {
+      const res = await api.patch(`/shops/${data.id}`, { status: data.status })
+      return res.data
+    })
   })
 
-// APPLICATIONS
 export type ShopApplication = {
   id: string
   shopId: string
@@ -177,115 +190,109 @@ const GetApplicationsSchema = z.object({
 
 export const getApplicationsFn = createServerFn({ method: "GET" })
   .inputValidator(Zod(GetApplicationsSchema))
-  .handler(async ({ data }) => {
-    const session = await useAppSession()
-    const accessToken = session.data?.accessToken
-    const refreshToken = session.data?.refreshToken
+  .handler(async ({ data, context }) => {
+    return serverRequest<{ data: ShopApplication[]; meta: { total: number } }>(context, async (api) => {
+      const shopsRes = await api.get("/shops", { params: { page: 1, limit: 100 } })
+      const shopItems: AdminShop[] = Array.isArray(shopsRes.data?.data)
+        ? shopsRes.data.data
+        : Array.isArray(shopsRes.data)
+        ? shopsRes.data
+        : []
 
-    const shops = await request<AdminShop[]>(
-      "GET",
-      `/core/shops?page=1&limit=100`,
-      null,
-      accessToken,
-      refreshToken
-    )
-
-    const shopItems = Array.isArray(shops.data) ? shops.data : []
-    const apps = await Promise.all(
-      shopItems.map(async (shop) => {
-        try {
-          const app = await request<ShopApplication>(
-            "GET",
-            `/core/shops/${shop.id}/application`,
-            null,
-            accessToken,
-            refreshToken
-          )
-
-          return {
-            ...app.data,
-            shop: app.data.shop ?? {
-              name: shop.name,
-              owner: {
-                email: shop.owner?.email ?? "-",
-                profile: {
-                  fullName: shop.owner?.profile?.fullName ?? "-",
+      const apps = await Promise.all(
+        shopItems.map(async (shop) => {
+          try {
+            const appRes = await api.get(`/shops/${shop.id}/application`)
+            const appData: ShopApplication = appRes.data?.data ?? appRes.data
+            return {
+              ...appData,
+              shop: appData.shop ?? {
+                name: shop.name,
+                owner: {
+                  email: shop.owner?.email ?? "-",
+                  profile: { fullName: shop.owner?.profile?.fullName ?? "-" },
                 },
               },
-            },
+            } as ShopApplication
+          } catch {
+            return null
           }
-        } catch {
-          return null
-        }
-      })
-    )
+        })
+      )
 
-    const filtered = apps
-      .filter((app): app is ShopApplication => Boolean(app))
-      .filter((app) => !data.status || data.status === "ALL" || app.status === data.status)
+      const filtered = apps
+        .filter((app): app is ShopApplication => Boolean(app))
+        .filter((app) => !data.status || data.status === "ALL" || app.status === data.status)
 
-    return { data: filtered, meta: { total: filtered.length } }
+      return { data: filtered, meta: { total: filtered.length } }
+    })
   })
 
 export const reviewApplicationFn = createServerFn({ method: "POST" })
   .inputValidator(Zod(z.object({ shopId: z.string(), status: z.string(), notes: z.string().optional() })))
-  .handler(async ({ data }) => {
-    const session = await useAppSession()
-    const accessToken = session.data?.accessToken
-    const refreshToken = session.data?.refreshToken
-
-    return request<any>("PATCH", `/core/shops/${data.shopId}/application/review`, { status: data.status, notes: data.notes }, accessToken, refreshToken)
+  .handler(async ({ data, context }) => {
+    return serverRequest<any>(context, async (api) => {
+      const res = await api.patch(`/shops/${data.shopId}/application/review`, {
+        status: data.status,
+        notes: data.notes,
+      })
+      return res.data
+    })
   })
 
-// CATEGORIES
 export type AdminCategory = {
   id: string
   name: string
   slug: string
   parentId: string | null
   createdAt: string
+  updatedAt: string
 }
 
 const GetCategoriesSchema = z.object({
   page: z.number().optional(),
   limit: z.number().optional(),
+  search: z.string().optional(),
 })
 
 export const getCategoriesFn = createServerFn({ method: "GET" })
   .inputValidator(Zod(GetCategoriesSchema))
-  .handler(async ({ data }) => {
-    const session = await useAppSession()
-    const accessToken = session.data?.accessToken
-    const refreshToken = session.data?.refreshToken
-
-    const query = new URLSearchParams()
-    if (data.page) query.append("page", data.page.toString())
-    if (data.limit) query.append("limit", data.limit.toString())
-
-    return request<AdminCategory[]>("GET", `/catalog/categories?${query.toString()}`, null, accessToken, refreshToken)
+  .handler(async ({ data, context }) => {
+    return catalogRequest<{ data: AdminCategory[]; meta?: ApiMeta }>(context, async (api) => {
+      const params = cleanParams({ page: data.page, limit: data.limit, search: data.search })
+      const res = await api.get("/categories", { params })
+      return { data: res.data?.data ?? [], meta: res.data?.meta }
+    })
   })
 
 export const createCategoryFn = createServerFn({ method: "POST" })
   .inputValidator(Zod(z.object({ name: z.string(), parentId: z.string().optional() })))
-  .handler(async ({ data }) => {
-    const session = await useAppSession()
-    const accessToken = session.data?.accessToken
-    const refreshToken = session.data?.refreshToken
+  .handler(async ({ data, context }) => {
+    return catalogRequest<AdminCategory>(context, async (api) => {
+      const res = await api.post("/categories", { name: data.name, parentId: data.parentId })
+      return res.data?.data ?? res.data
+    })
+  })
 
-    return request<AdminCategory>("POST", `/catalog/categories`, data, accessToken, refreshToken)
+export const updateCategoryFn = createServerFn({ method: "POST" })
+  .inputValidator(Zod(z.object({ id: z.string(), name: z.string().optional(), parentId: z.string().nullable().optional() })))
+  .handler(async ({ data, context }) => {
+    return catalogRequest<AdminCategory>(context, async (api) => {
+      const { id, ...payload } = data
+      const res = await api.put(`/categories/${id}`, cleanParams(payload as Record<string, any>))
+      return res.data?.data ?? res.data
+    })
   })
 
 export const deleteCategoryFn = createServerFn({ method: "POST" })
   .inputValidator(Zod(z.object({ id: z.string() })))
-  .handler(async ({ data }) => {
-    const session = await useAppSession()
-    const accessToken = session.data?.accessToken
-    const refreshToken = session.data?.refreshToken
-
-    return request<any>("DELETE", `/catalog/categories/${data.id}`, null, accessToken, refreshToken)
+  .handler(async ({ data, context }) => {
+    return catalogRequest<any>(context, async (api) => {
+      const res = await api.delete(`/categories/${data.id}`)
+      return res.data
+    })
   })
 
-// ORDERS
 export type AdminOrder = {
   id: string
   userId: string
@@ -310,25 +317,22 @@ const GetAllOrdersSchema = z.object({
 
 export const getAllOrdersFn = createServerFn({ method: "GET" })
   .inputValidator(Zod(GetAllOrdersSchema))
-  .handler(async ({ data }) => {
-    const session = await useAppSession()
-    const accessToken = session.data?.accessToken
-    const refreshToken = session.data?.refreshToken
-
-    const query = new URLSearchParams()
-    if (data.page) query.append("page", data.page.toString())
-    if (data.limit) query.append("limit", data.limit.toString())
-    if (data.status && data.status !== "ALL") query.append("status", data.status)
-
-    return request<AdminOrder[]>("GET", `/core/orders?${query.toString()}`, null, accessToken, refreshToken)
+  .handler(async ({ data, context }) => {
+    return serverRequest<ApiResult<AdminOrder[]>>(context, async (api) => {
+      const params = cleanParams({
+        page: data.page,
+        limit: data.limit,
+        status: data.status !== "ALL" ? data.status : undefined,
+      })
+      const res = await api.get("/orders", { params })
+      return res.data as ApiResult<AdminOrder[]>
+    })
   })
 
-// FINANCE
 export const getPlatformFinanceFn = createServerFn({ method: "GET" })
-  .handler(async () => {
-    const session = await useAppSession()
-    const accessToken = session.data?.accessToken
-    const refreshToken = session.data?.refreshToken
-
-    return request<any>("GET", `/core/admin/finance/overview`, null, accessToken, refreshToken)
+  .handler(async ({ context }) => {
+    return serverRequest<any>(context, async (api) => {
+      const res = await api.get("/admin/finance/overview")
+      return res.data
+    })
   })

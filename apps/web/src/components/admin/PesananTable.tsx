@@ -1,5 +1,6 @@
 import * as React from "react";
 import { toast } from "sonner";
+import { useServerFn } from "@tanstack/react-start";
 import {
   Table,
   TableBody,
@@ -11,12 +12,13 @@ import {
 import { Input } from "#/components/ui/input";
 import { Button } from "#/components/ui/button";
 import { Badge } from "#/components/ui/badge";
+import { getAllOrdersFn, type AdminOrder } from "#/features/admin/api";
 import { dummyOrders, type Order } from "#/constants/dummy.table";
 
 type SortOrder = "asc" | "desc";
-type StatusFilter = Order["status"] | "ALL";
+type StatusFilter = AdminOrder["status"] | "ALL";
 
-const STATUS_LABEL: Record<Order["status"], string> = {
+const STATUS_LABEL: Record<AdminOrder["status"], string> = {
   PENDING: "Menunggu",
   PAID: "Dibayar",
   PROCESSING: "Diproses",
@@ -25,30 +27,7 @@ const STATUS_LABEL: Record<Order["status"], string> = {
   CANCELLED: "Dibatalkan",
 };
 
-function sortData<T>(data: T[], key: keyof T, order: SortOrder): T[] {
-  return [...data].sort((a, b) => {
-    const av = (a[key] ?? "") as any;
-    const bv = (b[key] ?? "") as any;
-
-    if (typeof av === "string") {
-      return order === "asc" ? av.localeCompare(bv) : bv.localeCompare(av);
-    }
-
-    if (typeof av === "number") {
-      return order === "asc" ? av - bv : bv - av;
-    }
-
-    if (av instanceof Date) {
-      return order === "asc"
-        ? av.getTime() - bv.getTime()
-        : bv.getTime() - av.getTime();
-    }
-
-    return 0;
-  });
-}
-
-function getStatusClass(status: Order["status"]) {
+function getStatusClass(status: AdminOrder["status"]) {
   if (status === "PENDING") return "bg-yellow-100 text-yellow-700";
   if (status === "PAID") return "bg-blue-100 text-blue-700";
   if (status === "PROCESSING") return "bg-purple-100 text-purple-700";
@@ -57,88 +36,86 @@ function getStatusClass(status: Order["status"]) {
   return "bg-red-100 text-red-700";
 }
 
+function toAdminOrder(o: Order): AdminOrder {
+  return {
+    id: o.id,
+    userId: "-",
+    shopId: "-",
+    shopName: o.shopName,
+    totalAmount: o.totalAmount,
+    status: o.status,
+    createdAt: o.createdAt.toISOString(),
+    user: { email: "-", profile: { fullName: o.customerName } },
+  };
+}
+
 export function OrderTableDummy() {
-  const [data, setData] = React.useState<Order[]>(dummyOrders);
+  const getOrders = useServerFn(getAllOrdersFn);
+
+  const [data, setData] = React.useState<AdminOrder[]>(dummyOrders.map(toAdminOrder));
+  const [loading, setLoading] = React.useState(true);
   const [search, setSearch] = React.useState("");
-  const [sortKey, setSortKey] = React.useState<keyof Order>("createdAt");
   const [sortOrder, setSortOrder] = React.useState<SortOrder>("desc");
   const [filterStatus, setFilterStatus] = React.useState<StatusFilter>("ALL");
+  const [page, setPage] = React.useState(1);
+  const [total, setTotal] = React.useState(0);
+  const limit = 10;
 
-  const [selectedOrder, setSelectedOrder] = React.useState<Order | null>(null);
+  const [selectedOrder, setSelectedOrder] = React.useState<AdminOrder | null>(null);
 
-  const [openConfirmModal, setOpenConfirmModal] = React.useState(false);
-  const [selectedItem, setSelectedItem] = React.useState<Order | null>(null);
-  const [pendingStatus, setPendingStatus] =
-    React.useState<Order["status"] | null>(null);
+  const fetchData = React.useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await getOrders({
+        data: {
+          page,
+          limit,
+          status: filterStatus === "ALL" ? undefined : filterStatus,
+        },
+      });
+      const items = Array.isArray(res.data) ? res.data : [];
+      if (items.length > 0) {
+        setData(items);
+        setTotal(res.metaData?.total ?? res.meta?.total ?? items.length);
+      } else {
+        setData(dummyOrders.map(toAdminOrder));
+        setTotal(dummyOrders.length);
+      }
+    } catch {
+      toast.error("Gagal memuat pesanan dari database, menampilkan data contoh");
+      setData(dummyOrders.map(toAdminOrder));
+      setTotal(dummyOrders.length);
+    } finally {
+      setLoading(false);
+    }
+  }, [getOrders, page, filterStatus]);
 
-  const filtered = sortData(
-    data.filter((o) => {
+  React.useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  const filtered = [...data]
+    .filter((o) => {
       const keyword = search.toLowerCase();
+      return (
+        o.id.toLowerCase().includes(keyword) ||
+        (o.user?.profile?.fullName ?? "").toLowerCase().includes(keyword) ||
+        o.shopName.toLowerCase().includes(keyword)
+      );
+    })
+    .sort((a, b) => {
+      const aT = new Date(a.createdAt).getTime();
+      const bT = new Date(b.createdAt).getTime();
+      return sortOrder === "asc" ? aT - bT : bT - aT;
+    });
 
-      const matchSearch =
-        o.orderNumber.toLowerCase().includes(keyword) ||
-        o.customerName.toLowerCase().includes(keyword) ||
-        o.shopName.toLowerCase().includes(keyword);
-
-      const matchStatus = filterStatus === "ALL" || o.status === filterStatus;
-
-      return matchSearch && matchStatus;
-    }),
-    sortKey,
-    sortOrder
-  );
-
-  const handleSort = (key: keyof Order) => {
-    if (sortKey === key) {
-      setSortOrder((o) => (o === "asc" ? "desc" : "asc"));
-    } else {
-      setSortKey(key);
-      setSortOrder("asc");
-    }
-  };
-
-  const sortIcon = (key: keyof Order) =>
-    sortKey === key ? (sortOrder === "asc" ? " ↑" : " ↓") : "";
-
-  const updateStatus = (id: string, status: Order["status"]) => {
-    setData((prev) => prev.map((o) => (o.id === id ? { ...o, status } : o)));
-  };
-
-  const openConfirm = (item: Order, status: Order["status"]) => {
-    setSelectedItem(item);
-    setPendingStatus(status);
-    setOpenConfirmModal(true);
-  };
-
-  const handleConfirm = () => {
-    if (!selectedItem || !pendingStatus) return;
-
-    updateStatus(selectedItem.id, pendingStatus);
-
-    if (pendingStatus === "PAID") {
-      toast.success("Pembayaran dikonfirmasi", {
-        description: `${selectedItem.orderNumber} telah dikonfirmasi.`,
-        position: "bottom-right",
-      });
-    }
-
-    if (pendingStatus === "COMPLETED") {
-      toast.success("Pesanan diselesaikan", {
-        description: `${selectedItem.orderNumber} ditandai selesai.`,
-        position: "bottom-right",
-      });
-    }
-
-    setOpenConfirmModal(false);
-    setSelectedItem(null);
-    setPendingStatus(null);
-  };
+  const totalPages = Math.max(1, Math.ceil(total / limit));
 
   return (
     <div className="w-full space-y-4 overflow-hidden">
       <div className="flex flex-wrap items-center gap-2">
         <Input
-          placeholder="Cari nomor order, customer, atau toko..."
+          placeholder="Cari ID pesanan, customer, atau toko..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="max-w-md"
@@ -153,7 +130,10 @@ export function OrderTableDummy() {
         <div className="ml-auto flex items-center gap-2">
           <select
             value={filterStatus}
-            onChange={(e) => setFilterStatus(e.target.value as StatusFilter)}
+            onChange={(e) => {
+              setFilterStatus(e.target.value as StatusFilter);
+              setPage(1);
+            }}
             className="h-10 rounded-md border bg-background px-3 text-sm font-medium"
           >
             <option value="ALL">Semua Status</option>
@@ -167,10 +147,7 @@ export function OrderTableDummy() {
 
           <select
             value={sortOrder}
-            onChange={(e) => {
-              setSortKey("createdAt");
-              setSortOrder(e.target.value as SortOrder);
-            }}
+            onChange={(e) => setSortOrder(e.target.value as SortOrder)}
             className="h-10 rounded-md border bg-background px-3 text-sm font-medium"
           >
             <option value="desc">Tanggal Terbaru</option>
@@ -182,74 +159,51 @@ export function OrderTableDummy() {
       <Table className="w-full table-fixed text-sm">
         <TableHeader>
           <TableRow>
-            <TableHead
-              className="w-[13%] cursor-pointer select-none"
-              onClick={() => handleSort("orderNumber")}
-            >
-              No. Order{sortIcon("orderNumber")}
-            </TableHead>
-
-            <TableHead
-              className="w-[15%] cursor-pointer select-none"
-              onClick={() => handleSort("customerName")}
-            >
-              Customer{sortIcon("customerName")}
-            </TableHead>
-
-            <TableHead
-              className="w-[15%] cursor-pointer select-none"
-              onClick={() => handleSort("shopName")}
-            >
-              Toko{sortIcon("shopName")}
-            </TableHead>
-
-            <TableHead
-              className="w-[13%] cursor-pointer select-none"
-              onClick={() => handleSort("totalAmount")}
-            >
-              Total{sortIcon("totalAmount")}
-            </TableHead>
-
-            <TableHead
-              className="w-[13%] cursor-pointer select-none"
-              onClick={() => handleSort("status")}
-            >
-              Status{sortIcon("status")}
-            </TableHead>
-
-            <TableHead className="w-[12%]">Tanggal</TableHead>
-
-            <TableHead className="w-[19%]">Aksi</TableHead>
+            <TableHead className="w-[18%]">ID Pesanan</TableHead>
+            <TableHead className="w-[17%]">Customer</TableHead>
+            <TableHead className="w-[17%]">Toko</TableHead>
+            <TableHead className="w-[14%]">Total</TableHead>
+            <TableHead className="w-[13%]">Status</TableHead>
+            <TableHead className="w-[11%]">Tanggal</TableHead>
+            <TableHead className="w-[10%]">Aksi</TableHead>
           </TableRow>
         </TableHeader>
 
         <TableBody>
-          {filtered.map((o) => (
-            <TableRow key={o.id}>
-              <TableCell className="truncate font-medium">
-                {o.orderNumber}
+          {loading ? (
+            <TableRow>
+              <TableCell colSpan={7} className="py-10 text-center">
+                Memuat...
               </TableCell>
-
-              <TableCell className="truncate">{o.customerName}</TableCell>
-
-              <TableCell className="truncate">{o.shopName}</TableCell>
-
-              <TableCell className="truncate">
-                Rp {o.totalAmount.toLocaleString("id-ID")}
+            </TableRow>
+          ) : filtered.length === 0 ? (
+            <TableRow>
+              <TableCell colSpan={7} className="py-10 text-center text-muted-foreground">
+                Tidak ada pesanan ditemukan
               </TableCell>
-
-              <TableCell>
-                <Badge className={`text-xs ${getStatusClass(o.status)}`}>
-                  {STATUS_LABEL[o.status]}
-                </Badge>
-              </TableCell>
-
-              <TableCell className="truncate">
-                {o.createdAt.toLocaleDateString("id-ID")}
-              </TableCell>
-
-              <TableCell>
-                <div className="flex flex-wrap gap-1">
+            </TableRow>
+          ) : (
+            filtered.map((o) => (
+              <TableRow key={o.id}>
+                <TableCell className="truncate font-mono text-xs">
+                  {o.id.slice(-10).toUpperCase()}
+                </TableCell>
+                <TableCell className="truncate">
+                  {o.user?.profile?.fullName ?? o.user?.email ?? "-"}
+                </TableCell>
+                <TableCell className="truncate">{o.shopName}</TableCell>
+                <TableCell className="truncate">
+                  Rp {Number(o.totalAmount).toLocaleString("id-ID")}
+                </TableCell>
+                <TableCell>
+                  <Badge className={`text-xs ${getStatusClass(o.status)}`}>
+                    {STATUS_LABEL[o.status]}
+                  </Badge>
+                </TableCell>
+                <TableCell className="truncate">
+                  {new Date(o.createdAt).toLocaleDateString("id-ID")}
+                </TableCell>
+                <TableCell>
                   <Button
                     size="sm"
                     variant="outline"
@@ -258,43 +212,38 @@ export function OrderTableDummy() {
                   >
                     Lihat
                   </Button>
-
-                  {o.status === "PENDING" && (
-                    <Button
-                      size="sm"
-                      className="h-8 px-2 text-xs bg-green-600 hover:bg-green-700 text-white"
-                      onClick={() => openConfirm(o, "PAID")}
-                    >
-                      Konfirmasi Bayar
-                    </Button>
-                  )}
-
-                  {o.status === "SHIPPED" && (
-                    <Button
-                      size="sm"
-                      className="h-8 px-2 text-xs bg-green-600 hover:bg-green-700 text-white"
-                      onClick={() => openConfirm(o, "COMPLETED")}
-                    >
-                      Selesaikan
-                    </Button>
-                  )}
-                </div>
-              </TableCell>
-            </TableRow>
-          ))}
-
-          {filtered.length === 0 && (
-            <TableRow>
-              <TableCell
-                colSpan={7}
-                className="py-10 text-center text-muted-foreground"
-              >
-                Tidak ada pesanan ditemukan
-              </TableCell>
-            </TableRow>
+                </TableCell>
+              </TableRow>
+            ))
           )}
         </TableBody>
       </Table>
+
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between pt-2 text-sm">
+          <span className="text-muted-foreground">
+            Halaman {page} dari {totalPages}
+          </span>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={page <= 1}
+              onClick={() => setPage((p) => p - 1)}
+            >
+              Sebelumnya
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={page >= totalPages}
+              onClick={() => setPage((p) => p + 1)}
+            >
+              Berikutnya
+            </Button>
+          </div>
+        </div>
+      )}
 
       {selectedOrder && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
@@ -308,44 +257,37 @@ export function OrderTableDummy() {
 
             <div className="space-y-3 rounded-md border p-4 text-sm">
               <div className="flex justify-between gap-4">
-                <span className="text-muted-foreground">No. Order</span>
-                <span className="text-right font-medium">
-                  {selectedOrder.orderNumber}
+                <span className="text-muted-foreground">ID Pesanan</span>
+                <span className="text-right font-mono text-xs font-medium">
+                  {selectedOrder.id}
                 </span>
               </div>
-
               <div className="flex justify-between gap-4">
                 <span className="text-muted-foreground">Customer</span>
                 <span className="text-right font-medium">
-                  {selectedOrder.customerName}
+                  {selectedOrder.user?.profile?.fullName ?? selectedOrder.user?.email ?? "-"}
                 </span>
               </div>
-
               <div className="flex justify-between gap-4">
                 <span className="text-muted-foreground">Toko</span>
-                <span className="text-right font-medium">
-                  {selectedOrder.shopName}
-                </span>
+                <span className="text-right font-medium">{selectedOrder.shopName}</span>
               </div>
-
               <div className="flex justify-between gap-4">
                 <span className="text-muted-foreground">Total</span>
                 <span className="text-right font-medium">
-                  Rp {selectedOrder.totalAmount.toLocaleString("id-ID")}
+                  Rp {Number(selectedOrder.totalAmount).toLocaleString("id-ID")}
                 </span>
               </div>
-
               <div className="flex justify-between gap-4">
                 <span className="text-muted-foreground">Status</span>
                 <Badge className={getStatusClass(selectedOrder.status)}>
                   {STATUS_LABEL[selectedOrder.status]}
                 </Badge>
               </div>
-
               <div className="flex justify-between gap-4">
                 <span className="text-muted-foreground">Tanggal</span>
                 <span className="text-right font-medium">
-                  {selectedOrder.createdAt.toLocaleDateString("id-ID")}
+                  {new Date(selectedOrder.createdAt).toLocaleDateString("id-ID")}
                 </span>
               </div>
             </div>
@@ -353,54 +295,6 @@ export function OrderTableDummy() {
             <div className="flex justify-end">
               <Button variant="outline" onClick={() => setSelectedOrder(null)}>
                 Tutup
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {openConfirmModal && selectedItem && pendingStatus && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="w-full max-w-sm space-y-4 rounded-lg bg-background p-6 shadow-lg">
-            <h2 className="text-lg font-semibold">
-              {pendingStatus === "PAID"
-                ? "Konfirmasi Pembayaran"
-                : "Selesaikan Pesanan"}
-            </h2>
-
-            <p className="text-sm text-muted-foreground">
-              {pendingStatus === "PAID" ? (
-                <>
-                  Konfirmasi pembayaran untuk pesanan{" "}
-                  <span className="font-medium text-foreground">
-                    {selectedItem.orderNumber}
-                  </span>
-                  ?
-                </>
-              ) : (
-                <>
-                  Tandai pesanan{" "}
-                  <span className="font-medium text-foreground">
-                    {selectedItem.orderNumber}
-                  </span>{" "}
-                  sebagai selesai?
-                </>
-              )}
-            </p>
-
-            <div className="flex justify-end gap-2">
-              <Button
-                variant="outline"
-                onClick={() => setOpenConfirmModal(false)}
-              >
-                Batal
-              </Button>
-
-              <Button
-                className="bg-green-600 hover:bg-green-700 text-white"
-                onClick={handleConfirm}
-              >
-                {pendingStatus === "PAID" ? "Konfirmasi" : "Selesaikan"}
               </Button>
             </div>
           </div>
