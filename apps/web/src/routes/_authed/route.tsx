@@ -7,11 +7,15 @@ export const Route = createFileRoute("/_authed")({
       const user = await getCurrentUserFn()
 
       if (!user) {
-        throw new Error("Unauthenticated")
+        throw redirect({
+          to: "/auth/login",
+          search: { redirect: location.href },
+        })
       }
 
       return { user }
-    } catch {
+    } catch (err: any) {
+      if (err?.isRedirect) throw err
       throw redirect({
         to: "/auth/login",
         search: { redirect: location.href },

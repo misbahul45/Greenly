@@ -4,21 +4,20 @@ import * as React from "react"
 import { Outlet, createFileRoute, redirect } from "@tanstack/react-router"
 import SidebarSeller from "../../components/SidebarSeller"
 import Header from "../../components/Header"
-
-const SELLER_ROLES = ["SELLER"]
-const ADMIN_ROLES = ["ADMIN", "SUPER_ADMIN"]
+import { hasRole } from "#/lib/roles"
 
 export const Route = createFileRoute("/_authed/seller")({
   beforeLoad: ({ context }) => {
     const user = (context as any).user
-    const roles: string[] = (user?.roles ?? []).map((r: string) =>
-      r.trim().toUpperCase()
-    )
-    const isSeller = roles.some((r) => SELLER_ROLES.includes(r))
-    const isAdmin = roles.some((r) => ADMIN_ROLES.includes(r))
-    if (!isSeller && !isAdmin) {
-      throw redirect({ to: "/auth/login" })
+    const roles: unknown[] = user?.roles ?? []
+
+    if (hasRole(roles, "SELLER")) return
+
+    if (hasRole(roles, "ADMIN", "SUPER_ADMIN")) {
+      throw redirect({ to: "/admin/dashboard" })
     }
+
+    throw redirect({ to: "/auth/login" })
   },
   component: SellerLayout,
 })

@@ -25,19 +25,17 @@ import {
 import { Input } from "#/components/ui/input"
 import { LoginSchema } from "#/schema/auth"
 import { loginFn } from "#/server/auth"
+import { hasRole } from "#/lib/roles"
 import type { LoginResponse } from "#/types/login.response"
 
-const ADMIN_ROLES = ["ADMIN", "SUPER_ADMIN"]
-const SELLER_ROLES = ["SELLER"]
-
 function getDashboardPath(user: LoginResponse["user"]) {
-  const roles = user.roles.map((r) => r.trim().toUpperCase())
+  const roles = user.roles as unknown[]
 
-  if (roles.some((r) => ADMIN_ROLES.includes(r))) {
+  if (hasRole(roles, "ADMIN", "SUPER_ADMIN")) {
     return "/admin/dashboard"
   }
 
-  if (roles.some((r) => SELLER_ROLES.includes(r))) {
+  if (hasRole(roles, "SELLER")) {
     return "/seller/dashboard"
   }
 
