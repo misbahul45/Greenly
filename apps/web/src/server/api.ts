@@ -1,26 +1,26 @@
-import axios from "axios";
+import axios from "axios"
 
+const CORE_API_URL = "https://greenly-api.duckdns.org/api/core"
+const CATALOG_API_URL = "https://greenly-api.duckdns.org/api/catalog"
 
-export const createApi = (
-  accessToken?: string,
-  refreshToken?: string
-) => {
-  const api = axios.create({
-    baseURL: process.env.API_URL,
-  });
+export const createApi = (accessToken?: string) => {
+  return axios.create({
+    baseURL: process.env.API_URL ?? CORE_API_URL,
+    headers: accessToken
+      ? {
+          Authorization: `Bearer ${accessToken}`,
+        }
+      : undefined,
+  })
+}
 
-  api.interceptors.request.use((config) => {
-
-    if (accessToken) {
-      config.headers.Authorization = `Bearer ${accessToken}`;
-    }
-
-    if (refreshToken) {
-      config.headers["x-refresh-token"] = refreshToken;
-    }
-
-    return config;
-  });
-
-  return api;
-};
+export const createCatalogApi = (accessToken?: string) => {
+  return axios.create({
+    baseURL: process.env.CATALOG_API_URL ?? CATALOG_API_URL,
+    headers: accessToken
+      ? {
+          Authorization: `Bearer ${accessToken}`,
+        }
+      : undefined,
+  })
+}

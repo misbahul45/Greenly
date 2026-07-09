@@ -14,20 +14,17 @@ export const loginFn = createServerFn({ method: "POST" })
     const api = createApi();
 
     const res = await api.post<ApiResponse<LoginResponse>>("/auth/login", data);
+    const loginResponse = await apiRequest<LoginResponse>(Promise.resolve(res));
 
-    const tokens = res.data.data?.tokens;
-    if (!tokens?.accessToken || !tokens?.refreshToken) {
-        throw new Error("Login failed: tokens not returned by API");
-     }
-  
-
-    const { accessToken, refreshToken } =tokens;
+    const { accessToken, refreshToken } = loginResponse.tokens;
+    if (!accessToken || !refreshToken) {
+      throw new Error("Login failed: tokens not returned by API");
+    }
 
     const session = await useAppSession();
     await session.update({ accessToken, refreshToken });
 
-    // return res.data;
-    return res.data;
+    return loginResponse;
   });
 
 export const getCurrentUserFn =
@@ -38,4 +35,23 @@ export const getCurrentUserFn =
           api.get("/me")
         )
       );
+    });
+
+export const logoutFn =
+  createServerFn({ method: "POST" })
+    .handler(async (ctx) => {
+      const session = await useAppSession();
+
+      try {
+        await serverRequest<{}>(ctx, async (api) => {
+          await api.post("/auth/logout");
+          return {};
+        });
+      } catch {
+        // Session tetap dibersihkan walau request logout server gagal/expired.
+      } finally {
+        await session.clear();
+      }
+
+      return {};
     });

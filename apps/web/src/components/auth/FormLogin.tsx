@@ -1,9 +1,10 @@
 "use client"
+
 import * as React from "react"
 import { useForm } from "@tanstack/react-form"
-import { toast } from "sonner"
+import { useNavigate } from "@tanstack/react-router"
 import { Eye, EyeOff } from "lucide-react"
-import { Link, useNavigate } from "@tanstack/react-router"
+import { toast } from "sonner"
 
 import { Button } from "#/components/ui/button"
 import {
@@ -24,12 +25,10 @@ import {
 import { Input } from "#/components/ui/input"
 import { LoginSchema } from "#/schema/auth"
 import { loginFn } from "#/server/auth"
-import type { LoginResponse } from "#/types/login.response"
-
 
 export default function FormLogin() {
   const [showPassword, setShowPassword] = React.useState(false)
-  const navigate=useNavigate()
+  const navigate = useNavigate()
 
   const form = useForm({
     defaultValues: {
@@ -41,29 +40,27 @@ export default function FormLogin() {
     },
     onSubmit: async ({ value }) => {
       try {
-        const response = await loginFn({ data: value });
-        const result = response.data as LoginResponse;
-        
-
-         console.log(result)
+        const response = await loginFn({ data: value })
+        const isAdmin = response.user.roles.some((role) =>
+          ["ADMIN", "SUPER_ADMIN"].includes(role)
+        )
 
         toast.success("Login berhasil", {
-          description: "Selamat datang kembali 👋",
+          description: "Selamat datang kembali",
           position: "bottom-right",
-        });
+        })
 
-        navigate({
-          to:result.user.roles.includes('ADMIN')?'/admin/dashboard':'/seller/dashboard'
+        await navigate({
+          to: isAdmin ? "/admin/dashboard" : "/seller/dashboard",
         })
       } catch (error: any) {
-        console.log(error)
         toast.error("Login gagal", {
           description: error.message ?? "Terjadi kesalahan",
           position: "bottom-right",
-        });
+        })
       }
     },
-  });
+  })
 
   return (
     <Card className="w-full sm:max-w-md">
@@ -177,16 +174,6 @@ export default function FormLogin() {
             Masuk
           </Button>
         </Field>
-
-        {/* <p className="text-sm text-muted-foreground text-center">
-          Belum punya akun <span className="font-medium">Greenly Mart</span>?{" "}
-          <Link
-            to="/auth/regiister"
-            className="text-green-700 font-medium hover:underline"
-          >
-            Daftar
-          </Link>
-        </p> */}
       </CardFooter>
     </Card>
   )

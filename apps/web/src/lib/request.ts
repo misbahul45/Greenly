@@ -1,4 +1,3 @@
-import axios from "axios";
 import { useAppSession } from "#/hooks/useSession";
 import type { ApiResponse } from "#/types/api.response";
 import { createApi } from "#/server/api";
@@ -12,7 +11,7 @@ export const serverRequest = async <T>(
   let accessToken = session?.data?.accessToken;
   const refreshToken = session?.data?.refreshToken;
 
-  let api = createApi(accessToken, refreshToken);
+  let api = createApi(accessToken);
 
   try {
     return await fn(api);
@@ -24,25 +23,23 @@ export const serverRequest = async <T>(
       }
 
       try {
-        const refreshRes = await axios.post(
-          `${process.env.API_URL}/auth/refresh-token`,
-          {},
-          {
-            headers: {
-              "x-refresh-token": refreshToken,
-            },
-          }
-        );
+        const refreshRes = await createApi(refreshToken).post<
+          ApiResponse<{
+            accessToken: string
+            refreshToken: string
+          }>
+        >("/auth/refresh-token");
 
-        const newAccessToken = refreshRes.data.data.accessToken;
-        const newRefreshToken = refreshRes.data.data.refreshToken;
+        const refreshed = await apiRequest(Promise.resolve(refreshRes));
+        const newAccessToken = refreshed.accessToken;
+        const newRefreshToken = refreshed.refreshToken;
 
         await session.update({
           accessToken: newAccessToken,
           refreshToken: newRefreshToken,
         });
 
-        api = createApi(newAccessToken, newRefreshToken);
+        api = createApi(newAccessToken);
 
         return await fn(api);
       } catch (e) {
