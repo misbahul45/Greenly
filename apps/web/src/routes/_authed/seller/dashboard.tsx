@@ -17,14 +17,7 @@ function formatRupiah(value: number) {
   }).format(value)
 }
 
-const ORDER_STATUS_DATA = [
-  { label: "Pending", value: 4, color: "#eab308" },
-  { label: "Dibayar", value: 8, color: "#3b82f6" },
-  { label: "Diproses", value: 12, color: "#8b5cf6" },
-  { label: "Dikirim", value: 7, color: "#6366f1" },
-  { label: "Selesai", value: 31, color: "#22c55e" },
-  { label: "Batal", value: 2, color: "#ef4444" },
-]
+
 
 function SellerDashboard() {
   const getDashboard = useServerFn(getSellerDashboardFn)
@@ -68,6 +61,16 @@ function SellerDashboard() {
       </div>
     )
   }
+
+  const statusBreakdown = (data as any).orderStatusBreakdown as Record<string, number> | undefined
+  const ORDER_STATUS_DATA = [
+    { label: "Pending",  key: "PENDING",    color: "#eab308", value: statusBreakdown?.PENDING    ?? 0 },
+    { label: "Dibayar",  key: "PAID",       color: "#3b82f6", value: statusBreakdown?.PAID       ?? 0 },
+    { label: "Diproses", key: "PROCESSING", color: "#8b5cf6", value: statusBreakdown?.PROCESSING ?? 0 },
+    { label: "Dikirim",  key: "SHIPPED",    color: "#6366f1", value: statusBreakdown?.SHIPPED    ?? 0 },
+    { label: "Selesai",  key: "COMPLETED",  color: "#22c55e", value: statusBreakdown?.COMPLETED  ?? 0 },
+    { label: "Batal",    key: "CANCELLED",  color: "#ef4444", value: statusBreakdown?.CANCELLED  ?? 0 },
+  ]
 
   const maxOrderStatus = Math.max(...ORDER_STATUS_DATA.map((s) => s.value), 1)
   const totalOrderStatus = ORDER_STATUS_DATA.reduce((a, b) => a + b.value, 0)

@@ -7,8 +7,6 @@ import {
   LayoutDashboard,
   ShoppingBag,
   Package,
-  MessageCircle,
-  Users,
   WalletCards,
   LogOut,
   User,
@@ -39,16 +37,6 @@ const NAV_ITEMS_SELLER: NavItem[] = [
     label: "Produk",
     to: "/seller/produk",
     icon: <Package className="h-5 w-5" strokeWidth={2.2} />,
-  },
-  {
-    label: "Chat",
-    to: "/seller/chat",
-    icon: <MessageCircle className="h-5 w-5" strokeWidth={2.2} />,
-  },
-  {
-    label: "Customer",
-    to: "/seller/customer",
-    icon: <Users className="h-5 w-5" strokeWidth={2.2} />,
   },
   {
     label: "Laporan Keuangan",

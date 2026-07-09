@@ -8,16 +8,6 @@ export const Route = createFileRoute("/_authed/seller/laporan-keuangan")({
   component: LaporanKeuanganPage,
 })
 
-const fallbackLedger = [
-  { id: "f1", createdAt: new Date().toISOString(), description: "Pendapatan pesanan #1001", reference: "ORDER-1001", type: "CREDIT", amount: 185000 },
-  { id: "f2", createdAt: new Date(Date.now() - 86400000).toISOString(), description: "Pendapatan pesanan #1002", reference: "ORDER-1002", type: "CREDIT", amount: 96000 },
-  { id: "f3", createdAt: new Date(Date.now() - 172800000).toISOString(), description: "Biaya layanan platform", reference: "FEE-1002", type: "DEBIT", amount: 7500 },
-  { id: "f4", createdAt: new Date(Date.now() - 259200000).toISOString(), description: "Pendapatan pesanan #1003", reference: "ORDER-1003", type: "CREDIT", amount: 245000 },
-  { id: "f5", createdAt: new Date(Date.now() - 345600000).toISOString(), description: "Biaya layanan platform", reference: "FEE-1003", type: "DEBIT", amount: 12000 },
-  { id: "f6", createdAt: new Date(Date.now() - 432000000).toISOString(), description: "Pendapatan pesanan #1004", reference: "ORDER-1004", type: "CREDIT", amount: 310000 },
-  { id: "f7", createdAt: new Date(Date.now() - 518400000).toISOString(), description: "Pendapatan pesanan #1005", reference: "ORDER-1005", type: "CREDIT", amount: 128000 },
-]
-
 function formatRupiah(value: number) {
   return new Intl.NumberFormat("id-ID", {
     style: "currency",
@@ -36,9 +26,11 @@ function LaporanKeuanganPage() {
   const getLedger = useServerFn(getShopLedgerFn)
 
   const [shopId, setShopId] = useState<string | null>(null)
+  const [shopError, setShopError] = useState<string | null>(null)
   const [balance, setBalance] = useState(0)
   const [ledger, setLedger] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const [fetchError, setFetchError] = useState<string | null>(null)
 
   const [search, setSearch] = useState("")
   const [typeFilter, setTypeFilter] = useState("Semua")
@@ -59,29 +51,23 @@ function LaporanKeuanganPage() {
       if (id) {
         setShopId(id)
       } else {
-        // toast.error("Toko seller tidak ditemukan")
-        setBalance(273500)
-        setLedger(fallbackLedger)
+        setShopError("Anda belum memiliki toko yang terdaftar.")
         setLoading(false)
       }
     }).catch(() => {
       if (cancelled) return
-      toast.error("Gagal memuat toko seller")
-      setBalance(273500)
-      setLedger(fallbackLedger)
+      const msg = "Gagal memuat data toko seller"
+      setShopError(msg)
+      toast.error(msg)
       setLoading(false)
     })
     return () => { cancelled = true }
   }, [getMyShop])
 
   const fetchData = useCallback(async () => {
-    if (!shopId) {
-      setBalance(273500)
-      setLedger(fallbackLedger)
-      setLoading(false)
-      return
-    }
+    if (!shopId) return
     setLoading(true)
+    setFetchError(null)
     try {
       const [balRes, ledgerRes] = await Promise.all([
         getBalance({ data: { shopId } }),
@@ -89,11 +75,11 @@ function LaporanKeuanganPage() {
       ])
       const items = Array.isArray(ledgerRes.data) ? ledgerRes.data : []
       setBalance(Number(balRes.balance ?? 0))
-      setLedger(items.length > 0 ? items : fallbackLedger)
-    } catch {
-      toast.error("Gagal memuat data keuangan")
-      setBalance(273500)
-      setLedger(fallbackLedger)
+      setLedger(items)
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Gagal memuat data keuangan"
+      setFetchError(msg)
+      toast.error(msg)
     } finally {
       setLoading(false)
     }
@@ -177,12 +163,27 @@ function LaporanKeuanganPage() {
     [filteredByDate]
   )
 
+  if (shopError) {
+    return (
+      <div className="rounded-xl bg-white p-8 text-center shadow-sm ring-1 ring-black/5">
+        <p className="font-medium text-red-500">{shopError}</p>
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-xl font-semibold">Laporan Keuangan</h1>
         <p className="text-sm text-muted-foreground">Pantau saldo dan riwayat transaksi toko Anda.</p>
       </div>
+
+      {fetchError && (
+        <div className="rounded-xl bg-red-50 p-4 text-sm text-red-600 flex items-center justify-between">
+          <span>{fetchError}</span>
+          <button onClick={fetchData} className="text-green-600 underline hover:no-underline ml-4">Coba lagi</button>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="bg-white rounded-xl p-5 shadow-sm ring-1 ring-black/5">

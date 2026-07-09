@@ -59,18 +59,6 @@ function normalizeUser(u: AdminUser): NormalizedUser {
   };
 }
 
-function fromDummy(c: Customer): NormalizedUser {
-  return {
-    id: c.id,
-    fullName: c.fullName,
-    email: c.email,
-    phone: c.phone,
-    status: c.status,
-    createdAt: c.createdAt.toISOString(),
-    roles: [],
-  };
-}
-
 type ConfirmAction = {
   type: "suspend" | "ban";
   item: NormalizedUser;

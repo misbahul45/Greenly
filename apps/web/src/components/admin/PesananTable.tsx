@@ -36,19 +36,6 @@ function getStatusClass(status: AdminOrder["status"]) {
   return "bg-red-100 text-red-700";
 }
 
-function toAdminOrder(o: Order): AdminOrder {
-  return {
-    id: o.id,
-    userId: "-",
-    shopId: "-",
-    shopName: o.shopName,
-    totalAmount: o.totalAmount,
-    status: o.status,
-    createdAt: o.createdAt.toISOString(),
-    user: { email: "-", profile: { fullName: o.customerName } },
-  };
-}
-
 export function OrderTable() {
   const getOrders = useServerFn(getAllOrdersFn);
 

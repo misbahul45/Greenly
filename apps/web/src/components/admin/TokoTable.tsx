@@ -13,7 +13,6 @@ import { Button } from "#/components/ui/button";
 import { Badge } from "#/components/ui/badge";
 import { useServerFn } from "@tanstack/react-start";
 import { getShopsFn, reviewApplicationFn } from "#/server/admin";
-import type { AdminShop } from "#/types/server";
 
 type Shop = {
   id: string;
@@ -300,7 +299,21 @@ export function ShopTable() {
         </TableHeader>
 
         <TableBody>
-          {filtered.map((s) => (
+          {error ? (
+            <TableRow>
+              <TableCell colSpan={8} className="py-10 text-center">
+                <p className="text-red-500 font-medium">{error}</p>
+                <button onClick={fetchData} className="mt-3 text-sm text-green-600 underline hover:no-underline">Coba lagi</button>
+              </TableCell>
+            </TableRow>
+          ) : filtered.length === 0 ? (
+            <TableRow>
+              <TableCell colSpan={8} className="py-10 text-center text-muted-foreground">
+                Tidak ada toko ditemukan
+              </TableCell>
+            </TableRow>
+          ) : (
+          filtered.map((s) => (
             <TableRow key={s.id}>
               <TableCell className="truncate font-medium">{s.name}</TableCell>
               <TableCell className="truncate">{s.owner}</TableCell>
@@ -375,17 +388,7 @@ export function ShopTable() {
                 </div>
               </TableCell>
             </TableRow>
-          ))}
-
-          {filtered.length === 0 && (
-            <TableRow>
-              <TableCell
-                colSpan={8}
-                className="py-10 text-center text-muted-foreground"
-              >
-                Tidak ada toko ditemukan
-              </TableCell>
-            </TableRow>
+          ))
           )}
         </TableBody>
       </Table>

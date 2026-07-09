@@ -1,4 +1,4 @@
-import { OrderTableDummy } from '#/components/admin/PesananTable'
+import { OrderTable } from '#/components/admin/PesananTable'
 import { createFileRoute } from '@tanstack/react-router'
 
 export const Route = createFileRoute('/_authed/admin/pesanan')({
@@ -7,6 +7,6 @@ export const Route = createFileRoute('/_authed/admin/pesanan')({
 
 function RouteComponent() {
   return <div>
-    <OrderTableDummy />
+    <OrderTable />
   </div>
 }

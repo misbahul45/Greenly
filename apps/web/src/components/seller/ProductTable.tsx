@@ -25,54 +25,6 @@ import type { AdminCategory } from "#/types/server";
 
 type FormMode = "create" | "edit";
 
-const fallbackProducts: SellerProduct[] = [
-  {
-    id: "fallback-product-1",
-    name: "Paket Sayur Organik",
-    slug: "paket-sayur-organik",
-    description: "Paket sayur segar untuk kebutuhan harian.",
-    price: 45000,
-    stock: 32,
-    shopId: "fallback-shop-nesa",
-    categoryId: "fallback-category",
-    images: [],
-    imageUrls: [],
-    isActive: true,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    id: "fallback-product-2",
-    name: "Beras Merah Premium",
-    slug: "beras-merah-premium",
-    description: "Beras merah pilihan dari petani lokal.",
-    price: 68000,
-    stock: 18,
-    shopId: "fallback-shop-nesa",
-    categoryId: "fallback-category",
-    images: [],
-    imageUrls: [],
-    isActive: true,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    id: "fallback-product-3",
-    name: "Madu Hutan Murni",
-    slug: "madu-hutan-murni",
-    description: "Madu murni tanpa campuran gula.",
-    price: 85000,
-    stock: 12,
-    shopId: "fallback-shop-nesa",
-    categoryId: "fallback-category",
-    images: [],
-    imageUrls: [],
-    isActive: true,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-];
-
 export function ProductTableFull() {
   const getMyShop = useServerFn(getMyShopFn);
   const getProducts = useServerFn(getSellerProductsFn);
@@ -83,9 +35,11 @@ export function ProductTableFull() {
   const getCategories = useServerFn(getCategoriesFn);
 
   const [shopId, setShopId] = React.useState<string | null>(null);
+  const [shopError, setShopError] = React.useState<string | null>(null);
   const [data, setData] = React.useState<SellerProduct[]>([]);
   const [categories, setCategories] = React.useState<AdminCategory[]>([]);
   const [loading, setLoading] = React.useState(true);
+  const [error, setError] = React.useState<string | null>(null);
   const [search, setSearch] = React.useState("");
   const [debouncedSearch, setDebouncedSearch] = React.useState("");
   const [page] = React.useState(1);
@@ -103,31 +57,33 @@ export function ProductTableFull() {
     categoryId: "",
   });
 
+  // Load shop & categories on mount
   React.useEffect(() => {
     let cancelled = false;
 
-    setLoading(true);
-    getMyShop().then(res => {
-      if (cancelled) return;
-      const shops = Array.isArray(res) ? res : [];
-      const shop = shops[0] ?? null;
-      const id = shop?.id;
-      if (id) {
-        setShopId(id);
-      } else {
-        // toast.error("Toko seller tidak ditemukan");
-        setData(fallbackProducts);
+    getMyShop()
+      .then((res) => {
+        if (cancelled) return;
+        const shops = Array.isArray(res) ? res : [];
+        const shop = shops[0] ?? null;
+        const id = shop?.id;
+        if (id) {
+          setShopId(id);
+        } else {
+          setShopError("Anda belum memiliki toko yang terdaftar.");
+          setLoading(false);
+        }
+      })
+      .catch(() => {
+        if (cancelled) return;
+        const msg = "Gagal memuat data toko seller";
+        setShopError(msg);
+        toast.error(msg);
         setLoading(false);
-      }
-    }).catch(() => {
-      if (cancelled) return;
-      toast.error("Gagal memuat toko seller");
-      setData(fallbackProducts);
-      setLoading(false);
-    });
+      });
 
     getCategories({ data: { limit: 100 } })
-      .then(res => {
+      .then((res) => {
         if (!cancelled) setCategories(res.data);
       })
       .catch(() => {
@@ -145,12 +101,9 @@ export function ProductTableFull() {
   }, [search]);
 
   const fetchData = React.useCallback(async () => {
-    if (!shopId) {
-      setData(fallbackProducts);
-      setLoading(false);
-      return;
-    }
+    if (!shopId) return;
     setLoading(true);
+    setError(null);
     try {
       const res = await getProducts({
         data: {
@@ -158,12 +111,13 @@ export function ProductTableFull() {
           page,
           limit,
           search: debouncedSearch,
-        }
+        },
       });
-      setData(res.data.length > 0 ? res.data : fallbackProducts);
+      setData(res.data);
     } catch (err) {
-      toast.error("Gagal memuat produk");
-      setData(fallbackProducts);
+      const msg = err instanceof Error ? err.message : "Gagal memuat produk";
+      setError(msg);
+      toast.error(msg);
     } finally {
       setLoading(false);
     }
@@ -174,62 +128,32 @@ export function ProductTableFull() {
   }, [fetchData]);
 
   const handleToggle = async (id: string) => {
-    if (id.startsWith("fallback-")) {
-      setData((prev) => prev.map((item) => item.id === id ? { ...item, isActive: !item.isActive } : item));
-      toast.success("Status produk diperbarui");
-      return;
-    }
-
     try {
       await toggleProduct({ data: { id } });
       toast.success("Status produk diperbarui");
       fetchData();
-    } catch (err) {
+    } catch {
       toast.error("Gagal memperbarui status");
     }
   };
 
   const handleDelete = async (id: string) => {
     if (!confirm("Hapus produk ini?")) return;
-    if (id.startsWith("fallback-")) {
-      setData((prev) => prev.filter((item) => item.id !== id));
-      toast.success("Produk dihapus");
-      return;
-    }
-
     try {
       await deleteProduct({ data: { id } });
       toast.success("Produk dihapus");
       fetchData();
-    } catch (err) {
+    } catch {
       toast.error("Gagal menghapus produk");
     }
   };
 
   const handleSave = async () => {
+    if (!shopId) {
+      toast.error("ID toko tidak ditemukan");
+      return;
+    }
     try {
-      if (!shopId) {
-        const newItem: SellerProduct = {
-          id: `fallback-product-${Date.now()}`,
-          name: form.name,
-          slug: form.name.toLowerCase().replace(/\s+/g, "-"),
-          description: form.description,
-          price: form.price,
-          stock: form.stock,
-          shopId: "fallback-shop-nesa",
-          categoryId: form.categoryId || "fallback-category",
-          images: [],
-          imageUrls: [],
-          isActive: true,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        };
-        setData((prev) => [newItem, ...prev]);
-        setOpenFormModal(false);
-        toast.success("Produk ditambahkan");
-        return;
-      }
-
       const sku = selectedItem?.slug ?? `SKU-${Date.now()}`;
       const payload = {
         name: form.name,
@@ -253,7 +177,7 @@ export function ProductTableFull() {
       }
       setOpenFormModal(false);
       fetchData();
-    } catch (err) {
+    } catch {
       toast.error("Gagal menyimpan produk");
     }
   };
@@ -266,11 +190,6 @@ export function ProductTableFull() {
   };
 
   const openEdit = (p: SellerProduct) => {
-    if (p.id.startsWith("fallback-")) {
-      toast.info("Data contoh bisa ditambah/hapus. Edit penuh tersedia untuk data dari database.");
-      return;
-    }
-
     setFormMode("edit");
     setSelectedItem(p);
     setForm({
@@ -283,6 +202,15 @@ export function ProductTableFull() {
     setOpenFormModal(true);
   };
 
+  // Shop not found or error state
+  if (shopError) {
+    return (
+      <div className="rounded-xl bg-white p-8 text-center shadow-sm ring-1 ring-black/5">
+        <p className="font-medium text-red-500">{shopError}</p>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
@@ -292,7 +220,7 @@ export function ProductTableFull() {
           onChange={(e) => setSearch(e.target.value)}
           className="max-w-sm"
         />
-        <Button onClick={openCreate}>+ Tambah Produk</Button>
+        <Button onClick={openCreate} disabled={!shopId}>+ Tambah Produk</Button>
       </div>
 
       <div className="rounded-md border">
@@ -308,9 +236,26 @@ export function ProductTableFull() {
           </TableHeader>
           <TableBody>
             {loading ? (
-              <TableRow><TableCell colSpan={5} className="py-10 text-center">Memuat...</TableCell></TableRow>
+              Array.from({ length: 5 }).map((_, i) => (
+                <TableRow key={i}>
+                  {Array.from({ length: 5 }).map((__, j) => (
+                    <TableCell key={j}><div className="h-4 bg-gray-100 rounded animate-pulse" /></TableCell>
+                  ))}
+                </TableRow>
+              ))
+            ) : error ? (
+              <TableRow>
+                <TableCell colSpan={5} className="py-10 text-center">
+                  <p className="text-red-500 font-medium">{error}</p>
+                  <button onClick={fetchData} className="mt-3 text-sm text-green-600 underline hover:no-underline">Coba lagi</button>
+                </TableCell>
+              </TableRow>
             ) : data.length === 0 ? (
-              <TableRow><TableCell colSpan={5} className="py-10 text-center">Belum ada produk</TableCell></TableRow>
+              <TableRow>
+                <TableCell colSpan={5} className="py-10 text-center text-muted-foreground">
+                  Belum ada produk. Klik "+ Tambah Produk" untuk mulai.
+                </TableCell>
+              </TableRow>
             ) : (
               data.map((p) => (
                 <TableRow key={p.id}>
@@ -343,16 +288,16 @@ export function ProductTableFull() {
           <div className="bg-white p-6 rounded-lg w-full max-w-md space-y-4 shadow-xl">
             <h2 className="text-lg font-semibold">{formMode === "create" ? "Tambah Produk" : "Edit Produk"}</h2>
             <div className="space-y-3">
-              <Input placeholder="Nama Produk" value={form.name} onChange={e => setForm({...form, name: e.target.value})} />
-              <Input placeholder="Deskripsi" value={form.description} onChange={e => setForm({...form, description: e.target.value})} />
+              <Input placeholder="Nama Produk" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} />
+              <Input placeholder="Deskripsi" value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} />
               <div className="grid grid-cols-2 gap-2">
-                <Input type="number" placeholder="Harga" value={form.price} onChange={e => setForm({...form, price: Number(e.target.value)})} />
-                <Input type="number" placeholder="Stok" value={form.stock} onChange={e => setForm({...form, stock: Number(e.target.value)})} />
+                <Input type="number" placeholder="Harga" value={form.price} onChange={e => setForm({ ...form, price: Number(e.target.value) })} />
+                <Input type="number" placeholder="Stok" value={form.stock} onChange={e => setForm({ ...form, stock: Number(e.target.value) })} />
               </div>
               <select
                 className="w-full h-10 border rounded-md px-3 text-sm"
                 value={form.categoryId}
-                onChange={e => setForm({...form, categoryId: e.target.value})}
+                onChange={e => setForm({ ...form, categoryId: e.target.value })}
               >
                 <option value="">Pilih Kategori</option>
                 {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
