@@ -152,7 +152,7 @@ function ChatPage() {
         <div className="bg-white rounded-xl shadow-sm ring-1 ring-black/5 divide-y">
 
           {[
-            "Apa itu Chat Penjual?",
+            "Apa itu Chat Seller?",
             "Cara meningkatkan persentase balasan chat",
             "Tips menggunakan Template Pesan secara efektif",
             "Ketentuan dan Etika berkomunikasi dengan Pembeli",

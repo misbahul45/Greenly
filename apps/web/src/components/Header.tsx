@@ -10,7 +10,6 @@ type HeaderProps = {
 }
 
 export default function Header({
-  title,
   onOpenSidebar,
   userName = "Super Admin",
 }: HeaderProps) {
@@ -29,9 +28,6 @@ export default function Header({
         )}
 
         <div className="flex-1">
-          {title && (
-            <p className="mb-1 text-xs font-medium text-gray-500">{title}</p>
-          )}
           <div className="flex items-center gap-2 rounded-full bg-[#E5E7EB] px-4 py-2">
             <Search className="h-4 w-4 text-gray-500" />
             <input
