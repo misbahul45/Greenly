@@ -1,80 +1,198 @@
+import axios from "axios"
 import { createServerFn } from "@tanstack/react-start"
+import { useAppSession } from "#/hooks/useSession"
 import { z } from "zod"
-
-import { apiRequest, serverRequest } from "#/lib/request"
 import { Zod } from "#/lib/zod"
-import type { ApiMeta } from "#/types/api.response"
 
 type ApiResult<T> = {
   data: T
-  meta?: ApiMeta
+  meta?: {
+    total?: number
+    page?: number
+    limit?: number
+    lastPage?: number
+  }
   message?: string
 }
 
-type ShopBalance = {
-  balance: number | string
+function apiBaseUrl() {
+  const coreUrl = process.env.API_URL
+  if (coreUrl) {
+    return coreUrl.replace(/\/core\/?$/, "")
+  }
+  return process.env.VITE_API_BASE_URL ?? process.env.API_BASE_URL ?? "http://localhost/api"
 }
 
-type ShopLedger = {
-  id: string
-  description?: string | null
-  reference?: string | null
-  type: "CREDIT" | "DEBIT"
-  amount: number | string
-  createdAt: string
-}
+async function request<T>(
+  method: "GET" | "POST" | "PATCH" | "PUT" | "DELETE",
+  path: string,
+  data?: any,
+  accessToken?: string,
+  refreshToken?: string
+) {
+  const response = await axios({
+    method,
+    url: `${apiBaseUrl()}${path}`,
+    data,
+    headers: {
+      ...(accessToken && { Authorization: `Bearer ${accessToken}` }),
+      ...(refreshToken && { "x-refresh-token": refreshToken }),
+    },
+  })
 
-const ShopIdSchema = z.object({
-  shopId: z.string(),
-})
-
-const ShopLedgerSchema = z.object({
-  shopId: z.string(),
-  page: z.number().optional(),
-  limit: z.number().optional(),
-})
-
-function cleanParams<T extends Record<string, unknown>>(params: T) {
-  return Object.fromEntries(
-    Object.entries(params).filter(([, value]) => value !== undefined && value !== "")
-  )
+  return response.data as ApiResult<T>
 }
 
 export const getMyShopFn = createServerFn({ method: "GET" })
-  .handler(async (ctx) => {
-    return serverRequest<ApiResult<any>>(ctx, async (api) => {
-      const res = await api.get("/shops/me")
-      return {
-        data: res.data.data,
-        meta: res.data.metaData ?? res.data.metadata,
-        message: res.data.message,
-      }
-    })
+  .handler(async () => {
+    const session = await useAppSession()
+    const accessToken = session.data?.accessToken
+    const refreshToken = session.data?.refreshToken
+
+    return request<any>("GET", "/core/shops/me", null, accessToken, refreshToken)
   })
 
-export const getShopBalanceFn = createServerFn({ method: "GET" })
-  .inputValidator(Zod(ShopIdSchema))
-  .handler(async ({ data, context }) => {
-    const balance = await serverRequest<ShopBalance>(context, (api) =>
-      apiRequest(api.get(`/shops/${data.shopId}/finance/balance`))
-    )
+// PRODUCTS
+export type SellerProduct = {
+  id: string
+  name: string
+  slug: string
+  description: string
+  price: number
+  stock: number
+  shopId: string
+  categoryId: string
+  images: string[]
+  isActive: boolean
+  createdAt: string
+}
 
-    return { data: balance }
+const GetSellerProductsSchema = z.object({
+  shopId: z.string(),
+  page: z.number().optional(),
+  limit: z.number().optional(),
+  search: z.string().optional(),
+})
+
+export const getSellerProductsFn = createServerFn({ method: "GET" })
+  .inputValidator(Zod(GetSellerProductsSchema))
+  .handler(async ({ data }) => {
+    const session = await useAppSession()
+    const accessToken = session.data?.accessToken
+    const refreshToken = session.data?.refreshToken
+
+    const query = new URLSearchParams()
+    query.append("shop_id", data.shopId)
+    if (data.page) query.append("page", data.page.toString())
+    if (data.limit) query.append("limit", data.limit.toString())
+    if (data.search) query.append("search", data.search)
+
+    return request<SellerProduct[]>("GET", `/catalog/products?${query.toString()}`, null, accessToken, refreshToken)
+  })
+
+export const createProductFn = createServerFn({ method: "POST" })
+  .inputValidator((d: any) => d)
+  .handler(async ({ data }: { data: any }) => {
+    const session = await useAppSession()
+    const accessToken = session.data?.accessToken
+    const refreshToken = session.data?.refreshToken
+
+    return request<SellerProduct>("POST", `/catalog/products`, data, accessToken, refreshToken)
+  })
+
+export const updateProductFn = createServerFn({ method: "POST" })
+  .inputValidator(Zod(z.object({ id: z.string(), data: z.any() })))
+  .handler(async ({ data }) => {
+    const session = await useAppSession()
+    const accessToken = session.data?.accessToken
+    const refreshToken = session.data?.refreshToken
+
+    return request<SellerProduct>("PUT", `/catalog/products/${data.id}`, data.data, accessToken, refreshToken)
+  })
+
+export const deleteProductFn = createServerFn({ method: "POST" })
+  .inputValidator(Zod(z.object({ id: z.string() })))
+  .handler(async ({ data }) => {
+    const session = await useAppSession()
+    const accessToken = session.data?.accessToken
+    const refreshToken = session.data?.refreshToken
+
+    return request<any>("DELETE", `/catalog/products/${data.id}`, null, accessToken, refreshToken)
+  })
+
+export const toggleProductFn = createServerFn({ method: "POST" })
+  .inputValidator(Zod(z.object({ id: z.string() })))
+  .handler(async ({ data }) => {
+    const session = await useAppSession()
+    const accessToken = session.data?.accessToken
+    const refreshToken = session.data?.refreshToken
+
+    return request<any>("PATCH", `/catalog/products/${data.id}/toggle`, null, accessToken, refreshToken)
+  })
+
+// ORDERS
+export type SellerOrder = {
+  id: string
+  shopName: string
+  totalAmount: number
+  status: string
+  createdAt: string
+  items: any[]
+}
+
+const GetShopOrdersSchema = z.object({
+  shopId: z.string(),
+  page: z.number().optional(),
+  limit: z.number().optional(),
+  status: z.string().optional(),
+})
+
+export const getShopOrdersFn = createServerFn({ method: "GET" })
+  .inputValidator(Zod(GetShopOrdersSchema))
+  .handler(async ({ data }) => {
+    const session = await useAppSession()
+    const accessToken = session.data?.accessToken
+    const refreshToken = session.data?.refreshToken
+
+    const query = new URLSearchParams()
+    if (data.page) query.append("page", data.page.toString())
+    if (data.limit) query.append("limit", data.limit.toString())
+    if (data.status && data.status !== "ALL") query.append("status", data.status)
+
+    return request<SellerOrder[]>("GET", `/core/orders/shop/${data.shopId}?${query.toString()}`, null, accessToken, refreshToken)
+  })
+
+export const updateOrderStatusFn = createServerFn({ method: "POST" })
+  .inputValidator(Zod(z.object({ orderId: z.string(), status: z.string() })))
+  .handler(async ({ data }) => {
+    const session = await useAppSession()
+    const accessToken = session.data?.accessToken
+    const refreshToken = session.data?.refreshToken
+
+    return request<any>("PATCH", `/core/orders/${data.orderId}/status`, { status: data.status }, accessToken, refreshToken)
+  })
+
+// FINANCE
+export const getShopBalanceFn = createServerFn({ method: "GET" })
+  .inputValidator(Zod(z.object({ shopId: z.string() })))
+  .handler(async ({ data }) => {
+    const session = await useAppSession()
+    const accessToken = session.data?.accessToken
+    const refreshToken = session.data?.refreshToken
+
+    return request<any>("GET", `/core/shops/${data.shopId}/finance/balance`, null, accessToken, refreshToken)
   })
 
 export const getShopLedgerFn = createServerFn({ method: "GET" })
-  .inputValidator(Zod(ShopLedgerSchema))
-  .handler(async ({ data, context }) => {
-    return serverRequest<ApiResult<ShopLedger[]>>(context, async (api) => {
-      const { shopId, ...params } = data
-      const res = await api.get(`/shops/${shopId}/finance/ledger`, {
-        params: cleanParams(params),
-      })
+  .inputValidator(Zod(z.object({ shopId: z.string(), page: z.number().optional(), limit: z.number().optional() })))
+  .handler(async ({ data }) => {
+    const session = await useAppSession()
+    const accessToken = session.data?.accessToken
+    const refreshToken = session.data?.refreshToken
 
-      return {
-        data: res.data.data ?? [],
-        meta: res.data.metaData ?? res.data.metadata,
-        message: res.data.message,
-      }
-    })
+    const query = new URLSearchParams()
+    if (data.page) query.append("page", data.page.toString())
+    if (data.limit) query.append("limit", data.limit.toString())
+
+    return request<any[]>("GET", `/core/shops/${data.shopId}/finance/ledger?${query.toString()}`, null, accessToken, refreshToken)
   })

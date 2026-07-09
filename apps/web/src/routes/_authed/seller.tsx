@@ -18,8 +18,8 @@ function SellerLayout() {
 
       <div className="flex min-h-screen flex-1 flex-col">
         <Header
-          title="Seller"
-          userName="Nesa"
+          title="Admin Penjual"
+          userName="Penjual"
           onOpenSidebar={() => setSidebarOpen(true)}
         />
 
