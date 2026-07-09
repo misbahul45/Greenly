@@ -110,7 +110,7 @@ function AdminDashboard() {
           color="indigo"
         />
         <div className="bg-white rounded-xl p-5 shadow-sm ring-1 ring-black/5 flex items-center gap-4">
-          <div className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 ${data.mlStatus === "online" ? "bg-green-100" : "bg-gray-100"}`}>
+          <div className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 ${data.mlStatus === "online" ? "bg-green-100" : "bg-gray-100"}`}>
             <MlIcon active={data.mlStatus === "online"} />
           </div>
           <div className="min-w-0">
@@ -182,7 +182,7 @@ function StatCard({
 
   return (
     <div className="bg-white rounded-xl p-5 shadow-sm ring-1 ring-black/5 flex items-center gap-4">
-      <div className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 ${bg[color]}`}>
+      <div className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 ${bg[color]}`}>
         {icon}
       </div>
       <div className="min-w-0">
