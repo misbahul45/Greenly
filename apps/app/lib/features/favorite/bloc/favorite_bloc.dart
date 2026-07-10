@@ -34,10 +34,37 @@ class FavoriteBloc extends Bloc<FavoriteEvent, FavoriteState> {
     Emitter<FavoriteState> emit,
   ) async {
     final optimistic = !state.isFavorite;
-    emit(state.copyWith(isFavorite: optimistic, isToggling: true));
+    emit(
+      state.copyWith(
+        isFavorite: optimistic,
+        isToggling: true,
+        productId: event.productId,
+      ),
+    );
     final res = await _service.toggle(productId: event.productId);
     if (res.isSuccess && res.data != null) {
-      emit(state.copyWith(isFavorite: res.data!.isFavorite, isToggling: false));
+      final isFav = res.data!.isFavorite;
+
+      List<FavoriteProductData> updatedFavorites = state.favorites;
+      int updatedTotal = state.totalFavorites;
+
+      if (!isFav && state.favorites.isNotEmpty) {
+        updatedFavorites = state.favorites
+            .where((f) => f.productId != event.productId)
+            .toList();
+        if (updatedTotal > 0) {
+          updatedTotal = updatedTotal - 1;
+        }
+      }
+
+      emit(
+        state.copyWith(
+          isFavorite: isFav,
+          isToggling: false,
+          favorites: updatedFavorites,
+          totalFavorites: updatedTotal,
+        ),
+      );
     } else {
       emit(
         state.copyWith(

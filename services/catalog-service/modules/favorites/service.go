@@ -45,31 +45,22 @@ func NewService(
 }
 
 func (s *service) Toggle(ctx context.Context, userID string, productID string) (ToggleFavoriteResponse, error) {
-	existing, err := s.repository.FindByUserAndProduct(ctx, userID, productID)
-	if err == nil && existing.ID != "" {
-		if err := s.repository.Delete(ctx, userID, productID); err != nil {
-			return ToggleFavoriteResponse{}, err
-		}
-		return ToggleFavoriteResponse{IsFavorite: false, ProductID: productID}, nil
-	}
-
-	product, err := s.getProductByID(ctx, productID)
+	_, err := s.getProductByID(ctx, productID)
 	if err != nil {
 		return ToggleFavoriteResponse{}, ErrProductNotFound
 	}
 
-	fav := Favorite{
-		UserID:    userID,
-		ProductID: productID,
-		ShopID:    product.ShopID,
+	isFav, err := s.repository.ToggleWithTransaction(ctx, userID, productID)
+	if err != nil {
+		if mongo.IsDuplicateKeyError(err) {
+			isFav, err = s.repository.ToggleWithTransaction(ctx, userID, productID)
+		}
+		if err != nil {
+			return ToggleFavoriteResponse{}, err
+		}
 	}
-	fav.BeforeCreate()
 
-	if _, err := s.repository.Create(ctx, fav); err != nil {
-		return ToggleFavoriteResponse{}, err
-	}
-
-	return ToggleFavoriteResponse{IsFavorite: true, ProductID: productID}, nil
+	return ToggleFavoriteResponse{IsFavorite: isFav, ProductID: productID}, nil
 }
 
 func (s *service) GetUserFavorites(ctx context.Context, userID string, query FavoriteQuery) ([]FavoriteResponse, int64, error) {

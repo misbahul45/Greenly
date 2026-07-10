@@ -173,7 +173,6 @@ class _FavoriteProductCard extends StatelessWidget {
         context.read<FavoriteBloc>().add(
           FavoriteToggleRequested(productId: product.productId),
         );
-        context.read<FavoriteBloc>().add(FavoriteListRequested());
       },
     );
   }

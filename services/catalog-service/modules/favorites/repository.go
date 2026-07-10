@@ -16,16 +16,17 @@ type Repository interface {
 	Create(ctx context.Context, favorite Favorite) (Favorite, error)
 	Delete(ctx context.Context, userID, productID string) error
 	CountByUser(ctx context.Context, userID string) (int64, error)
+	ToggleWithTransaction(ctx context.Context, userID, productID string) (bool, error)
 }
 
 type repository struct {
-	collection    *mongo.Collection
+	collection        *mongo.Collection
 	productCollection *mongo.Collection
 }
 
 func NewRepository(db *mongo.Database) Repository {
 	return &repository{
-		collection:    db.Collection("favorites"),
+		collection:        db.Collection("favorite_products"),
 		productCollection: db.Collection("products"),
 	}
 }
@@ -89,7 +90,7 @@ func (r *repository) Create(ctx context.Context, favorite Favorite) (Favorite, e
 		return favorite, err
 	}
 
-	_, err = r.productCollection.UpdateOne(ctx, 
+	_, err = r.productCollection.UpdateOne(ctx,
 		bson.M{"_id": favorite.ProductID},
 		bson.M{"$inc": bson.M{"favorite_count": 1}},
 	)
@@ -102,7 +103,7 @@ func (r *repository) Create(ctx context.Context, favorite Favorite) (Favorite, e
 
 func (r *repository) Delete(ctx context.Context, userID, productID string) error {
 	now := time.Now()
-	result, err := r.collection.UpdateOne(ctx, 
+	result, err := r.collection.UpdateOne(ctx,
 		bson.M{
 			"user_id":    userID,
 			"product_id": productID,
@@ -132,4 +133,59 @@ func (r *repository) CountByUser(ctx context.Context, userID string) (int64, err
 		"user_id":    userID,
 		"deleted_at": nil,
 	})
+}
+
+func (r *repository) ToggleWithTransaction(ctx context.Context, userID, productID string) (bool, error) {
+	session, err := r.collection.Database().Client().StartSession()
+	if err != nil {
+		return false, err
+	}
+	defer session.EndSession(ctx)
+
+	result, err := session.WithTransaction(ctx, func(sessCtx mongo.SessionContext) (interface{}, error) {
+		var existing Favorite
+		findErr := r.collection.FindOne(sessCtx, bson.M{
+			"user_id":    userID,
+			"product_id": productID,
+			"deleted_at": nil,
+		}).Decode(&existing)
+
+		if findErr == nil && existing.ID != "" {
+			_, updateErr := r.collection.UpdateOne(sessCtx,
+				bson.M{"_id": existing.ID},
+				bson.M{"$set": bson.M{"deleted_at": time.Now()}},
+			)
+			if updateErr != nil {
+				return false, updateErr
+			}
+			_, updateErr = r.productCollection.UpdateOne(sessCtx,
+				bson.M{"_id": productID},
+				bson.M{"$inc": bson.M{"favorite_count": -1}},
+			)
+			return false, updateErr
+		}
+
+		fav := Favorite{}
+		fav.UserID = userID
+		fav.ProductID = productID
+		fav.BeforeCreate()
+
+		_, insertErr := r.collection.InsertOne(sessCtx, fav)
+		if insertErr != nil {
+			return false, insertErr
+		}
+
+		_, updateErr := r.productCollection.UpdateOne(sessCtx,
+			bson.M{"_id": productID},
+			bson.M{"$inc": bson.M{"favorite_count": 1}},
+		)
+		return true, updateErr
+	})
+
+	if err != nil {
+		return false, err
+	}
+
+	isFav, _ := result.(bool)
+	return isFav, nil
 }

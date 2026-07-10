@@ -17,16 +17,17 @@ type ProductQuery struct {
 }
 
 type ProductSearchQuery struct {
-	Page       int      `form:"page"`
-	Limit      int      `form:"limit"`
-	Keyword    string   `form:"q"`
-	ShopIDs    []string `form:"shop_ids"`
-	CategoryID string   `form:"category_id"`
-	MinPrice   float64  `form:"min_price"`
-	MaxPrice   float64  `form:"max_price"`
-	MinRating  float64  `form:"min_rating"`
-	SortBy     string   `form:"sort_by"`
-	SortOrder  string   `form:"sort_order"`
+	Page        int      `form:"page"`
+	Limit       int      `form:"limit"`
+	Keyword     string   `form:"q"`
+	ShopIDs     []string `form:"shop_ids"`
+	CategoryID  string   `form:"category_id"`
+	MinPrice    float64  `form:"min_price"`
+	MaxPrice    float64  `form:"max_price"`
+	MinRating   float64  `form:"min_rating"`
+	MinEcoScore float64  `form:"min_eco_score"`
+	SortBy      string   `form:"sort_by"`
+	SortOrder   string   `form:"sort_order"`
 }
 
 type CreateProductDTO struct {

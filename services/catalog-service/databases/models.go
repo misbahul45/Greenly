@@ -54,6 +54,11 @@ type Product struct {
 	Description string `bson:"description" json:"description"`
 	SKU         string `bson:"sku" json:"sku"`
 
+	Price    float64 `bson:"price" json:"price"`
+	Currency string  `bson:"currency" json:"currency"`
+
+	EcoScore float64 `bson:"eco_score" json:"ecoScore"`
+
 	FavoriteCount int     `bson:"favorite_count" json:"favoriteCount"`
 	ReviewCount   int     `bson:"review_count" json:"reviewCount"`
 	RatingAverage float64 `bson:"rating_average" json:"ratingAverage"`

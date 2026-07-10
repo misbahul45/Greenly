@@ -99,6 +99,16 @@ func (h *handler) Search(c *gin.Context) {
 		query.Limit = 20
 	}
 
+	if query.MinPrice > 0 && query.MaxPrice > 0 && query.MinPrice > query.MaxPrice {
+		c.Error(middleware.NewAppError(400, "min_price cannot be greater than max_price", nil))
+		return
+	}
+
+	if query.MinRating < 0 || query.MinRating > 5 {
+		c.Error(middleware.NewAppError(400, "min_rating must be between 0 and 5", nil))
+		return
+	}
+
 	res, total, err := h.service.Search(c.Request.Context(), query)
 	if err != nil {
 		c.Error(middleware.NewAppError(500, "Search failed", err))

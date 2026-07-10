@@ -160,7 +160,7 @@ func (s *service) Search(ctx context.Context, query ProductSearchQuery) ([]Produ
 	}
 
 	if query.Keyword != "" {
-		filter["$text"] = bson.M{"$search": query.Keyword}
+		filter["$text"] = bson.M{"$search": sanitizeMongoTextSearch(query.Keyword)}
 	}
 
 	if len(query.ShopIDs) > 0 {
@@ -184,6 +184,10 @@ func (s *service) Search(ctx context.Context, query ProductSearchQuery) ([]Produ
 
 	if query.MinRating > 0 {
 		filter["rating_average"] = bson.M{"$gte": query.MinRating}
+	}
+
+	if query.MinEcoScore > 0 {
+		filter["eco_score"] = bson.M{"$gte": query.MinEcoScore}
 	}
 
 	skip := int64(query.Page-1) * int64(query.Limit)
@@ -236,6 +240,8 @@ func (s *service) Create(ctx context.Context, dto CreateProductDTO) (databases.P
 		Description: dto.Description,
 		SKU:         dto.SKU,
 		IsActive:    dto.IsActive,
+		Price:       dto.Price,
+		Currency:    dto.Currency,
 	}
 	product.BeforeCreate()
 
@@ -311,6 +317,13 @@ func (s *service) Update(ctx context.Context, id string, dto UpdateProductDTO) (
 	}
 	if dto.IsActive != nil {
 		existing.IsActive = *dto.IsActive
+	}
+
+	if dto.Price != nil {
+		existing.Price = *dto.Price
+	}
+	if dto.Currency != nil {
+		existing.Currency = *dto.Currency
 	}
 
 	existing.BeforeUpdate()
@@ -663,4 +676,10 @@ func generateSlug(name string) string {
 	slug = strings.ReplaceAll(slug, " ", "-")
 	slug = strings.ReplaceAll(slug, "_", "-")
 	return slug + "-" + databases.NewID()[:8]
+}
+
+func sanitizeMongoTextSearch(keyword string) string {
+	keyword = strings.ReplaceAll(keyword, `\`, `\\`)
+	keyword = strings.ReplaceAll(keyword, `"`, `\"`)
+	return keyword
 }

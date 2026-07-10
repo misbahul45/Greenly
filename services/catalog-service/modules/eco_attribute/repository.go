@@ -16,19 +16,30 @@ type Repository interface {
 }
 
 type repository struct {
-	collection *mongo.Collection
+	collection        *mongo.Collection
+	productCollection *mongo.Collection
 }
 
 func NewRepository(db *mongo.Database) Repository {
 	return &repository{
-		collection: db.Collection("eco_attributes"),
+		collection:        db.Collection("eco_attributes"),
+		productCollection: db.Collection("products"),
 	}
 }
 
 func (r *repository) Create(ctx context.Context, eco EcoAttribute) (EcoAttribute, error) {
 	eco.BeforeCreate()
 	_, err := r.collection.InsertOne(ctx, eco)
-	return eco, err
+	if err != nil {
+		return eco, err
+	}
+
+	_, _ = r.productCollection.UpdateOne(ctx,
+		bson.M{"_id": eco.ProductID},
+		bson.M{"$set": bson.M{"eco_score": eco.EcoScore, "updated_at": time.Now()}},
+	)
+
+	return eco, nil
 }
 
 func (r *repository) FindByProductID(ctx context.Context, productID string) (EcoAttribute, error) {
@@ -47,7 +58,16 @@ func (r *repository) Update(ctx context.Context, productID string, eco EcoAttrib
 		"updated_at":       eco.UpdatedAt,
 	}}
 	_, err := r.collection.UpdateOne(ctx, bson.M{"product_id": productID, "deleted_at": nil}, update)
-	return eco, err
+	if err != nil {
+		return eco, err
+	}
+
+	_, _ = r.productCollection.UpdateOne(ctx,
+		bson.M{"_id": productID},
+		bson.M{"$set": bson.M{"eco_score": eco.EcoScore, "updated_at": time.Now()}},
+	)
+
+	return eco, nil
 }
 
 func (r *repository) Delete(ctx context.Context, productID string) error {

@@ -49,6 +49,18 @@ class _SearchFilterSheetState extends State<SearchFilterSheet> {
   void _apply() {
     final minPrice = double.tryParse(_minPriceCtrl.text.trim());
     final maxPrice = double.tryParse(_maxPriceCtrl.text.trim());
+
+    if (minPrice != null && maxPrice != null && minPrice > maxPrice) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Harga minimum tidak boleh lebih besar dari harga maksimum',
+          ),
+        ),
+      );
+      return;
+    }
+
     Navigator.of(context).pop(
       SearchProductFilter(
         categoryId: _selectedCategoryId,

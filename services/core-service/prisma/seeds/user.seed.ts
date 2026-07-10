@@ -23,7 +23,6 @@ export async function seedUsers(prisma: PrismaClient) {
     { email: 'rina.susanti@gmail.com', password: 'rina12345', fullName: 'Rina Susanti', phone: '088901234567', address: 'Jl. Imam Bonjol No. 15, Palembang' },
     { email: 'doni.firmansyah@gmail.com', password: 'doni12345', fullName: 'Doni Firmansyah', phone: '089012345678', address: 'Jl. Kartini No. 4, Denpasar' },
     { email: 'lisa.anggraini@gmail.com', password: 'lisa12345', fullName: 'Lisa Anggraini', phone: '081123456789', address: 'Jl. Pemuda No. 9, Balikpapan' },
-    { email: 'misbahulmu756@gmail.com', password: 'takin123', fullName: 'Misbahul Muttaqin', phone: '081298765432', address: 'Jl. Kapasari No. 21, Surabaya' },
   ]
 
   const shopOwners = [

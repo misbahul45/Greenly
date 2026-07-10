@@ -143,7 +143,7 @@ func CreateCatalogIndexes(db *mongo.Database) error {
 			namedUniqueIndex("uniq_active_price_snapshot_product", bson.D{{Key: "product_id", Value: 1}}),
 		},
 		"favorite_products": {
-			namedUniqueIndex("uniq_favorite_user_product", bson.D{{Key: "user_id", Value: 1}, {Key: "product_id", Value: 1}}),
+			namedUniquePartialIndex("uniq_favorite_user_product", bson.D{{Key: "user_id", Value: 1}, {Key: "product_id", Value: 1}}),
 			namedIndex("idx_favorite_user", bson.D{{Key: "user_id", Value: 1}}),
 			namedIndex("idx_favorite_product", bson.D{{Key: "product_id", Value: 1}}),
 		},
