@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"mime/multipart"
 	"net/http"
 	"os"
@@ -29,8 +30,12 @@ type client struct {
 }
 
 func NewClient() Client {
+	key := os.Getenv("IMAGEKIT_PRIVATE_KEY")
+	if key == "" {
+		log.Println("[WARN] IMAGEKIT_PRIVATE_KEY is not set — avatar uploads will fail")
+	}
 	return &client{
-		privateKey: os.Getenv("IMAGEKIT_PRIVATE_KEY"),
+		privateKey: key,
 		httpClient: &http.Client{Timeout: 30 * time.Second},
 	}
 }
@@ -41,6 +46,10 @@ func (c *client) authHeader() string {
 }
 
 func (c *client) Upload(fileName string, fileData []byte, folder string) (*UploadResponse, error) {
+	if c.privateKey == "" {
+		return nil, fmt.Errorf("IMAGEKIT_PRIVATE_KEY is not configured")
+	}
+
 	body := &bytes.Buffer{}
 	writer := multipart.NewWriter(body)
 

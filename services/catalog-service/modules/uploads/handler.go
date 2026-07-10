@@ -6,9 +6,18 @@ import (
 	"catalog-service/utils"
 	"fmt"
 	"io"
+	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
+
+const maxAvatarSize = 5 * 1024 * 1024
+
+var allowedMIMETypes = map[string]bool{
+	"image/jpeg": true,
+	"image/png":  true,
+	"image/webp": true,
+}
 
 type Handler interface {
 	UploadAvatar(c *gin.Context)
@@ -30,9 +39,20 @@ func (h *handler) UploadAvatar(c *gin.Context) {
 	}
 	defer file.Close()
 
+	if header.Size > maxAvatarSize {
+		c.Error(middleware.NewAppError(400, "file size exceeds 5MB limit", nil))
+		return
+	}
+
 	fileData, err := io.ReadAll(file)
 	if err != nil {
 		c.Error(middleware.NewAppError(400, "Failed to read file", nil))
+		return
+	}
+
+	detectedType := http.DetectContentType(fileData)
+	if !allowedMIMETypes[detectedType] {
+		c.Error(middleware.NewAppError(400, "only JPEG, PNG, and WebP images are allowed", nil))
 		return
 	}
 

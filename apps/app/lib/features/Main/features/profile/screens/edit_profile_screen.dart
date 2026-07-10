@@ -87,10 +87,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     if (picked == null || !mounted) return;
 
     final file = File(picked.path);
-    setState(() {
-      _pickedFile = file;
-      _uploading = true;
-    });
+    setState(() => _uploading = true);
 
     try {
       final res = await ApiClient.upload<Map<String, dynamic>>(
@@ -106,6 +103,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         final url = res.data!['url']?.toString() ?? '';
         if (url.isNotEmpty) {
           setState(() {
+            _pickedFile = file;
             _avatarUrl = url;
             _uploading = false;
           });
@@ -113,21 +111,26 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         }
       }
 
-      // Upload failed — keep the local preview but show error
-      setState(() => _uploading = false);
+      setState(() {
+        _pickedFile = null;
+        _uploading = false;
+      });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(res.message.isNotEmpty
-                ? res.message
-                : 'Gagal mengunggah gambar'),
+            content: Text(
+              res.message.isNotEmpty ? res.message : 'Gagal mengunggah gambar',
+            ),
             backgroundColor: Colors.red,
           ),
         );
       }
     } catch (_) {
       if (!mounted) return;
-      setState(() => _uploading = false);
+      setState(() {
+        _pickedFile = null;
+        _uploading = false;
+      });
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Terjadi kesalahan saat mengunggah gambar'),
